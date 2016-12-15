@@ -1,0 +1,449 @@
+--
+--
+-- Copyright (c) 1998  Adaptec Inc.
+--
+-- Module Name:
+--
+--	AAC.mib
+--
+-- Abstract:
+--
+--	Defines the AdaptecArrayController SNMP interface.
+--
+-- Author:
+--
+--   FSA Apps Team
+--
+-- Revision History:
+--
+-- $Log: AdaptecArrayController.mib $
+-- Revision \main\14  1999/04/28  16:59:56  stclair(stclair_snappy.mainline)
+-- Fold in changes required by the solaris MIB compiler.
+-- 
+-- Revision \main\rel_icestorm_bl07\2  1998/08/12  11:48:27  stclair(stclair_snap.is07)
+-- Changing access type for new status field.
+-- Revision \main\rel_icestorm_bl07\1  1998/07/31  10:37:51  stclair(stclair_snap.is07)
+-- Snmp Changes.  Added adapter status reporting to the mib.
+-- 
+-- Revision \main\stclair_7_30_98\1  1998/07/31  10:25:37  stclair(stclair_snap.is07)
+-- Added better status reporting to the mib.  Also roll in changes from Terry to allow mib to compile under netware.
+-- 
+-- Revision \main\12  1998/07/06  9:44:54  stclair(stclair_snap2.mainline)
+-- Updating mib file so that it will compile using the netware mib compiler.
+-- 
+-- Revision 1.5  1998/01/14 21:24:30  stclair
+-- Format change.
+-- Revision 1.4  1998/01/08 20:03:36  stclair
+-- Some format changes.
+-- Revision 1.3  1997/12/18 16:56:44  stclair
+-- Fixed a bug in channel count.  Should be an INTEGER.
+-- Revision 1.2  1997/12/15 20:37:14  stclair
+-- Fixed header.
+--
+--
+	AdaptecArrayController-MIB DEFINITIONS ::= BEGIN
+
+	IMPORTS
+		enterprises
+			FROM RFC1155-SMI
+		OBJECT-TYPE
+			FROM RFC-1212
+		DisplayString
+			FROM RFC1213-MIB;
+
+		adaptec						OBJECT IDENTIFIER ::= { enterprises 795 }
+		products					OBJECT IDENTIFIER ::= { adaptec 3 }
+		adaptecArrayController		OBJECT IDENTIFIER ::= { products 5 }
+
+
+		-- AdaptecArrayController MIB
+
+		adaptecArrayControllerSoftwareVersion OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"Version information for the Adaptec Array Controller 
+				Software Suite."
+				::= {adaptecArrayController 1}
+
+		adaptecArrayControllerAdapterNumber OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The Number of Adaptec Array Controllers present in the system."
+				::= {adaptecArrayController 2}
+
+		adaptecArrayControllerAdapterTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF AdaptecArrayControllerAdapterEntry
+			ACCESS not-accessible
+			STATUS mandatory
+			DESCRIPTION
+				"A list of Adaptec Array Controller entries.  
+				The number of entries is given by 
+				AdaptecArrayControllerAdapterNumber."
+				::={adaptecArrayController 3}
+
+		adaptecArrayControllerContainerTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF AdaptecArrayControllerContainerEntry
+			ACCESS not-accessible
+			STATUS mandatory
+			DESCRIPTION
+				"A list of Adaptec Array Controller Container
+				Entries. There will one entry in this table for
+				each container on the host."
+				::={adaptecArrayController 4}
+
+		adaptecArrayControllerDeviceTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF AdaptecArrayControllerDeviceEntry
+			ACCESS not-accessible
+			STATUS mandatory
+			DESCRIPTION
+				"A list of devices that are attached to 
+				 Adaptec Array Controllers that are connected
+				 to this host."
+				::={adaptecArrayController 5}
+
+	-- The adaptecArrayController Adapter Table.
+
+		adaptecArrayControllerAdapterEntry OBJECT-TYPE
+			SYNTAX AdaptecArrayControllerAdapterEntry
+			ACCESS not-accessible
+			STATUS mandatory
+			DESCRIPTION
+				"Descriptive and Status Information for an 
+				Adaptec Array Controller."
+			INDEX  { adaptecArrayControllerAdapterIndex }
+				::= {adaptecArrayControllerAdapterTable 1}
+
+		AdaptecArrayControllerAdapterEntry ::=
+			SEQUENCE {
+				adaptecArrayControllerAdapterIndex
+					INTEGER,
+				adaptecArrayControllerAdapterDescription
+					DisplayString,
+				adaptecArrayControllerAdapterType
+					DisplayString,
+				adaptecArrayControllerAdapterVersion
+					DisplayString,
+				adaptecArrayControllerAdapterChannelCount
+					INTEGER,
+				adaptecArrayControllerAdapterStatus
+					INTEGER
+			}
+
+		adaptecArrayControllerAdapterIndex OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION 
+				"A unique index into the
+				AdaptecArrayControllerAdapterTable.  This 
+				ranges between 1 and the value of 
+				AdaptecArrayControllerAdapterNumber."
+			::={adaptecArrayControllerAdapterEntry 1}
+
+		adaptecArrayControllerAdapterDescription OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION 
+			"The Adaptec Array Controller description for 
+			this adapter."
+			::= {adaptecArrayControllerAdapterEntry 2}
+
+		adaptecArrayControllerAdapterType OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION 
+			"The model name of this Adaptec Array Controller."
+			::= {adaptecArrayControllerAdapterEntry 3}
+
+		adaptecArrayControllerAdapterVersion OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION 
+			"The hardware and software version string for 
+			this Adaptec Array Controller."
+			::= {adaptecArrayControllerAdapterEntry 4}
+
+		adaptecArrayControllerAdapterChannelCount OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION 
+			"The number of channels supported by this Adaptec Array Controller."
+			::= {adaptecArrayControllerAdapterEntry 5}
+
+		adaptecArrayControllerAdapterStatus OBJECT-TYPE
+			SYNTAX INTEGER { 
+				other(1),
+				unknown(2),
+				ok(3),
+				nonCritical(4),
+				critical(5),
+				nonRecoverable(6)
+			}
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The status of the controller.  This status
+				 reflects the status of all containers and
+				 devices connected to the controller."
+				::={adaptecArrayControllerAdapterEntry 6}
+
+		-- The adaptecArrayController Container Table.  This table contains information
+		-- about all adaptecArrayController Containers present in the system.
+
+		adaptecArrayControllerContainerEntry OBJECT-TYPE
+			SYNTAX AdaptecArrayControllerContainerEntry
+			ACCESS not-accessible
+			STATUS mandatory
+			DESCRIPTION
+				"Descriptive and status information for containers
+				 hosted by Adaptec Array Controller."
+			INDEX  { adaptecArrayControllerContIndex }
+				 ::= {adaptecArrayControllerContainerTable 1}
+
+		AdaptecArrayControllerContainerEntry ::=
+			SEQUENCE {
+				adaptecArrayControllerContIndex
+					INTEGER,
+				adapterArrayControllerContAdapterIndex
+					INTEGER,
+				adaptecArrayControllerContNumber
+					INTEGER,
+				adaptecArrayControllerContSize
+					INTEGER,
+				adaptecArrayControllerContMountPoint
+					DisplayString,
+				adaptecArrayControllerContType
+					DisplayString,
+				adaptecArrayControllerContUsage
+					DisplayString,
+				adaptecArrayControllerContStatus
+					INTEGER
+			}
+
+		adaptecArrayControllerContIndex OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "An internal index used to identify this container."
+			::= {adaptecArrayControllerContainerEntry 1}
+
+		adapterArrayControllerContAdapterIndex OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "An index into the AdaptecArrayControllerAdapterTable
+			that specified the AAC Controller to which this container
+			belongs."
+			::= {adaptecArrayControllerContainerEntry 2}
+
+		adaptecArrayControllerContNumber OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "An AAC container ID."
+			::= {adaptecArrayControllerContainerEntry 3}
+
+		adaptecArrayControllerContSize OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The size of the container in megabytes."
+			::= {adaptecArrayControllerContainerEntry 4}
+				
+		adaptecArrayControllerContMountPoint OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION 
+			"A string representing drive letters and mount 
+			points for the container."
+			::= {adaptecArrayControllerContainerEntry 5}
+
+		adaptecArrayControllerContType OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "A string representing the container type."
+			::= {adaptecArrayControllerContainerEntry 6}
+
+		adaptecArrayControllerContUsage OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "A string representing the container's usage."
+			::= {adaptecArrayControllerContainerEntry 7}
+
+
+		adaptecArrayControllerContStatus OBJECT-TYPE
+			SYNTAX INTEGER { 
+				other(1),
+				unknown(2),
+				ok(3),
+				nonCritical(4),
+				critical(5),
+				nonRecoverable(6)
+			}
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION 
+				"The current status of the container.  If a
+				 container with a redundant container type is 
+				 no longer redundant,  its status will be marked
+				 as nonCritical.  If the container is no longer
+				 on-line,  its status will be marked as critical."
+			::= {adaptecArrayControllerContainerEntry 8}
+		
+		-- The adaptecArrayController Device Table.
+		-- This table containes information about every device attached
+		-- to the adaptecArrayController system.
+
+		adaptecArrayControllerDeviceEntry OBJECT-TYPE
+			SYNTAX AdaptecArrayControllerDeviceEntry
+			ACCESS not-accessible
+			STATUS mandatory
+			DESCRIPTION
+				"Descriptive and status information for devices
+				 connected to Adaptec Array Controllers."
+			INDEX  { adaptecArrayControllerDevIndex }
+				 ::= {adaptecArrayControllerDeviceTable 1}
+
+		AdaptecArrayControllerDeviceEntry ::=
+			SEQUENCE {
+				adaptecArrayControllerDevIndex
+					INTEGER,
+				adaptecArrayControllerDevAdapterIndex
+					INTEGER,
+				adaptecArrayControllerDevChannelId
+					INTEGER,
+				adaptecArrayControllerDevId
+					INTEGER,
+				adaptecArrayControllerDevLogicalNumber
+					INTEGER,
+				adaptecArrayControllerDevType
+					INTEGER,
+				adaptecArrayControllerDevVendor
+					DisplayString,
+				adaptecArrayControllerDevProduct
+					DisplayString,
+				adaptecArrayControllerDevRevision
+					DisplayString,
+				adaptecArrayControllerDevBlocks
+					INTEGER,
+				adaptecArrayControllerDevBytesPerBlock
+					INTEGER,
+				adaptecArrayControllerDevUsage
+					DisplayString,
+				adaptecArrayControllerDevStatus
+					INTEGER
+			}
+
+		adaptecArrayControllerDevIndex OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "An internally used identifier."
+			::= {adaptecArrayControllerDeviceEntry 1}			
+
+		adaptecArrayControllerDevAdapterIndex OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "An index into the AdaptecArrayControllerAdapterTable
+			that specified the AAC Controller to which this container
+			belongs."
+			::= {adaptecArrayControllerDeviceEntry 2}
+
+		adaptecArrayControllerDevChannelId OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The channel that the device is connected to."
+			::= {adaptecArrayControllerDeviceEntry 3}
+
+		adaptecArrayControllerDevId OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The Device ID."
+			::= {adaptecArrayControllerDeviceEntry 4}
+
+		adaptecArrayControllerDevLogicalNumber OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The Logical Device ID."
+			::= {adaptecArrayControllerDeviceEntry 5}
+
+		adaptecArrayControllerDevType OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The Device Type."
+			::= {adaptecArrayControllerDeviceEntry 6}
+
+		adaptecArrayControllerDevVendor OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The Device Vendor."
+			::= {adaptecArrayControllerDeviceEntry 7}
+
+		adaptecArrayControllerDevProduct OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The Product Identifier."
+			::= {adaptecArrayControllerDeviceEntry 8}
+
+		adaptecArrayControllerDevRevision OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The Product Revision."
+			::= {adaptecArrayControllerDeviceEntry 9}
+
+		adaptecArrayControllerDevBlocks OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The Number of Blocks on the Device."
+			::= {adaptecArrayControllerDeviceEntry 10}
+
+		adaptecArrayControllerDevBytesPerBlock OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The Number of Bytes Per Block on the Device."
+			::= {adaptecArrayControllerDeviceEntry 11}
+	
+		adaptecArrayControllerDevUsage OBJECT-TYPE
+			SYNTAX DisplayString
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION "The manner of usage by the Adaptec Array Controller."
+			::= {adaptecArrayControllerDeviceEntry 12}
+
+		adaptecArrayControllerDevStatus OBJECT-TYPE
+			SYNTAX INTEGER { 
+				other(1),
+				unknown(2),
+				ok(3),
+				nonCritical(4),
+				critical(5),
+				nonRecoverable(6)
+			}
+			ACCESS read-only
+			STATUS  mandatory
+			DESCRIPTION 
+				"The status of the device."
+			::= {adaptecArrayControllerDeviceEntry 13}
+
+END

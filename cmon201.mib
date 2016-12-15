@@ -1,0 +1,176 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-SYSTEM-MONITOR-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion System Monitoring MIB Release 2.0.1
+-- Revision 07/11/2000
+
+-- Copyright 1994-2000 Nortel Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	Counter
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	sysMonitor
+		FROM CENTILLION-ROOT-MIB;
+
+
+-- SECTION 2: System Monitoring Information
+
+cardMonitorTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CardMonEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Card Monitor Table."
+	::= { sysMonitor 1 }
+
+cardMonEntry OBJECT-TYPE
+	SYNTAX	CardMonEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An entry in the card monitor table. Each entry represents
+		statistics collected on each possible slot in the system."
+	INDEX	{ cardMonIndex }
+	::= { cardMonitorTable 1 }
+
+CardMonEntry ::= SEQUENCE {
+	cardMonIndex
+		INTEGER,
+	cardMonCellsReceived
+		Counter,
+	cardMonCellsTransmitted
+		Counter,
+	cardMonCellsDropped
+		Counter,
+	cardMonSARReceived
+		Counter,
+	cardMonSARTransmitted
+		Counter,
+	cardMonSARDropped
+		Counter,
+	cardMonMSIMsgs
+		Counter,
+	cardMonCardInsertions
+		Counter,
+	cardMonCardRemovals
+		Counter
+	}
+
+cardMonIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The card number index. Valid entries are system dependent
+		based on the chassis type."
+	::= { cardMonEntry 1 }
+
+cardMonCellsReceived OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of cells revceived by the card. Note this
+		statistic is not maintained in high-performance mode."
+	::= { cardMonEntry 2 }
+
+cardMonCellsTransmitted OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of cells transmitted by the card. Note this
+		statistic is not maintained in high-performance mode."
+	::= { cardMonEntry 3 }
+
+cardMonCellsDropped OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of cells dropped by the card."
+	::= { cardMonEntry 4 }
+
+cardMonSARReceived OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of SAR packets revceived by the card. Note this
+		statistic is not maintained in high-performance mode."
+	::= { cardMonEntry 5 }
+
+cardMonSARTransmitted OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of SAR packetd transmitted by the card. Note this
+		statistic is not maintained in high-performance mode."
+	::= { cardMonEntry 6 }
+
+cardMonSARDropped OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of SAR packets dropped by the card."
+	::= { cardMonEntry 7 }
+
+cardMonMSIMsgs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of MSI messages to and from the card. Note
+		this statistic is not maintained in high-performance mode. "
+	::= { cardMonEntry 8 }
+	
+cardMonCardInsertions OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of card insertions into the slot represented by
+		the slot number." 
+	::= { cardMonEntry 9 }
+
+cardMonCardRemovals OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of card removals on the slot."
+	::= { cardMonEntry 10 }
+
+cpuPctUse OBJECT-TYPE
+    SYNTAX INTEGER
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+           "Current utilization of the MCP cpu.
+           Displays the utilization of the MCP cpu as a percentage at the time
+           the object is polled. CPU utilization is highly variable, and as
+           such, cpuPctUse can only be considered a snap shot and may not
+           be valid immediately after polling the object."
+    ::= { sysMonitor 4 }
+
+END

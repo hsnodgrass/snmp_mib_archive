@@ -1,0 +1,630 @@
+    ADTRAN-DS1-MIB  DEFINITIONS ::= BEGIN
+
+    -- TITLE:       ADTRAN DS1 MIB (Extensions to RFC1406)
+    -- FILENAME:    ADS1.MIB
+    -- PARTNUMBER:  9950.017L1-19A
+    -- AUTHOR:      Jeff Wells
+    -- DATE:        94/11/01
+
+    -- Adtran DS1 Management Group
+
+    -- Adtran DS1 Management Groups enhance the management capabilities
+    -- offered by the standard MIB-2 DS1 Transmission Group, RFC-1406.
+    -- Adtran DS1 groups provide the capability to send traps for
+    -- DS1 line Alarm failures and Performance Threshold Crossing Alerts.
+
+    -- The Adtran DS1 Management Group consists of four sub-groups:
+    --    Alarm Table
+    --    Alert Table
+    --    Current Thresholds Group
+    --    Total Thresholds Group
+
+    -- The Adtran products that support this group include:
+    -- ACTDAXL2, TSU, TSU100, TSU600, HSU100, HSU600
+    --
+
+    IMPORTS
+        enterprises
+            FROM RFC1155-SMI
+        OBJECT-TYPE
+            FROM RFC-1212;
+
+    -- OBJECT IDENTIFIERS
+    
+    adtran  OBJECT IDENTIFIER ::= { enterprises 664 }
+    adMgmt  OBJECT IDENTIFIER ::= { adtran 2 }
+    adDS1mg OBJECT IDENTIFIER ::= { adMgmt 3 }
+        
+    --
+    -- The DS1 Alarm Group
+    --
+    
+    adDS1AlarmTable  OBJECT-TYPE
+        SYNTAX      SEQUENCE OF AdDS1AlarmEntry
+        ACCESS      not-accessible
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 Alarm Event Table."
+        ::= { adDS1mg 1 }
+                        
+    adDS1AlarmEntry  OBJECT-TYPE
+        SYNTAX      AdDS1AlarmEntry
+        ACCESS      not-accessible
+        STATUS      mandatory
+        DESCRIPTION
+            "An entry in the DS1 Alarm Event Table."
+        INDEX       { adDS1AlarmIndex }
+        ::= { adDS1AlarmTable 1 }
+
+    AdDS1AlarmEntry ::=
+        SEQUENCE {
+            adDS1AlarmIndex
+                INTEGER,
+            adDS1AlarmEnable
+                INTEGER,
+            adDS1LineEvent
+                INTEGER,
+            adDS1LineArm
+                INTEGER
+        }
+
+    adDS1AlarmIndex  OBJECT-TYPE
+        SYNTAX      INTEGER(1..'7fffffff'h)
+        ACCESS      read-only
+        STATUS      mandatory
+        DESCRIPTION
+            "The index value which uniquely identifies the DS1
+            interface. The interface identified by a particular
+            value of this index is the same interface as identified
+            by dsx1LineIndex in DS1 MIB."
+        ::= { adDS1AlarmEntry 1 }
+
+    adDS1AlarmEnable  OBJECT-TYPE
+        SYNTAX      INTEGER {
+                    ds1AlarmOFF(1),
+                    ds1AlarmON(2)
+                }
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "Enables or disables the generation of DS1 Alarm Traps
+            for Line Status event changes."
+        ::= { adDS1AlarmEntry 2 }           
+
+    adDS1LineEvent  OBJECT-TYPE
+        SYNTAX      INTEGER(1..4095)
+        ACCESS      read-only
+        STATUS      mandatory
+        DESCRIPTION
+            "This bit map variable indicates state changes in the
+            DS1 line status variable (dsx1LineStatus).  When a line
+            status bit changes state, the corresponding line event
+            bit is set in this variable.  If armed, setting the event
+            will generate an Alarm Trap.  After reporting the events
+            in an Alarm Trap or Get response, the device clears
+            the reported events.
+
+            The various alarm event bit positions are:
+                1   No Alarm Present
+                2   Far end LOF ( a.k.a., Yellow Alarm )
+                4   Near end sending LOF Indication
+                8   Far end sending AIS ( Blue Alarm )
+               16   Near end sending AIS
+               32   Near end LOF ( a.k.a., Red Alarm ) 
+               64   Near end Loss Of Signal
+              128   Near end is looped
+              256   E1 TS16 AIS
+              512   Far End Sending TS16 LOMF
+             1024   Near End Sending TS16 LOMF
+             2048   Near End detects a test code
+             4096   any line status not defined here"
+
+        ::= { adDS1AlarmEntry 3 }
+
+    adDS1LineArm    OBJECT-TYPE
+        SYNTAX      INTEGER(1..4095)
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "This bit map variable arms or disarms an individual or
+            group of events identified in adDS1LineEvent as a source
+            for generation of DS1 Alarm Trap.
+
+            The various arm event bit positions are:
+                1   No Alarm Present
+                2   Far end LOF ( a.k.a., Yellow Alarm )
+                4   Near end sending LOF Indication
+                8   Far end sending AIS ( Blue Alarm )
+               16   Near end sending AIS
+               32   Near end LOF ( a.k.a., Red Alarm ) 
+               64   Near end Loss Of Signal
+              128   Near end is looped
+              256   E1 TS16 AIS
+              512   Far End Sending TS16 LOMF
+             1024   Near End Sending TS16 LOMF
+             2048   Near End detects a test code
+             4096   any line status not defined here"
+
+        ::= { adDS1AlarmEntry 4 }
+
+
+    --
+    -- The DS1 Threshold Crossing Alert Group
+    --
+    
+    adDS1AlertTable  OBJECT-TYPE
+        SYNTAX      SEQUENCE OF AdDS1AlertEntry
+        ACCESS      not-accessible
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 Alert Event Table."
+        ::= { adDS1mg 2 }
+                        
+    adDS1AlertEntry  OBJECT-TYPE
+        SYNTAX      AdDS1AlertEntry
+        ACCESS      not-accessible
+        STATUS      mandatory
+        DESCRIPTION
+            "An entry in the DS1 Alert Event Table."
+        INDEX       { adDS1AlertIndex }
+        ::= { adDS1AlertTable 1 }
+
+    AdDS1AlertEntry ::=
+        SEQUENCE {
+            adDS1AlertIndex
+                INTEGER,
+            adDS1AlertEnable
+                INTEGER,
+            adDS1CurrentAlert
+                INTEGER,
+            adDS1TotalAlert
+                INTEGER,
+            adDS1FarCurrentAlert
+                INTEGER,
+            adDS1FarTotalAlert
+                INTEGER,
+            adDS1CurrentArm
+                INTEGER,
+            adDS1TotalArm
+                INTEGER,
+            adDS1FarCurrentArm
+                INTEGER,
+            adDS1FarTotalArm
+                INTEGER
+        }
+
+    adDS1AlertIndex  OBJECT-TYPE
+        SYNTAX      INTEGER(1..'7fffffff'h)
+        ACCESS      read-only
+        STATUS      mandatory
+        DESCRIPTION
+            "The index value which uniquely identifies the DS1
+            interface. The interface identified by a particular
+            value of this index is the same interface as identified
+            by dsx1LineIndex in DS1 MIB."
+        ::= { adDS1AlertEntry 1 }
+
+    adDS1AlertEnable  OBJECT-TYPE
+        SYNTAX      INTEGER {
+                    ds1AlertOFF(1),
+                    ds1AlertON(2)
+                }
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "Enables or disables the generation of DS1 Alert Traps
+            for Performance Monitor Threshold Crossing Alerts."
+        ::= { adDS1AlertEntry 2 }           
+
+    adDS1CurrentAlert  OBJECT-TYPE
+        SYNTAX      INTEGER(1..1023)
+        ACCESS      read-only
+        STATUS      mandatory
+        DESCRIPTION
+            "This DS1 performance status variable indicates Threshold
+            Crossing Alerts for Near End Current 15 minute interval.
+            An alert bit is set in this variable when the value of
+            the dsx1CurrentTable object exceeds the Threshold Value.
+            This variable contains the sum of alert values.
+
+            Threshold Crossing Alert bit position values:
+
+               1  ES   - Errored Seconds
+               2  SES  - Severely Errored Seconds
+               4  SEFS - Severely Errored Framing Seconds
+               8  UAS  - Unavailable Seconds
+              16  CSS  - Controlled Slip Seconds
+              32  PCV  - Path Coding Violations
+              64  LES  - Line Errored Seconds
+             128  BES  - Bursty Errored Seconds
+             256  DM   - Degraded Minutes
+             512  LCV  - Line Code Violations"
+                
+        ::= { adDS1AlertEntry 3 }
+
+    adDS1TotalAlert  OBJECT-TYPE
+        SYNTAX      INTEGER(1..1023)
+        ACCESS      read-only
+        STATUS      mandatory
+        DESCRIPTION
+            "This DS1 performance status variable indicates Threshold
+            Crossing Alerts for Near End Total performance variables.
+            An alert bit is set in this variable when the value of
+            the dsx1TotalTable object exceeds the Threshold Value.
+            This variable contains the sum of alert values.
+
+            Threshold Crossing Alert bit position values:
+               1  ES   - Errored Seconds
+               2  SES  - Severely Errored Seconds
+               4  SEFS - Severely Errored Framing Seconds
+               8  UAS  - Unavailable Seconds
+              16  CSS  - Controlled Slip Seconds
+              32  PCV  - Path Coding Violations
+              64  LES  - Line Errored Seconds
+             128  BES  - Bursty Errored Seconds
+             256  DM   - Degraded Minutes
+             512  LCV  - Line Code Violations"
+                
+        ::= { adDS1AlertEntry 4 }
+
+    adDS1FarCurrentAlert  OBJECT-TYPE
+        SYNTAX      INTEGER(1..511)
+        ACCESS      read-only
+        STATUS      mandatory
+        DESCRIPTION
+            "This DS1 performance status variable indicates Threshold
+            Crossing Alerts for Far End Current 15 minute interval.
+            An alert bit is set in this variable when the value of
+            the dsx1FarEndCurrentTable object exceeds the Threshold
+            Value. This variable contains the sum of alert values.
+
+            Threshold Crossing Alert bit position values:
+                1  ES   - Errored Seconds
+                2  SES  - Severely Errored Seconds
+                4  SEFS - Severely Errored Framing Seconds
+                8  UAS  - Unavailable Seconds
+               16  CSS  - Controlled Slip Seconds
+               32  PCV  - Path Coding Violations
+               64  LES  - Line Errored Seconds
+              128  BES  - Bursty Errored Seconds
+              256  DM   - Degraded Minutes"
+                
+        ::= { adDS1AlertEntry 5 }
+
+    adDS1FarTotalAlert  OBJECT-TYPE
+        SYNTAX      INTEGER(1..511)
+        ACCESS      read-only
+        STATUS      mandatory
+        DESCRIPTION
+            "This DS1 performance status variable indicates Threshold
+            Crossing Alerts for Far End Total performance variables.
+            An alert bit is set in this variable when the value of
+            the dsx1FarEndTotalTable object exceeds the Threshold
+            Value. This variable contains the sum of alert values.
+
+            Threshold Crossing Alert bit position values:
+                1  ES   - Errored Seconds
+                2  SES  - Severely Errored Seconds
+                4  SEFS - Severely Errored Framing Seconds
+                8  UAS  - Unavailable Seconds
+               16  CSS  - Controlled Slip Seconds
+               32  PCV  - Path Coding Violations
+               64  LES  - Line Errored Seconds
+              128  BES  - Bursty Errored Seconds
+              256  DM   - Degraded Minutes"
+                
+        ::= { adDS1AlertEntry 6 }
+
+    adDS1CurrentArm  OBJECT-TYPE
+        SYNTAX      INTEGER(1..1023)
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "This variable arms and disarms an individual or group
+            of alerts identified in adDS1CurrentAlert as a source
+            for the generation of Threshold Crossing Alert Trap.
+            This variable contains the sum of Arm values.
+
+            Threshold Crossing Arm bit position values:
+                1  ES   - Errored Seconds
+                2  SES  - Severely Errored Seconds
+                4  SEFS - Severely Errored Framing Seconds
+                8  UAS  - Unavailable Seconds
+               16  CSS  - Controlled Slip Seconds
+               32  PCV  - Path Coding Violations
+               64  LES  - Line Errored Seconds
+              512  LCV  - Line Code Violations"
+                
+        ::= { adDS1AlertEntry 7 }
+
+    adDS1TotalArm  OBJECT-TYPE
+        SYNTAX      INTEGER(1..1023)
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "This variable arms and disarms an individual or group
+            of alerts identified in adDS1TotalAlert as a source
+            for the generation of Threshold Crossing Alert Trap.
+            This variable contains the sum of Arm values.
+
+            Threshold Crossing Arm bit position values:
+                1  ES   - Errored Seconds
+                2  SES  - Severely Errored Seconds
+                4  SEFS - Severely Errored Framing Seconds
+                8  UAS  - Unavailable Seconds
+               16  CSS  - Controlled Slip Seconds
+               32  PCV  - Path Coding Violations
+               64  LES  - Line Errored Seconds
+              512  LCV  - Line Code Violations"
+                
+        ::= { adDS1AlertEntry 8 }
+
+    adDS1FarCurrentArm  OBJECT-TYPE
+        SYNTAX      INTEGER(1..511)
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "This variable arms and disarms an individual or group
+            of alerts identified in adDS1FarCurrentAlert as a source
+            for the generation of Threshold Crossing Alert Trap.
+            This variable contains the sum of Arm values.
+
+            Threshold Crossing Arm bit position values:
+                1  ES   - Errored Seconds
+                2  SES  - Severely Errored Seconds
+                4  SEFS - Severely Errored Framing Seconds
+                8  UAS  - Unavailable Seconds
+               16  CSS  - Controlled Slip Seconds
+               32  PCV  - Path Coding Violations
+               64  LES  - Line Errored Seconds
+              128  BES  - Bursty Errored Seconds
+              256  DM   - Degraded Minutes"
+                
+        ::= { adDS1AlertEntry 9 }
+
+    adDS1FarTotalArm  OBJECT-TYPE
+        SYNTAX      INTEGER(1..511)
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "This variable arms and disarms an individual or group
+            of alerts identified in adDS1FarTotalAlert as a source
+            for the generation of Threshold Crossing Alert Trap.
+            This variable contains the sum of Arm values.
+
+            Threshold Crossing Arm bit position values:
+                1  ES   - Errored Seconds
+                2  SES  - Severely Errored Seconds
+                4  SEFS - Severely Errored Framing Seconds
+                8  UAS  - Unavailable Seconds
+               16  CSS  - Controlled Slip Seconds
+               32  PCV  - Path Coding Violations
+               64  LES  - Line Errored Seconds
+              128  BES  - Bursty Errored Seconds
+              256  DM   - Degraded Minutes"
+                
+        ::= { adDS1AlertEntry 10 }
+
+
+    -- DS1 Threshold Values
+
+    -- The current and total threshold value groups define performance threshold 
+    -- values for DS1 Line and Path statistics. If a statistic value exceeds its
+    -- threshold value, then its corresponding Threshold Crossing Alert bit is set
+    -- in the Alert Table entry for the line.  The device sends an Alert Trap to the
+    -- manager if the alert event is armed and Alert Traps are enabled.
+
+    -- Threshold values apply to both Near End and Far End parameters.
+    -- Default threshold values are from "Generic Digital Transmission
+    -- Surveillance",TA-NWT-000820,Issue 1, June 1993.
+
+    --
+    -- The Current Threshold Value Group
+    --
+    
+    adDS1CurrentThreshold  OBJECT IDENTIFIER ::= { adDS1mg 3 }
+
+    adDS1CurrentThrsES  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Current 15 minute Errored Seconds parameter.  The 
+            default value is 65 for an approximate BER level of
+            (10** -5)."
+        ::= { adDS1CurrentThreshold 1 }
+        
+    adDS1CurrentThrsSES  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Current 15 minute Severely Errored Seconds parameter.
+            The default value is 10 for an approximate BER level of
+            (10** -5)."
+        ::= { adDS1CurrentThreshold 2 }
+
+    adDS1CurrentThrsSEFS  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Current 15 minute Severely Errored Framing Seconds
+            parameter.  The default value is 2 for an approximate
+            BER level of (10** -5)."
+        ::= { adDS1CurrentThreshold 3 }
+
+    adDS1CurrentThrsUAS  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Current 15 minute Unavailable Seconds parameter.  The 
+            default value is 10 for an approximate BER level of
+            (10** -5)."
+        ::= { adDS1CurrentThreshold 4 }
+
+    adDS1CurrentThrsCSS  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Current 15 minute Controlled Slip Seconds parameter.
+            The default value is 1 for an approximate BER level of
+            (10** -5)."
+        ::= { adDS1CurrentThreshold 5 }
+
+    adDS1CurrentThrsPCVsf  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Current 15 minute Path Coding Violations parameter,
+            when the Line Type is Super Frame (AT&T D4 format) DS1.
+            Default value for an approximate BER level of (10**-5)
+            is 72 Framing errors."
+        ::= { adDS1CurrentThreshold 6 }
+
+    adDS1CurrentThrsPCVesf  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Current 15 minute Path Coding Violations parameter,
+            when the Line Type is Extended Super Frame (ESF) DS1.
+            Default value for an approximate BER level of (10**-5)
+            is 13,296 CRC errors."
+        ::= { adDS1CurrentThreshold 7 }
+            
+    adDS1CurrentThrsLES  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Current 15 minute Line Errored Seconds parameter.
+            The default value is 65 for an approximate BER level of
+            (10** -5)."
+        ::= { adDS1CurrentThreshold 8 }
+
+    adDS1CurrentThrsLCV  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Current 15 minute Line Code Violations parameter.  The 
+            default value is 13,340 for an approximate BER level of
+            (10** -5)."
+        ::= { adDS1CurrentThreshold 9 }
+
+
+
+    -- The Total Threshold Group
+
+    adDS1TotalThreshold    OBJECT IDENTIFIER ::= { adDS1mg 4 }
+
+    adDS1TotalThrsES  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Total Errored Seconds parameter.  The default value 
+            is 648 for an approximate BER level of (10** -5)."
+        ::= { adDS1TotalThreshold 1 }
+        
+    adDS1TotalThrsSES  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Total Severely Errored Seconds parameter. The default
+            value is 100 for an approximate BER level of (10** -5)."
+        ::= { adDS1TotalThreshold 2 }
+
+    adDS1TotalThrsSEFS  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Total Severely Errored Framing Seconds parameter.  The
+            default value is 17 for an approximate BER level of
+            (10** -5)."
+        ::= { adDS1TotalThreshold 3 }
+
+    adDS1TotalThrsUAS  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Total Unavailable Seconds parameter.  The default value
+            is 10 for an approximate BER level of (10** -5)."
+        ::= { adDS1TotalThreshold 4 }
+
+    adDS1TotalThrsCSS  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Total Controlled Slip Seconds parameter. The default
+            value is 4 for an approximate BER level of(10** -5)."
+        ::= { adDS1TotalThreshold 5 }
+
+    adDS1TotalThrsPCVsf  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Total Path Coding Violations parameter, when the Line
+            Type is Super Frame (AT&T D4 format) DS1.  The default
+            value for an approximate BER level of (10**-5) is 691
+            framing errors."
+        ::= { adDS1TotalThreshold 6 }
+
+    adDS1TotalThrsPCVesf  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Total Path Coding Violations parameter, when the Line
+            Type is Extended Super Frame (ESF) DS1.  The default
+            value for an approximate BER level of (10**-5) is
+            132,960 CRC errors."
+        ::= { adDS1TotalThreshold 7 }
+            
+    adDS1TotalThrsLES  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Total Line Errored Seconds parameter. The default value
+            is 648 for an approximate BER level of (10** -5)."
+        ::= { adDS1TotalThreshold 8 }
+
+    adDS1TotalThrsLCV  OBJECT-TYPE
+        SYNTAX      INTEGER
+        ACCESS      read-write
+        STATUS      mandatory
+        DESCRIPTION
+            "The DS1 performance monitor Threshold Value for the
+            Total Line Code Violations parameter.  The default value
+            is 133,400 for an approximate BER level of (10** -5)."
+        ::= { adDS1TotalThreshold 9 }
+
+    END
+    

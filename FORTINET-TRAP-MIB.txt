@@ -1,0 +1,245 @@
+--
+-- Copyright (c) 2002 by FortiNet, Inc.
+-- All rights reserved.
+-- 
+-- MODULE-IDENTITY
+--  OrgName
+--    FortiNet, Inc.
+--  ContactInfo
+--     Technical Support
+--     
+--     1731 Embarcadero Road, Suite 200
+--     Palo Alto, CA  94303
+--     USA
+--    
+--     Tel: 1.650.493-6800
+--     E-mail: support@fortinet.com
+--     Http://www.fortinet.com
+--
+
+FORTINET-TRAP-MIB	DEFINITIONS ::= BEGIN
+	IMPORTS
+		fortinet, fortinetTrap
+			FROM FORTINET-MIB
+		TRAP-TYPE
+			FROM RFC-1215
+		DisplayString
+			FROM RFC1213-MIB
+		OBJECT-TYPE
+			FROM RFC-1212
+		IpAddress
+			FROM RFC1155-SMI;
+
+
+	fnTrapSysSn	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The serial number of the Fortigate."
+		::=  {  fortinetTrap  1  }
+
+	fnTrapIfName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The interface name"
+		::=  {  fortinetTrap  2  }
+
+	fnTrapIfIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The IP address of the corresponding 
+					 interface."
+		::=  {  fortinetTrap  3  }
+
+	fnTrapIfNetmask	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The netmask of the interface."
+		::=  {  fortinetTrap  4  }
+
+	fnTrapType	OBJECT-TYPE	
+		SYNTAX			INTEGER {
+			-- system
+			link-up(51),               --
+			link-down(52),             --
+			cpu-usage-high(101),       -- CPU usage is too high
+			memory-low(102),           -- Memory is too low
+			disk-low(103),             -- Disk space is low
+			interface-ip-change(104),  -- Change of IP on interface
+			system-dead(105),          -- System can't behave as ..
+			                           -- .. exepected any more
+			ha-swtich(106),            -- HA fail over
+			hardware-problem(107),     -- Some hardware problems
+
+			-- fire wall
+
+			-- user
+			auth-srv-unreachable(301), -- Failed to reach auth ..
+			                           -- .. server(Radius, LDAP) ..
+			                           -- .. to validate a user
+			-- vpn
+			vpn-tunnel-up(401),        -- VPN tunnel status from ..
+			                           -- .. down to up
+			vpn-tunnel-down(402),      -- VPN tunnel status from ..
+			                           -- .. up to down
+			-- nids
+			syn-flood-attack(501),     -- Syn Flood Attack happened
+			port-scan-attack(502),     -- Port Scan attack happened
+
+			-- anti virus
+			virus-detected(601),       -- Virus got detected by ..
+			                           -- .. the system
+			-- web filter
+
+			-- email filter
+
+			-- log
+			log-full(901)              -- Log is full
+
+			-- misc
+		}
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The integer value of the raised trap 
+					type. Note that the type should be 
+					interpreted within a specific 
+					description"
+		::=  {  fortinetTrap  5  }
+
+	fnTrapDesc		OBJECT-TYPE 
+		SYNTAX			DisplayString (SIZE (0..255))
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The textual description of the trap"
+		::= { fortinetTrap 6 }
+
+	fnTrapColdStart		TRAP-TYPE
+		ENTERPRISE		fortinet
+		DESCRIPTION		"This trap indicates that the system 
+					just rebooted."
+		::=  0
+
+	fnTrapSystemDown	TRAP-TYPE
+		ENTERPRISE		fortinet
+		--&MESG	"System Down"
+		DESCRIPTION		"This trap indicates the that snmp 
+					agent went down as the result of 
+					SIGTERM. "
+		::=  10
+
+	fnTrapAgentDown		TRAP-TYPE
+		ENTERPRISE		fortinet
+		--&MESG	"Agent Down"
+		DESCRIPTION		"This trap indicates that the snmp 
+					agent just stopped."
+		::=  11
+
+	fnTrapAgentUp		TRAP-TYPE
+		ENTERPRISE		fortinet
+		--&MESG	"Agent Up"
+		DESCRIPTION		"This trap indicates that the snmp 
+					agent just started."
+		::=  12
+
+	fnTrapInfChg		TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES		{ fnTrapSysSn, fnTrapIfName, 
+					  fnTrapIfNetmask,  fnTrapSysSn }
+		--&MESG	"The $2 Interface IP is changed to $3 (Serial No.: $1)"
+		DESCRIPTION		"This trap indicates that the IP 
+					address of the inerface has been 
+					changed."
+		::=  100
+
+	fnTrapSystem		TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  101
+
+	fnTrapFirewall		TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  200
+
+	fnTrapUser			TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  300
+
+	fnTrapVpn			TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  400
+
+	fnTrapNids			TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  500
+
+	fnTrapAntiVirus		TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  600
+
+	fnTrapWebFilter		TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  700
+
+	fnTrapEmailFilter	TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  800
+
+	fnTrapLog			TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  900
+
+	fnTrapMisc			TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES  		{ fnTrapType, fnTrapDesc  }
+		DESCRIPTION		"This trap indicates that some kind 
+					of system issue."
+		::=  1000
+
+	fnTrapDemoUpdateConfig		TRAP-TYPE
+		ENTERPRISE		fortinet
+		VARIABLES		{ fnTrapSysSn, fnTrapIfName, 
+					  fnTrapIfNetmask,  fnTrapSysSn }
+		DESCRIPTION		"This trap indicates that the FGT 
+					requests new configuration from 
+					management application, including 
+					FortiManager. When management 
+					application receives this trap, it 
+					should push device configuration to 
+					FGT. So this trap should be used very 
+					carefully, it causes FGT configuration
+					being overwritten by the configuration
+					received from management application."
+		::=  10000
+
+END
+
+-- $Id: fn-trap-mib,v 1.2 2003/10/21 20:45:18 apankratov Exp $

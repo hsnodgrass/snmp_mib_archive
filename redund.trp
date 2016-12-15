@@ -1,0 +1,55 @@
+-- SECTION 1: Top Level Definitions
+
+REDUND-TRAP-MIB DEFINITIONS ::= BEGIN
+
+
+-- Copyright 1997 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification 
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions. 
+ 
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.    
+
+
+-- Imports  
+
+IMPORTS     
+	TRAP-TYPE  	 FROM RFC-1215     
+	sysMcpRedundIndx, sysMcpRedundOperState
+			 FROM CENTILLION-CONFIG-MIB          
+	sysMcpRedundTrap FROM CENTILLION-ROOT-MIB;
+
+-- SECTION 2: Redundant traps definitions    
+
+sysMcpRedundDown  TRAP-TYPE
+    ENTERPRISE  	sysMcpRedundTrap
+    VARIABLES   	{ sysMcpRedundIndx, 
+			  sysMcpRedundOperState }
+--  STATUS      mandatory
+    DESCRIPTION 
+	"When two MCP's are participating in redundancy,
+	 they are aware of each other through a
+	 mechanism based on heart beat protocol.  
+                   
+         When primary MCP detects the failure of the
+         secondary, it will send the trap immediately.
+  
+  	 When the secondary MCP detects the primary has
+	 failed, it will take control, reset the switch
+	 and then send the trap.
+
+ 	 Varbind information returned with this trap:
+         1. sysMcpRedundIndx  represents the slot where
+            active MCP resides.
+         2. sysMcpRedundOperState represents the state of
+            the failed MCP."
+
+ ::= 1 -- 0x01
+ 
+END
+

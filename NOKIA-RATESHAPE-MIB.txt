@@ -1,0 +1,955 @@
+NOKIA-RATESHAPE-MIB DEFINITIONS ::= BEGIN
+
+
+-- 4567890123456789012345678901234567890123456789012345678901234567890123456789
+-- This line is 80 characters wide, keep lines in this file shorter than that
+-- ===============================================================
+--	   Copyright (C) Nokia Telecommunications Oy 1998
+-- ===============================================================
+-- This MIB Module defines the Rate Shaping MIB. More detailed
+-- description of the variables and tables is provided in other
+-- related documentation.
+--
+-- Format:   SNMP v2 MIB (Simple network management protocol,
+--	     version 2, Management Information Base  )
+--
+-- ================================================================
+-- Author      : Alan Francisco
+-- Version     : 1.06
+-- Created     : 20.07.1998
+-- Last Update : 
+--		 16.06.1999	 - Got rid of extra commas
+--		 03.03.1999	 - Changed rsRuleRowIndex to rsRuleIndex,
+--				   changed rsAggregationClassRowIndex to
+--				   rsAggregationClassIndex
+--		 15.12.1998	 - Updated version info
+--		 09.12.1998	 - Updated rsAggregationClassMeanRate,
+--				   rsAggregationClassBurstRate, and
+--				   rsAggregationClassBurstDuration
+--		 27.08.1998	 - Changed ipsoRS to ntcRS and moved
+--				   this node to under ntcCommon
+--		 12.08.1998	 - Modified RateLimitAction and
+--				   removed rsRuleName
+--		 03.08.1998      - Added Nokia Telecommunications
+--		            	   header
+--               20.07.1998      - Updated node names for MIB
+--				   location, revised object
+--				   names in several groups
+-- ================================================================
+
+IMPORTS
+
+    IpAddress, enterprises, Integer32, Counter32,
+    OBJECT-TYPE, MODULE-IDENTITY
+            FROM SNMPv2-SMI
+--    ifIndex
+--            FROM IF-MIB
+    RowStatus, DisplayString, TEXTUAL-CONVENTION
+            FROM SNMPv2-TC
+    OBJECT-GROUP
+            FROM SNMPv2-CONF;
+
+ntcRS MODULE-IDENTITY
+        LAST-UPDATED "0001300000Z"
+        ORGANIZATION "Nokia"
+	CONTACT-INFO
+	"EMail: tac.support@nokia.com
+	 Postal: 313 Fairchild Drive
+                 Mountain View,
+                 California, 94043"
+
+--        REVISION "9907160000Z"
+        DESCRIPTION 
+	"This MIB Module defines the Rate Shaping MIB. More detailed
+	 description of the variables and tables is provided in other
+	 related documentation."
+
+	REVISION "0001140000Z"
+	DESCRIPTION
+	"Co-Editor: Kripakaran Karlekar
+	 Converted MIB from SMIv1 to SMIv2 format"
+	
+	::= {ntcCommon 4}
+	
+nokia 		OBJECT IDENTIFIER ::= {enterprises 94}
+nokiaProducts 	OBJECT IDENTIFIER ::= {nokia 1}
+ntcCommon	OBJECT IDENTIFIER ::= {nokiaProducts 16}
+-- ntcRS 		OBJECT IDENTIFIER ::= {ntcCommon 4}
+
+--rsAccessLists            OBJECT IDENTIFIER ::= { ntcRS 1 }
+--rsRules			         OBJECT IDENTIFIER ::= { ntcRS 2 }
+--rsAggregationClasses     OBJECT IDENTIFIER ::= { ntcRS 3 }
+--rsAccessListStats        OBJECT IDENTIFIER ::= { ntcRS 4 }
+--rsRuleStats              OBJECT IDENTIFIER ::= { ntcRS 5 }
+--rsAggregationClassStats  OBJECT IDENTIFIER ::= { ntcRS 6 }
+
+PacketSource ::= TEXTUAL-CONVENTION
+	STATUS current
+	DESCRIPTION " The source of the packet rate-limited for.
+		      input statistics of the input packets.
+		      output statistics of the output packets. "
+	SYNTAX	INTEGER { input(1), output(2) }
+
+
+RateLimitAction ::= TEXTUAL-CONVENTION 
+	STATUS current
+	DESCRIPTION "
+		The action taken after evaluating the rate limit.
+		drop       drop the packet.
+		accept     transmit the packet.
+		reject     discard the packet and return ICMP error message.
+		condition		pass to the traffic conditioner.
+		skip		inactive rule, must perform default action.
+		prioritize     prioritize the packet."
+        SYNTAX INTEGER {
+			drop(1),
+			accept(2),
+			reject(3),
+			condition(4),
+			skip(5),
+			prioritize(6)
+			}
+
+
+rsAccessLists OBJECT-GROUP
+        OBJECTS {
+		rsAccessListIfIndex,
+		rsAccessListIndex,
+		rsAccessListDirection,
+		rsAccessListName,
+		rsAccessListRowStatus 
+        }
+        STATUS current  
+        DESCRIPTION     
+           "A collection of objects providing the instrumentation of
+            rsAccessLists"
+        ::= { ntcRS 1 }    
+
+rsAccessListTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF RsAccessListEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of access list configuration entries.
+         An access list will contain several rules for rate limits
+         which are applied to one or more MIB-II interface-direction
+	 tuples. Each MIB-II interface may not utilize more than two
+	 access lists; one for the in direction and one for the out 
+	 direction."
+    ::= { rsAccessLists 1 }
+
+rsAccessListEntry OBJECT-TYPE
+    SYNTAX RsAccessListEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+	"A series of objects used to describe each access list."
+    INDEX { rsAccessListIfIndex, rsAccessListIndex, rsAccessListDirection }
+    ::= { rsAccessListTable 1 }
+
+RsAccessListEntry ::= SEQUENCE {
+	rsAccessListIfIndex Integer32,
+	rsAccessListIndex Integer32,
+	rsAccessListDirection PacketSource,
+	rsAccessListName DisplayString,
+	rsAccessListRowStatus RowStatus
+    }
+
+rsAccessListIfIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"The ifIndex of the MIB-II interface which this access list
+	 entry is responsible for. "
+    ::= { rsAccessListEntry 1 }
+
+rsAccessListIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"A unique index value for this access list."
+    ::= { rsAccessListEntry 2 }
+
+rsAccessListDirection OBJECT-TYPE
+    SYNTAX PacketSource
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The data source for this access list."
+    ::= { rsAccessListEntry 3 }
+
+rsAccessListName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+	"This string provides a unique descriptor for this access list.
+	 If an attempt is made to set this string to the name of
+	 another access list on the agent, it should return noSuchName."
+    ::= { rsAccessListEntry 4 }
+
+rsAccessListRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+	"The current status of this access list. Setting this object to
+	 'destroy' has the effect of deleting this access list. 
+	 createAndGo(4) appends to the list and activates it. "
+    ::= { rsAccessListEntry 5 }
+
+rsRules OBJECT-GROUP
+        OBJECTS {
+	    rsRuleIfIndex,
+	    rsRuleIndex,
+	    rsRuleDirection,
+	    rsRuleTOS,
+	    rsRuleAction,
+	    rsRuleSrcAddress,
+	    rsRuleSrcAddrMask,
+	    rsRuleDestAddress,
+	    rsRuleDestAddrMask,
+	    rsRuleIpProtocol,
+	    rsRuleSrcStartingPort,
+	    rsRuleSrcEndingPort,
+	    rsRuleDestStartingPort,
+	    rsRuleDestEndingPort,
+	    rsRuleAggregationClassIndex,
+	    rsRuleEstablished,
+	    rsRuleRowStatus
+        }
+        STATUS current  
+        DESCRIPTION     
+           "A collection of objects providing the instrumentation of
+            rsRules"
+        ::= { ntcRS 2 }    
+
+rsRuleTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF RsRuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of rate limit configuration entries.
+         Rate Limit is a method of traffic control.  It allows a set
+         of rate limits to be configured and applied to packets flowing
+         into/out of an interface to regulate network traffic."
+    ::= { rsRules 1 }
+
+rsRuleEntry OBJECT-TYPE
+    SYNTAX RsRuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A collection of rate-limit configuration objects on this 
+         interface.  Entries in the rsRuleTable is created
+         and deleted via the rate-limit command line interface."
+    INDEX { rsRuleIfIndex, rsRuleIndex, rsRuleDirection }
+    ::= { rsRuleTable 1 }
+
+RsRuleEntry ::= SEQUENCE {
+    rsRuleIfIndex Integer32,
+    rsRuleIndex Integer32,
+    rsRuleDirection PacketSource,
+    rsRuleTOS Integer32,
+    rsRuleAction RateLimitAction,
+    rsRuleSrcAddress IpAddress,
+    rsRuleSrcAddrMask IpAddress,
+    rsRuleDestAddress IpAddress,
+    rsRuleDestAddrMask IpAddress,
+    rsRuleIpProtocol Integer32,
+    rsRuleSrcStartingPort Integer32,
+    rsRuleSrcEndingPort Integer32,
+    rsRuleDestStartingPort Integer32,
+    rsRuleDestEndingPort Integer32,
+    rsRuleAggregationClassIndex Integer32,
+    rsRuleEstablished INTEGER,
+    rsRuleRowStatus  RowStatus
+    }
+
+rsRuleIfIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"The ifIndex of the MIB-II interface which this access list
+	 entry is responsible for. "
+    ::= { rsRuleEntry 1 }
+
+rsRuleIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "An arbitrary index for rate limit objects.
+	 It will increase as the list for each rsRuleIfIndex
+	 is traversed.In other words,the value of rsRuleIndex 
+	 increments for the same value of rsRuleIfIndex, but starts 
+	 over at 1 once the value of rsRuleIfIndex changes."
+    ::= { rsRuleEntry 2 }
+
+rsRuleDirection OBJECT-TYPE
+    SYNTAX PacketSource
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The data source for the Rate Limit object."
+    ::= { rsRuleEntry 3 }
+
+rsRuleTOS OBJECT-TYPE
+    SYNTAX Integer32(1..255)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"The TOS field of the type of packet which this rule governs."
+    ::= { rsRuleEntry 4 }
+
+rsRuleAction OBJECT-TYPE
+    SYNTAX RateLimitAction
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The forwarding Action associated with this rule."
+    ::= { rsRuleEntry 5 }
+
+rsRuleSrcAddress OBJECT-TYPE
+    SYNTAX  IpAddress
+    MAX-ACCESS  read-create
+    STATUS  current
+    DESCRIPTION
+        "The source IP address for this rule."
+    ::= { rsRuleEntry 6 }
+
+rsRuleSrcAddrMask OBJECT-TYPE
+    SYNTAX  IpAddress
+    MAX-ACCESS  read-create
+    STATUS  current  
+    DESCRIPTION
+        "The mask of source address for this rule."
+    ::= { rsRuleEntry 7 }
+
+rsRuleDestAddress OBJECT-TYPE
+    SYNTAX  IpAddress
+    MAX-ACCESS  read-create
+    STATUS  current
+    DESCRIPTION
+        "The destination IP address for this rule."
+    ::= { rsRuleEntry 8 }
+
+rsRuleDestAddrMask OBJECT-TYPE
+    SYNTAX  IpAddress
+    MAX-ACCESS  read-create
+    STATUS  current  
+    DESCRIPTION
+        "The mask of destination address for this rule."
+    ::= { rsRuleEntry 9 }
+
+rsRuleIpProtocol OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  read-create
+    STATUS  current
+    DESCRIPTION
+        "The number of IP protocol that rule applies on."
+    ::= { rsRuleEntry 10 }
+
+rsRuleSrcStartingPort OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  read-create
+    STATUS  current
+    DESCRIPTION
+        "The start of the source range of port number(s) of the IP
+	 protocol for this rule."
+    ::= { rsRuleEntry 11 }
+
+rsRuleSrcEndingPort OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The end of the source range of port number(s) of the IP
+	 protocol for this rule."
+    ::= { rsRuleEntry 12 }
+
+rsRuleDestStartingPort OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  read-create
+    STATUS  current
+    DESCRIPTION
+        "The start of the destination range of port number(s) of the IP
+	 protocol for this rule."
+    ::= { rsRuleEntry 13 }
+
+rsRuleDestEndingPort OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The end of the destination range of port number(s) of the IP
+	 protocol for this rule."
+    ::= { rsRuleEntry 14 }
+
+rsRuleAggregationClassIndex OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The index(rsAggregationClassIndex) to the aggregation
+	 class(queue) if RateLimitAction is enqueue(3)."
+    ::= { rsRuleEntry 15 }
+
+rsRuleEstablished OBJECT-TYPE
+    SYNTAX INTEGER {
+		   established(1),
+		   notEstablished(2)
+		   }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"An integer value indicating whether or not this rule is	
+	 effective on previously-established TCP connections.
+	 'established' will indicate that upon activation of
+	 this rule, only previously-established TCP connections
+	 will match this rule. 'notEstablished' will indicate
+	 that any TCP connection can match this rule. "
+    ::= { rsRuleEntry 16 }
+
+rsRuleRowStatus         OBJECT-TYPE
+    SYNTAX  RowStatus 
+    MAX-ACCESS  read-create
+    STATUS  current
+    DESCRIPTION
+        "The current status of this rule. The rules defined in this 
+	 table is treated as a linked list. By definition 
+	 rsRuleRowStatus will ensure that there are no orphan rules 
+	 i.e the linked list is not broken. Setting a rule to 'destroy'
+	 has the effect of deleting this rule. createAndGo(4) appends to 
+	 the list thus ensuring that there are no orphans. "
+    ::= { rsRuleEntry 17 }
+
+rsAggregationClasses OBJECT-GROUP
+        OBJECTS {
+	    rsAggregationClassIfIndex,
+	    rsAggregationClassIndex,
+	    rsAggregationClassDirection,
+	    rsAggregationClassName,
+	    rsAggregationClassMeanRate,
+--            rsAggregationClassBurstRate,
+	    rsAggregationClassBurstSize,
+	    rsAggregationClassRowStatus
+        }
+        STATUS current  
+        DESCRIPTION     
+           "A collection of objects providing the instrumentation of
+            rsAggregationClasses"
+        ::= { ntcRS 3 }    
+
+rsAggregationClassTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF RsAggregationClassEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of aggregation class entries."
+    ::= { rsAggregationClasses 1 }
+
+rsAggregationClassEntry OBJECT-TYPE
+    SYNTAX RsAggregationClassEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A collection of aggregation class objects on this 
+        interface-direction tuple. "
+    INDEX { rsAggregationClassIfIndex, rsAggregationClassIndex, rsAggregationClassDirection }
+-- Augments rsRuleEntry
+    ::= { rsAggregationClassTable 1 }
+
+RsAggregationClassEntry ::= SEQUENCE {
+    rsAggregationClassIfIndex Integer32,
+    rsAggregationClassIndex Integer32,
+    rsAggregationClassDirection PacketSource,
+    rsAggregationClassName DisplayString,
+    rsAggregationClassMeanRate Integer32,
+--    rsAggregationClassBurstRate Integer32,
+    rsAggregationClassBurstSize Integer32,
+    rsAggregationClassRowStatus RowStatus
+    }
+
+rsAggregationClassIfIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"The value of ifIndex which corresponds to the first
+	 interface for which this aggregation class handles
+	 tokens. "
+    ::= { rsAggregationClassEntry 1 }
+
+rsAggregationClassIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"The unique row index of this aggregation class(queue)."
+    ::= { rsAggregationClassEntry 2 }
+
+rsAggregationClassDirection OBJECT-TYPE
+    SYNTAX PacketSource
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The data source for this aggregation class."
+    ::= { rsAggregationClassEntry 3 }
+
+rsAggregationClassName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "A string which uniquely represents this aggregation class."
+    ::= { rsAggregationClassEntry 4 }
+
+rsAggregationClassMeanRate OBJECT-TYPE
+    SYNTAX Integer32(10..1000000)
+--  Units
+--    kilobits/second
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The peak bandwidth when rsAggregationClassBurstRate and
+	 rsAggregationClassBurstDuration are not set.
+
+	 When mean rate and burst duration are set, the mean rate
+	 specifies the long-term rate which the packet stream will
+	 be shaped to, but the packet stream can burst above that
+	 rate for as long as the burst duration specifies with no
+	 penalty.
+
+	 The value noSuchName
+	 should be returned if an attempt is made to set the value
+	 to a rate is higher than the rate available to this
+	 aggregation class."
+
+    ::= { rsAggregationClassEntry 5 }
+
+--rsAggregationClassBurstRate OBJECT-TYPE 
+--    SYNTAX Integer32(10..1000000)
+--  Units
+--    Kb/s
+--    MAX-ACCESS read-create
+--    STATUS obsolete
+--    DESCRIPTION
+--       "The maximum burst peak rate in kilobits per second before
+--       being shaped.
+--      
+--        This object is obsolete. It is no longer supported."
+--    ::= { rsAggregationClassEntry 6 }
+
+rsAggregationClassBurstSize OBJECT-TYPE
+    SYNTAX Integer32(1500..150000)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+	"The Burst size associated with this aggregation class."
+    ::= { rsAggregationClassEntry 7 }
+
+rsAggregationClassRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+	"The current status of this aggregation class. The behavior
+	 of this aggregation class upon changing of this object
+	 should be analogous to the behavior of a rule when
+	 its rsRuleRowStatus is modified."
+    ::= { rsAggregationClassEntry 8 }
+
+rsAccessListStats OBJECT-GROUP
+        OBJECTS {
+	    rsAccessListStatIfIndex,
+	    rsAccessListStatIndex,
+	    rsAccessListStatDirection,
+	    rsAccessListStatPktsPassed,
+	    rsAccessListStatBytesPassed
+        }
+        STATUS current  
+        DESCRIPTION     
+           "A collection of objects providing the instrumentation of
+            rsAccessListStats"
+        ::= { ntcRS 4 }    
+
+rsAccessListStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF RsAccessListStatEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of access list status entries."
+    ::= { rsAccessListStats 1 }
+
+rsAccessListStatEntry OBJECT-TYPE
+    SYNTAX RsAccessListStatEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A series of status objects used to describe each access list. "
+    INDEX { rsAccessListStatIfIndex, rsAccessListStatIndex, rsAccessListStatDirection }
+-- Augments rsRuleEntry
+    ::= { rsAccessListStatTable 1 }
+
+RsAccessListStatEntry ::= SEQUENCE {
+    rsAccessListStatIfIndex Integer32,
+    rsAccessListStatIndex Integer32,
+    rsAccessListStatDirection PacketSource,
+    rsAccessListStatPktsPassed Counter32,
+    rsAccessListStatBytesPassed Counter32
+    }
+
+rsAccessListStatIfIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The ifIndex of the MIB-II interface which this access list
+         stat entry is responsible for. "
+    ::= { rsAccessListStatEntry 1 }
+
+rsAccessListStatIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "A unique index value for this access list."
+    ::= { rsAccessListStatEntry 2 }
+
+rsAccessListStatDirection OBJECT-TYPE
+    SYNTAX PacketSource
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The data source for this access list."
+    ::= { rsAccessListStatEntry 3 }
+
+rsAccessListStatPktsPassed OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    packets
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Gives the count of number of packets successfully exiting
+         this access list."
+    ::= { rsAccessListStatEntry 4 }
+
+rsAccessListStatBytesPassed OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    bytes
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Gives the count of number of bytes successfully exiting
+         this access list."
+    ::= { rsAccessListStatEntry 5 }
+
+rsRuleStats OBJECT-GROUP
+        OBJECTS {
+	    rsRuleStatIfIndex,
+	    rsRuleStatIndex,
+	    rsRuleStatDirection,
+	    rsRuleStatDropPkts,
+	    rsRuleStatDropOctets,
+	    rsRuleStatPktsPassed,
+	    rsRuleStatBytesPassed
+        }
+        STATUS current  
+        DESCRIPTION     
+           "A collection of objects providing the instrumentation of
+            rsRuleStats"
+        ::= { ntcRS 6 }    
+
+rsRuleStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF RsRuleStatEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of rate limit status entries."
+    ::= { rsRuleStats 1 }
+
+rsRuleStatEntry OBJECT-TYPE
+    SYNTAX RsRuleStatEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A collection of rate-limit status objects on this 
+        interface.  "
+    INDEX { rsRuleStatIfIndex, rsRuleStatIndex, rsRuleStatDirection }
+-- Augments rsRuleEntry
+    ::= { rsRuleStatTable 1 }
+
+RsRuleStatEntry ::= SEQUENCE {
+    rsRuleStatIfIndex Integer32,
+    rsRuleStatIndex Integer32,
+    rsRuleStatDirection PacketSource,
+    rsRuleStatDropPkts Counter32,
+    rsRuleStatDropOctets Counter32,
+    rsRuleStatPktsPassed Counter32,
+    rsRuleStatBytesPassed Counter32
+    }
+
+rsRuleStatIfIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"The value of ifIndex which corresponds to the
+	 interface for which this rule is applied to. "
+    ::= { rsRuleStatEntry 1 }
+
+rsRuleStatIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"The rsRuleIndex value of the rule this entry describes. "
+    ::= { rsRuleStatEntry 2 }
+
+rsRuleStatDirection OBJECT-TYPE
+    SYNTAX PacketSource
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The data source for this rule."
+    ::= { rsRuleStatEntry 3 }
+
+rsRuleStatDropPkts OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    packets
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of packets which exceeded this rate limit."
+    ::= { rsRuleStatEntry 4 }
+
+rsRuleStatDropOctets OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    bytes
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of bytes which exceeded this rate limit."
+    ::= { rsRuleStatEntry 5 }
+
+rsRuleStatPktsPassed OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    packets
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Gives the count of number of packets successfully exiting 
+         this rule."
+    ::= { rsRuleStatEntry 6 }
+
+rsRuleStatBytesPassed OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    bytes
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Gives the count of number of bytes successfully exiting 
+         this rule."
+    ::= { rsRuleStatEntry 7 }
+
+rsAggregationClassStats OBJECT-GROUP
+        OBJECTS {
+	    rsAggregationClassStatIfIndex,
+	    rsAggregationClassStatIndex,
+	    rsAggregationClassStatDirection,
+	    rsAggregationClassStatShapedPkts,
+	    rsAggregationClassStatShapedOctets,
+	    rsAggregationClassStatEnqueuedPkts,
+	    rsAggregationClassStatEnqueuedOctets,
+	    rsAggregationClassStatDroppedPkts,
+	    rsAggregationClassStatDroppedOctets,
+	    rsAggregationClassStatInputPktsPassed,
+	    rsAggregationClassStatOutputPktsPassed,
+	    rsAggregationClassStatInputBytesPassed,
+	    rsAggregationClassStatOutputBytesPassed
+        }
+        STATUS current  
+        DESCRIPTION     
+           "A collection of objects providing the instrumentation of
+            rsAggregationClassStats"
+        ::= { ntcRS 5 }    
+
+rsAggregationClassStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF RsAggregationClassStatEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of aggregation class status entries."
+    ::= { rsAggregationClassStats 1 }
+
+rsAggregationClassStatEntry OBJECT-TYPE
+    SYNTAX RsAggregationClassStatEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A collection of aggregation class status objects on this 
+         interface.  Entries are created and deleted via
+         the rate-limit command line interface."
+    INDEX { rsAggregationClassStatIfIndex, rsAggregationClassStatIndex, rsAggregationClassStatDirection }
+-- Augments rsRuleEntry
+    ::= { rsAggregationClassStatTable 1 }
+
+RsAggregationClassStatEntry ::= SEQUENCE {
+    rsAggregationClassStatIfIndex Integer32,
+    rsAggregationClassStatIndex Integer32,
+    rsAggregationClassStatDirection PacketSource,
+    rsAggregationClassStatShapedPkts Counter32,
+    rsAggregationClassStatShapedOctets Counter32,
+    rsAggregationClassStatEnqueuedPkts Counter32,
+    rsAggregationClassStatEnqueuedOctets Counter32,
+    rsAggregationClassStatDroppedPkts Counter32,
+    rsAggregationClassStatDroppedOctets Counter32,
+    rsAggregationClassStatInputPktsPassed Counter32,
+    rsAggregationClassStatOutputPktsPassed Counter32,
+    rsAggregationClassStatInputBytesPassed Counter32,
+    rsAggregationClassStatOutputBytesPassed Counter32
+    }
+
+rsAggregationClassStatIfIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"The value of ifIndex which corresponds to the
+	 interface for which this aggregation class handles
+	 tokens for."
+    ::= { rsAggregationClassStatEntry 1 }
+
+rsAggregationClassStatIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+	"The value of rsAggregationClassIndex for the aggregation
+	 class which this entry describes. "
+    ::= { rsAggregationClassStatEntry 2 }
+
+rsAggregationClassStatDirection OBJECT-TYPE
+    SYNTAX PacketSource
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The data source for this aggregation class."
+    ::= { rsAggregationClassStatEntry 3 }
+
+rsAggregationClassStatShapedPkts OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    packets
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of packets shaped by this rate limit."
+    ::= { rsAggregationClassStatEntry 4 }
+
+rsAggregationClassStatShapedOctets OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    bytes
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of bytes shaped by this interface."
+    ::= { rsAggregationClassStatEntry 5 }
+
+rsAggregationClassStatEnqueuedPkts OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    packets
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of packets enqueued by this rate limit."
+    ::= { rsAggregationClassStatEntry 6 }
+
+rsAggregationClassStatEnqueuedOctets OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    bytes
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of enqueued bytes by this rate limit."
+    ::= { rsAggregationClassStatEntry 7 }
+
+rsAggregationClassStatDroppedPkts OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    packets
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of packets which exceeded this rate limit."
+    ::= { rsAggregationClassStatEntry 8 }
+
+rsAggregationClassStatDroppedOctets OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    bytes
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of bytes which exceeded this rate limit."
+    ::= { rsAggregationClassStatEntry 9 }
+
+rsAggregationClassStatInputPktsPassed OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    packets
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of packets successfully exiting this 
+         aggregation class."
+    ::= { rsAggregationClassStatEntry 10 }
+
+rsAggregationClassStatOutputPktsPassed OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    packets
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of packets successfully exiting this 
+         aggregation class."
+    ::= { rsAggregationClassStatEntry 11 }
+
+rsAggregationClassStatInputBytesPassed OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    bytes
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of bytes successfully exiting this 
+         aggregation class."
+    ::= { rsAggregationClassStatEntry 12 }
+
+rsAggregationClassStatOutputBytesPassed OBJECT-TYPE
+    SYNTAX Counter32
+--  Units
+--    bytes
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The counter of bytes successfully exiting this 
+         aggregation class."
+    ::= { rsAggregationClassStatEntry 13 }
+
+END
+

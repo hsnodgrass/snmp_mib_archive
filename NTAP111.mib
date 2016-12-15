@@ -1,0 +1,7195 @@
+
+	-- ============================ --
+	-- Network Appliance Custom MIB --
+	-- ============================ --
+
+	-- Version 1.1.1, June 1998 (See NOTE below)
+
+	-- Copyright (c) 1995-1998 Network Appliance, Inc.
+	-- All rights reserved.
+
+	-- This Network Appliance SNMP Management Information Base
+	-- (Specification) embodies Network Appliance's confidential
+	-- and proprietary intellectual property.  Network Appliance
+	-- retains all title and ownership in the Specification,
+	-- including any revisions.
+
+	-- This Specification is supplied "AS IS," and Network Appliance
+	-- makes no warranty, either express or implied, as to the use,
+	-- operation, condition, or performance of the Specification.
+
+	-- Agent support for this MIB is available with software release
+	-- 5.1 and later of Network Appliance filer software.
+
+				-- [ $RCSfile: netapp.mib,v $		]
+				-- [ $Date: 1998/02/14 02:08:48 $	]
+				-- [ $Revision: 3.27 $			]
+
+	-- NOTE:   Please maintain the format of the line above
+		-- containing the MIB's version number as:
+		--
+		-- Version <version #>, <Date> (See NOTE below)
+		--
+		-- This line is parsed during the release process
+		-- to extract the version of the MIB.
+
+
+	NETWORK-APPLIANCE-MIB DEFINITIONS ::= BEGIN
+
+	IMPORTS
+		enterprises, Counter, IpAddress, TimeTicks
+			FROM RFC1155-SMI
+		OBJECT-TYPE
+			FROM RFC-1212;
+
+	--  This MIB module uses the extended OBJECT-TYPE macro as
+	--  defined in RFC-1212
+
+
+	--  MIB-II (same prefix as MIB-I)
+
+
+	-- textual conventions
+
+	DisplayString ::=
+		OCTET STRING
+	-- This data type is used to model textual information taken
+	-- from the NVT ASCII character set.  By convention, objects
+	-- with this syntax are declared as having
+	--
+	--      SIZE (0..255)
+
+
+
+	-- the Network Appliance MIB
+
+	netapp OBJECT IDENTIFIER ::= { enterprises 789 }
+
+
+
+	-- the current netapp mib
+
+	netapp1	OBJECT IDENTIFIER ::= { netapp 1 }
+
+
+
+	-- top-level netapp groups
+
+	product	OBJECT IDENTIFIER ::= { netapp1 1 }
+
+	sysStat	OBJECT IDENTIFIER ::= { netapp1 2 }
+
+	nfs	OBJECT IDENTIFIER ::= { netapp1 3 }
+
+	quota	OBJECT IDENTIFIER ::= { netapp1 4 }
+
+	filesys	OBJECT IDENTIFIER ::= { netapp1 5 }
+
+	raid	OBJECT IDENTIFIER ::= { netapp1 6 }
+
+
+
+	-- -- -- -- -- -- -- --
+	-- the product group --
+	-- -- -- -- -- -- -- --
+
+	productType	OBJECT-TYPE
+	SYNTAX		INTEGER {
+			    eisa-based(1),
+			    pci-based(2)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The product type representing the target platform."
+	::= { product 1 }
+
+	productVersion	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"Version String for the Software Running on
+			 this platform."
+	::= { product 2 }
+
+	productId	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The serial id of this system."
+	::= { product 3 }
+
+
+
+	-- -- -- -- -- -- -- --
+	-- the sysStat group --
+	-- -- -- -- -- -- -- --
+
+	cpu	OBJECT IDENTIFIER ::=	{ sysStat 1 }
+
+	misc	OBJECT IDENTIFIER ::=	{ sysStat 2 }
+
+	cf	OBJECT IDENTIFIER ::=	{ sysStat 3 }
+
+
+	-- the cpu group for sysStat
+
+	cpuUpTime		OBJECT-TYPE
+	SYNTAX			TimeTicks
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+			"The time (in hundredths of a second) that the
+			 CPU has been up since the last boot."
+	::= { cpu 1 }
+
+	cpuBusyTime		OBJECT-TYPE
+	SYNTAX			TimeTicks
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+			"The time (in hundredths of a second) that the
+			 CPU has been doing useful work since the last
+			 boot."
+	::= { cpu 2 }
+
+	cpuBusyTimePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER (0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+			"The percent of time that the CPU has been doing
+			 useful work since the last boot."
+	::= { cpu 3 }
+
+	cpuIdleTime		OBJECT-TYPE
+	SYNTAX			TimeTicks
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+			"The time (in hundredths of a second) that the
+			 CPU has been idle since the last boot."
+	::= { cpu 4 }
+
+	cpuIdleTimePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER (0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+			"The percent of time that the CPU has been idle
+			 since the last boot."
+	::= { cpu 5 }
+
+
+
+	-- the misc group for sysStat
+
+	miscNfsOps		OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+			"The total number of Server side NFS calls since
+			 the last boot"
+	::= { misc 1 }
+
+	miscNetRcvdKB		OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+			"The total number of KBytes received on all the
+			 network interfaces, since the last boot."
+	::= { misc 2 }
+
+	miscNetSentKB		OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+			"The total number of KBytes transmitted on all the
+			 network interfaces, since the last boot."
+	::= { misc 3 }
+
+	-- the Clustered Failover group
+
+	cfSettings		OBJECT-TYPE
+	SYNTAX			INTEGER {
+					notConfigured(1),
+					enabled(2),
+					disabled(3),
+					takeoverByPartnerDisabled(4),
+					thisNodeDead(5)
+				}
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+
+				"Clustered Failover configuration settings.
+				 The value notConfigured(1) indicates that the
+				 cluster is not licensed. The thisNodeDead(5)
+				 setting indicates that this node has been 
+				 taken over."
+	::= { cf 1 }
+
+	cfState			OBJECT-TYPE
+	SYNTAX			INTEGER {
+					dead(1),
+					canTakeover(2),
+					cannotTakeover(3),
+					takeover(4)
+				}
+	ACCESS			read-only
+	STATUS			optional
+	DESCRIPTION
+				"Clustered Failover state."
+	::= { cf 2 }
+
+	cfCannotTakeoverCause	OBJECT-TYPE
+	SYNTAX			INTEGER {
+					ok(1),
+					unknownReason(2),
+					disabledByOperator(3),
+					interconnectOffline(4),
+					disabledByPartner(5),
+					takeoverFailed(6)
+				}
+	ACCESS			read-only
+	STATUS			optional
+	DESCRIPTION
+				"The reason this node cannot takeover its
+				 partner"
+	::= { cf 3 }
+
+	cfPartnerStatus		OBJECT-TYPE
+	SYNTAX			INTEGER {
+					maybeDown(1),
+					ok(2),
+					dead(3)
+				}
+	ACCESS			read-only
+	STATUS			optional
+	DESCRIPTION
+				"This is the status last returned by the
+				 Clustered Failover partner."
+	::= { cf 4 }
+
+	cfPartnerLastStatusUpdate	OBJECT-TYPE
+	SYNTAX				TimeTicks
+	ACCESS				read-only
+	STATUS				optional
+	DESCRIPTION
+				"If non-zero, the absolute time of the last
+				 update from the Clustered Failover partner."
+	::= { cf 5 }
+
+	cfPartnerName		OBJECT-TYPE
+	SYNTAX			DisplayString
+	ACCESS			read-only
+	STATUS			optional
+	DESCRIPTION
+				"Hostname for Clustered Failover partner."
+	::= { cf 6 }
+
+	cfPartnerSysid		OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			optional
+	DESCRIPTION
+				"System ID for Clustered Failover partner."
+	::= { cf 7 }
+	
+	cfInterconnectStatus	OBJECT-TYPE
+	SYNTAX			INTEGER {
+					notPresent(1),
+					down(2),
+					partialFailure(3),
+					up(4)
+				}
+	ACCESS			read-only
+	STATUS			optional
+	DESCRIPTION
+				"The current status of the interconnect.
+				 The partialFailure(3) status indicates that
+				 one of the links in the interconnect hardware
+				 is down." 
+	::= { cf 8 }
+
+
+	-- -- -- -- -- -- --
+	-- the NFS group  --
+	-- -- -- -- -- -- --
+
+	curNfs		OBJECT IDENTIFIER ::= { nfs 1 }
+
+	totNfs		OBJECT IDENTIFIER ::= { nfs 2 }
+
+
+
+	-- the curNfs group
+
+		-- this group contains NFS statistics since the last
+		-- time the statistics were cleared
+
+	rpcServ		OBJECT IDENTIFIER ::= { curNfs 1 }
+
+	nfsServ		OBJECT IDENTIFIER ::= { curNfs 2 }
+
+	nfsPerClient	OBJECT IDENTIFIER ::= { curNfs 3 }
+
+
+
+	-- the rpcServ group
+
+ 	rpcCalls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total number of RPC calls received, since
+			 the last time the statistics were cleared."
+	::= { rpcServ 1 }
+
+	rpcBadCalls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total number of calls rejected by the RPC
+			 layer, since the last time the statistics were
+			 cleared."
+	::= { rpcServ 2 }
+
+	rpcNullRecvs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of times an RPC call was not available
+			 when it was thought to be received, since the
+			 last time the statistics were cleared."
+	::= { rpcServ 3 }
+
+	rpcBadLens	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of RPC calls received with a length
+			 shorter than a minimum-sized RPC call, since the
+			 last time the statistics were cleared."
+	::= { rpcServ 4 }
+
+	rpcServXDRCalls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of RPC calls received whose header
+			 could not be XDR decoded, since the last time
+			 the statistics were cleared."
+	::= { rpcServ 5 }
+
+
+
+	-- the nfsServ group
+
+	nfsCalls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total number of NFS calls received, since
+			 the last time the statistics were cleared."
+	::= { nfsServ 1 }
+
+	nfsServBadCalls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total number of received NFS calls rejected,
+			 since the last time the statistics were cleared."
+	::= { nfsServ 2 }
+
+	nfsV2		OBJECT IDENTIFIER ::= { nfsServ 3 }
+
+	nfsV3		OBJECT IDENTIFIER ::= { nfsServ 4 }
+
+	replyCache	OBJECT IDENTIFIER ::= { nfsServ 5 }
+
+
+
+	-- the nfsV2 group
+
+		-- this group contains statistics for NFS
+		-- Version 2 calls processed since the last
+		-- time the statistics were cleared
+
+	v2Calls		OBJECT IDENTIFIER ::= { nfsV2 1 }
+
+	v2Percent	OBJECT IDENTIFIER ::= { nfsV2 2 }
+
+	v2CachedCalls	OBJECT IDENTIFIER ::= { nfsV2 3 }
+
+	v2CachedPerCent	OBJECT IDENTIFIER ::= { nfsV2 4 }
+
+
+
+	-- the v2Calls group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 2 procedure
+		-- since the last time the statistics were cleared
+
+	v2cNulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_NULL (Do Nothing) procedure,
+			 since the last time the statistics were cleared."
+	::= { v2Calls 1 }
+
+	v2cGetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_GETATTR (Get File Attributes)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 2 }
+
+	v2cSetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SETATTR (Set File Attributes)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 3 }
+
+	v2cRoots	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_ROOT (Get Filesystem Root)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 4 }
+
+	v2cLookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LOOKUP (Look Up File Name)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 5 }
+
+	v2cReadlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READLINK (Read From Symbolic
+			 Link) procedure, since the last time the
+			 statistics were cleared."
+	::= { v2Calls 6 }
+
+	v2cReads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READ (Read From File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 7 }
+
+	v2cWrcaches	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITECACHE (Write to Cache)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 8 }
+
+	v2cWrites	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITE (Write to File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 9 }
+
+	v2cCreates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_CREATE (Create File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 10 }
+
+	v2cRemoves	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_REMOVE (Remove File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 11 }
+
+	v2cRenames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RENAME (Rename File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 12 }
+
+	v2cLinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LINK (Create Link to File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 13 }
+
+	v2cSymlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SYMLINK (Create Symbolic Link)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 14 }
+
+	v2cMkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_MKDIR (Create Directory)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 15 }
+
+	v2cRmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RMDIR (Remove Directory)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 16 }
+
+	v2cReaddirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READDIR (Read From Directory)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v2Calls 17 }
+
+	v2cStatfss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_STATFS (Get Filesystem
+			 Attributes) procedure, since the last time
+			 the statistics were cleared."
+	::= { v2Calls 18 }
+
+
+
+	-- the v2Percent group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 2 procedure,
+		-- as a percentage of total NFS calls received,
+		-- since the last time the statistics were cleared
+
+	v2pNulls	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_NULL (Do Nothing) procedure
+			 as a percentage of total NFS calls received,
+			 since the last time the statistics were cleared."
+	::= { v2Percent 1 }
+
+	v2pGetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_GETATTR (Get File Attributes)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 2 }
+
+	v2pSetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SETATTR (Set File Attributes)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 3 }
+
+	v2pRoots	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_ROOT (Get Filesystem Root)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 4 }
+
+	v2pLookups	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LOOKUP (Look Up File Name)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 5 }
+
+	v2pReadlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READLINK (Read From Symbolic
+			 Link) procedure as a percentage of total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v2Percent 6 }
+
+	v2pReads	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READ (Read From File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 7 }
+
+	v2pWrcaches	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITECACHE (Write to Cache)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 8 }
+
+	v2pWrites	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITE (Write to File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 9 }
+
+	v2pCreates	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_CREATE (Create File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 10 }
+
+	v2pRemoves	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_REMOVE (Remove File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 11 }
+
+	v2pRenames	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RENAME (Rename File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 12 }
+
+	v2pLinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LINK (Create Link to File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 13 }
+
+	v2pSymlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SYMLINK (Create Symbolic Link)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 14 }
+
+	v2pMkdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_MKDIR (Create Directory)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 15 }
+
+	v2pRmdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RMDIR (Remove Directory)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 16 }
+
+	v2pReaddirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READDIR (Read From Directory)
+			 procedure as a percentage of total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v2Percent 17 }
+
+	v2pStatfss	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_STATFS (Get Filesystem
+			 Attributes) procedure as a percentage of
+			 total NFS calls received, since the last
+			 time the statistics were cleared."
+	::= { v2Percent 18 }
+
+
+
+	-- the v2CachedCalls group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 2 procedure,
+		-- that did not result in the filesystem blocking to
+		-- read from disk, since the last time the statistics
+		-- were cleared
+
+	v2ccNulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_NULL (Do Nothing) procedure,
+			 that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v2CachedCalls 1 }
+
+	v2ccGetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_GETATTR (Get File Attributes)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 2 }
+
+	v2ccSetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SETATTR (Set File Attributes)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 3 }
+
+	v2ccRoots	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_ROOT (Get Filesystem Root)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 4 }
+
+	v2ccLookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LOOKUP (Look Up File Name)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 5 }
+
+	v2ccReadlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READLINK (Read From Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 6 }
+
+	v2ccReads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READ (Read From File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 7 }
+
+	v2ccWrcaches	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITECACHE (Write to Cache)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 8 }
+
+	v2ccWrites	OBJECT-TYPE
+	SYNTAX		Counter ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITE (Write to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 9 }
+
+	v2ccCreates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_CREATE (Create File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 10 }
+
+	v2ccRemoves	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_REMOVE (Remove File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 11 }
+
+	v2ccRenames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RENAME (Rename File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 12 }
+
+	v2ccLinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LINK (Create Link to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 13 }
+
+	v2ccSymlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SYMLINK (Create Symbolic Link)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 14 }
+
+	v2ccMkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_MKDIR (Create Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 15 }
+
+	v2ccRmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RMDIR (Remove Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 16 }
+
+	v2ccReaddirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READDIR (Read From Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v2CachedCalls 17 }
+
+	v2ccStatfss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_STATFS (Get Filesystem
+			 Attributes) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 since the last time the statistics were cleared."
+	::= { v2CachedCalls 18 }
+
+
+
+	-- the v2CachedPerCent group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 2 procedure,
+		-- that did not result in the filesystem blocking to
+		-- read from disk, as a percentage of the total
+		-- number of calls received for that procedure,
+		-- since the last time the statistics were cleared
+
+	v2cpNulls	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_NULL (Do Nothing) procedure,
+			 that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last time the
+			 statistics were cleared."
+	::= { v2CachedPerCent 1 }
+
+	v2cpGetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_GETATTR (Get File Attributes)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 2 }
+
+	v2cpSetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SETATTR (Set File Attributes)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 3 }
+
+	v2cpRoots	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_ROOT (Get Filesystem Root)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 4 }
+
+	v2cpLookups	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LOOKUP (Look Up File Name)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 5 }
+
+	v2cpReadlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READLINK (Read From Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 6 }
+
+	v2cpReads	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READ (Read From File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 7 }
+
+	v2cpWrcaches	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITECACHE (Write to Cache)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 8 }
+
+	v2cpWrites	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITE (Write to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 9 }
+
+	v2cpCreates	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_CREATE (Create File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 10 }
+
+	v2cpRemoves	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_REMOVE (Remove File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 11 }
+
+	v2cpRenames	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RENAME (Rename File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 12 }
+
+	v2cpLinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LINK (Create Link to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 13 }
+
+	v2cpSymlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SYMLINK (Create Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 14 }
+
+	v2cpMkdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_MKDIR (Create Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 15 }
+
+	v2cpRmdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RMDIR (Remove Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 16 }
+
+	v2cpReaddirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READDIR (Read From Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v2CachedPerCent 17 }
+
+	v2cpStatfss	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_STATFS (Get Filesystem
+			 Attributes) procedure, that did not result
+			 in the filesystem blocking to read from
+			 disk, as a percentage of the total number
+			 of calls received for this procedure, since
+			 the last time the statistics were cleared."
+	::= { v2CachedPerCent 18 }
+
+
+
+	-- the nfsV3 group
+
+		-- this group contains statistics for NFS
+		-- Version 3 calls processed since the last
+		-- time the statistics were cleared
+
+	v3Calls		OBJECT IDENTIFIER ::= { nfsV3 1 }
+
+	v3Percent	OBJECT IDENTIFIER ::= { nfsV3 2 }
+
+	v3CachedCalls	OBJECT IDENTIFIER ::= { nfsV3 3 }
+
+	v3CachedPerCent	OBJECT IDENTIFIER ::= { nfsV3 4 }
+
+
+
+	-- the v3Calls group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 3 procedure
+		-- since the last time the statistics were cleared
+
+	v3cNulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_NULL (Do Nothing) procedure,
+			 since the last time the statistics were cleared."
+	::= { v3Calls 1 }
+
+	v3cGetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_GETATTR (Get File Attributes)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 2 }
+
+	v3cSetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SETATTR (Set File Attributes)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 3 }
+
+	v3cLookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LOOKUP (Lookup Filename)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 4 }
+
+	v3cAccesss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_ACCESS (Check Access Permission)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 5 }
+
+	v3cReadlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READLINK (Read from Symbolic
+			 Link) procedure, since the last time the
+			 statistics were cleared."
+	::= { v3Calls 6 }
+
+	v3cReads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READ (Read From File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 7 }
+
+	v3cWrites	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_WRITE (Write to File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 8 }
+
+	v3cCreates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_CREATE (Create a File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 9 }
+
+	v3cMkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKDIR (Create a Directory)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 10 }
+
+	v3cSymlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SYMLINK (Create a Symbolic
+			 Link) procedure, since the last time the
+			 statistics were cleared."
+	::= { v3Calls 11 }
+
+	v3cMknods	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKNOD (Create a Special
+			 Device) procedure, since the last time the
+			 statistics were cleared."
+	::= { v3Calls 12 }
+
+	v3cRemoves	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_REMOVE (Remove a File)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 13 }
+
+	v3cRmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RMDIR (Remove a Directory)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 14 }
+
+	v3cRenames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RENAME (Rename a File or
+			 Directory) procedure, since the last time
+			 the statistics were cleared."
+	::= { v3Calls 15 }
+
+	v3cLinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LINK (Create Link to an
+			 Object) procedure, since the last time the
+			 statistics were cleared."
+	::= { v3Calls 16 }
+
+	v3cReaddirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIR (Read From Directory)
+			 procedure, since the last time the statistics
+			 were cleared."
+	::= { v3Calls 17 }
+
+	v3cReaddirPluss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIRPLUS (Extended Read
+			 from Directory) procedure, since the last
+			 time the statistics were cleared."
+	::= { v3Calls 18 }
+
+	v3cFsstats	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSSTAT (Get Dynamic File
+			 System Information) procedure, since the
+			 last time the statistics were cleared."
+	::= { v3Calls 19 }
+
+	v3cFsinfos	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSINFO (Get Static File System
+			 Information) procedure, since the last time
+			 the statistics were cleared."
+	::= { v3Calls 20 }
+
+	v3cPathconfs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_PATHCONF (Retrieve POSIX
+			 Information) procedure, since the last time
+			 the statistics were cleared."
+	::= { v3Calls 21 }
+
+	v3cCommits	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_COMMIT (Commit Cached Data on
+			 a Server to Stable Storage) procedure, since
+			 the last time the statistics were cleared."
+	::= { v3Calls 22 }
+
+
+
+	-- the v3Percent group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 3 procedure,
+		-- as a percentage of total NFS calls received,
+		-- since the last time the statistics were cleared
+
+	v3pNulls	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_NULL (Do Nothing) procedure,
+			 as a percentage of the total NFS calls
+			 received, since the last time the statistics
+			 were cleared."
+	::= { v3Percent 1 }
+
+	v3pGetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_GETATTR (Get File Attributes)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 2 }
+
+	v3pSetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SETATTR (Set File Attributes)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 3 }
+
+	v3pLookups	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LOOKUP (Lookup Filename)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 4 }
+
+	v3pAccesss	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_ACCESS (Check Access
+			 Permission) procedure, as a percentage of
+			 the total NFS calls received, since the
+			 last time the statistics were cleared."
+	::= { v3Percent 5 }
+
+	v3pReadlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READLINK (Read from Symbolic
+			 Link) procedure, as a percentage of the total
+			 NFS calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 6 }
+
+	v3pReads	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READ (Read From File)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 7 }
+
+	v3pWrites	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_WRITE (Write to File)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 8 }
+
+	v3pCreates	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_CREATE (Create a File)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 9 }
+
+	v3pMkdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKDIR (Create a Directory)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 10 }
+
+	v3pSymlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SYMLINK (Create a Symbolic
+			 Link) procedure, as a percentage of the total
+			 NFS calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 11 }
+
+	v3pMknods	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKNOD (Create a Special
+			 Device) procedure, as a percentage of the
+			 total NFS calls received, since the last
+			 time the statistics were cleared."
+	::= { v3Percent 12 }
+
+	v3pRemoves	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_REMOVE (Remove a File)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 13 }
+
+	v3pRmdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RMDIR (Remove a Directory)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 14 }
+
+	v3pRenames	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RENAME (Rename a File or
+			 Directory) procedure, as a percentage of
+			 the total NFS calls received, since the
+			 last time the statistics were cleared."
+	::= { v3Percent 15 }
+
+	v3pLinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LINK (Create Link to an
+			 Object) procedure, as a percentage of
+			 the total NFS calls received, since the
+			 last time the statistics were cleared."
+	::= { v3Percent 16 }
+
+	v3pReaddirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIR (Read From Directory)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last time the
+			 statistics were cleared."
+	::= { v3Percent 17 }
+
+	v3pReaddirPluss	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIRPLUS (Extended Read
+			 from Directory) procedure, as a percentage
+			 of the total NFS calls received, since the
+			 last time the statistics were cleared."
+	::= { v3Percent 18 }
+
+	v3pFsstats	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSSTAT (Get Dynamic File
+			 System Information) procedure, as a percentage
+			 of the total NFS calls received, since the
+			 last time the statistics were cleared."
+	::= { v3Percent 19 }
+
+	v3pFsinfos	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSINFO (Get Static File System
+			 Information) procedure, as a percentage of the
+			 total NFS calls received, since the last time
+			 the statistics were cleared."
+	::= { v3Percent 20 }
+
+	v3pPathconfs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_PATHCONF (Retrieve POSIX
+			 Information) procedure, as a percentage of the
+			 total NFS calls received, since the last time
+			 the statistics were cleared."
+	::= { v3Percent 21 }
+
+	v3pCommits	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_COMMIT (Commit Cached Data on
+			 a Server to Stable Storage) procedure, as a
+			 percentage of the total NFS calls received,
+			 since the last time the statistics were cleared."
+	::= { v3Percent 22 }
+
+
+
+	-- the v3CachedCalls group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 3 procedure,
+		-- that did not result in the filesystem blocking to
+		-- read from disk, since the last time the statistics
+		-- were cleared
+
+	v3ccNulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_NULL (Do Nothing) procedure,
+			 that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v3CachedCalls 1 }
+
+	v3ccGetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_GETATTR (Get File Attributes)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v3CachedCalls 2 }
+
+	v3ccSetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SETATTR (Set File Attributes)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v3CachedCalls 3 }
+
+	v3ccLookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LOOKUP (Lookup Filename)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v3CachedCalls 4 }
+
+	v3ccAccesss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_ACCESS (Check Access Permission)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v3CachedCalls 5 }
+
+	v3ccReadlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READLINK (Read from Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v3CachedCalls 6 }
+
+	v3ccReads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READ (Read From File)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v3CachedCalls 7 }
+
+	v3ccWrites	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_WRITE (Write to File)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v3CachedCalls 8 }
+
+	v3ccCreates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_CREATE (Create a File)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v3CachedCalls 9 }
+
+	v3ccMkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKDIR (Create a Directory)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last
+			 time the statistics were cleared."
+	::= { v3CachedCalls 10 }
+
+	v3ccSymlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SYMLINK (Create a Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v3CachedCalls 11 }
+
+	v3ccMknods	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKNOD (Create a Special
+			 Device) procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v3CachedCalls 12 }
+
+	v3ccRemoves	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_REMOVE (Remove a File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v3CachedCalls 13 }
+
+	v3ccRmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RMDIR (Remove a Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v3CachedCalls 14 }
+
+	v3ccRenames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RENAME (Rename a File or
+			 Directory) procedure, that did not result in
+			 the filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v3CachedCalls 15 }
+
+	v3ccLinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LINK (Create Link to an
+			 Object) procedure, that did not result in
+			 the filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v3CachedCalls 16 }
+
+	v3ccReaddirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIR (Read From
+			 Directory) procedure, that did not result in
+			 the filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v3CachedCalls 17 }
+
+	v3ccReaddirPluss OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIRPLUS (Extended Read
+			 from Directory) procedure, that did not result in
+			 the filesystem blocking to read from disk, since
+			 the last time the statistics were cleared."
+	::= { v3CachedCalls 18 }
+
+	v3ccFsstats	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSSTAT (Get Dynamic File
+			 System Information) procedure, that did not
+			 result in the filesystem blocking to read
+			 from disk, since the last time the statistics
+			 were cleared."
+	::= { v3CachedCalls 19 }
+
+	v3ccFsinfos	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSINFO (Get Static File
+			 System Information) procedure, that did not
+			 result in the filesystem blocking to read
+			 from disk, since the last time the statistics
+			 were cleared."
+	::= { v3CachedCalls 20 }
+
+	v3ccPathconfs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_PATHCONF (Retrieve POSIX
+			 Information) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 since the last time the statistics were cleared."
+	::= { v3CachedCalls 21 }
+
+	v3ccCommits	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_COMMIT (Commit Cached Data on
+			 a Server to Stable Storage) procedure, that did
+			 not result in the filesystem blocking to read
+			 from disk, since the last time the statistics
+			 were cleared."
+	::= { v3CachedCalls 22 }
+
+
+
+	-- the v3CachedPerCent group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 3 procedure,
+		-- that did not result in the filesystem blocking to
+		-- read from disk, as a percentage of the total
+		-- number of calls received for that procedure,
+		-- since the last time the statistics were cleared
+
+	v3cpNulls	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_NULL (Do Nothing) procedure,
+			 that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last time the
+			 statistics were cleared."
+	::= { v3CachedPerCent 1 }
+
+	v3cpGetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_GETATTR (Get File Attributes)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last time the
+			 statistics were cleared."
+	::= { v3CachedPerCent 2 }
+
+	v3cpSetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SETATTR (Set File Attributes)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last time the
+			 statistics were cleared."
+	::= { v3CachedPerCent 3 }
+
+	v3cpLookups	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LOOKUP (Lookup Filename)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last time the
+			 statistics were cleared."
+	::= { v3CachedPerCent 4 }
+
+	v3cpAccesss	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_ACCESS (Check Access Permission)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last time the
+			 statistics were cleared."
+	::= { v3CachedPerCent 5 }
+
+	v3cpReadlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READLINK (Read from Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 6 }
+
+	v3cpReads	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READ (Read From File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 7 }
+
+	v3cpWrites	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_WRITE (Write to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 8 }
+
+	v3cpCreates	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_CREATE (Create a File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 9 }
+
+	v3cpMkdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKDIR (Create a Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 10 }
+
+	v3cpSymlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SYMLINK (Create a Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 11 }
+
+	v3cpMknods	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKNOD (Create a Special
+			 Device) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 12 }
+
+	v3cpRemoves	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_REMOVE (Remove a File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 13 }
+
+	v3cpRmdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RMDIR (Remove a Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 14 }
+
+	v3cpRenames	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RENAME (Rename a File or
+			 Directory) procedure, that did not result in
+			 the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 15 }
+
+	v3cpLinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LINK (Create Link to an
+			 Object) procedure, that did not result in
+			 the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 16 }
+
+	v3cpReaddirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIR (Read From Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 17 }
+
+	v3cpReaddirPluss OBJECT-TYPE
+	SYNTAX		 INTEGER (0..100)
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIRPLUS (Extended Read
+			 from Directory) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 18 }
+
+	v3cpFsstats	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSSTAT (Get Dynamic File
+			 System Information) procedure, that did not
+			 result in the filesystem blocking to read from
+			 disk, as a percentage of the total number of
+			 calls received for this procedure, since the
+			 last time the statistics were cleared."
+	::= { v3CachedPerCent 19 }
+
+	v3cpFsinfos	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSINFO (Get Static File System
+			 Information) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 20 }
+
+	v3cpPathconfs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_PATHCONF (Retrieve POSIX
+			 Information) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last
+			 time the statistics were cleared."
+	::= { v3CachedPerCent 21 }
+
+	v3cpCommits	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_COMMIT (Commit Cached Data on
+			 a Server to Stable Storage) procedure, that
+			 did not result in the filesystem blocking to
+			 read from disk, as a percentage of the total
+			 number of calls received for this procedure,
+			 since the last time the statistics were cleared."
+	::= { v3CachedPerCent 22 }
+
+
+
+	-- the replyCache group
+
+		-- this group contains statistics related to the 
+		-- Reply Cache processing, since the last time the
+		-- statistics were cleared
+
+	rcInProgressHits OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS requests that were dropped,
+			 for calls already in progress, since the last
+			 time the statistics were cleared."
+	::= { replyCache 1 }
+
+	rcDelayHits	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS requests that were dropped,
+			 for replies already generated within a short
+			 interval, since the last time the statistics
+			 were cleared."
+	::= { replyCache 2 }
+
+	rcMisses	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS requests received for which
+			 there were no corresponding entries already in
+			 the Reply Cache, since the last time the
+			 statistics were cleared."
+	::= { replyCache 3 }
+
+	rcNonIdemDoneHits OBJECT-TYPE
+	SYNTAX		  Counter
+	ACCESS		  read-only
+	STATUS		  mandatory
+	DESCRIPTION
+			"The number of NFS requests received that
+			 resulted in replies being replayed from
+			 the Reply Cache, since the last time the
+			 statistics were cleared."
+	::= { replyCache 4 }
+
+	rcNonIdemNotDoneHits OBJECT-TYPE
+	SYNTAX		     Counter
+	ACCESS		     read-only
+	STATUS		     mandatory
+	DESCRIPTION
+			"The number of NFS requests received for calls
+			 that resulted in this request being processed
+			 as a new request even when a corresponding
+			 entry existed in the Reply Cache, since the
+			 last time the statistics were cleared."
+	::= { replyCache 5 }
+
+
+
+	-- the per-client nfs statistics table
+ 
+	pclTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF PclEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Provide a report of per-client NFS statistics
+			 since the last time the statistics were cleared."
+	::= { nfsPerClient 1 }
+ 
+	pclEntry	OBJECT-TYPE
+	SYNTAX		PclEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Provide a report of NFS statistics for the
+			 referenced NFS client since the last time the
+			 statistics were cleared."
+	INDEX	{ pclIpAddr }
+	::= { pclTable 1 }
+
+	PclEntry ::=
+	    SEQUENCE {
+		pclIpAddr
+		    IpAddress,
+		pclRpcCalls
+		    Counter,
+		pclRpcBadCalls
+		    Counter,
+		pclRpcNullRecvs
+		    Counter,
+		pclRpcBadLens
+		    Counter,
+		pclRpcServXDRCalls
+		    Counter,
+		pclNfsCalls
+		    Counter,
+		pclNfsServBadCalls
+		    Counter,
+		pclNfsV2Nulls
+		    Counter,
+		pclNfsV2Getattrs
+		    Counter,
+		pclNfsV2Setattrs
+		    Counter,
+		pclNfsV2Roots
+		    Counter,
+		pclNfsV2Lookups
+		    Counter,
+		pclNfsV2Readlinks
+		    Counter,
+		pclNfsV2Reads
+		    Counter,
+		pclNfsV2Wrcaches
+		    Counter,
+		pclNfsV2Writes
+		    Counter,
+		pclNfsV2Creates
+		    Counter,
+		pclNfsV2Removes
+		    Counter,
+		pclNfsV2Renames
+		    Counter,
+		pclNfsV2Links
+		    Counter,
+		pclNfsV2Symlinks
+		    Counter,
+		pclNfsV2Mkdirs
+		    Counter,
+		pclNfsV2Rmdirs
+		    Counter,
+		pclNfsV2Readdirs
+		    Counter,
+		pclNfsV2Statfss
+		    Counter,
+		pclNfsV3Nulls
+		    Counter,
+		pclNfsV3Getattrs
+		    Counter,
+		pclNfsV3Setattrs
+		    Counter,
+		pclNfsV3Lookups
+		    Counter,
+		pclNfsV3Accesss
+		    Counter,
+		pclNfsV3Readlinks
+		    Counter,
+		pclNfsV3Reads
+		    Counter,
+		pclNfsV3Writes
+		    Counter,
+		pclNfsV3Creates
+		    Counter,
+		pclNfsV3Mkdirs
+		    Counter,
+		pclNfsV3Symlinks
+		    Counter,
+		pclNfsV3Mknods
+		    Counter,
+		pclNfsV3Removes
+		    Counter,
+		pclNfsV3Rmdirs
+		    Counter,
+		pclNfsV3Renames
+		    Counter,
+		pclNfsV3Links
+		    Counter,
+		pclNfsV3Readdirs
+		    Counter,
+		pclNfsV3ReaddirPluss
+		    Counter,
+		pclNfsV3Fsstats
+		    Counter,
+		pclNfsV3Fsinfos
+		    Counter,
+		pclNfsV3Pathconfs
+		    Counter,
+		pclNfsV3Commits
+		    Counter,
+		pclPerCent
+		    INTEGER (0..100),
+		pclNfsV2NullPerCent
+		    INTEGER (0..100),
+		pclNfsV2GetattrPerCent
+		    INTEGER (0..100),
+		pclNfsV2SetattrPerCent
+		    INTEGER (0..100),
+		pclNfsV2RootPerCent
+		    INTEGER (0..100),
+		pclNfsV2LookupPerCent
+		    INTEGER (0..100),
+		pclNfsV2ReadlinkPerCent
+		    INTEGER (0..100),
+		pclNfsV2ReadPerCent
+		    INTEGER (0..100),
+		pclNfsV2WrcachePerCent
+		    INTEGER (0..100),
+		pclNfsV2WritePerCent
+		    INTEGER (0..100),
+		pclNfsV2CreatePerCent
+		    INTEGER (0..100),
+		pclNfsV2RemovePerCent
+		    INTEGER (0..100),
+		pclNfsV2RenamePerCent
+		    INTEGER (0..100),
+		pclNfsV2LinkPerCent
+		    INTEGER (0..100),
+		pclNfsV2SymlinkPerCent
+		    INTEGER (0..100),
+		pclNfsV2MkdirPerCent
+		    INTEGER (0..100),
+		pclNfsV2RmdirPerCent
+		    INTEGER (0..100),
+		pclNfsV2ReaddirPerCent
+		    INTEGER (0..100),
+		pclNfsV2StatfsPerCent
+		    INTEGER (0..100),
+		pclNfsV3NullPerCent
+		    INTEGER (0..100),
+		pclNfsV3GetattrPerCent
+		    INTEGER (0..100),
+		pclNfsV3SetattrPerCent
+		    INTEGER (0..100),
+		pclNfsV3LookupPerCent
+		    INTEGER (0..100),
+		pclNfsV3AccessPerCent
+		    INTEGER (0..100),
+		pclNfsV3ReadlinkPerCent
+		    INTEGER (0..100),
+		pclNfsV3ReadPerCent
+		    INTEGER (0..100),
+		pclNfsV3WritePerCent
+		    INTEGER (0..100),
+		pclNfsV3CreatePerCent
+		    INTEGER (0..100),
+		pclNfsV3MkdirPerCent
+		    INTEGER (0..100),
+		pclNfsV3SymlinkPerCent
+		    INTEGER (0..100),
+		pclNfsV3MknodPerCent
+		    INTEGER (0..100),
+		pclNfsV3RemovePerCent
+		    INTEGER (0..100),
+		pclNfsV3RmdirPerCent
+		    INTEGER (0..100),
+		pclNfsV3RenamePerCent
+		    INTEGER (0..100),
+		pclNfsV3LinkPerCent
+		    INTEGER (0..100),
+		pclNfsV3ReaddirPerCent
+		    INTEGER (0..100),
+		pclNfsV3ReaddirPlusPerCent
+		    INTEGER (0..100),
+		pclNfsV3FsstatPerCent
+		    INTEGER (0..100),
+		pclNfsV3FsinfoPerCent
+		    INTEGER (0..100),
+		pclNfsV3PathconfPerCent
+		    INTEGER (0..100),
+		pclNfsV3CommitPerCent
+		    INTEGER (0..100)
+	    }
+
+	pclIpAddr	OBJECT-TYPE
+	SYNTAX		IpAddress
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The IP address of the referenced client."
+	::= { pclEntry 1 }
+
+	pclRpcCalls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total number of RPC calls received from
+			 the referenced client, since the last time the
+			 statistics were cleared."
+	::= { pclEntry 2 }
+
+	pclRpcBadCalls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total number of calls received from the
+			 referenced client that were rejected by the
+			 RPC layer, since the last time the
+			 statistics were cleared."
+	::= { pclEntry 3 }
+
+	pclRpcNullRecvs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of times an RPC call was not available
+			 when it was thought to be received from
+			 referenced client, since the last time the
+			 statistics were cleared."
+	::= { pclEntry 4 }
+
+	pclRpcBadLens	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of RPC calls received from the
+			 referenced client with a length shorter
+			 than a minimum-sized RPC call, since the
+			 last time the statistics were cleared."
+	::= { pclEntry 5 }
+
+	pclRpcServXDRCalls OBJECT-TYPE
+	SYNTAX		   Counter
+	ACCESS		   read-only
+	STATUS		   mandatory
+	DESCRIPTION
+			   "The number of RPC calls received from the
+			    referenced client whose header could not
+			    be XDR decoded, since the last time the
+			    statistics were cleared."
+	::= { pclEntry 6 }
+
+	pclNfsCalls	   OBJECT-TYPE
+	SYNTAX		   Counter
+	ACCESS		   read-only
+	STATUS		   mandatory
+	DESCRIPTION
+			   "The total number of NFS calls received from
+			    the referenced client, since the last time
+			    the statistics were cleared."
+	::= { pclEntry 7 }
+
+	pclNfsServBadCalls OBJECT-TYPE
+	SYNTAX		   Counter
+	ACCESS		   read-only
+	STATUS		   mandatory
+	DESCRIPTION
+			   "The total number of NFS calls received from
+			    the referenced client that were rejected, since
+			    the last time the statistics were cleared."
+	::= { pclEntry 8 }
+
+	pclNfsV2Nulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_NULL
+			 (Do Nothing) procedure, since the last time the
+			 statistics were cleared."
+	::= { pclEntry 9 }
+
+	pclNfsV2Getattrs OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_GETATTR
+			 (Get File Attributes) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 10 }
+
+	pclNfsV2Setattrs OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_SETATTR
+			 (Set File Attributes) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 11 }
+
+	pclNfsV2Roots	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_ROOT
+			 (Get Filesystem Root) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 12 }
+
+	pclNfsV2Lookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_LOOKUP
+			 (Look Up File Name) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 13 }
+
+	pclNfsV2Readlinks OBJECT-TYPE
+	SYNTAX		  Counter
+	ACCESS		  read-only
+	STATUS		  mandatory
+	DESCRIPTION
+			 "The number of NFS Version 2 calls received
+			  from the referenced client for the NFSPROC_READLINK
+			  (Read From Symbolic Link) procedure, since the last
+			  time the statistics were cleared."
+	::= { pclEntry 14 }
+
+	pclNfsV2Reads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_READ
+			 (Read From File) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 15 }
+
+	pclNfsV2Wrcaches OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_WRITECACHE
+			 (Write to Cache) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 16 }
+
+	pclNfsV2Writes	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_WRITE
+			 (Write to File) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 17 }
+
+	pclNfsV2Creates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_CREATE
+			 (Create File) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 18 }
+
+	pclNfsV2Removes	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_REMOVE
+			 (Remove File) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 19 }
+
+	pclNfsV2Renames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_RENAME
+			 (Rename File) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 20 }
+
+	pclNfsV2Links	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_LINK
+			 (Create Link to File) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 21 }
+
+	pclNfsV2Symlinks OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_SYMLINK
+			 (Create Symbolic Link) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 22 }
+
+	pclNfsV2Mkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_MKDIR
+			 (Create Directory) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 23 }
+
+	pclNfsV2Rmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_RMDIR
+			 (Remove Directory) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 24 }
+
+	pclNfsV2Readdirs OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_READDIR
+			 (Read From Directory) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 25 }
+
+	pclNfsV2Statfss OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 from the referenced client for the NFSPROC_STATFS
+			 (Get Filesystem Attributes) procedure, since the
+			 last time the statistics were cleared."
+	::= { pclEntry 26 }
+
+	pclNfsV3Nulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_NULL
+			 (Do Nothing) procedure, since the last time the
+			 statistics were cleared."
+	::= { pclEntry 27 }
+
+	pclNfsV3Getattrs OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_GETATTR
+			 (Get File Attributes) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 28 }
+
+	pclNfsV3Setattrs OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_SETATTR
+			 (Set File Attributes) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 29 }
+
+	pclNfsV3Lookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_LOOKUP
+			 (Lookup Filename) procedure, since the last time
+			 the statistics were cleared."
+	::= { pclEntry 30 }
+
+	pclNfsV3Accesss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_ACCESS
+			 (Check Access Permission) procedure, since the
+			 last time the statistics were cleared."
+	::= { pclEntry 31 }
+
+	pclNfsV3Readlinks OBJECT-TYPE
+	SYNTAX		  Counter
+	ACCESS		  read-only
+	STATUS		  mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_READLINK
+			 (Read from Symbolic Link) procedure, since the
+			 last time the statistics were cleared."
+	::= { pclEntry 32 }
+
+	pclNfsV3Reads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_READ
+			 (Read From File) procedure, since the last time
+			 the statistics were cleared."
+	::= { pclEntry 33 }
+
+	pclNfsV3Writes	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_WRITE
+			 (Write to File) procedure, since the last time
+			 the statistics were cleared."
+	::= { pclEntry 34 }
+
+	pclNfsV3Creates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_CREATE
+			 (Create a File) procedure, since the last time
+			 the statistics were cleared."
+	::= { pclEntry 35 }
+
+	pclNfsV3Mkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_MKDIR
+			 (Create a Directory) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 36 }
+
+	pclNfsV3Symlinks OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_SYMLINK
+			 (Create a Symbolic Link) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 37 }
+
+	pclNfsV3Mknods	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_MKNOD
+			 (Create a Special Device) procedure, since the
+			 last time the statistics were cleared."
+	::= { pclEntry 38 }
+
+	pclNfsV3Removes	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_REMOVE
+			 (Remove a File) procedure, since the last time
+			 the statistics were cleared."
+	::= { pclEntry 39 }
+
+	pclNfsV3Rmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_RMDIR
+			 (Remove a Directory) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 40 }
+
+	pclNfsV3Renames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_RENAME
+			 (Rename a File or Directory) procedure, since the
+			 last time the statistics were cleared."
+	::= { pclEntry 41 }
+
+	pclNfsV3Links	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_LINK
+			 (Create Link to an Object) procedure, since the
+			 last time the statistics were cleared."
+	::= { pclEntry 42 }
+
+	pclNfsV3Readdirs OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_READDIR
+			 (Read From Directory) procedure, since the last
+			 time the statistics were cleared."
+	::= { pclEntry 43 }
+
+	pclNfsV3ReaddirPluss OBJECT-TYPE
+	SYNTAX		     Counter
+	ACCESS		     read-only
+	STATUS		     mandatory
+	DESCRIPTION
+			     "The number of NFS Version 3 calls received
+			      from the referenced client for the
+			      NFSPROC3_READDIRPLUS (Extended Read from
+			      Directory) procedure, since the last time
+			      the statistics were cleared."
+	::= { pclEntry 44 }
+
+	pclNfsV3Fsstats	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_FSSTAT
+			 (Get Dynamic File System Information) procedure,
+			 since the last time the statistics were cleared."
+	::= { pclEntry 45 }
+
+	pclNfsV3Fsinfos	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_FSINFO
+			 (Get Static File System Information) procedure,
+			 since the last time the statistics were cleared."
+	::= { pclEntry 46 }
+
+	pclNfsV3Pathconfs OBJECT-TYPE
+	SYNTAX		  Counter
+	ACCESS		  read-only
+	STATUS		  mandatory
+	DESCRIPTION
+			  "The number of NFS Version 3 calls received
+			   from the referenced client for the NFSPROC3_PATHCONF
+			   (Retrieve POSIX Information) procedure, since the
+			   last time the statistics were cleared."
+	::= { pclEntry 47 }
+
+	pclNfsV3Commits	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 from the referenced client for the NFSPROC3_COMMIT
+			 (Commit Cached Data on a Server to Stable Storage)
+			 procedure, since the last time the statistics were
+			 cleared."
+	::= { pclEntry 48 }
+
+	pclPerCent		OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of the total NFS calls for the
+				 referenced client as a percentage of the
+				 total NFS calls received from all
+				 clients, since the last time the
+				 statistics were cleared."
+	::= { pclEntry 49 }
+
+	pclNfsV2NullPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_NULL (Do Nothing) procedure,
+				 as a percentage of the total calls
+				 received from this client, since the
+				 last time the statistics were cleared."
+	::= { pclEntry 50 }
+
+	pclNfsV2GetattrPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_GETATTR (Get File Attributes)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 51 }
+
+	pclNfsV2SetattrPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_SETATTR (Set File Attributes)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 52 }
+
+	pclNfsV2RootPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_ROOT (Get Filesystem Root)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 53 }
+
+	pclNfsV2LookupPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_LOOKUP (Look Up File Name)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 54 }
+
+	pclNfsV2ReadlinkPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_READLINK (Read From Symbolic
+				 Link) procedure, as a percentage of the
+				 total calls received from this client,
+				 since the last time the statistics were
+				 cleared."
+	::= { pclEntry 55 }
+
+	pclNfsV2ReadPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_READ (Read From File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 56 }
+
+	pclNfsV2WrcachePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_WRITECACHE (Write to Cache)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 57 }
+
+	pclNfsV2WritePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_WRITE (Write to File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 58 }
+
+	pclNfsV2CreatePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_CREATE (Create File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 59 }
+
+	pclNfsV2RemovePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_REMOVE (Remove File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 60 }
+
+	pclNfsV2RenamePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_RENAME (Rename File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 61 }
+
+	pclNfsV2LinkPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_LINK (Create Link to File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 62 }
+
+	pclNfsV2SymlinkPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_SYMLINK (Create Symbolic Link)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 63 }
+
+	pclNfsV2MkdirPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_MKDIR (Create Directory)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 64 }
+
+	pclNfsV2RmdirPerCent	OBJECT-TYPE
+	SYNTAX		 	INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_RMDIR (Remove Directory)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 65 }
+
+	pclNfsV2ReaddirPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_READDIR (Read From Directory)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 66 }
+
+	pclNfsV2StatfsPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 2 calls
+				 received from the referenced client for
+				 the NFSPROC_STATFS (Get Filesystem
+				 Attributes) procedure, as a percentage
+				 of the total calls received from this
+				 client, since the last time the
+				 statistics were cleared."
+	::= { pclEntry 67 }
+
+	pclNfsV3NullPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_NULL (Do Nothing) 
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 68 }
+
+	pclNfsV3GetattrPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_GETATTR (Get File Attributes)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 69 }
+
+	pclNfsV3SetattrPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_SETATTR (Set File Attributes)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 70 }
+
+	pclNfsV3LookupPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_LOOKUP (Lookup Filename)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 71 }
+
+	pclNfsV3AccessPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_ACCESS (Check Access Permission)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 72 }
+
+	pclNfsV3ReadlinkPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_READLINK (Read from Symbolic
+				 Link) procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 73 }
+
+	pclNfsV3ReadPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_READ (Read From File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 74 }
+
+	pclNfsV3WritePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_WRITE (Write to File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 75 }
+
+	pclNfsV3CreatePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_CREATE (Create a File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 76 }
+
+	pclNfsV3MkdirPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_MKDIR (Create a Directory)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 77 }
+
+	pclNfsV3SymlinkPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_SYMLINK (Create a Symbolic
+				 Link) procedure, as a percentage of the
+				 total calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 78 }
+
+	pclNfsV3MknodPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_MKNOD (Create a Special
+				 Device) procedure, as a percentage of the
+				 total calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 79 }
+
+	pclNfsV3RemovePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_REMOVE (Remove a File)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 80 }
+
+	pclNfsV3RmdirPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_RMDIR (Remove a Directory)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 81 }
+
+	pclNfsV3RenamePerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_RENAME (Rename a File or
+				 Directory) procedure, as a percentage of
+				 the total calls received from this client,
+				 since the last time the statistics were
+				 cleared."
+	::= { pclEntry 82 }
+
+	pclNfsV3LinkPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_LINK (Create Link to an Object) 
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 83 }
+
+	pclNfsV3ReaddirPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_READDIR (Read From Directory)
+				 procedure, as a percentage of the total
+				 calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 84 }
+
+	pclNfsV3ReaddirPlusPerCent	OBJECT-TYPE
+	SYNTAX				INTEGER(0..100)
+	ACCESS				read-only
+	STATUS				mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_READDIRPLUS (Extended Read from
+				 Directory) procedure, as a percentage of the
+				 total calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 85 }
+
+	pclNfsV3FsstatPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_FSSTAT (Get Dynamic File
+				 System Information) procedure, as a
+				 percentage of the total calls received
+				 from this client, since the last time
+				 the statistics were cleared."
+	::= { pclEntry 86 }
+
+	pclNfsV3FsinfoPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_FSINFO (Get Static File System
+				 Information) procedure, as a percentage of the
+				 total calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 87 }
+
+	pclNfsV3PathconfPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_PATHCONF (Retrieve POSIX
+				 Information) procedure, as a percentage of the
+				 total calls received from this client, since
+				 the last time the statistics were cleared."
+	::= { pclEntry 88 }
+
+	pclNfsV3CommitPerCent	OBJECT-TYPE
+	SYNTAX			INTEGER(0..100)
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The number of NFS Version 3 calls
+				 received from the referenced client for
+				 the NFSPROC3_COMMIT (Commit Cached Data on
+				 a Server to Stable Storage) procedure, as
+				 a percentage of the total calls received
+				 from this client, since the last time the
+				 statistics were cleared."
+	::= { pclEntry 89 }
+
+
+
+	-- the totNfs group
+
+		-- this group contains the NFS statistics since the
+		-- last boot
+
+	trpcServ	OBJECT IDENTIFIER ::= { totNfs 1 }
+
+	tnfsServ	OBJECT IDENTIFIER ::= { totNfs 2 }
+
+
+
+	-- the trpcServ group
+
+ 	trpcCalls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total number of RPC calls received,
+			 since the last boot."
+	::= { trpcServ 1 }
+
+	trpcBadCalls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total number of calls rejected by the RPC
+			 layer, since the last boot."
+	::= { trpcServ 2 }
+
+	trpcNullRecvs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of times an RPC call was not
+			 available when it was thought to be received,
+			 since the last boot."
+	::= { trpcServ 3 }
+
+	trpcBadLens	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of RPC calls received with a length
+			 shorter than a minimum-sized RPC call, since
+			 the last boot."
+	::= { trpcServ 4 }
+
+	trpcServXDRCalls OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of RPC calls received whose header
+			 could not be XDR decoded, since the last boot."
+	::= { trpcServ 5 }
+
+
+
+	-- the tnfsServ group
+
+	tnfsCalls	 OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			 "The total number of NFS calls received, since
+			  since the last boot."
+	::= { tnfsServ 1 }
+
+	tnfsServBadCalls OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			 "The total number of received NFS calls rejected,
+			  since the last boot."
+	::= { tnfsServ 2 }
+
+	tnfsV2		OBJECT IDENTIFIER ::= { tnfsServ 3 }
+
+	tnfsV3		OBJECT IDENTIFIER ::= { tnfsServ 4 }
+
+	treplyCache	OBJECT IDENTIFIER ::= { tnfsServ 5 }
+
+
+
+	-- the tnfsV2 group
+
+		-- this group contains statistics for NFS
+		-- Version 2 calls processed since the last boot
+
+	tv2Calls		OBJECT IDENTIFIER ::= { tnfsV2 1 }
+
+	tv2Percent		OBJECT IDENTIFIER ::= { tnfsV2 2 }
+
+	tv2CachedCalls		OBJECT IDENTIFIER ::= { tnfsV2 3 }
+
+	tv2CachedPerCent	OBJECT IDENTIFIER ::= { tnfsV2 4 }
+
+
+
+	-- the tv2Calls group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 2 procedure
+		-- since the last boot
+
+	tv2cNulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_NULL (Do Nothing) procedure,
+			 since the last boot."
+	::= { tv2Calls 1 }
+
+	tv2cGetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_GETATTR (Get File Attributes)
+			 procedure, since the last boot."
+	::= { tv2Calls 2 }
+
+	tv2cSetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SETATTR (Set File Attributes)
+			 procedure, since the the last boot."
+	::= { tv2Calls 3 }
+
+	tv2cRoots	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_ROOT (Get Filesystem Root)
+			 procedure, since the last boot."
+	::= { tv2Calls 4 }
+
+	tv2cLookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LOOKUP (Look Up File Name)
+			 procedure, since the last boot."
+	::= { tv2Calls 5 }
+
+	tv2cReadlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READLINK (Read From Symbolic
+			 Link) procedure, since the last boot."
+	::= { tv2Calls 6 }
+
+	tv2cReads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READ (Read From File)
+			 procedure, since the last boot."
+	::= { tv2Calls 7 }
+
+	tv2cWrcaches	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITECACHE (Write to Cache)
+			 procedure, since the last boot."
+	::= { tv2Calls 8 }
+
+	tv2cWrites	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITE (Write to File)
+			 procedure, since the last boot."
+	::= { tv2Calls 9 }
+
+	tv2cCreates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_CREATE (Create File)
+			 procedure, since the last boot."
+	::= { tv2Calls 10 }
+
+	tv2cRemoves	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_REMOVE (Remove File)
+			 procedure, since the last boot."
+	::= { tv2Calls 11 }
+
+	tv2cRenames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RENAME (Rename File)
+			 procedure, since the last boot."
+	::= { tv2Calls 12 }
+
+	tv2cLinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LINK (Create Link to File)
+			 procedure, since the last boot."
+	::= { tv2Calls 13 }
+
+	tv2cSymlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SYMLINK (Create Symbolic Link)
+			 procedure, since the last boot."
+	::= { tv2Calls 14 }
+
+	tv2cMkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_MKDIR (Create Directory)
+			 procedure, since the last boot."
+	::= { tv2Calls 15 }
+
+	tv2cRmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RMDIR (Remove Directory)
+			 procedure, since the last boot."
+	::= { tv2Calls 16 }
+
+	tv2cReaddirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READDIR (Read From Directory)
+			 procedure, since the last boot."
+	::= { tv2Calls 17 }
+
+	tv2cStatfss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_STATFS (Get Filesystem
+			 Attributes) procedure, since the last boot."
+	::= { tv2Calls 18 }
+
+
+
+	-- the tv2Percent group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 2 procedure,
+		-- as a percentage of total NFS calls received,
+		-- since the last boot
+
+	tv2pNulls	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_NULL (Do Nothing) procedure
+			 as a percentage of total NFS calls received,
+			 since the last boot."
+	::= { tv2Percent 1 }
+
+	tv2pGetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_GETATTR (Get File Attributes)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 2 }
+
+	tv2pSetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SETATTR (Set File Attributes)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 3 }
+
+	tv2pRoots	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_ROOT (Get Filesystem Root)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 4 }
+
+	tv2pLookups	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LOOKUP (Look Up File Name)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 5 }
+
+	tv2pReadlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READLINK (Read From Symbolic
+			 Link) procedure as a percentage of total NFS
+			 calls received, since the last boot."
+	::= { tv2Percent 6 }
+
+	tv2pReads	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READ (Read From File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 7 }
+
+	tv2pWrcaches	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITECACHE (Write to Cache)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 8 }
+
+	tv2pWrites	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITE (Write to File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 9 }
+
+	tv2pCreates	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_CREATE (Create File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 10 }
+
+	tv2pRemoves	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_REMOVE (Remove File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 11 }
+
+	tv2pRenames	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RENAME (Rename File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 12 }
+
+	tv2pLinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LINK (Create Link to File)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 13 }
+
+	tv2pSymlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SYMLINK (Create Symbolic Link)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 14 }
+
+	tv2pMkdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_MKDIR (Create Directory)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 15 }
+
+	tv2pRmdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RMDIR (Remove Directory)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 16 }
+
+	tv2pReaddirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READDIR (Read From Directory)
+			 procedure as a percentage of total NFS calls
+			 received, since the last boot."
+	::= { tv2Percent 17 }
+
+	tv2pStatfss	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_STATFS (Get Filesystem
+			 Attributes) procedure as a percentage of
+			 total NFS calls received, since the last boot."
+	::= { tv2Percent 18 }
+
+
+
+	-- the tv2CachedCalls group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 2 procedure,
+		-- that did not result in the filesystem blocking to
+		-- read from disk, since the last boot
+
+	tv2ccNulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_NULL (Do Nothing) procedure,
+			 that did not result in the filesystem blocking
+			 to read from disk, since the last boot."
+	::= { tv2CachedCalls 1 }
+
+	tv2ccGetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_GETATTR (Get File Attributes)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, 
+			 since the last boot."
+	::= { tv2CachedCalls 2 }
+
+	tv2ccSetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SETATTR (Set File Attributes)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 3 }
+
+	tv2ccRoots	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_ROOT (Get Filesystem Root)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 4 }
+
+	tv2ccLookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LOOKUP (Look Up File Name)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 5 }
+
+	tv2ccReadlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READLINK (Read From Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, 
+			 since the last boot."
+	::= { tv2CachedCalls 6 }
+
+	tv2ccReads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READ (Read From File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 7 }
+
+	tv2ccWrcaches	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITECACHE (Write to Cache)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 8 }
+
+	tv2ccWrites	OBJECT-TYPE
+	SYNTAX		Counter ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITE (Write to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 9 }
+
+	tv2ccCreates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_CREATE (Create File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 10 }
+
+	tv2ccRemoves	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_REMOVE (Remove File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 11 }
+
+	tv2ccRenames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RENAME (Rename File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 12 }
+
+	tv2ccLinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LINK (Create Link to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 13 }
+
+	tv2ccSymlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SYMLINK (Create Symbolic Link)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 14 }
+
+	tv2ccMkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_MKDIR (Create Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 15 }
+
+	tv2ccRmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RMDIR (Remove Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 16 }
+
+	tv2ccReaddirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READDIR (Read From Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 17 }
+
+	tv2ccStatfss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_STATFS (Get Filesystem
+			 Attributes) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv2CachedCalls 18 }
+
+
+
+	-- the tv2CachedPerCent group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 2 procedure,
+		-- that did not result in the filesystem blocking to
+		-- read from disk, as a percentage of the total
+		-- number of calls received for that procedure,
+		-- since the last boot
+
+	tv2cpNulls	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_NULL (Do Nothing) procedure,
+			 that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last boot."
+	::= { tv2CachedPerCent 1 }
+
+	tv2cpGetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_GETATTR (Get File Attributes)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 2 }
+
+	tv2cpSetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SETATTR (Set File Attributes)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 3 }
+
+	tv2cpRoots	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_ROOT (Get Filesystem Root)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 4 }
+
+	tv2cpLookups	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LOOKUP (Look Up File Name)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 5 }
+
+	tv2cpReadlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READLINK (Read From Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 6 }
+
+	tv2cpReads	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READ (Read From File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 7 }
+
+	tv2cpWrcaches	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITECACHE (Write to Cache)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 8 }
+
+	tv2cpWrites	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_WRITE (Write to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 9 }
+
+	tv2cpCreates	OBJECT-TYPE
+	SYNTAX          INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_CREATE (Create File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 10 }
+
+	tv2cpRemoves	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_REMOVE (Remove File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 11 }
+
+	tv2cpRenames	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RENAME (Rename File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 12 }
+
+	tv2cpLinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_LINK (Create Link to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 13 }
+
+	tv2cpSymlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_SYMLINK (Create Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 14 }
+
+	tv2cpMkdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_MKDIR (Create Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 15 }
+
+	tv2cpRmdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_RMDIR (Remove Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 16 }
+
+	tv2cpReaddirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_READDIR (Read From Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv2CachedPerCent 17 }
+
+	tv2cpStatfss	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 2 calls received
+			 for the NFSPROC_STATFS (Get Filesystem
+			 Attributes) procedure, that did not result
+			 in the filesystem blocking to read from
+			 disk, as a percentage of the total number
+			 of calls received for this procedure, 
+			 since the last boot."
+	::= { tv2CachedPerCent 18 }
+
+
+
+	-- the tnfsV3 group
+
+		-- this group contains statistics for NFS
+		-- Version 3 calls processed since the last boot
+
+	tv3Calls		OBJECT IDENTIFIER ::= { tnfsV3 1 }
+
+	tv3Percent		OBJECT IDENTIFIER ::= { tnfsV3 2 }
+
+	tv3CachedCalls		OBJECT IDENTIFIER ::= { tnfsV3 3 }
+
+	tv3CachedPerCent	OBJECT IDENTIFIER ::= { tnfsV3 4 }
+
+
+
+	-- the tv3Calls group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 3 procedure
+		-- since the last boot
+
+	tv3cNulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_NULL (Do Nothing) procedure,
+			 since the last boot."
+	::= { tv3Calls 1 }
+
+	tv3cGetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_GETATTR (Get File Attributes)
+			 procedure, since the last boot."
+	::= { tv3Calls 2 }
+
+	tv3cSetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SETATTR (Set File Attributes)
+			 procedure, since the last boot."
+	::= { tv3Calls 3 }
+
+	tv3cLookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LOOKUP (Lookup Filename)
+			 procedure, since the last boot."
+	::= { tv3Calls 4 }
+
+	tv3cAccesss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_ACCESS (Check Access Permission)
+			 procedure, since the last boot."
+	::= { tv3Calls 5 }
+
+	tv3cReadlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READLINK (Read from Symbolic
+			 Link) procedure, since the last boot."
+	::= { tv3Calls 6 }
+
+	tv3cReads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READ (Read From File)
+			 procedure, since the last boot."
+	::= { tv3Calls 7 }
+
+	tv3cWrites	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_WRITE (Write to File)
+			 procedure, since the last boot."
+	::= { tv3Calls 8 }
+
+	tv3cCreates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_CREATE (Create a File)
+			 procedure, since the last boot."
+	::= { tv3Calls 9 }
+
+	tv3cMkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKDIR (Create a Directory)
+			 procedure, since the last boot."
+	::= { tv3Calls 10 }
+
+	tv3cSymlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SYMLINK (Create a Symbolic
+			 Link) procedure, since the last boot."
+	::= { tv3Calls 11 }
+
+	tv3cMknods	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKNOD (Create a Special
+			 Device) procedure, since the last boot."
+	::= { tv3Calls 12 }
+
+	tv3cRemoves	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_REMOVE (Remove a File)
+			 procedure, since the last boot."
+	::= { tv3Calls 13 }
+
+	tv3cRmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RMDIR (Remove a Directory)
+			 procedure, since the last boot."
+	::= { tv3Calls 14 }
+
+	tv3cRenames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RENAME (Rename a File or
+			 Directory) procedure, since the last boot."
+	::= { tv3Calls 15 }
+
+	tv3cLinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LINK (Create Link to an
+			 Object) procedure, since the last boot."
+	::= { tv3Calls 16 }
+
+	tv3cReaddirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIR (Read From Directory)
+			 procedure, since the last boot."
+	::= { tv3Calls 17 }
+
+	tv3cReaddirPluss OBJECT-TYPE
+	SYNTAX		 Counter
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIRPLUS (Extended Read
+			 from Directory) procedure, since the last boot."
+	::= { tv3Calls 18 }
+
+	tv3cFsstats	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSSTAT (Get Dynamic File
+			 System Information) procedure, since the
+			 last boot."
+	::= { tv3Calls 19 }
+
+	tv3cFsinfos	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSINFO (Get Static File System
+			 Information) procedure, since the last boot."
+	::= { tv3Calls 20 }
+
+	tv3cPathconfs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_PATHCONF (Retrieve POSIX
+			 Information) procedure, since the last boot."
+	::= { tv3Calls 21 }
+
+	tv3cCommits	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_COMMIT (Commit Cached Data on
+			 a Server to Stable Storage) procedure, since
+			 the last boot."
+	::= { tv3Calls 22 }
+
+
+
+	-- the tv3Percent group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 3 procedure,
+		-- as a percentage of total NFS calls received,
+		-- since the last boot
+
+	tv3pNulls	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_NULL (Do Nothing) procedure,
+			 as a percentage of the total NFS calls
+			 received, since the last boot."
+	::= { tv3Percent 1 }
+
+	tv3pGetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_GETATTR (Get File Attributes)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 2 }
+
+	tv3pSetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SETATTR (Set File Attributes)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 3 }
+
+	tv3pLookups	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LOOKUP (Lookup Filename)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 4 }
+
+	tv3pAccesss	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_ACCESS (Check Access
+			 Permission) procedure, as a percentage of
+			 the total NFS calls received, since the last boot."
+	::= { tv3Percent 5 }
+
+	tv3pReadlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READLINK (Read from Symbolic
+			 Link) procedure, as a percentage of the total
+			 NFS calls received, since the last boot."
+	::= { tv3Percent 6 }
+
+	tv3pReads	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READ (Read From File)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 7 }
+
+	tv3pWrites	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_WRITE (Write to File)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 8 }
+
+	tv3pCreates	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_CREATE (Create a File)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 9 }
+
+	tv3pMkdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKDIR (Create a Directory)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 10 }
+
+	tv3pSymlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SYMLINK (Create a Symbolic
+			 Link) procedure, as a percentage of the total
+			 NFS calls received, since the last boot."
+	::= { tv3Percent 11 }
+
+	tv3pMknods	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKNOD (Create a Special
+			 Device) procedure, as a percentage of the
+			 total NFS calls received, since the last boot."
+	::= { tv3Percent 12 }
+
+	tv3pRemoves	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_REMOVE (Remove a File)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 13 }
+
+	tv3pRmdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RMDIR (Remove a Directory)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 14 }
+
+	tv3pRenames	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100) ACCESS          read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RENAME (Rename a File or
+			 Directory) procedure, as a percentage of
+			 the total NFS calls received, since the
+			 last boot."
+	::= { tv3Percent 15 }
+
+	tv3pLinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LINK (Create Link to an
+			 Object) procedure, as a percentage of
+			 the total NFS calls received, since the
+			 last boot."
+	::= { tv3Percent 16 }
+
+	tv3pReaddirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIR (Read From Directory)
+			 procedure, as a percentage of the total NFS
+			 calls received, since the last boot."
+	::= { tv3Percent 17 }
+
+	tv3pReaddirPluss OBJECT-TYPE
+	SYNTAX		 INTEGER (0..100)
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIRPLUS (Extended Read
+			 from Directory) procedure, as a percentage
+			 of the total NFS calls received, since the
+			 last boot."
+	::= { tv3Percent 18 }
+
+	tv3pFsstats	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSSTAT (Get Dynamic File
+			 System Information) procedure, as a percentage
+			 of the total NFS calls received, since the
+			 last boot."
+	::= { tv3Percent 19 }
+
+	tv3pFsinfos	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSINFO (Get Static File System
+			 Information) procedure, as a percentage of the
+			 total NFS calls received, since the last boot."
+	::= { tv3Percent 20 }
+
+	tv3pPathconfs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_PATHCONF (Retrieve POSIX
+			 Information) procedure, as a percentage of the
+			 total NFS calls received, since the last boot."
+	::= { tv3Percent 21 }
+
+	tv3pCommits	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_COMMIT (Commit Cached Data on
+			 a Server to Stable Storage) procedure, as a
+			 percentage of the total NFS calls received,
+			 since the last boot."
+	::= { tv3Percent 22 }
+
+
+
+	-- the tv3CachedCalls group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 3 procedure,
+		-- that did not result in the filesystem blocking to
+		-- read from disk, since the last boot
+
+	tv3ccNulls	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_NULL (Do Nothing) procedure,
+			 that did not result in the filesystem blocking
+			 to read from disk, since the last boot."
+	::= { tv3CachedCalls 1 }
+
+	tv3ccGetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_GETATTR (Get File Attributes)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last boot."
+	::= { tv3CachedCalls 2 }
+
+	tv3ccSetattrs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SETATTR (Set File Attributes)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last boot."
+	::= { tv3CachedCalls 3 }
+
+	tv3ccLookups	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LOOKUP (Lookup Filename)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last boot."
+	::= { tv3CachedCalls 4 }
+
+	tv3ccAccesss	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_ACCESS (Check Access Permission)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last boot."
+	::= { tv3CachedCalls 5 }
+
+	tv3ccReadlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READLINK (Read from Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last boot."
+	::= { tv3CachedCalls 6 }
+
+	tv3ccReads	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READ (Read From File)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last boot."
+	::= { tv3CachedCalls 7 }
+
+	tv3ccWrites	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_WRITE (Write to File)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last boot."
+	::= { tv3CachedCalls 8 }
+
+	tv3ccCreates	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_CREATE (Create a File)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last boot."
+	::= { tv3CachedCalls 9 }
+
+	tv3ccMkdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKDIR (Create a Directory)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, since the last boot."
+	::= { tv3CachedCalls 10 }
+
+	tv3ccSymlinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SYMLINK (Create a Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last boot."
+	::= { tv3CachedCalls 11 }
+
+	tv3ccMknods	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKNOD (Create a Special
+			 Device) procedure, that did not result in the
+			 filesystem blocking to read from disk, since
+			 the last boot."
+	::= { tv3CachedCalls 12 }
+
+	tv3ccRemoves	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_REMOVE (Remove a File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, 
+			 since the last boot."
+	::= { tv3CachedCalls 13 }
+
+	tv3ccRmdirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RMDIR (Remove a Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv3CachedCalls 14 }
+
+	tv3ccRenames	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RENAME (Rename a File or
+			 Directory) procedure, that did not result in
+			 the filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv3CachedCalls 15 }
+
+	tv3ccLinks	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LINK (Create Link to an
+			 Object) procedure, that did not result in
+			 the filesystem blocking to read from disk, 
+			 since the last boot."
+	::= { tv3CachedCalls 16 }
+
+	tv3ccReaddirs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIR (Read From
+			 Directory) procedure, that did not result in
+			 the filesystem blocking to read from disk, 
+			 since the last boot."
+	::= { tv3CachedCalls 17 }
+
+	tv3ccReaddirPluss OBJECT-TYPE
+	SYNTAX		  Counter
+	ACCESS		  read-only
+	STATUS		  mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIRPLUS (Extended Read
+			 from Directory) procedure, that did not result in
+			 the filesystem blocking to read from disk, 
+			 since the last boot."
+	::= { tv3CachedCalls 18 }
+
+	tv3ccFsstats	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSSTAT (Get Dynamic File
+			 System Information) procedure, that did not
+			 result in the filesystem blocking to read
+			 from disk, since the last boot."
+	::= { tv3CachedCalls 19 }
+
+	tv3ccFsinfos	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS          read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSINFO (Get Static File
+			 System Information) procedure, that did not
+			 result in the filesystem blocking to read
+			 from disk, since the last boot."
+	::= { tv3CachedCalls 20 }
+
+	tv3ccPathconfs	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_PATHCONF (Retrieve POSIX
+			 Information) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 since the last boot."
+	::= { tv3CachedCalls 21 }
+
+	tv3ccCommits	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_COMMIT (Commit Cached Data on
+			 a Server to Stable Storage) procedure, that did
+			 not result in the filesystem blocking to read
+			 from disk, since the last boot."
+	::= { tv3CachedCalls 22 }
+
+
+
+	-- the tv3CachedPerCent group
+
+		-- this group contains statistics for the number of
+		-- calls received for each NFS Version 3 procedure,
+		-- that did not result in the filesystem blocking to
+		-- read from disk, as a percentage of the total
+		-- number of calls received for that procedure,
+		-- since the last boot
+
+	tv3cpNulls	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_NULL (Do Nothing) procedure,
+			 that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last boot."
+	::= { tv3CachedPerCent 1 }
+
+	tv3cpGetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_GETATTR (Get File Attributes)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last boot."
+	::= { tv3CachedPerCent 2 }
+
+	tv3cpSetattrs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SETATTR (Set File Attributes)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last boot."
+	::= { tv3CachedPerCent 3 }
+
+	tv3cpLookups	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LOOKUP (Lookup Filename)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last boot."
+	::= { tv3CachedPerCent 4 }
+
+	tv3cpAccesss	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_ACCESS (Check Access Permission)
+			 procedure, that did not result in the filesystem
+			 blocking to read from disk, as a percentage
+			 of the total number of calls received for
+			 this procedure, since the last boot."
+	::= { tv3CachedPerCent 5 }
+
+	tv3cpReadlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READLINK (Read from Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last
+			 last boot."
+	::= { tv3CachedPerCent 6 }
+
+	tv3cpReads	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READ (Read From File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 7 }
+
+	tv3cpWrites	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_WRITE (Write to File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 8 }
+
+	tv3cpCreates	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_CREATE (Create a File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 9 }
+
+	tv3cpMkdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKDIR (Create a Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 10 }
+
+	tv3cpSymlinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_SYMLINK (Create a Symbolic
+			 Link) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 11 }
+
+	tv3cpMknods	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_MKNOD (Create a Special
+			 Device) procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 12 }
+
+	tv3cpRemoves	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_REMOVE (Remove a File)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 13 }
+
+	tv3cpRmdirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RMDIR (Remove a Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 14 }
+
+	tv3cpRenames	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_RENAME (Rename a File or
+			 Directory) procedure, that did not result in
+			 the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 15 }
+
+	tv3cpLinks	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_LINK (Create Link to an
+			 Object) procedure, that did not result in
+			 the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 16 }
+
+	tv3cpReaddirs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIR (Read From Directory)
+			 procedure, that did not result in the
+			 filesystem blocking to read from disk, as a
+			 percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 17 }
+
+	tv3cpReaddirPluss OBJECT-TYPE
+	SYNTAX		  INTEGER (0..100)
+	ACCESS		  read-only
+	STATUS		  mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_READDIRPLUS (Extended Read
+			 from Directory) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 18 }
+
+	tv3cpFsstats	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSSTAT (Get Dynamic File
+			 System Information) procedure, that did not
+			 result in the filesystem blocking to read from
+			 disk, as a percentage of the total number of
+			 calls received for this procedure, since the
+			 last boot."
+	::= { tv3CachedPerCent 19 }
+
+	tv3cpFsinfos	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_FSINFO (Get Static File System
+			 Information) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 20 }
+
+	tv3cpPathconfs	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_PATHCONF (Retrieve POSIX
+			 Information) procedure, that did not result
+			 in the filesystem blocking to read from disk,
+			 as a percentage of the total number of calls
+			 received for this procedure, since the last boot."
+	::= { tv3CachedPerCent 21 }
+
+	tv3cpCommits	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS Version 3 calls received
+			 for the NFSPROC3_COMMIT (Commit Cached Data on
+			 a Server to Stable Storage) procedure, that
+			 did not result in the filesystem blocking to
+			 read from disk, as a percentage of the total
+			 number of calls received for this procedure,
+			 since the last boot."
+	::= { tv3CachedPerCent 22 }
+
+
+
+	-- the treplyCache group
+
+		-- this group contains statistics related to the 
+		-- Reply Cache processing, since the last boot
+
+	trcInProgressHits OBJECT-TYPE
+	SYNTAX		  Counter
+	ACCESS		  read-only
+	STATUS		  mandatory
+	DESCRIPTION
+			"The number of NFS requests that were dropped, for
+			 calls already in progress, since the last boot."
+	::= { treplyCache 1 }
+
+	trcDelayHits	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS requests that were dropped,
+			 for replies already generated within a short
+			 interval, since the last boot."
+	::= { treplyCache 2 }
+
+	trcMisses	OBJECT-TYPE
+	SYNTAX		Counter
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of NFS requests received for which
+			 there were no corresponding entries already in
+			 the Reply Cache, since the last boot."
+	::= { treplyCache 3 }
+
+	trcNonIdemDoneHits OBJECT-TYPE
+	SYNTAX		   Counter
+	ACCESS		   read-only
+	STATUS		   mandatory
+	DESCRIPTION
+			"The number of NFS requests received that
+			 resulted in replies being replayed from
+			 the Reply Cache, since the last boot."
+	::= { treplyCache 4 }
+
+	trcNonIdemNotDoneHits OBJECT-TYPE
+	SYNTAX		      Counter
+	ACCESS		      read-only
+	STATUS		      mandatory
+	DESCRIPTION
+			"The number of NFS requests received for calls
+			 that resulted in this request being processed
+			 as a new request even when a corresponding
+			 entry existed in the Reply Cache, since the
+			 last boot."
+	::= { treplyCache 5 }
+
+
+
+	-- -- -- -- -- --  --
+	-- the quota group --
+	-- -- -- -- -- --  --
+
+	quotaState	OBJECT-TYPE
+	SYNTAX		INTEGER {
+		quotaStateOff(1),
+		quotaStateOn(2),
+		quotaStateInit(3)
+	}
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"Indicates whether the root volume's quotas are ON, 
+			 OFF or initializing.  This object is deprecated -
+			 use qvStateTable.qvStateStat instead."
+	::= { quota 1 }
+
+	quotaInitPercent OBJECT-TYPE
+	SYNTAX		 INTEGER (0..100)
+	ACCESS		 read-only
+	STATUS		 deprecated
+	DESCRIPTION
+			"Indicates percentage of root volume quota 
+			 computation done while quotas are in initializing 
+			 state. This object is deprecated - use 
+			 qvStateTable.qvInitPercent instead."
+	::= { quota 2 }
+
+
+	-- the old volume-unaware quota report table.  DEPRECATED
+
+	qrTable		OBJECT-TYPE
+	SYNTAX		SEQUENCE OF QrEntry
+	ACCESS		not-accessible
+	STATUS		deprecated
+	DESCRIPTION
+			"Provide a report of the current file and
+			 space consumption for each user or group with
+			 a quota in /etc/quotas.  All quotas are displayed
+			 regardless of volume, and no volume information
+			 is given.  This table is deprecated - use qrVTable 
+			 instead."
+	::= { quota 3 }
+
+	qrEntry		OBJECT-TYPE
+	SYNTAX		QrEntry
+	ACCESS		not-accessible
+	STATUS		deprecated
+	DESCRIPTION
+			"Provide a report of the current file and
+			 space consumption for a referenced entry
+			 with a quota in the file /etc/quotas.
+			 All quotas are displayed regardless of volume, 
+			 and no volume information is given.  This object is 
+			 deprecated - use qrVEntry instead."
+
+	INDEX	{ qrIndex }
+	::= { qrTable 1 }
+
+	QrEntry ::=
+	    SEQUENCE {
+		qrIndex
+		    INTEGER,
+		qrType
+		    INTEGER,
+		qrId
+		    INTEGER,
+		qrKBytesUsed
+		    INTEGER,
+		qrKBytesLimit
+		    INTEGER,
+		qrFilesUsed
+		    INTEGER,
+		qrFileLimit
+		    INTEGER,
+		qrPathName
+		    DisplayString
+	    }
+
+	qrIndex		OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"A number that identifies this entry in the
+			 file /etc/quotas."
+	::= { qrEntry 1 }
+
+	qrType		OBJECT-TYPE
+	SYNTAX		INTEGER {
+		qrTypeUser(1),
+		qrTypeGroup(2),
+		qrTypeTree(3),
+		qrTypeUnknown(4)
+	}
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"Identifies the kind of quota for this qrEntry."
+	::= { qrEntry 2 }
+
+	qrId		OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The UID (user's numerical ID) or the GID (numerical
+			 ID of  the  group  that a user belongs to), as
+			 applicable, associated with this qrEntry."
+	::= { qrEntry 3 }
+
+	qrKBytesUsed	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The current number of KBytes used for this
+			 qrEntry."
+	::= { qrEntry 4 }
+
+	qrKBytesLimit	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The limit of KBytes that can be used for this
+			 qrEntry."
+	::= { qrEntry 5 }
+
+	qrFilesUsed	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The current number of files used for this
+			 qrEntry."
+	::= { qrEntry 6 }
+
+	qrFileLimit	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The limit of files that can be used for this
+			 qrEntry."
+	::= { qrEntry 7 }
+
+	qrPathName	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"A textual string that contains the path
+			 corresponding to this qrEntry."
+	::= { qrEntry 8 }
+
+	-- quota volume state table	
+
+	qvStateTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF QvStateEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Provide a report of the current quota state of
+			each volume in the system."
+	::= { quota 4 }
+
+	qvStateEntry		OBJECT-TYPE
+	SYNTAX		QvStateEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Provide a report of the current quota state of
+			each volume in the system."
+	INDEX	{ qvStateVolume }
+	::= { qvStateTable 1 }
+
+	QvStateEntry ::=
+	    SEQUENCE {
+		qvStateVolume
+		    INTEGER,
+		qvStateName
+		    DisplayString,
+		qvStateStat
+		    INTEGER,
+		qvStateInitPercent
+		    INTEGER
+	    }
+
+	qvStateVolume	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies this volume.  The mapping
+       			 of this number to actual volumes may change if 
+			 volumes are added or deleted.  Use qvStateName to 
+			 unambiguously identify a volume.  The mapping
+			 established by this object is the same as 
+			 the mapping of qrVVolume (below) to actual volumes.
+			 For instance, if a qvStateVolume value of '5'
+			 represents the volume 'vol2', a value of '5'
+			 in qrVVolume also represents the volume 'vol2'."
+	::= { qvStateEntry 1 }
+
+	qvStateName	 OBJECT-TYPE
+	SYNTAX		 DisplayString
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"Indicates the name of this volume."
+	::= { qvStateEntry 2 }
+
+	qvStateStat	OBJECT-TYPE
+	SYNTAX		INTEGER {
+		quotaStateOff(1),
+		quotaStateOn(2),
+		quotaStateInit(3)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"Indicates whether quotas are ON, OFF or
+			 initializing."
+	::= { qvStateEntry 3 }
+
+	qvStateInitPercent OBJECT-TYPE
+	SYNTAX		 INTEGER (0..100)
+	ACCESS		 read-only
+	STATUS		 mandatory
+	DESCRIPTION
+			"Indicates percentage of quota computation done
+			 while quotas are in initializing state."
+	::= { qvStateEntry 4 }
+
+	-- multi-volume-aware quota table
+
+	qrVTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF QrVEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Provide a report of the current file and
+			 space consumption for each user or group with
+			 a quota in /etc/quotas."
+	::= { quota 5 }
+
+
+	qrVEntry	OBJECT-TYPE
+	SYNTAX		QrVEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Provide a report of the current file and
+			 space consumption for a referenced entry
+			 with a quota in the file /etc/quotas.  Indices
+			 select the volume of the quota and the quota entry
+			 itself."
+	INDEX	{ qrVVolume, qrVIndex }
+	::= { qrVTable 1 }
+
+	QrVEntry ::=
+	    SEQUENCE {
+		qrVIndex
+		    INTEGER,
+		qrVType
+		    INTEGER,
+		qrVId
+		    INTEGER,
+		qrVKBytesUsed
+		    INTEGER,
+		qrVKBytesLimit
+		    INTEGER,
+		qrVFilesUsed
+		    INTEGER,
+		qrVFileLimit
+		    INTEGER,
+		qrVPathName
+		    DisplayString,
+		qrVVolume
+		    INTEGER,
+		qrVTree
+		    DisplayString
+	    }
+
+	qrVIndex	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies this entry in the
+			 file /etc/quotas in the given volume."
+	::= { qrVEntry 1 }
+
+	qrVType		OBJECT-TYPE
+	SYNTAX		INTEGER {
+		qrVTypeUser(1),
+		qrVTypeGroup(2),
+		qrVTypeTree(3),
+		qrVTypeUserDefault(4),
+		qrVTypeGroupDefault(5),
+		qrVTypeUnknown(6)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"Identifies the kind of quota for this qrVEntry."
+	::= { qrVEntry 2 }
+
+	qrVId		OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The UID (user's numerical ID) or the GID (numerical
+			 ID of  the  group  that a user belongs to), as
+			 applicable, associated with this qrVEntry."
+	::= { qrVEntry 3 }
+
+	qrVKBytesUsed	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The current number of KBytes used for this
+			 qrVEntry."
+	::= { qrVEntry 4 }
+
+	qrVKBytesLimit	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The limit of KBytes that can be used for this
+			 qrVEntry."
+	::= { qrVEntry 5 }
+
+	qrVFilesUsed	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The current number of files used for this
+			 qrVEntry."
+	::= { qrVEntry 6 }
+
+	qrVFileLimit	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The limit of files that can be used for this
+			 qrVEntry."
+	::= { qrVEntry 7 }
+
+	qrVPathName	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A textual string that contains the path
+			 corresponding to this qrVEntry."
+	::= { qrVEntry 8 }
+
+	qrVVolume	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies the volume for which
+			this quota is in effect on.  The volume that this
+			value represents can be determined by checking
+			the value of qvStateName (above) with 
+			qvStateVolume set to the value found here."
+	::= { qrVEntry 9 }
+
+        qrVTree		OBJECT-TYPE
+        SYNTAX          DisplayString
+        ACCESS          read-only
+        STATUS          mandatory
+        DESCRIPTION
+			"A string that indicates which qtree this quota
+			belongs to."        
+	::= { qrVEntry 10 }
+
+
+	-- -- -- -- -- -- -- --  --
+	-- the file system group --
+	-- -- -- -- -- -- -- --  --
+
+	filesysMaxfilesAvail	OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			deprecated
+	DESCRIPTION
+				"The count of the maximum number of
+				 files allowable on the root volume.  This
+				 object is deprecated - use 
+				 dfEntry.dfMaxFilesAvail instead."
+	::= { filesys 1 }
+
+	filesysMaxfilesUsed	OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			deprecated
+	DESCRIPTION
+				"The count of the number of files
+				 currently in use on the root volume.  
+				 This object is deprecated - use
+				 dfEntry.dfMaxFilesUsed instead."
+	::= { filesys 2 }
+
+	filesysMaxfilesPossible	OBJECT-TYPE
+	SYNTAX                  INTEGER
+	ACCESS			read-only
+	STATUS			deprecated
+	DESCRIPTION
+				"The largest value to which the
+				 filesysMaxfilesAvail parameter above can
+				 be increased by reconfiguration on the
+				 root volume.  This object is deprecated -
+				 use dfEntry.dfMaxFilesPossible."
+	::= { filesys 3 }
+
+	dfTable			OBJECT-TYPE
+	SYNTAX			SEQUENCE OF DfEntry
+	ACCESS			not-accessible
+	STATUS			mandatory
+	DESCRIPTION
+				"Provide a report of the available disk space
+				 on the file systems."
+	::= { filesys 4 }
+
+	snapshot OBJECT IDENTIFIER ::= { filesys 5 }
+
+
+
+	-- the display file system table
+
+	dfEntry		OBJECT-TYPE
+	SYNTAX		DfEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Provide a report of the available disk space on
+			 the referenced file system."
+	INDEX      { dfIndex }
+	::= { dfTable 1 }
+
+	DfEntry ::=
+	    SEQUENCE {
+		dfIndex
+		    INTEGER,
+		dfFileSys
+		    DisplayString,
+		dfKBytesTotal
+		    INTEGER,
+		dfKBytesUsed
+		    INTEGER,
+		dfKBytesAvail
+		    INTEGER,
+		dfPerCentKBytesCapacity
+		    INTEGER,
+		dfInodesUsed
+		    INTEGER,
+		dfInodesFree
+		    INTEGER,
+		dfPerCentInodeCapacity
+		    INTEGER,
+		dfMountedOn
+		    DisplayString,
+		dfMaxFilesAvail
+		    INTEGER,
+		dfMaxFilesUsed
+		    INTEGER,
+		dfMaxFilesPossible
+		    INTEGER
+	    }
+
+	dfIndex		OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies this entry for the
+			 referenced file system."
+	::= { dfEntry 1 }
+
+	dfFileSys	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The name for the referenced file system."
+	::= { dfEntry 2 }
+
+	dfKBytesTotal	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total capacity in KBytes for the
+			 referenced file system."
+	::= { dfEntry 3 }
+
+	dfKBytesUsed	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total disk space in KBytes that is in use
+			 on the referenced file system."
+	::= { dfEntry 4 }
+
+	dfKBytesAvail	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The total disk space in KBytes that is in
+			 free for use on the referenced file system."
+	::= { dfEntry 5 }
+
+	dfPerCentKBytesCapacity	OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The percentage of disk space currently
+				 in use on the referenced file system."
+	::= { dfEntry 6 }
+
+	dfInodesUsed		OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The total number of inodes in use on the
+				 referenced file system."
+	::= { dfEntry 7 }
+
+	dfInodesFree		OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The total number of inodes that are
+				 available for use on the referenced
+				 file system."
+	::= { dfEntry 8 }
+
+	dfPerCentInodeCapacity	OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The percentage of disk space currently
+				 in use based on inode counts, on the
+				 referenced file system."
+	::= { dfEntry 9 }
+
+	dfMountedOn		OBJECT-TYPE
+	SYNTAX			DisplayString
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The name of the file on which this file
+				 system is mounted."
+	::= { dfEntry 10 }
+
+	dfMaxFilesAvail		OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The count of the maximum number of
+				 files allowable on the referenced file
+				 system."
+	::= { dfEntry 11 }
+
+	dfMaxFilesUsed		OBJECT-TYPE
+	SYNTAX			INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The count of the number of files
+				 currently in use on the referenced file
+				 system."
+	::= { dfEntry 12 }
+
+	dfMaxFilesPossible	OBJECT-TYPE
+	SYNTAX                  INTEGER
+	ACCESS			read-only
+	STATUS			mandatory
+	DESCRIPTION
+				"The largest value to which the
+				 filesysMaxfilesAvail parameter above can
+				 be increased by reconfiguration on the
+				 referenced file system."
+	::= { dfEntry 13 }
+
+
+
+	-- the old single-volume snapshot table.  DEPRECATED
+
+	slTable		OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SlEntry
+	ACCESS		not-accessible
+	STATUS		deprecated
+	DESCRIPTION
+			"Provide a report of the snapshots on the
+			 root volume.  This table is deprecated - use
+			 slVTable instead."
+	::= { snapshot 1 }
+
+	slEntry		OBJECT-TYPE
+	SYNTAX		SlEntry
+	ACCESS		not-accessible
+	STATUS		deprecated
+	DESCRIPTION
+			"Provide a report on a given snapshot on the
+			 root volume.  This object is deprecated - use
+			 slVEntry instead."
+	INDEX	{ slIndex }
+	::= { slTable 1 }
+
+	SlEntry ::=
+	    SEQUENCE {
+		slIndex
+		    INTEGER,
+		slMonth
+		    INTEGER,
+		slDay
+		    INTEGER (1..31),
+		slHour
+		    INTEGER (0..23),
+		slMinutes
+		    INTEGER (0..59),
+		slName
+		    DisplayString
+	    }
+
+	slIndex		OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"A number that identifies this entry for the
+			 referenced file system."
+	::= { slEntry 1 }
+
+	slMonth		OBJECT-TYPE
+	SYNTAX		INTEGER {
+		january(1),
+		february(2),
+		march(3),
+		april(4),
+		may(5),
+		june(6),
+		july(7),
+		august(8),
+		september(9),
+		october(10),
+		november(11),
+		december(12)
+	}
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The month in which the snapshot was created."
+	::= { slEntry 2 }
+
+	slDay		OBJECT-TYPE
+	SYNTAX		INTEGER (1..31)
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The day on which the snapshot was created."
+	::= { slEntry 3 }
+
+	slHour		OBJECT-TYPE
+	SYNTAX		INTEGER (0..23)
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The hour in which the snapshot was created."
+	::= { slEntry 4 }
+
+	slMinutes	OBJECT-TYPE
+	SYNTAX		INTEGER (0..59)
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The minute in which the snapshot was created."
+	::= { slEntry 5 }
+
+	slName		OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The name of the referenced snapshot."
+	::= { slEntry 6 }
+
+
+	-- The multivolume snapshot table.
+
+	slVTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SlVEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Provide a report of the snapshots on the
+			 file systems."
+	::= { snapshot 2 }
+
+	slVEntry	OBJECT-TYPE
+	SYNTAX		SlVEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Provide a report on a given snapshot on the
+			 file system.  Indices select the volume of
+			 the snapshot and the snapshot entry itself."
+	INDEX	{ slVVolume, slVIndex }
+	::= { slVTable 1 }
+
+	SlVEntry ::=
+	    SEQUENCE {
+		slVIndex
+		    INTEGER,
+		slVMonth
+		    INTEGER,
+		slVDay
+		    INTEGER (1..31),
+		slVHour
+		    INTEGER (0..23),
+		slVMinutes
+		    INTEGER (0..59),
+		slVName
+		    DisplayString,
+		slVVolume
+		    INTEGER
+	    }
+
+	slVIndex	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies this entry for the
+			 referenced file system."
+	::= { slVEntry 1 }
+
+	slVMonth		OBJECT-TYPE
+	SYNTAX		INTEGER {
+		january(1),
+		february(2),
+		march(3),
+		april(4),
+		may(5),
+		june(6),
+		july(7),
+		august(8),
+		september(9),
+		october(10),
+		november(11),
+		december(12)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The month in which the snapshot was created."
+	::= { slVEntry 2 }
+
+	slVDay		OBJECT-TYPE
+	SYNTAX		INTEGER (1..31)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The day on which the snapshot was created."
+	::= { slVEntry 3 }
+
+	slVHour		OBJECT-TYPE
+	SYNTAX		INTEGER (0..23)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The hour in which the snapshot was created."
+	::= { slVEntry 4 }
+
+	slVMinutes	OBJECT-TYPE
+	SYNTAX		INTEGER (0..59)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The minute in which the snapshot was created."
+	::= { slVEntry 5 }
+
+	slVName		OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The name of the referenced snapshot."
+	::= { slVEntry 6 }
+
+	slVVolume	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies the volume that contains
+			this snapshot."
+	::= { slVEntry 7 }
+
+
+
+
+	-- -- -- -- -- -- --
+	-- the RAID group --
+	-- -- -- -- -- -- --
+
+	-- Old root volume raid table.  DEPRECATED
+
+	raidTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF RaidEntry
+	ACCESS		not-accessible
+	STATUS		deprecated
+	DESCRIPTION
+			"Display RAID configuration information for the
+			 root volume.  This table is deprecated - use
+			 raidVTable instead."
+	::= { raid 1 }
+
+	raidEntry	OBJECT-TYPE
+	SYNTAX		RaidEntry
+	ACCESS		not-accessible
+	STATUS		deprecated
+	DESCRIPTION
+			"Display RAID configuration information for
+			 the referenced disk drive.  This only works for
+			 disks contained within the root volume, and will
+			 include spare drives.  This object is 
+			 deprecated - use raidVEntry instead."
+	INDEX	{ raidIndex }
+	::= { raidTable 1 }
+
+	RaidEntry ::=
+	    SEQUENCE {
+		raidIndex
+		    INTEGER,
+		raidDiskName
+		    DisplayString,
+		raidStatus
+		    INTEGER,
+		raidDiskId
+		    INTEGER,
+		raidScsiAdapter
+		    DisplayString,
+		raidScsiId
+		    INTEGER (0..100),
+		raidUsedMb
+		    INTEGER,
+		raidUsedBlocks
+		    INTEGER,
+		raidTotalMb
+		    INTEGER,
+		raidTotalBlocks
+		    INTEGER,
+		raidCompletionPerCent
+		    INTEGER (0..100)
+	    }
+
+	raidIndex	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"A number that identifies this entry for the
+			 referenced disk drive."
+	::= { raidEntry 1 }
+
+	raidDiskName	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The name identifying the referenced disk drive."
+	::= { raidEntry 2 }
+
+	raidStatus	OBJECT-TYPE
+	SYNTAX		INTEGER {
+		active(1),
+		reconstructionInProgress(2),
+		parityReconstructionInProgress(3),
+		parityVerificationInProgress(4),
+		scrubbingInProgress(5),
+		failed(6),
+		addingSpare(7),
+		spare(8)
+	}
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The status of the referenced disk drive."
+	::= { raidEntry 3 }
+
+	raidDiskId	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The disk identifier for the referenced disk
+			 drive."
+	::= { raidEntry 4 }
+
+	raidScsiAdapter	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The identifier of the SCSI adapter for the
+			 referenced disk drive."
+	::= { raidEntry 5 }
+
+	raidScsiId	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The identifier for the referenced disk drive
+			 on the referenced SCSI adapter."
+	::= { raidEntry 6 }
+
+	raidUsedMb	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The number of MBytes currently in use on
+			 the referenced disk drive."
+	::= { raidEntry 7 }
+
+	raidUsedBlocks	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The number of Blocks currently in use on
+			 the referenced disk drive."
+	::= { raidEntry 8 }
+
+	raidTotalMb	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The number of MBytes physically available
+			 on the referenced disk drive."
+	::= { raidEntry 9 }
+
+	raidTotalBlocks	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		deprecated
+	DESCRIPTION
+			"The number of Blocks physically available
+			 on the referenced disk drive."
+	::= { raidEntry 10 }
+
+	raidCompletionPerCent OBJECT-TYPE
+	SYNTAX		      INTEGER (0..100)
+	ACCESS		      read-only
+	STATUS		      deprecated
+	DESCRIPTION
+			 "In the case when reconstruction/adding a
+			  spare, verification or scrubbing is in progress,
+			  the percent of such reconstruction, verification
+			  or scrubbing that has been completed on the
+			  referenced disk drive."
+	::= { raidEntry 11 }
+
+
+	-- Multivolume raidTable.
+
+
+	raidVTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF RaidVEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Display RAID configuration information."
+	::= { raid 2 }
+
+	raidVEntry	OBJECT-TYPE
+	SYNTAX		RaidVEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Display RAID configuration information for
+			 the referenced volume, raid group, and disk drive."
+	INDEX	{ raidVVol, raidVGroup, raidVIndex }
+	::= { raidVTable 1 }
+
+	RaidVEntry ::=
+	    SEQUENCE {
+		raidVIndex
+		    INTEGER,
+		raidVDiskName
+		    DisplayString,
+		raidVStatus
+		    INTEGER,
+		raidVDiskId
+		    INTEGER,
+		raidVScsiAdapter
+		    DisplayString,
+		raidVScsiId
+		    INTEGER (0..100),
+		raidVUsedMb
+		    INTEGER,
+		raidVUsedBlocks
+		    INTEGER,
+		raidVTotalMb
+		    INTEGER,
+		raidVTotalBlocks
+		    INTEGER,
+		raidVCompletionPerCent
+		    INTEGER (0..100),
+		raidVVol
+		    INTEGER,
+		raidVGroup
+		    INTEGER
+	    }
+
+	raidVIndex	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies this disk drive within 
+			 the given volume and RAID group."
+	::= { raidVEntry 1 }
+
+	raidVDiskName	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The name identifying the referenced disk drive."
+	::= { raidVEntry 2 }
+
+	raidVStatus	OBJECT-TYPE
+	SYNTAX		INTEGER {
+		active(1),
+		reconstructionInProgress(2),
+		parityReconstructionInProgress(3),
+		parityVerificationInProgress(4),
+		scrubbingInProgress(5),
+		failed(6)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The status of the referenced disk drive."
+	::= { raidVEntry 3 }
+
+	raidVDiskId	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The disk identifier for the referenced disk
+			 drive."
+	::= { raidVEntry 4 }
+
+	raidVScsiAdapter	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The identifier of the SCSI adapter for the
+			 referenced disk drive."
+	::= { raidVEntry 5 }
+
+	raidVScsiId	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The identifier for the referenced disk drive
+			 on the referenced SCSI adapter."
+	::= { raidVEntry 6 }
+
+	raidVUsedMb	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of MBytes currently in use on
+			 the referenced disk drive."
+	::= { raidVEntry 7 }
+
+	raidVUsedBlocks	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of Blocks currently in use on
+			 the referenced disk drive."
+	::= { raidVEntry 8 }
+
+	raidVTotalMb	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of MBytes physically available
+			 on the referenced disk drive."
+	::= { raidVEntry 9 }
+
+	raidVTotalBlocks	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of Blocks physically available
+			 on the referenced disk drive."
+	::= { raidVEntry 10 }
+
+	raidVCompletionPerCent OBJECT-TYPE
+	SYNTAX		      INTEGER (0..100)
+	ACCESS		      read-only
+	STATUS		      mandatory
+	DESCRIPTION
+			 "In the case when reconstruction/adding a
+			  spare, verification or scrubbing is in progress,
+			  the percent of such reconstruction, verification
+			  or scrubbing that has been completed on the
+			  referenced disk drive."
+	::= { raidVEntry 11 }
+
+	raidVVol	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies the volume that this entry
+			 belongs to."
+	::= { raidVEntry 12 }
+
+	raidVGroup	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies the RAID group within the
+			 given volume that this entry belongs to."
+	::= { raidVEntry 13 }
+
+
+	-- Spare disk table.
+
+	spareTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SpareEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Display spare disk configuration information."
+	::= { raid 3 }
+
+	spareEntry	OBJECT-TYPE
+	SYNTAX		SpareEntry
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION
+			"Display configuration information for
+			 the referenced spare disk drive."
+	INDEX	{ spareIndex }
+	::= { spareTable 1 }
+
+	SpareEntry ::=
+	    SEQUENCE {
+		spareIndex
+		    INTEGER,
+		spareDiskName
+		    DisplayString,
+		spareStatus
+		    INTEGER,
+		spareDiskId
+		    INTEGER,
+		spareScsiAdapter
+		    DisplayString,
+		spareScsiId
+		    INTEGER (0..100),
+		spareTotalMb
+		    INTEGER,
+		spareTotalBlocks
+		    INTEGER
+	    }
+
+	spareIndex	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"A number that identifies this entry for the
+			 referenced disk drive in the list of spare disk
+			 drives."
+	::= { spareEntry 1 }
+
+	spareDiskName	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The name identifying the referenced spare disk 
+			 drive."
+	::= { spareEntry 2 }
+
+	spareStatus	OBJECT-TYPE
+	SYNTAX		INTEGER {
+		spare(1),
+		addingspare(2)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The status of the referenced spare disk drive."
+	::= { spareEntry 3 }
+
+	spareDiskId	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The disk identifier for the referenced spare disk
+			 drive."
+	::= { spareEntry 4 }
+
+	spareScsiAdapter	OBJECT-TYPE
+	SYNTAX		DisplayString
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The identifier of the SCSI adapter for the
+			 referenced spare disk drive."
+	::= { spareEntry 5 }
+
+	spareScsiId	OBJECT-TYPE
+	SYNTAX		INTEGER (0..100)
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The identifier for the referenced spare disk drive
+			 on the referenced SCSI adapter."
+	::= { spareEntry 6 }
+
+	spareTotalMb	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of MBytes physically available
+			 on the referenced spare disk drive."
+	::= { spareEntry 7 }
+
+	spareTotalBlocks	OBJECT-TYPE
+	SYNTAX		INTEGER
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION
+			"The number of Blocks physically available
+			 on the referenced spare disk drive."
+	::= { spareEntry 8 }
+
+
+
+
+	END
+
+

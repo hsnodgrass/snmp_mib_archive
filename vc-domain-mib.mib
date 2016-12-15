@@ -1,0 +1,1315 @@
+-- ****************************************************************************
+--
+--                         Virtual Connect Domain MIB
+--
+--      Copyright 2008 Hewlett-Packard Development Company, L.P.
+-- 
+--
+-- ****************************************************************************
+
+HPVC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE,
+    Integer32, Unsigned32,
+    NOTIFICATION-TYPE, Counter32,
+    Gauge32, mib-2, zeroDotZero             FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, TruthValue,
+    RowPointer, TimeStamp                   FROM SNMPv2-TC
+    SnmpAdminString                         FROM SNMP-FRAMEWORK-MIB
+    enterprises                             FROM RFC1155-SMI
+    TransportAddressType, TransportAddress  FROM TRANSPORT-ADDRESS-MIB
+
+
+    MODULE-COMPLIANCE, OBJECT-GROUP,
+    NOTIFICATION-GROUP                  FROM SNMPv2-CONF;
+
+
+    hp                     OBJECT IDENTIFIER ::= { enterprises 11 }
+    hpSysMgt               OBJECT IDENTIFIER ::= { hp 5 }
+    hpEmbeddedServerMgt    OBJECT IDENTIFIER ::= { hpSysMgt 7 }
+    hpModuleMgmtProc       OBJECT IDENTIFIER ::= { hpEmbeddedServerMgt 5 }
+    virtualConnect         OBJECT IDENTIFIER ::= { hpModuleMgmtProc 2 }
+
+vcDomainMIB MODULE-IDENTITY
+    LAST-UPDATED "200810080000Z"            -- 06 October 2008
+    ORGANIZATION "Hewlett-Packard Company"
+    CONTACT-INFO "Robert Teisberg
+                  Hewlett-Packard Company.
+                  Email: robert.teisberg@hp.com"
+    DESCRIPTION
+     "This MIB module describes Virtual Connect (VC) domain level MIB objects
+      for HP Virtual Connect Manager (VCM). The VCM is responsible for managing
+      an entire Virtual Connect (VC) domain.
+      This MIB module reports all managed objects with in the VC domain,such as
+      VC Ethernet modules (Enet), VC FibreChannel (FC) modules, Physical Servers,
+      network, fabrics, server profiles and associations between various VC objects.
+
+      Keeping the limitations of SMI specifications in mind, the complex
+      relationships between VC objects are represented in the form of mapping
+      tables with appropriate index values to indicate the assoications."
+
+-- Revision History
+
+       REVISION     "200812080000Z"            -- 08 December 2008
+       DESCRIPTION  "Draft-0. Initial cut.  -Jitendra Vegiraju"
+       REVISION     "200901080000Z"            -- 08 January 2009
+       DESCRIPTION  "Draft-1. Moved vcModuleRole to VC Module MIB
+                     Modified the vcProfileNetworkMap and vcProfileFcFabricMap
+                     table to include port number as secondary index.
+                                             -Jitendra Vegiraju"
+       REVISION     "200902170000Z"            -- 17 February 2009
+       DESCRIPTION  "Draft-2. Added enclosure UUID object to Vcenclosuretable.
+                     Added traps for server status change and profile status change.
+                                             -Jitendra Vegiraju"
+       REVISION     "200906270000Z"            -- 27 June 2009
+       DESCRIPTION  "Draft-3. Changed vcDomainLastCheckpointTime to SnmpAdminString type.
+                                             -Jitendra Vegiraju"
+       REVISION     "201003080000Z"            -- 08 March 2010
+       DESCRIPTION  "Draft-4. Changed the description of vcCheckpointTimeout and
+                     vcCheckpointCompleted to be more specific on when these
+                     traps are sent.
+                                             -Tony Cureington"
+    ::= { virtualConnect 1 }
+
+vcDomainMIBObjects          OBJECT IDENTIFIER ::= { vcDomainMIB 1 }
+
+-- Top level object groups for VC MIB
+
+vcDomain                          OBJECT IDENTIFIER ::= { vcDomainMIBObjects 1 }
+vcEnclosure                       OBJECT IDENTIFIER ::= { vcDomainMIBObjects 2 }
+vcModule                          OBJECT IDENTIFIER ::= { vcDomainMIBObjects 3 }
+vcPort                            OBJECT IDENTIFIER ::= { vcDomainMIBObjects 4 }
+vcPhysicalServer                  OBJECT IDENTIFIER ::= { vcDomainMIBObjects 5 }
+vcEnetNetwork                     OBJECT IDENTIFIER ::= { vcDomainMIBObjects 6 }
+vcFcFabric                        OBJECT IDENTIFIER ::= { vcDomainMIBObjects 7 }
+vcProfile                         OBJECT IDENTIFIER ::= { vcDomainMIBObjects 8 }
+vcEnetNetworkVcPortMap            OBJECT IDENTIFIER ::= { vcDomainMIBObjects 9 }
+vcFcFabricVcPortMap               OBJECT IDENTIFIER ::= { vcDomainMIBObjects 10 }
+vcProfileNetworkMap               OBJECT IDENTIFIER ::= { vcDomainMIBObjects 11 }
+vcProfileFcFabricMap              OBJECT IDENTIFIER ::= { vcDomainMIBObjects 12 }
+
+
+VcManagedStatus ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "The managed status of a virtual Connect object.
+
+             The enumerations are described below:
+                unknown(1),   
+                normal(2),
+                warning(3),
+                minor(4),
+                major(5),
+                critical(6),
+                disabled(7),
+                info(8)"
+    SYNTAX      INTEGER
+    {
+        unknown(1),   
+        normal(2),
+        warning(3),
+        minor(4),
+        major(5),
+        critical(6),
+        disabled(7),
+        info(8)
+    }
+
+VcDomainModuleRole ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "The virtual connect manager role of this module.
+             The enumerations are described below:
+
+                unintegrated       - module is not a member of a domain
+                primaryProtected   - module is VCM primary, and a VCM standby exists
+                primaryUnprotected - module is VCM primary, and no VCM standby exists
+                standby            - module is VCM standby
+                other                - module is not able to host VCM
+
+             For roles other than primaryProtected and primaryUnprotected,
+             the only populated objects are:
+                domainModuleRole, domainPrimaryAddressType, domainPrimary,
+                checkpointState
+              "
+    SYNTAX      INTEGER
+    {
+       unintegrated(1),
+       primaryProtected(2),
+       primaryUnprotected(3),
+       standby(4),
+       other(5)
+    }
+
+VcModuleType ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "The virtual connect interconnect module type.
+             The enumerations are described below:
+
+                vcModuleEnet       - VC-Enet module
+                vcModuleFC         - VC-FC module
+                vcModuleOther      - Unknown module or a module not suppported by VC
+              "
+    SYNTAX      INTEGER
+    {
+       vcModuleEnet(1),
+       vcModuleFC(2),
+       vcModuleOther(3)
+    }
+
+VcPortType ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "The virtual connect port type.
+             The enumerations are described below:
+
+                vcEnetPhysicalPort       - A physical port on VC-Enet module
+                vcEnetLogicallPort       - A logical port on VC-Enet module (e.g.,
+                                           a Flex-10 subport)
+                vcFCPort                 - A physical port on VC-FC module
+              "
+    SYNTAX      INTEGER
+    {
+       vcEnetPhysicalPort(1),
+       vcEnetLogicallPort(2),
+       vcFCPort(3)
+    }
+
+-- Domain level objects
+
+vcDomainName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Virtual Connect Domain name."
+    ::= { vcDomain 1 }
+
+vcDomainManagedStatus OBJECT-TYPE
+    SYNTAX      VcManagedStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The overall domain status of the Virtual Connect Domain."
+    ::= { vcDomain 2 }
+
+vcDomainPrimaryAddressType OBJECT-TYPE
+    SYNTAX      TransportAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The transport address type used to address the primary VC module."
+    ::= { vcDomain 3 }
+
+vcDomainPrimaryAddress OBJECT-TYPE
+    SYNTAX      TransportAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The address of the primary VC module. The address format is determined
+         by the vcDomainPrimaryAddressType object."
+    ::= { vcDomain 4 }
+
+vcDomainCheckpointValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object returns 'true' when the VC configuration has been 
+         successfully checkpointed."
+    ::= { vcDomain 5 }
+
+vcDomainLastCheckpointTime OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The timestamp of the last attempt to update the configuration state of the domain."
+    ::= { vcDomain 6 }
+
+vcDomainStackingLinkRedundant OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The overall stacking link connection redundancy status.
+         This value indicates whether all VC-Enet modules will remain
+         connected to each other with the loss of a link."
+    ::= { vcDomain 7 }
+
+--
+-- Enclosure Table
+--
+
+vcEnclosureTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcEnclosureEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of enclosures in the Virtual Connect Domain."
+    ::= { vcEnclosure 1 }
+
+vcEnclosureEntry OBJECT-TYPE
+    SYNTAX      VcEnclosureEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing information about a particular enclosure."
+    INDEX       { vcEnclosureIndex }
+    ::= { vcEnclosureTable 1 }
+
+VcEnclosureEntry ::= SEQUENCE {
+    vcEnclosureIndex                      INTEGER,
+    vcEnclosureName                       OCTET STRING,
+    vcEnclosureManagedStatus              VcManagedStatus,
+    vcEnclosureAddressType                TransportAddressType,
+    vcEnclosureAddress                    TransportAddress,
+    vcEnclosureUUID                       SnmpAdminString
+}
+
+vcEnclosureIndex OBJECT-TYPE
+   SYNTAX      INTEGER
+   MAX-ACCESS  read-only
+   STATUS      current
+   DESCRIPTION
+        "Index value for the enclosure table."
+    ::= { vcEnclosureEntry 1 }
+
+vcEnclosureName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Administratively assigned name for the enclosure."
+    ::= { vcEnclosureEntry 2 }
+
+vcEnclosureManagedStatus OBJECT-TYPE
+    SYNTAX      VcManagedStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Managed status of the enclusure."
+    ::= { vcEnclosureEntry 3 }
+
+vcEnclosureAddressType OBJECT-TYPE
+    SYNTAX      TransportAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The transport address type used to address the enclosure's management entity."
+    ::= { vcEnclosureEntry 4 }
+
+vcEnclosureAddress OBJECT-TYPE
+    SYNTAX      TransportAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The address of the enclosure's management entity.
+         The address format is determined by the vcEnclosureAddressType object."
+    ::= { vcEnclosureEntry 5 }
+
+vcEnclosureUUID OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "UUID value for the enclosure."
+    ::= { vcEnclosureEntry 6 }
+
+--
+-- vcModule Table
+--
+
+vcModuleTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcModuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of VC interconnect modules in the Virtual Connect Domain."
+    ::= { vcModule 1 }
+
+vcModuleEntry OBJECT-TYPE
+    SYNTAX      VcModuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing information about a single interconnect module."
+    INDEX       { vcModuleIndex }
+    ::= { vcModuleTable 1 }
+
+VcModuleEntry ::= SEQUENCE {
+    vcModuleIndex                      INTEGER,
+    vcModuleType                       VcModuleType,
+    vcModuleManagedStatus              VcManagedStatus,
+    vcModulePartNumber                 SnmpAdminString,
+    vcModuleSerialNumber               SnmpAdminString,
+    vcModuleProductName                SnmpAdminString,
+    vcModuleFwRev                      SnmpAdminString,
+    vcModuleEnclosurePointer           RowPointer,
+    vcModuleLocation                   Unsigned32,
+    vcModuleAddressType                TransportAddressType,
+    vcModuleAddress                    TransportAddress,
+    vcModuleID                         SnmpAdminString
+}
+
+vcModuleIndex OBJECT-TYPE
+   SYNTAX      INTEGER
+   MAX-ACCESS  read-only
+   STATUS      current
+   DESCRIPTION
+        "Index value for the vcModuleTable."
+    ::= { vcModuleEntry 1 }
+
+vcModuleType OBJECT-TYPE
+    SYNTAX      VcModuleType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The VC interconnect module type."
+    ::= { vcModuleEntry 2 }
+
+vcModuleManagedStatus OBJECT-TYPE
+    SYNTAX      VcManagedStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The overall managed status of the vcEnetModule."
+    ::= { vcModuleEntry 3 }
+
+vcModulePartNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The part number of the VC module."
+    ::= { vcModuleEntry 4 }
+
+vcModuleSerialNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The serial number of the VC module."
+    ::= { vcModuleEntry 5 }
+
+vcModuleProductName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The product name of the VC module."
+    ::= { vcModuleEntry 6 }
+
+vcModuleFwRev OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The revision number of the firmware running on this Enet module."
+    ::= { vcModuleEntry 7 }
+
+vcModuleEnclosurePointer OBJECT-TYPE
+    SYNTAX      RowPointer
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A reference pointer into vcEnclosureTable that contains enclosure
+         information for the enclosure associated with this vcModule."
+    ::= { vcModuleEntry 8 }
+
+vcModuleLocation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The interconnect bay number associated with this VC module."
+    ::= { vcModuleEntry 9 }
+
+vcModuleAddressType OBJECT-TYPE
+    SYNTAX      TransportAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The transport address type used to address the EnetModule's management entity."
+    ::= { vcModuleEntry 10 }
+
+vcModuleAddress OBJECT-TYPE
+    SYNTAX      TransportAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The address of the SNMP agent on the VC module.
+         The address format is determined by the vcModuleAddressType object."
+    ::= { vcModuleEntry 11 }
+
+vcModuleID OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Unique identifier for the VC module. This object contains reports the
+         following values,
+           - MAC address for Enet module.
+           - WWN address for FC modules."
+    ::= { vcModuleEntry 12 }
+
+--
+-- vcPort Table
+--
+
+vcPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of ports in the Virtual Connect Domain. Ports include
+         physical network ports (uplinks, server links, stacking links,
+         and unconnected), logical network ports (Flex-10 subports on downlinks),
+         and Fibre Channel ports (uplinks and downlinks)."
+    ::= { vcPort 1 }
+
+vcPortEntry OBJECT-TYPE
+    SYNTAX      VcPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry continaing information about a particular ethernet port."
+    INDEX       { vcPortIndex }
+    ::= { vcPortTable 1 }
+
+VcPortEntry ::= SEQUENCE {
+    vcPortIndex                      INTEGER,
+    vcPortType                       VcPortType,
+    vcPortManagedStatus              VcManagedStatus,
+    vcPortManagerAddressType         TransportAddressType,
+    vcPortManagerAddress             TransportAddress,
+    vcPortContainerPointer           RowPointer,
+    vcPortPhysicalPortPointer        RowPointer
+}
+
+vcPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for the vcPort table."
+    ::= { vcPortEntry 1 }
+
+vcPortType OBJECT-TYPE
+    SYNTAX      VcPortType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates the VC port type."
+    ::= { vcPortEntry 2 }
+
+vcPortManagedStatus OBJECT-TYPE
+    SYNTAX      VcManagedStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Managed status of the vcPort."
+    ::= { vcPortEntry 3 }
+
+vcPortManagerAddressType OBJECT-TYPE
+    SYNTAX      TransportAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The transport address type used to address the EnetModule's management entity."
+    ::= { vcPortEntry 4 }
+
+vcPortManagerAddress OBJECT-TYPE
+    SYNTAX      TransportAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The address of the SNMP agent on the VC module.
+         The address format is determined by the vcPortManagerAddressType object."
+    ::= { vcPortEntry 5 }
+
+vcPortPhysicalPortPointer OBJECT-TYPE
+    SYNTAX      RowPointer
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "reference to the table entry for the physical port in the containing
+         module's MIB. The referenced table depends on the port type:
+            vcEnetPhysicalPort: ifTable
+            vcEnetLogicalPort : ifTable of corresponding physical port
+            vcFCPort          : connUnitPortTable
+         "
+    ::= { vcPortEntry 6 }
+
+vcPortContainerPointer OBJECT-TYPE
+    SYNTAX      RowPointer
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "reference to the table entry in the VC Domain MIB for the component
+         which contains this port:
+              vcEnetPhysicalPort: vcModuleTable
+              vcEnetLogicalPort : vcPortTable (for the physical port containing
+                                  this Flex-10 subport)
+              vcFCPort: vcModuleTable
+         "
+    ::= { vcPortEntry 7 }
+
+--
+-- vcPhysicalServer Table (server bay devices)
+--
+
+vcPhysicalServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcPhysicalServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of server bay devices in the Virtual Connect Domain."
+    ::= { vcPhysicalServer 1 }
+
+vcPhysicalServerEntry OBJECT-TYPE
+    SYNTAX      VcPhysicalServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "VC PhysicalServer bay (server bay) table entry."
+    INDEX       { vcPhysicalServerIndex }
+    ::= { vcPhysicalServerTable 1 }
+
+VcPhysicalServerEntry ::= SEQUENCE {
+    vcPhysicalServerIndex              INTEGER,
+    vcPhysicalServerEnclosureIndex     INTEGER,
+    vcPhysicalServerManagedStatus      VcManagedStatus,
+    vcPhysicalServerPartNumber         SnmpAdminString,
+    vcPhysicalServerSerialNumber       SnmpAdminString,
+    vcPhysicalServerProductName        SnmpAdminString,
+    vcPhysicalServerLocation           Unsigned32
+}
+
+vcPhysicalServerIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for the vcPhysicalServer table."
+    ::= { vcPhysicalServerEntry 1 }
+
+vcPhysicalServerEnclosureIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for the enclosure in vcEnclosureTable containing this server."
+    ::= { vcPhysicalServerEntry 2 }
+
+vcPhysicalServerManagedStatus OBJECT-TYPE
+    SYNTAX      VcManagedStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Managed status of the vcPhysicalServer."
+    ::= { vcPhysicalServerEntry 3 }
+
+vcPhysicalServerPartNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The part number of the Physical Server."
+    ::= { vcPhysicalServerEntry 4 }
+
+vcPhysicalServerSerialNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The serial number of the Physical Server."
+    ::= { vcPhysicalServerEntry 5 }
+
+vcPhysicalServerProductName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The product name of the Physical Server."
+    ::= { vcPhysicalServerEntry 6 }
+
+vcPhysicalServerLocation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The device bay number of the bay in which this server is installed."
+    ::= { vcPhysicalServerEntry 7 }
+
+--
+-- FcFabric Table
+--
+
+vcFcFabricTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcFcFabricEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of FC fabrics in the Virtual Connect Domain."
+    ::= { vcFcFabric 1 }
+
+vcFcFabricEntry OBJECT-TYPE
+    SYNTAX      VcFcFabricEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a single fabric."
+    INDEX       { vcFcFabricIndex }
+    ::= { vcFcFabricTable 1 }
+
+VcFcFabricEntry ::= SEQUENCE {
+    vcFcFabricIndex                      INTEGER,
+    vcFcFabricName                       SnmpAdminString,
+    vcFcFabricManagedStatus              VcManagedStatus
+}
+
+vcFcFabricIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for the vcFcFabric table."
+    ::= { vcFcFabricEntry 1 }
+
+vcFcFabricName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Administratively assigned name for the fabric."
+    ::= { vcFcFabricEntry 2 }
+
+vcFcFabricManagedStatus OBJECT-TYPE
+    SYNTAX      VcManagedStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The overall managed status of the vcFcFabric."
+    ::= { vcFcFabricEntry 3 }
+
+
+--
+-- VcEnetNetwork Table
+--
+
+vcEnetNetworkTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcEnetNetworkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of ethernet networks in the Virtual Connect Domain."
+    ::= { vcEnetNetwork 1 }
+
+vcEnetNetworkEntry OBJECT-TYPE
+    SYNTAX      VcEnetNetworkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contianing information about a single network."
+    INDEX       { vcEnetNetworkIndex }
+    ::= { vcEnetNetworkTable 1 }
+
+VcEnetNetworkEntry ::= SEQUENCE {
+    vcEnetNetworkIndex                      INTEGER,
+    vcEnetNetworkName                       SnmpAdminString,
+    vcEnetNetworkManagedStatus              VcManagedStatus,
+    vcEnetNetworkUplinkVlanId               Unsigned32
+}
+
+vcEnetNetworkIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for the vcEnetNetwork table."
+    ::= { vcEnetNetworkEntry 1 }
+
+vcEnetNetworkName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Administratively assigned name for the network."
+    ::= { vcEnetNetworkEntry 2 }
+
+vcEnetNetworkManagedStatus OBJECT-TYPE
+    SYNTAX      VcManagedStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The overall managed status of the vcEnetNetwork."
+    ::= { vcEnetNetworkEntry 3 }
+
+vcEnetNetworkUplinkVlanId  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The VLAN ID for the external uplink network. This value is
+         set to 0 if no uplink VLAN ID is assigned."
+    ::= { vcEnetNetworkEntry 4 }
+
+--
+-- Server Profile Table
+--
+
+vcProfileTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcProfileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of Server profiles in the Virtual Connect Domain."
+    ::= { vcProfile 1 }
+
+vcProfileEntry OBJECT-TYPE
+    SYNTAX      VcProfileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a single server profile."
+    INDEX       { vcProfileIndex }
+    ::= { vcProfileTable 1 }
+
+VcProfileEntry ::= SEQUENCE {
+    vcProfileIndex                      INTEGER,
+    vcProfileName                       SnmpAdminString,
+    vcProfileManagedStatus              VcManagedStatus,
+    vcProfilePhysicalServerIndex        Unsigned32,
+    vcProfileLogicalSerialNumber        SnmpAdminString
+}
+
+vcProfileIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for the vcProfile table."
+    ::= { vcProfileEntry 1 }
+
+vcProfileName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+         "A globally-unique, administratively assigned name for the
+         vcProfilek."
+    ::= { vcProfileEntry 2 }
+
+vcProfileManagedStatus OBJECT-TYPE
+    SYNTAX      VcManagedStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Managed status of the vcProfile."
+    ::= { vcProfileEntry 3 }
+
+vcProfilePhysicalServerIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value of assigned physical server from  vcPhysicalServer table.
+         The value is set to 0 if the profile is unassigned."
+    ::= { vcProfileEntry 4 }
+
+vcProfileLogicalSerialNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A logical server serial number to this profile. If the value is
+         empty, the server will use hardware serial number."
+    ::= { vcProfileEntry 5 }
+
+--
+-- vcEnetNetworkVcPortMap Table
+--
+
+vcEnetNetworkVcPortMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcEnetNetworkVcPortMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table lists a mapping of networks and associated ports
+         The objective of this table is to provide a mechanism to 
+         access all EnetPorts associated with a given EnetNetwork.
+         The second index to the table vcPortIndex can be used
+         access port information for a given port"
+    ::= { vcEnetNetworkVcPortMap 1 }
+vcEnetNetworkVcPortMapEntry OBJECT-TYPE
+    SYNTAX      VcEnetNetworkVcPortMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a VcPort in Enet Network."
+    INDEX       { vcEnetNetworkVcPortMapNetworkIndex,
+                  vcEnetNetworkVcPortMapVcPortIndex }
+    ::= { vcEnetNetworkVcPortMapTable 1 }
+
+VcEnetNetworkVcPortMapEntry ::= SEQUENCE {
+    vcEnetNetworkVcPortMapNetworkIndex  INTEGER,
+    vcEnetNetworkVcPortMapVcPortIndex   INTEGER
+}
+
+vcEnetNetworkVcPortMapNetworkIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for network entry. This index value must correspond to
+         vcEnetNetworkIndex from vcEnetNetworkTable."
+    ::= { vcEnetNetworkVcPortMapEntry 1 }
+
+vcEnetNetworkVcPortMapVcPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for VcPort entry. This index value must correspond to
+         vcPortIndex from vcPortTable."
+    ::= { vcEnetNetworkVcPortMapEntry 2 }
+
+--
+-- vcFcFabricVcPortMap Table
+--
+
+vcFcFabricVcPortMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcFcFabricVcPortMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table lists a mapping of fabics and associated VcPorts.
+         The objective of this table is to provide a mechanism to 
+         access all VcPorts associated with a given FcFabric.
+         The second index to the table vcVcPortIndex can be used
+         access VcPort information for a given VcPort"
+    ::= { vcFcFabricVcPortMap 1 }
+
+vcFcFabricVcPortMapEntry OBJECT-TYPE
+    SYNTAX      VcFcFabricVcPortMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a single fabric."
+    INDEX       { vcFcFabricVcPortMapFcFabricIndex,
+                  vcFcFabricVcPortMapVcPortIndex }
+    ::= { vcFcFabricVcPortMapTable 1 }
+
+VcFcFabricVcPortMapEntry ::= SEQUENCE {
+    vcFcFabricVcPortMapFcFabricIndex       INTEGER,
+    vcFcFabricVcPortMapVcPortIndex         INTEGER
+}
+
+vcFcFabricVcPortMapFcFabricIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for vcFabric entry. This index value must correspond to
+         vcFcFabricIndex from vcFcFabricTable."
+    ::= { vcFcFabricVcPortMapEntry 1 }
+
+vcFcFabricVcPortMapVcPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for VcPort entry. This index value must correspond to
+         vcPortIndex from vcPortTable."
+    ::= { vcFcFabricVcPortMapEntry 2 }
+
+--
+-- vcProfileNetworkMap Table
+--
+
+vcProfileNetworkMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcProfileNetworkMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table lists a mapping of profiles and associated ports.
+         The objective of this table is to provide a mechanism to 
+         access all Networks assigned to a given vcProfile.
+         The second index to the table vcNetworkIndex can be used
+         access network information for a given network"
+    ::= { vcProfileNetworkMap 1 }
+
+vcProfileNetworkMapEntry OBJECT-TYPE
+    SYNTAX      VcProfileNetworkMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a single network."
+    INDEX       { vcProfileNetworkMapProfileIndex,
+                  vcProfileNetworkMapConnectionIndex }
+    ::= { vcProfileNetworkMapTable 1 }
+
+VcProfileNetworkMapEntry ::= SEQUENCE {
+    vcProfileNetworkMapProfileIndex     INTEGER,
+    vcProfileNetworkMapConnectionIndex  INTEGER,
+    vcProfileNetworkMapNetworkIndex     INTEGER
+}
+
+vcProfileNetworkMapProfileIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for profile entry. This index value must correspond to
+         vcProfileIndex from vcProfileTable."
+    ::= { vcProfileNetworkMapEntry 1 }
+
+vcProfileNetworkMapConnectionIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Ethernet network connection number associated with this mapping."
+    ::= { vcProfileNetworkMapEntry 2 }
+
+vcProfileNetworkMapNetworkIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value to identify the network. This index value must correspond to
+         vcNetworkIndex from vcEnetNetworkTable."
+    ::= { vcProfileNetworkMapEntry 3 }
+
+--
+-- vcProfileFcFabricMap Table
+--
+
+vcProfileFcFabricMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF VcProfileFcFabricMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table lists a mapping of profiles and associated ports.
+         The objective of this table is to provide a mechanism to 
+         access all Fabrics associated with a given vcProfile.
+         The second index to the table vcFcFabricIndex can be used
+         to access fabric information for a given fabric"
+    ::= { vcProfileFcFabricMap 1 }
+
+vcProfileFcFabricMapEntry OBJECT-TYPE
+    SYNTAX      VcProfileFcFabricMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a single network."
+    INDEX       { vcProfileFcFabricMapProfileIndex,
+                  vcProfileFcFabricMapConnectionIndex }
+    ::= { vcProfileFcFabricMapTable 1 }
+
+VcProfileFcFabricMapEntry ::= SEQUENCE {
+    vcProfileFcFabricMapProfileIndex    INTEGER,
+    vcProfileFcFabricMapConnectionIndex INTEGER,
+    vcProfileFcFabricMapFcFabricIndex   INTEGER
+}
+
+vcProfileFcFabricMapProfileIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for profile entry. This index value must correspond to
+         vcProfileIndex from vcProfileTable."
+    ::= { vcProfileFcFabricMapEntry 1 }
+
+vcProfileFcFabricMapConnectionIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "FcFabric connection number associated with this mapping."
+    ::= { vcProfileFcFabricMapEntry 2 }
+
+vcProfileFcFabricMapFcFabricIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index value for vcFcFabric entry. This index value must correspond to
+         vcFcFabricIndex from vcFcFabricTable."
+    ::= { vcProfileFcFabricMapEntry 3 }
+
+
+--
+-- Notification Objects
+--
+vcDomainMIBNotificationPrefix OBJECT IDENTIFIER
+    ::= { vcDomainMIB 2 }
+vcDomainMIBNotifications OBJECT IDENTIFIER
+    ::= { vcDomainMIBNotificationPrefix 0 }
+vcDomainMIBNotificationObjects OBJECT IDENTIFIER
+    ::= { vcDomainMIBNotificationPrefix 1 }
+
+--
+-- Notifications
+--
+
+vcDomainManagedStatusChange NOTIFICATION-TYPE
+    OBJECTS { vcDomainManagedStatus }
+    STATUS  current
+    DESCRIPTION
+        "The summary managed status of the domain has changed."
+    ::= { vcDomainMIBNotifications 1 }
+
+vcCheckpointTimeout NOTIFICATION-TYPE
+    OBJECTS { vcDomainCheckpointValid, vcDomainLastCheckpointTime }
+    STATUS  current
+    DESCRIPTION
+        "The checkpoint valid status remained false for more than
+         five minutes."
+    ::= { vcDomainMIBNotifications 2 }
+
+vcCheckpointCompleted NOTIFICATION-TYPE
+    OBJECTS { vcDomainCheckpointValid }
+    STATUS  current
+    DESCRIPTION
+        "A checkpoint operation has completed following a checkpoint timeout
+         trap. The checkpoint valid status is true again. This trap is
+         not sent on every checkpoint completion, but only on a checkpoint
+         completion after a vcCheckpointTimeout trap has been sent."
+    ::= { vcDomainMIBNotifications 3 }
+
+vcEnetNetworkManagedStatusChange NOTIFICATION-TYPE
+    OBJECTS { vcEnetNetworkManagedStatus, vcEnetNetworkIndex }
+    STATUS  current
+    DESCRIPTION
+        "The managed status of network has changed."
+    ::= { vcDomainMIBNotifications 4 }
+
+vcFcFabricManagedStatusChange NOTIFICATION-TYPE
+    OBJECTS { vcFcFabricManagedStatus, vcFcFabricIndex }
+    STATUS  current
+    DESCRIPTION
+        "The managed status of VC FC Fabric has changed."
+    ::= { vcDomainMIBNotifications 5 }
+
+vcModuleManagedStatusChange NOTIFICATION-TYPE
+    OBJECTS { vcModuleManagedStatus, vcModuleIndex }
+    STATUS  current
+    DESCRIPTION
+        "The managed status of VC module has changed."
+    ::= { vcDomainMIBNotifications 6 }
+
+vcEnclosureManagedStatusChange NOTIFICATION-TYPE
+    OBJECTS { vcEnclosureManagedStatus, vcEnclosureIndex }
+    STATUS  current
+    DESCRIPTION
+        "The managed status of the enclosure has changed."
+    ::= { vcDomainMIBNotifications 7 }
+
+vcPhysicalServerManagedStatusChange NOTIFICATION-TYPE
+    OBJECTS { vcPhysicalServerManagedStatus, vcPhysicalServerIndex }
+    STATUS  current
+    DESCRIPTION
+        "The managed status of the server has changed."
+    ::= { vcDomainMIBNotifications 8 }
+
+vcProfileManagedStatusChange NOTIFICATION-TYPE
+    OBJECTS { vcProfileManagedStatus, vcProfileIndex }
+    STATUS  current
+    DESCRIPTION
+        "The managed status of the profile has changed."
+    ::= { vcDomainMIBNotifications 9 }
+
+vcTestTrap NOTIFICATION-TYPE
+    OBJECTS { vcDomainName }
+    STATUS  current
+    DESCRIPTION
+        "A test trap for verifying trap configuration."
+    ::= { vcDomainMIBNotifications 10 }
+
+vcDomainStackingLinkRendundancyStatusChange NOTIFICATION-TYPE
+    OBJECTS { vcDomainStackingLinkRedundant }
+    STATUS  current
+    DESCRIPTION
+        "The stacking link connection redundancy status has changed."
+    ::= { vcDomainMIBNotifications 11 }
+
+--
+-- Conformance
+--
+
+vcDomainMIBConformance OBJECT IDENTIFIER ::= { vcDomainMIB 3 }
+vcDomainMIBCompliances OBJECT IDENTIFIER ::=
+    { vcDomainMIBConformance 1 }
+vcDomainMIBGroups      OBJECT IDENTIFIER ::=
+    { vcDomainMIBConformance 2 }
+
+-- Compliance
+
+vcDomainMIBCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION
+
+            "The compliance statement for entities which implement
+            the VC MIB."
+    MODULE  -- this module
+            MANDATORY-GROUPS {
+                    vcDomainGroup, vcEnclosureGroup, vcModuleGroup,
+                    vcPortGroup, vcPhysicalServerGroup, vcFcFabricGroup,
+                    vcEnetNetworkGroup, vcProfileGroup,
+                    vcEnetNetworkVcPortMapGroup,
+                    vcFcFabricVcPortMapGroup,
+                    vcProfileNetworkMapGroup,
+                    vcProfileFcFabricMapGroup,
+                    vcManagedStatusNotificationsGroup
+            }
+
+
+    ::= { vcDomainMIBCompliances 1 }
+
+-- Units of Conformance
+
+vcDomainGroup OBJECT-GROUP
+    OBJECTS {
+            vcDomainName, vcDomainManagedStatus, vcDomainPrimaryAddressType,
+            vcDomainPrimaryAddress, vcDomainCheckpointValid,
+            vcDomainLastCheckpointTime, vcDomainStackingLinkRedundant
+    }
+    STATUS current
+    DESCRIPTION
+            "Virtual Connect Domain level objects."
+    ::= { vcDomainMIBGroups 1 }
+
+vcEnclosureGroup OBJECT-GROUP
+    OBJECTS {
+            vcEnclosureIndex, vcEnclosureName, vcEnclosureManagedStatus,
+            vcEnclosureAddressType, vcEnclosureAddress, vcEnclosureUUID
+    }
+    STATUS current
+    DESCRIPTION
+            "Virtual Connect Enclosure objects."
+    ::= { vcDomainMIBGroups 2 }
+
+vcModuleGroup OBJECT-GROUP
+    OBJECTS {
+            vcModuleIndex, vcModuleType, vcModuleManagedStatus,
+            vcModulePartNumber, vcModuleFwRev, vcModuleEnclosurePointer,
+            vcModuleLocation, vcModuleAddressType, vcModuleAddress,
+            vcModuleID
+
+    }
+    STATUS current
+    DESCRIPTION
+            "Virtual Connect Module objects."
+    ::= { vcDomainMIBGroups 3 }
+
+vcPortGroup OBJECT-GROUP
+    OBJECTS {
+            vcPortIndex, vcPortType, vcPortManagedStatus,
+            vcPortManagerAddressType, vcPortManagerAddress,
+            vcPortContainerPointer, vcPortPhysicalPortPointer
+    }
+    STATUS current
+    DESCRIPTION
+            "Virtual Connect Port objects."
+    ::= { vcDomainMIBGroups 4 }
+
+vcPhysicalServerGroup OBJECT-GROUP
+    OBJECTS {
+            vcPhysicalServerIndex, vcPhysicalServerEnclosureIndex,
+            vcPhysicalServerManagedStatus, vcPhysicalServerLocation
+    }
+    STATUS current
+    DESCRIPTION
+            "Virtual Connect PhysicalServer objects."
+    ::= { vcDomainMIBGroups 5 }
+
+vcFcFabricGroup OBJECT-GROUP
+    OBJECTS {
+            vcFcFabricIndex, vcFcFabricName, vcFcFabricManagedStatus
+    }
+    STATUS current
+    DESCRIPTION
+            "Virtual Connect FC Fabric objects."
+    ::= { vcDomainMIBGroups 6 }
+
+vcEnetNetworkGroup OBJECT-GROUP
+    OBJECTS {
+            vcEnetNetworkIndex, vcEnetNetworkName, vcEnetNetworkManagedStatus,
+            vcEnetNetworkUplinkVlanId
+    }
+    STATUS current
+    DESCRIPTION
+            "Virtual Connect Ethernet Network objects."
+    ::= { vcDomainMIBGroups 7 }
+
+vcProfileGroup OBJECT-GROUP
+    OBJECTS {
+            vcProfileIndex, vcProfileName, vcProfileManagedStatus,
+            vcProfilePhysicalServerIndex, vcProfileLogicalSerialNumber
+    }
+    STATUS current
+    DESCRIPTION
+            "Virtual Connect Server profile objects."
+    ::= { vcDomainMIBGroups 8 }
+
+vcEnetNetworkVcPortMapGroup OBJECT-GROUP
+    OBJECTS {
+            vcEnetNetworkVcPortMapNetworkIndex,
+            vcEnetNetworkVcPortMapVcPortIndex
+    }
+    STATUS current
+    DESCRIPTION
+            "VC Ethernet Network to VC Port mapping objects."
+    ::= { vcDomainMIBGroups 9 }
+
+vcFcFabricVcPortMapGroup OBJECT-GROUP
+    OBJECTS {
+            vcFcFabricVcPortMapFcFabricIndex,
+            vcFcFabricVcPortMapVcPortIndex
+    }
+    STATUS current
+    DESCRIPTION
+            "VC FC fabric to VC Port mapping objects."
+    ::= { vcDomainMIBGroups 10 }
+
+vcProfileNetworkMapGroup OBJECT-GROUP
+    OBJECTS {
+            vcProfileNetworkMapProfileIndex,
+            vcProfileNetworkMapNetworkIndex
+    }
+    STATUS current
+    DESCRIPTION
+            "VC Profile to Ethernet network mapping objects."
+    ::= { vcDomainMIBGroups 11 }
+
+vcProfileFcFabricMapGroup OBJECT-GROUP
+    OBJECTS {
+            vcProfileFcFabricMapProfileIndex,
+            vcProfileFcFabricMapFcFabricIndex
+    }
+    STATUS current
+    DESCRIPTION
+            "VC Profile to FC fabric mapping objects."
+    ::= { vcDomainMIBGroups 12 }
+
+vcManagedStatusNotificationsGroup  NOTIFICATION-GROUP
+    NOTIFICATIONS {
+            vcDomainManagedStatusChange, vcCheckpointTimeout,
+            vcCheckpointCompleted, vcEnetNetworkManagedStatusChange,
+            vcFcFabricManagedStatusChange, vcModuleManagedStatusChange,
+            vcEnclosureManagedStatusChange, vcPhysicalServerManagedStatusChange,
+            vcProfileManagedStatusChange, vcTestTrap, 
+            vcDomainStackingLinkRendundancyStatusChange
+    }
+    STATUS  current
+    DESCRIPTION
+            "The notifications which indicate specific changes in the
+            Virtual Connect Domain managed status."
+    ::= { vcDomainMIBGroups 13 }
+
+END

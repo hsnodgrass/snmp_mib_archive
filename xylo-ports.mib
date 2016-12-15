@@ -1,0 +1,2974 @@
+-- File: xylo-ports.mib
+--	Bay Networks Remote Annex Private Enterprise MIB
+--
+--  Copyright 1991, 1993, 1994, 1995, 1996, 1997 Bay Networks, Inc.  
+--  ALL RIGHTS RESERVED.
+--
+--  ALL RIGHTS RESERVED. Licensed Material - Property of Bay Networks, Inc.
+--  This software is made available solely pursuant to the terms of a
+--  software license agreement which governs its use.
+--  Unauthorized duplication, distribution or sale are strictly prohibited.
+--
+--  This information is subject to change without notice, and should
+--  not be construed as a commitment by Bay Networks, Inc.  Bay Networks, Inc.,
+--  assumes no responsibility for any errors that may appear in this
+--  document.
+--
+
+  XYLO-PORTS-MIB DEFINITIONS ::= BEGIN
+
+  IMPORTS
+		TimeTicks, IpAddress, Counter 
+			FROM RFC1155-SMI
+		DisplayString
+			FROM RFC1213-MIB
+		OBJECT-TYPE
+			FROM RFC-1212
+		ports, parallelport, anxsyncports, anxModem
+			FROM XYLO-MIB-SMI;
+
+
+--  xylogics		OBJECT IDENTIFIER ::= { enterprises 15 } 
+--  annex		OBJECT IDENTIFIER ::= { xylogics 2 }
+--  ports		OBJECT IDENTIFIER ::= { annex 3 }
+--  parallelport	OBJECT IDENTIFIER ::= { annex 4 }
+--  anxsyncports 	OBJECT IDENTIFIER ::= { annex 9 }
+--  anxModem	 	OBJECT IDENTIFIER ::= { annex 100 }
+--  anxinterface	OBJECT IDENTIFIER ::= { annex 13 }
+
+-- the ports group
+
+  totalPorts	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The number of serial ports on this Annex."
+		::= { ports 1 }
+
+  totalInChars	OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of characters received on all
+			serial ports."
+		::= { ports 2 }
+
+  totalOutChars	OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of characters transmitted on
+			all serial ports."
+		::= { ports 3 }
+
+  totalParityErrs	OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of parity errors detected
+			on all serial ports."
+		::= { ports 4 }
+
+  totalOverrunErrs	OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of overruns detected on all
+			serial ports."
+		::= { ports 5 }
+
+  totalFramingErrs	OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of framing errors detected
+			on all serial ports."
+		::= { ports 6 }
+
+  portTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF PortEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Table of port entries."
+		::= { ports 7 }
+
+  portEntry	OBJECT-TYPE
+		SYNTAX PortEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"The port's configuration parameters."
+		INDEX  { anxpPortIndex }
+		::= { portTable 1 }
+
+  PortEntry	::= SEQUENCE {
+	anxpPortIndex		INTEGER,
+	anxpMode		INTEGER,
+	anxpCtrlLines		INTEGER,
+	anxpBidirModem		INTEGER,
+	anxpAllowBcast		INTEGER,
+	anxpBcastDirection	INTEGER,
+	anxpInputStartChar	DisplayString,
+	anxpInputStopChar	DisplayString,
+	anxpOutputStartChar	DisplayString,
+	anxpOutputStopChar	DisplayString,
+	anxpIxanyFlowCtl	INTEGER,
+	anxpLongBreak		INTEGER,
+	anxpShortBreak		INTEGER,
+	anxpForwardTimer	INTEGER,
+	anxpForwardCount	INTEGER,
+	anxpImask7Bits		INTEGER,
+	anxpAttnChar		DisplayString,
+	anxpInputBufSize	INTEGER,
+	anxpInputIsActivity	INTEGER,
+	anxpOutputIsActivity	INTEGER,
+	anxpInactivityTimer	INTEGER,
+	anxpResetIdleTimer	INTEGER,
+	anxpCliInactivity	INTEGER,
+	anxpCliSecurity		INTEGER,
+	anxpConnectSecurity	INTEGER,
+	anxpPortServerSecurity	INTEGER,
+	anxpPortPassword	DisplayString,
+	anxpUserName		DisplayString,
+	anxpDedicatedAddr	IpAddress,
+	anxpDedicatedPort	DisplayString,
+	anxpPrompt		DisplayString,
+	anxpTermVar		DisplayString,
+	anxpNewLineTerm		INTEGER,
+	anxpEcho		INTEGER,
+	anxpMapToLower		INTEGER,
+	anxpMapToUpper		INTEGER,
+	anxpHardwareTabs	INTEGER,
+	anxpCharErase		INTEGER,
+	anxpLineErase		INTEGER,
+	anxpEraseChar		DisplayString,
+	anxpEraseWord		DisplayString,
+	anxpEraseLine		DisplayString,
+	anxpRedisplayLine	DisplayString,
+	anxpToggleOutput	DisplayString,
+	anxpTelnetEscape	DisplayString,
+	anxpNeedDsr		INTEGER,
+	anxpTelnetCRLF		INTEGER,
+	anxpLatbEnable		INTEGER,
+	anxpSlipSecure		INTEGER,
+	anxpNetLocalAddr	IpAddress,
+	anxpNetRemoteAddr	IpAddress,
+	anxpSlipSubnetMask	IpAddress,
+	anxpSlipLoadDumpHost	IpAddress,
+	anxpNetMetric		INTEGER,
+	anxpSlipAllowDump	INTEGER,
+	anxpDoCompression	INTEGER,
+	anxpAllowCompression	INTEGER,
+	anxpSlipMtuSize		INTEGER,
+	anxpSlipNoIcmp		INTEGER,
+	anxpSlipTos		INTEGER,
+	anxpPppMru		INTEGER,
+	anxpPppAcm		DisplayString,
+	anxpPppSecurityProto	INTEGER,
+	anxpPppUserRemote	DisplayString,
+	anxpPppPasswdRemote	DisplayString,
+	anxpLatAuthGroupVal	DisplayString,
+	anxpPppDialupAddr	INTEGER,
+	anxpBanner		INTEGER,
+	anxpPsHistory		INTEGER,
+	anxpLocation		DisplayString,
+	anxpType		INTEGER,
+	anxpCliImask7		INTEGER,
+        anxpModemVar            DisplayString,
+        anxpPppNcp              INTEGER,
+	anxpPhoneNumber         DisplayString,
+	anxpNetInactivity       INTEGER,
+        anxpAtGuest             INTEGER,
+	anxpAtNodeid            DisplayString,
+	anxpAtSecurity          INTEGER,
+	anxpArapV42bis          INTEGER,
+        anxpTn3270PrinterHost   IpAddress,
+	anxpTn3270PrinterName   DisplayString,
+	anxpTcpKeepAlive	INTEGER,
+	anxpDtrSignal           INTEGER,
+	anxpRtsSignal           INTEGER,
+	anxpCliInterface	INTEGER,
+	anxpAutobaud		INTEGER,
+	anxpDefSessMode		INTEGER,
+        anxpIpxSecurity         INTEGER,
+	anxpIpsoClass           INTEGER,
+	anxpVciLoginPortPasswd  INTEGER,
+	anxpVciLoginTimeout     INTEGER,
+	anxpDedicatedArgs	DisplayString,
+	anxpNetInactivityUnits	INTEGER,
+        anxpResolveProtocol     INTEGER,
+        anxpForwardKey          DisplayString,
+        anxpBackwardKey         DisplayString,
+	anxpPppIpxNetwork	DisplayString,
+	anxpPppIpxNode		DisplayString,
+	anxpLatAuthMap          OCTET STRING,
+	anxpMultiSession	INTEGER,
+	anxpAutoTimeout		INTEGER,
+	anxpAutoPPPSecurity	INTEGER
+  }
+
+  anxpPortIndex	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"A unique number from 1 to totalPorts that 
+			identifies each serial port."
+		::= { portEntry 1 }
+
+  anxpMode	OBJECT-TYPE
+		SYNTAX INTEGER {
+			cli(1),
+			slave(2),
+			adaptive(3),
+			unused(4),
+			slip(5),
+			dedicated(6),
+			ppp(7),
+			arap(8),
+			invalid(9),
+			auto-detect(10),
+			auto-adapt(11),
+			ndp(12),
+			ipx(13),
+			call(14),
+			connect(15),
+			rlogin(16),
+			telnet(17),
+			tn3270(18)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines the mode for access to
+			the serial line port.  The default is cli.
+			
+			This MIB object corresponds to the NA/admin
+			asynchronous port parameter 'mode'."
+		::= { portEntry 2 }
+
+  anxpCtrlLines	OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			flowcontrol(2),
+			modemcontrol(3),
+			both(4)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The type of hardware control used on the port:
+			none, modem control (dcd/dtr), flow control (cts/rts),
+			or both.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'control_lines'."
+		::= { portEntry 3 }
+
+  anxpBidirModem  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether the port is
+			configured for adaptive use with a bidirectional
+			modem.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'bidirectional_modem'."
+		::= { portEntry 4 }
+
+  anxpAllowBcast  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Controls whether the serial port can receive
+			administrative broadcast messages.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'allow_broadcast'."
+		::= { portEntry 5 }
+
+  anxpBcastDirection  OBJECT-TYPE
+		SYNTAX INTEGER {
+			port(1),
+			network(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Defines the direction that an administrative
+			broadcast message is sent.  This parameter is
+			valid only when the port is defined as a slave
+			port by the anxpMode parameter.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'broadcast_direction'."
+		::= { portEntry 6 }
+
+  anxpInputStartChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The control character sequence that restarts
+			input if the charPortInFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'input_start_char'."
+		::= { portEntry 7 }
+
+  anxpInputStopChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The control character sequence that stops
+			input if the charPortInFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'input_stop_char'."
+		::= { portEntry 8 }
+
+  anxpOutputStartChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The control character sequence that restarts
+			output if the charPortOutFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'output_start_char'."
+		::= { portEntry 9 }
+
+  anxpOutputStopChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The control character sequence that stops
+			output if the charPortOutFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'output_stop_char'."
+		::= { portEntry 10 }
+
+  anxpIxanyFlowCtl  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter specifies whether any input
+			character will be treated as a start (xon)
+			character when output has been suspended by
+			a stop (xoff) character.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ixany_flow_control'."
+		::= { portEntry 11 }
+
+  anxpLongBreak	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			returns the user to the CLI prompt after 
+			receiving a break greater than two seconds.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'long_break'."
+		::= { portEntry 12 }
+
+  anxpShortBreak  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			returns the user to the CLI prompt after 
+			receiving a break shorter than two seconds.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'short_break'."
+		::= { portEntry 13 }
+
+  anxpForwardTimer  OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines the inter-character
+			timer that sets the amount of time, in tens of
+			milliseconds, that will elapse before
+			forwarding the received data.  The value of
+			5 turns off the timer.  Setting this object
+			to 0 causes the default value of 5 to be used.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'forwarding_timer'."
+		::= { portEntry 14 }
+
+  anxpForwardCount OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Specifies the number of received characters
+			buffered for the port by the Annex before
+			forwarding the characters to the host or 
+			network.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'forwarding_count'."
+		::= { portEntry 15 }
+
+  anxpImask7Bits  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, instructs the Annex to ignore
+			the eighth bit of all received characters
+			on the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'imask_7bits'."
+		::= { portEntry 16 }
+
+  anxpAttnChar	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Defines a control character sequence as an
+			attention character to return the user to
+			the CLI prompt.  The Annex-II only allows
+			a single control character (eg. ^A), while
+			the Annex3 and MicroAnnex allow a string
+			of control characters to be defined
+			(eg. ^A^B^Z).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'attn_string'."
+		::= { portEntry 17 }
+
+  anxpInputBufSize  OBJECT-TYPE
+		SYNTAX INTEGER (1..255)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The number of 256-byte blocks allocated to
+			receive input characters from this port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'input_buffer_size'."
+		::= { portEntry 18 }
+
+  anxpInputIsActivity	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Controls whether received input characters
+			are considered as activity for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'input_is_activity'."
+		::= { portEntry 19 }
+
+  anxpOutputIsActivity  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Controls whether transmitted output characters
+			are considered as activity for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'output_is_activity'."
+		::= { portEntry 20 }
+
+  anxpInactivityTimer  OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The amount of time, in minutes, which a port
+			can remain inactive before the Annex terminates
+			all sessions and resets the port.  A value of
+			0 disables the timer.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'inactivity_timer'."
+		::= { portEntry 21 }
+
+  anxpResetIdleTimer  OBJECT-TYPE
+		SYNTAX INTEGER {
+			input(1),
+			output(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Defines whether input or output resets the
+			idle timer for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'reset_idle_time_on'."
+		::= { portEntry 22 }
+
+  anxpCliInactivity  OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The amount of time, in minutes, that the Annex
+			waits before hanging up the serial port after
+			it becomes idle.  A value of 0 turns off the
+			timer.  A value of 255 means immediate, which
+			causes the Annex to hang up the port immediately
+			after exiting from the last job.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'cli_inactivity'."
+		::= { portEntry 23 }
+
+  anxpCliSecurity  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether security is
+			enabled for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'cli_security'."
+		::= { portEntry 24 }
+
+  anxpConnectSecurity  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether the host-based
+			security policy is enabled for access from the 
+			port to the network.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'connect_security'."
+		::= { portEntry 25 }
+
+  anxpPortServerSecurity  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether the host-based
+			security policy is enabled for access to the 
+			port from the port server.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'port_server_security'."
+		::= { portEntry 26 }
+
+  anxpPortPassword  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines a password for the
+			port for local password protection.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'port_password'."
+		::= { portEntry 27 }
+
+  anxpUserName	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"A string defining the default user name for 
+			the user of this serial port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'user_name'."
+		::= { portEntry 28 }
+
+  anxpDedicatedAddr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When the anxpMode parameter is set to dedicated,
+			this parameter defines the Internet address
+			of the host to which this port can connect to.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'dedicated_address'.
+			
+			See also anxpDedicatedPort below.  These objects
+			are being phased out in favor of the object
+			anxpDedicatedArgs."
+		::= { portEntry 29 }
+
+  anxpDedicatedPort  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The application name or TCP port number to
+			which this port can connect when the anxpMode
+			parameter is set to dedicated.  The allowed
+			application names are 'telnet', 'rlogin',
+			and 'call'.  If a number is specified, the
+			number must range between 0 and 65535.
+			
+			Certain numeric values are translated to the
+			above names as follows:
+			
+				Set value	Get value
+				
+				   0		telnet
+				   23		telnet
+				   513		rlogin
+				   1027		call
+			
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'dedicated_port'.
+
+			See also anxpDedicatedAddr above.  These objects
+			are being phased out in favor of the object
+			anxpDedicatedArgs."
+
+		::= { portEntry 30 }
+
+  anxpPrompt	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..32))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines a port-specific prompt
+			string.  The prompt string consists of displayable
+			characters and embedded formatting codes.  Each
+			formatting code is stored in a single character 
+			in nonvolatile memory.  The maximum number of 
+			characters stored for the prompt string 
+			is 16.  Since the formatting codes consist of
+			a '%' prepended to a single character, the maximum
+			length string that may be entered for this object
+			is 32 characters.  Strings less than 32
+			characters in length will be rejected as bad values
+			if they cannot be stored into 16 characters in 
+			nonvolatile memory after the formatting codes are
+			compressed into single characters.
+			
+			The valid formatting codes are:
+
+		          %a  the string 'annex'     
+			  %c  the string ': '
+			  %d  the date and time      
+			  %i  the Annex's IP address
+			  %j  a newline character    
+			  %l  port location, or 'port n'
+			  %n  the Annex's name       
+			  %p  the port number
+			  %r  the string 'port'      
+			  %s  a space
+			  %t  the time hh:mm:ss      
+			  %u  the user name for port
+			  %%  the string '%'
+
+			
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'prompt'."
+		::= { portEntry 31 }
+
+  anxpTermVar	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"A string defining the type of terminal attached
+			to the serial port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'term_var'."
+		::= { portEntry 32 }
+
+  anxpNewLineTerm OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether a carriage
+			return is echoed as just a carriage return
+			(enabled), or whether the carriage return is
+			echoed as a carriage return and line feed.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'newline_terminal'."
+		::= { portEntry 33 }
+
+  anxpEcho OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			echoes all characters as they are received 
+			from the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'echo'."
+		::= { portEntry 34 }
+
+  anxpMapToLower OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, the Annex translates all upper
+			case characters to lower case as they are 
+			received from the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'map_to_lower'."
+		::= { portEntry 35 }
+
+  anxpMapToUpper OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, the Annex translates all lower
+			case characters to upper case as they are
+			transmitted to the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'map_to_upper'."
+		::= { portEntry 36 }
+
+  anxpHardwareTabs  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, this parameter allows the Annex
+			to expand ASCII tab characters.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'hardware_tabs'."
+		::= { portEntry 37 }
+
+  anxpCharErase  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			echoes the character erase and word erase 
+			characters for a video terminal (enabled) 
+			or for a hard-copy terminal (disabled).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'char_erase'."
+		::= { portEntry 38 }
+
+  anxpLineErase OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			echoes the line erase character for a video 
+			terminal (enabled) or for a hard-copy terminal 
+			(disabled).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'line_erase'."
+		::= { portEntry 39 }
+
+  anxpEraseChar OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Defines the character erase control character
+			sequence.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'erase_char'."
+		::= { portEntry 40 }
+
+  anxpEraseWord OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Defines the word erase control character
+			sequence.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'erase_word'."
+		::= { portEntry 41 }
+
+  anxpEraseLine OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Defines the line erase control character
+			sequence.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'erase_line'."
+		::= { portEntry 42 }
+
+  anxpRedisplayLine OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Defines the reprint line control character
+			sequence.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'redisplay_line'."
+		::= { portEntry 43 }
+
+  anxpToggleOutput OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Defines the flush control character used to
+			flush the output buffer.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'toggle_output'."
+		::= { portEntry 44 }
+
+  anxpTelnetEscape OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Defines the control character that returns the
+			user to the 'telnet:' prompt when running the
+			CLI telnet command.  
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			The value 'U' disables this feature on the
+			specified port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'telnet_escape'."
+		::= { portEntry 45 }
+
+  anxpNeedDsr	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Specifies whether the DSR signal needs to be
+			asserted when connecting to a slave port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'need_dsr'."
+		::= { portEntry 46 }
+
+  anxpTelnetCRLF OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Defines what characters are transmitted 
+			out the port to the network when the 
+			End-of-Line character is sensed.  'enabled' 
+			means transmit Line-Feed and Carriage-Return.  
+			'disabled' means transmit Carriage-Return 
+			and NULL.  The default is enabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'telnet_crlf'."
+		::= { portEntry 47 }
+
+  anxpLatbEnable	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Controls interpretation of LAT Data-B packets
+			received from host.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'latb_enable'."
+		::= { portEntry 48 }
+
+  anxpSlipSecure	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"If anxEnableSecurity is not set, this 
+			parameter selects slip session logging.  If 
+			anxEnableSecurity is set, this parameter 
+			permits slip access only from secure ports.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'slip_ppp_security'."
+		::= { portEntry 49 }
+
+  anxpNetLocalAddr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The Internet address for the Annex's side
+			of the point-to-point (SLIP or PPP) link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'local_address'."
+		::= { portEntry 50 }
+
+  anxpNetRemoteAddr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The Internet address for the host at the
+			remote end of the point-to-point (SLIP or PPP) 
+			link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'remote_address'."
+		::= { portEntry 51 }
+
+  anxpSlipSubnetMask  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The subnet mask for this SLIP interface.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'subnet_mask'."
+		::= { portEntry 52 }
+
+  anxpSlipLoadDumpHost  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The Internet address of the host from which
+			the Annex receives a load or to which the
+			Annex sends a dump over the SLIP interface.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'slip_load_dump_host'."
+		::= { portEntry 53 }
+
+  anxpNetMetric OBJECT-TYPE
+		SYNTAX INTEGER (0..64)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines the hop count to 
+			the remote end of the SLIP or PPP interface.
+			Setting this object to 0 defaults to a
+			value of 1.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'metric'."
+		::= { portEntry 54 }
+
+  anxpSlipAllowDump  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines whether the Annex is
+			allowed to dump across a SLIP link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'slip_allow_dump'."
+		::= { portEntry 55 }
+
+  anxpDoCompression  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, the Annex will attempt to negotiate
+			TCP/IP header compression on this serial link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'do_compression'."
+		::= { portEntry 56 }
+
+  anxpAllowCompression  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, the Annex will allow TCP/IP
+			header compression on this serial link only
+			if the other end of the serial link initiates
+			the compression.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'allow_compression'."
+		::= { portEntry 57 }
+
+  anxpSlipMtuSize OBJECT-TYPE
+		SYNTAX INTEGER {
+			large(1),
+			small(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Force the compressed SLIP interface to use
+			a Maximum Transmission Unit (MTU) of either 
+			1024 bytes (large) or 256 bytes (small).  The
+			default is large.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'slip_mtu_size'."
+		::= { portEntry 58 }
+
+  anxpSlipNoIcmp  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, the Annex will discard any
+			ICMP packets directed to this SLIP link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'slip_no_icmp'."
+		::= { portEntry 59 }
+
+  anxpSlipTos	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, the Annex sends interactive
+			traffic over this SLIP link before any other
+			traffic.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'slip_tos'."
+		::= { portEntry 60 }
+
+  anxpPppMru    OBJECT-TYPE
+		SYNTAX INTEGER (64..1500)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines the maximum receive
+			unit in bytes.  The default value is 1500.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ppp_mru'."
+		::= { portEntry 61 }
+
+  anxpPppAcm    OBJECT-TYPE
+		SYNTAX DisplayString  (SIZE (8..10))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter specifies which of the first
+			32 bytes (0x00, ... 0x1F) can be sent as
+			clear text and which need to be escaped.  A
+			bit on in the mask indicates the character
+			must be escaped.  The mask should be specified
+			as an 8 hex character string (0x1F000000 and
+			1F000000 are both acceptable).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ppp_acm'."
+		::= { portEntry 62 }
+
+  anxpPppSecurityProto OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			pap(2),
+			chap(3),
+			chap-pap(4)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Defines which security protocol will be used
+			to authenticate the remote user.  This
+			parameter must be set and the Annex 
+			enable_security (anxEnableSecurity) must be 
+			enabled before authentication is performed.  
+			The default is none
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ppp_security_protocol'."
+		::= { portEntry 63 }
+
+  anxpPppUserRemote	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The username used by the Annex to identify 
+			itself if the remote PPP peer asks for 
+			authentication.  
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ppp_username_remote'."
+		::= { portEntry 64 }
+
+  anxpPppPasswdRemote	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The password used by the Annex to identify 
+			itself if the remote PPP peer asks for 
+			authentication.  Reading this parameter
+			will return either <set> if the password is
+			defined or <unset> if the password is not
+			defined.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ppp_password_remote'."
+		::= { portEntry 65 }
+
+  anxpLatAuthGroupVal	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..610))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This port parameter specifies which remote 
+			group codes are accessible to a user on a 
+			particular Annex port. Each port has its own 
+			set of group codes.  The syntax is a series
+			of numbers between 0 and 255, separated by
+			commas and dashes, such as 1,5,100-255.
+			The keywords 'all' and 'none' are also accepted
+			and will enable all or disable all groups,
+			respectively.
+			
+			If the LAT protocol is not available on the
+			Annex, sets of this object are ignored.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'authorized_groups'.
+
+			Note: You may use either this object or 
+			anxpLatAuthMap object to read or set the 
+			'group_value' parameter.anxpLatAuthMap is 
+			preferred."
+		::= { portEntry 66 }
+
+  anxpPppDialupAddr	OBJECT-TYPE
+	SYNTAX INTEGER {
+                        local(1),
+                        authserver(2),
+                        dhcp(3)
+                }
+                ACCESS read-write 
+                STATUS deprecated
+                DESCRIPTION
+                        "
+                        local(1) - Disabled.
+        
+                        authserver(2) - The Annex requests the
+                        PPP dialup addresses from the host-based
+                        ACP.
+                        
+                        dhcp(3) - The Annex requests the
+                        PPP dialup addresses from the host-based
+                        DHCP.
+                         
+                        This MIB object corresponds to the NA/admin 
+                        asynchronous port parameter 'address_origin'."
+		::= { portEntry 67 }
+
+  anxpBanner	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2),
+			beforesec(3),		
+			aftersec(4)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Specifies whether the Annex banner and message-
+			of-the-day are displayed on the port.  The
+			default is enabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'banner'."
+		::= { portEntry 68 }
+
+  anxpPsHistory	OBJECT-TYPE
+		SYNTAX INTEGER (0..32767)
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Specifies how much data to buffer on a slave
+			port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ps_history_buffer'."
+		::= { portEntry 69 }
+
+  anxpLocation	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"A descriptive string for a this port.  This
+			string is displayed by the CLI who command.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'location'."
+		::= { portEntry 70 }
+
+  anxpType	OBJECT-TYPE
+		SYNTAX INTEGER {
+			hardwired(1),
+			dialin(2),
+			x25(3),
+			tn3270(4),
+			pc(5),
+			terminal(6),
+			printer(7),
+			modem(8)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The type of device attached to the port.  The
+			default is hardwired.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'type'."
+		::= { portEntry 71 } 
+
+  anxpCliImask7	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Defines whether input at the CLI is masked to
+			7 bits.  The default is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'cli_imask7'."
+		::= { portEntry 72 }
+
+  anxpModemVar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+		STATUS deprecated
+                DESCRIPTION
+			"A string defining the type of modem attached
+			to the serial port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'type_of_modem'."
+                ::= { portEntry 73 }
+
+  anxpPppNcp    OBJECT-TYPE
+		SYNTAX INTEGER {
+			ipcp(1),
+			atcp(2),
+			all(3),
+			ipxcp(4),
+			ipcp-atcp(5),
+			ipcp-ipxcp(6),
+			atcp-ipxcp(7),
+			ipcp-atcp-ipxcp(8),
+			ipcp-ccp(9),
+			atcp-ccp(10),
+			ipxcp-ccp(11),
+			ipcp-atcp-ccp(12),
+			ipcp-ipxcp-ccp(13),
+			atcp-ipxcp-ccp(14),
+			ipcp-atcp-ipxcp-ccp(15)
+		}
+		ACCESS read-write
+		STATUS deprecated
+                DESCRIPTION
+			"The protocol running on the interface.	
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ppp_ncp'.
+			Note that all and ipcp-atcp-ipxcp-ccp-mp are
+			identical and provided for backward compatibility."
+		::= { portEntry 74 }
+							 
+  --		    { portEntry 75 } is reserved
+ 
+  anxpPhoneNumber    OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..32))
+		ACCESS read-write
+                STATUS deprecated
+		DESCRIPTION
+			"The phone number used for this port when doing
+			demand dialing.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'phone_number'."
+                ::= { portEntry 76 }
+		 
+  anxpNetInactivity     OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write
+                STATUS deprecated
+		DESCRIPTION
+			"The number of units allowed for serial protocol
+			inactivity on the port.  The type of unit, minutes
+			or seconds, is defined by the object 
+                        anxpNetInactivityUnits.  If the type of units is
+                        'seconds', the actual granularity is only 5
+                        seconds.  When the interval expires,
+                        the port is automatically reset.  A value of 0
+			disables the timer.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'net_inactivity'."
+		::= { portEntry 77 }
+
+  anxpAtGuest   OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+                }
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+                        "If enabled, allows ARAP guest login service.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'at_guest'."
+		::= { portEntry 78 }
+					 
+  anxpAtNodeid  OBJECT-TYPE
+                SYNTAX DisplayString (SIZE (3..11))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+                        "The default AppleTalk node ID hint that is
+			used by the Annex on this port.  The address 
+			consists of two parts separated by a dot.  The 
+			address may be in either hex or decimal format.  
+			The first part is the network address and ranges from 
+			0 to 65534 (0x0000 to 0xFFFE).  The second part 
+			is the node address and ranges from 0 to 254 (0x00 
+			to 0xFE).  
+
+			Example:
+			
+			  0x00BF.0xFD  191.253  0x00BF.253  191.0xFD
+			  
+			are all the same address.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'at_nodeid'."
+		::= { portEntry 79 }
+								 
+  anxpAtSecurity        OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+                }
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+                        "Controls whether ACP service is enabled for
+			this port when establishing an AppleTalk
+			connection.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'at_security'."
+		::= { portEntry 80 }
+ 
+  anxpArapV42bis        OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+                        disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Controls whether V.42bis compression is done
+			during an ARAP session.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'arap_v42bis'."
+		::= { portEntry 81 }
+
+  anxpTn3270PrinterHost OBJECT-TYPE
+		SYNTAX IpAddress 
+		ACCESS read-write
+		STATUS deprecated
+                DESCRIPTION
+			"The IP address of the machine running a 
+			Berkeley-style lpd server.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'tn3270_printer_name'."
+		::= { portEntry 82 }
+ 
+  anxpTn3270PrinterName OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+                STATUS deprecated
+		DESCRIPTION
+			"A valid printer name contained in the 
+			/etc/printcap file on the remote host.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'tn3270_printer_name'."
+		::= { portEntry 83 }
+
+  anxpTcpKeepAlive OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The default keep-alive value for connections
+			to this serial port.  If this is zero, use the
+			value specified by anxTcpKeepAlive.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'tcp_keepalive'."
+		::= { portEntry 84 }
+
+
+	--  { portEntry 85 } is reserved
+
+
+  anxpDtrSignal OBJECT-TYPE
+		SYNTAX INTEGER {
+			unknown(1),
+			high(2),
+			low(3)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Controls the DTR (Data Terminal Ready) output
+			control signal for this serial port. Valid set
+			values are high or low. Setting the value on an
+			idle port will produce an error."
+		::= { portEntry 86 }
+			   
+  anxpRtsSignal OBJECT-TYPE
+		SYNTAX INTEGER {
+			unknown(1),
+			high(2),
+			low(3)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Controls the RTS (Request to Send) output control
+			signal for this serial port. Valid set values are
+			high or low. Setting the value on an idle port will
+			produce an error."
+		::= { portEntry 87 }
+
+  anxpCliInterface OBJECT-TYPE
+		SYNTAX INTEGER {
+			uci(1),
+			vci(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Specifies either a Unix or VMS command line interface.
+			The default is uci.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'cli_interface'."
+		::= { portEntry 88 }
+							   
+  anxpAutobaud  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, specifies that the line speed should be
+			determined when opening the connection.  The default
+			is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'autobaud'."
+		::= { portEntry 89 }
+
+  anxpDefSessMode       OBJECT-TYPE
+		SYNTAX INTEGER {
+			interactive(1),
+			passthru(2),
+			passall(3),
+			transparent(4)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The default session mode when the DECServer command
+			interface is configured.  The default is interactive.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'default_session_mode'."
+		::= { portEntry 90 }
+		
+  anxpIpxSecurity OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Controls whether IPX security is enabled on
+			this port.  The default is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ipx_security'."
+		::= { portEntry 91 }
+		
+  anxpIpsoClass OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			secret(2),
+			topsecret(3),
+			confidential(4),
+			unclassified(5)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Defines the IP security classification for
+			packets sent and received on this port.  The
+			default value is none.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'ipso_class'."
+		::= { portEntry 92 }
+
+  anxpVciLoginPortPasswd        OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Enables the port password if the port is
+			configured as a DECServer interface port.
+			The default is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'login_port_password'."
+		::= { portEntry 93 }
+
+  anxpVciLoginTimeout   OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Enables a login timer if the port is configured
+			as a DECServer interface port.  The default
+			is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'login_port_timeout'."
+		::= { portEntry 94 }
+
+  anxpDedicatedArgs	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..100))
+		ACCESS read-write
+                STATUS deprecated
+		DESCRIPTION
+			"Command line arguments to be passed to process
+			started by a dedicated port with mode set to
+			'telnet', 'tn3270', 'rlogin', 'connect' (if LAT
+			is in use) or 'call'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'dedicated_arguments'."
+		::= { portEntry 95 }
+
+  anxpNetInactivityUnits OBJECT-TYPE
+		SYNTAX INTEGER {
+			minutes(1),
+			seconds(2)
+		}
+		ACCESS read-write
+                STATUS deprecated
+		DESCRIPTION
+			"The type of units that are used for the 
+			port's net inactivity timer.  See also the 
+			anxpNetInactivity object.  The default value
+			is 'minutes'.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous port parameter 'net_inactivity_units'."
+		::= { portEntry 96 }
+
+  anxpResolveProtocol   OBJECT-TYPE
+                SYNTAX INTEGER {
+                        connect(15),
+                        telnet(17),
+                        any(19)
+                }
+                ACCESS read-write
+                STATUS deprecated
+                DESCRIPTION
+                        "Default host protocol to use when starting a
+                        dedicated port and the protocol is not explicitly
+                        specified in the command.  Is set to one of
+                        'telnet', connect, or any.  Any means to try LAT
+                        (connect) first and if that fails, try telnet.
+
+                        This MIB object corresponds to the NA/admin
+                        asynchronous port parameter 'resolve_protocol."
+                ::= { portEntry 97 }
+
+  anxpForwardKey        OBJECT-TYPE
+                SYNTAX DisplayString (SIZE(0..16))
+                ACCESS read-write
+                STATUS deprecated
+                DESCRIPTION
+                        "Defines a control character sequence as an
+                        attention character to switch the user to
+                        the next session.  The Annex-II only allows
+                        a single control character (eg. ^A), while
+                        the Annex3 and MicroAnnex allow a string
+                        of control characters to be defined
+                        (eg. ^A^B^Z).
+
+                        This MIB object corresponds to the NA/admin
+                        asynchronous port parameter 'forward_key'."
+                ::= { portEntry 98 }
+
+  anxpBackwardKey       OBJECT-TYPE
+                SYNTAX DisplayString (SIZE(0..16))
+                ACCESS read-write
+                STATUS deprecated
+                DESCRIPTION
+                        "Defines a control character sequence as an
+                        attention character to switch the user to
+                        the previous session.  The Annex-II only allows
+                        a single control character (eg. ^A), while
+                        the Annex3 and MicroAnnex allow a string
+                        of control characters to be defined
+                        (eg. ^A^B^Z).
+
+                        This MIB object corresponds to the NA/admin
+                        asynchronous port parameter 'Backward_key'."
+                ::= { portEntry 99 }
+
+  anxpPppIpxNetwork	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE(1..8))
+                ACCESS read-write
+                STATUS deprecated
+                DESCRIPTION
+			"The IPX network number for an IPX PPP connection
+			using this port. When the IPX PPP connection is
+			established the network number will be negotiated.
+			If one end of the connection is set to zero then 
+			the value from the other end of the connection will
+			be used.
+			The value of this object is an 8 digit hexadecimal
+			number string representing the IPX network segment
+			assigned to this port. The value must be unique 
+			across the network domain.
+			This MIB object corresponds to the NA/admin
+			asynchronous port parameter 'ppp_ipx_network'."
+		::= { portEntry 100 }
+
+  anxpPppIpxNode	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE(11..17))
+                ACCESS read-write
+                STATUS deprecated
+                DESCRIPTION
+			"The IPX node number for an IPX PPP connection
+			using this port. 
+			The value of this object is a 12 digit
+			hexadecimal number string representing the IPX
+			node number assigned to this port.
+			Note the string is expected in the form:
+			12-3a-4-7-89-23.Each part of the address 
+			must be a hex value separated by a hyphen.
+			This MIB object corresponds to the NA/admin
+			asynchronous port parameter 'ppp_ipx_node'."
+
+		::= { portEntry 101 }
+
+  anxpLatAuthMap        OBJECT-TYPE
+		SYNTAX OCTET STRING (SIZE (1..32))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"This port parameter is functionally identical to
+	  		anxpLatAuthGroupVal and corresponds to the 
+			NA/admin Annex parameter 'group_value'.
+
+			The syntax of this object is an octet string
+			32 bytes long, with the first byte 
+			representing groups 0 through 7 and the last 
+			byte representing groups 248 through 255.
+ 
+			For example, 0x40 0x25 ... means the groups 
+			1,10,13,15 are valid for this port.
+			A returned value with all bits set to zero is the
+			same as setting 'group_value' to 'none'.
+			The object always returns a string 32 bytes long.
+
+			Note: You may use either this object or 
+			anxpLatAuthVal object to read or set the 
+			'group_value' parameter.anxpLatAuthMap is 
+			preferred." 
+
+		::= { portEntry 102 }
+
+    anxpMultiSession     OBJECT-TYPE
+		SYNTAX  INTEGER {
+        	        enable(1),
+                	disable(2)
+		        }
+	        ACCESS read-write
+	        STATUS deprecated
+        	DESCRIPTION
+                	"This parameter allows multisession operation to 
+			be managed on a per port basis. This MIB object 
+			corresponds to the NA/admin port parameter 
+			'multisessions'. To enable the multisession 
+			capability on a port, it is also necessary to enable
+			the service at the Annex level by setting the object
+			anxMultiSession to the enable value. Only when the
+			service is enabled at the Annex and at the port level
+			will it take effect.
+			
+			Note: The value of this object is written in the
+			non-volatile memory. Thus the value takes in effect
+			after reboot or resetting the port." 
+
+	   	::= { portEntry 103 }
+
+    anxpAutoTimeout     OBJECT-TYPE
+		SYNTAX  INTEGER (1..60)
+	        ACCESS read-write
+	        STATUS deprecated
+        	DESCRIPTION
+                	"This parameter allows a user to specify the
+			maximum amount of time the annex should wait
+			before dropping into cli mode. This parameter 
+			will specify the amount of time in seconds that 
+			the annex will wait for a auto-detect or 
+			auto-adapt port client's to identify itself as a
+			PPP or CLI client before defaulting the user into
+			CLI mode.
+
+			The default is 30 seconds.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous port parameter 'autodetect-timeout'."
+			
+	   	::= { portEntry 104 }
+
+    anxpAutoPPPSecurity     OBJECT-TYPE
+		SYNTAX  INTEGER {
+				enable(1),
+				disable(2)
+			}
+	        ACCESS read-write
+	        STATUS deprecated
+        	DESCRIPTION
+                	"This parameter should be used together with the
+			ppp_security_protocol parameter. If this object is
+			set to enable and if the user comes in as CLI and
+			then goes into PPP mode, the annex behaves as if
+			the ppp_security_protocol parameter was set to 
+			'none'. If the user is auto-detected as PPP, the
+			annex will use ppp_security_protocol as specified.
+			Finally, settting this object to disable, will not 
+			affect the annex operation.
+
+			The default is disable(2).
+
+			This MIB object corresponds to the NA/admin
+			asynchronous port parameter 'ppp_sec_auto'."
+			
+	   	::= { portEntry 105 }
+
+--  a table of current port status and statistics
+
+  portStatsTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF PortStatsEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Table of current port status entries."
+		::= { ports 8 }
+
+  portStatsEntry	OBJECT-TYPE
+		SYNTAX PortStatsEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"The port's current status parameters.  
+			If the port is not in use, no values are
+			returned for that port."
+		INDEX  { anxpPortStatsIndex }
+		::= { portStatsTable 1 }
+
+  PortStatsEntry  ::= SEQUENCE {
+	anxpPortStatsIndex	INTEGER,
+	anxpCurrentUserName	DisplayString,
+	anxpPortIdleTime	DisplayString,
+	anxpPortLoginTime	DisplayString,
+	anxpPortProto		INTEGER,
+	anxpPortJobs            DisplayString
+  }
+
+  anxpPortStatsIndex	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"A unique number from 1 to the sum of the 
+			number of asynchronous ports, synchronous ports,
+			and virtual ports.  The numbers from 1 to
+			totalPorts represent the asynchronous ports,
+			from totalPorts+1 to totalPorts+totalSyncPorts
+			represent the synchronous ports, and from
+			totalPorts+totalSyncPorts to
+			totalPorts+totalSyncPorts+128 represent the
+			virtual ports."
+		::= { portStatsEntry 1 }
+
+  anxpCurrentUserName	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..128))
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"The name of the current user on this port. The 
+			string '<unknown>' is returned if the port is in 
+			use but the current user name cannot be determined."
+		::= { portStatsEntry 2 }
+
+  anxpPortIdleTime	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"The length of time in DD:HH:MM since the
+			last activity on this port."
+		::= { portStatsEntry 3 }
+
+  anxpPortLoginTime	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Displays the time that the port was opened from the
+			Annex time-of-the-day clock."
+		::= { portStatsEntry 4 }
+		
+
+  anxpPortProto		 OBJECT-TYPE
+		SYNTAX   INTEGER {
+				cli(1),
+                                psvr(2),
+                                vcli(5),
+                                dp(6),
+                                slip(7),
+                                lpd(8),
+                                ppp(9),
+                                arap(10),
+                                ftp(11),
+                                ndp(12),
+                                ipx(13),
+                                dyndial(14)
+			}
+		ACCESS   read-only
+		STATUS   deprecated
+		DESCRIPTION
+        		"This object returns the information that is similar
+			to when the command 'who' is typed on the CLI. 
+			CLI - The port is a CLI port and was opened by
+				a device connected to the port or by a
+				connection from a host as a virtual CLI.
+			PSVR - The port is a slave port and was opened
+				via a network connection to the port
+				server.
+			VCLI - The port is a virtual port.
+			DP - The port is dedicated.
+			LPD- The port is the Annex line printer daemon.
+			PPP - The port is a PPP interface.
+			SLIP - The port is a SLIP interface.
+			ARAP - The port is a ARAP interface.
+			FTP - The port is a FTP interface.
+			IPX - The port is an IPX interface.
+			DYNDIAL - The port is a dynamic dial port.
+		Note: Values 3 and 4 are unused."      
+		::= { portStatsEntry 5 }
+
+anxpPortJobs   OBJECT-TYPE
+                SYNTAX DisplayString
+                ACCESS read-only
+                STATUS deprecated
+                DESCRIPTION
+                        "Port Job list for this cli port."
+                ::= { portStatsEntry 6 }
+ 
+
+  -- the parallel port parameters
+
+  
+  anxpParaPorts	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"The number of parallel ports on this Annex."
+		::= { parallelport 1 }
+
+  -- The remainder of these parallel port objects are returned only
+  -- if the value of anxpParaPorts is non-zero.
+
+  anxpParaPortTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF AnxpParaPortEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Table of parallel port parameters."
+		::= { parallelport 2 }
+
+  anxpParaPortEntry	OBJECT-TYPE
+		SYNTAX AnxpParaPortEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"The Annex parallel port configuration 
+			parameters."
+		INDEX  { anxpParaPortIndex }
+		::= { anxpParaPortTable 1 }
+
+  AnxpParaPortEntry	::= SEQUENCE {
+	anxpParaPortIndex		INTEGER,
+	anxpParaPortHardwareTabs	INTEGER,
+	anxpParaPortMapToUpper		INTEGER,
+	anxpParaPortPrinterWidth	INTEGER,
+	anxpParaPortInterface		INTEGER,
+	anxpParaPortSpeed		INTEGER,
+	anxpParaPortCRLF		INTEGER,
+	anxpParaPortTcpKeepAlive	INTEGER
+  }
+
+  anxpParaPortIndex	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"A unique number from 1 to anxpParaPorts that 
+			identifies each parallel port."
+		::= { anxpParaPortEntry 1 }
+
+  anxpParaPortHardwareTabs OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			will send a tab character to the printer.  If
+			disabled, the tab is replaced with spaces.
+			
+			This MIB object corresponds to the NA/admin 
+			parallel port parameter 'hardware_tabs'."
+		::= { anxpParaPortEntry 2 }
+
+  anxpParaPortMapToUpper  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, the Annex translates all lower
+			case characters to upper case before 
+			transmitting the characters to the printer 
+			port.
+			
+			This MIB object corresponds to the NA/admin 
+			parallel port parameter 'map_to_upper'."
+		::= { anxpParaPortEntry 3 }
+
+  anxpParaPortPrinterWidth  OBJECT-TYPE
+		SYNTAX INTEGER (0..132)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The defined maximum number of characters per
+			printer line.  The Annex will insert a <newline>
+			character after the specified number of characters
+			are output on the parallel port.  A value of 0 
+			disables this feature.
+			
+			This MIB object corresponds to the NA/admin 
+			parallel port parameter 'printer_width'."
+		::= { anxpParaPortEntry 4 }
+
+  anxpParaPortInterface OBJECT-TYPE
+		SYNTAX INTEGER {
+			centronics(1),
+			dataproducts(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The type of printer attached to the port.
+			
+			This MIB object corresponds to the NA/admin 
+			parallel port parameter 'type'."
+		::= { anxpParaPortEntry 5 }
+
+  anxpParaPortSpeed OBJECT-TYPE
+		SYNTAX INTEGER {
+			normal(1),
+			high-speed(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The printer speed on the Micro-Annex.
+
+			If this is an Annex-3 and the printer type is
+			Centronics, the default is 'normal'.  It should
+			not be necessary to change the value of this
+			parameter.
+			
+			This MIB object corresponds to the NA/admin 
+			parallel port parameter 'printer_speed'."
+		::= { anxpParaPortEntry 6 }
+
+  anxpParaPortCRLF OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+                }
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+                        "When enabled, the Annex converts a carriage-return
+			character to carriage-return/line-feed.
+			
+			This MIB object corresponds to the NA/admin 
+			parallel port parameter 'printer_crlf'."
+		::= { anxpParaPortEntry 7 }
+								 
+  anxpParaPortTcpKeepAlive OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The default keep-alive value for connections
+			to this parallel port.  If this is zero, use the
+			value specified by anxTcpKeepAlive.
+			
+			This MIB object corresponds to the NA/admin 
+			parallel port parameter 'tcp_keepalive'."
+		::= { anxpParaPortEntry 8 }
+
+
+
+-- the synchronous ports group
+
+  totalSyncPorts OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The number of synchronous ports on this Annex."
+		::= { anxsyncports 1 }
+
+  totalSyncInChars OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of characters received on all
+			synchronous ports."
+		::= { anxsyncports 2 }
+
+  totalSyncOutChars OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of characters transmitted on
+			all synchronous ports."
+		::= { anxsyncports 3 }
+
+  totalSyncFrameCheckErrs OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of frame check errors detected
+			on all synchronous ports since the last boot."
+		::= { anxsyncports 4 }
+
+  totalSyncXmitUnderrunErrs OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of transmit underrun errors 
+			detected on all synchronous ports since the 
+			last boot."
+		::= { anxsyncports 5 }
+
+  totalSyncRecvOverrunErrs OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"The total number of receive overrun errors 
+			detected on all synchronous ports since the 
+			last boot."
+		::= { anxsyncports 6 }
+
+
+-- table of synchronous port parameters
+-- These objects are returned only if totalSyncPorts is non-zero.
+ 
+
+  anxSyncTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF AnxSyncEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Table of synchronous port parameters."
+		::= { anxsyncports 7 }
+
+  anxSyncEntry	OBJECT-TYPE
+		SYNTAX AnxSyncEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"The synchronous port's parameters."
+		INDEX  { anxSyncPortIndex }
+		::= { anxSyncTable 1 }
+
+  AnxSyncEntry ::= SEQUENCE {
+	anxSyncPortIndex 	INTEGER,
+	anxSyncMode 		INTEGER,
+	anxSyncClocking 	DisplayString,
+	anxSyncLocalUser 	DisplayString,
+	anxSyncPortPassword 	DisplayString,
+	anxSyncLocalAddr 	IpAddress,
+	anxSyncRemoteAddr 	IpAddress,
+	anxSyncMetric 		INTEGER,
+	anxSyncAllowCompression INTEGER,
+	anxSyncPppMru 		INTEGER,
+	anxSyncPppSecurityProto	INTEGER,
+	anxSyncPppUserRemote 	DisplayString,
+	anxSyncPppPasswdRemote 	DisplayString,
+	anxSyncPppNcp 		INTEGER,
+	anxSyncLocation		DisplayString,
+	anxSyncForceCTS		INTEGER,
+	anxSyncSubNetMask	IpAddress,
+	anxSyncDialupAddr	INTEGER,
+	anxSyncPppSecurity	INTEGER
+	}
+
+  anxSyncPortIndex OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"A unique number from 1 to totalSyncPorts that 
+			identifies each synchronous port."
+		::= { anxSyncEntry 1 }
+
+  anxSyncMode OBJECT-TYPE
+		SYNTAX INTEGER {
+			unused(1),
+			ppp(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines the mode for access to
+			the synchronous port.  The default is unused.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'mode'."
+		::= { anxSyncEntry 2 }
+
+  anxSyncClocking OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (2..8))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The clock rate (in Kbps) supplied for this port.  
+			The allowable values are '56', '64', '112', '128' or
+			'external'.  The default value is 'external'.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'clocking'."
+		::= { anxSyncEntry 3 } 
+
+  anxSyncLocalUser OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"A string specifying the default user name for
+			the port.  The default value is a zero length
+			string.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'user_name'."
+		::= { anxSyncEntry 4 }
+
+  anxSyncPortPassword OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The port password.  The default value
+			is '<unset>'.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'port_password'."
+		::= { anxSyncEntry 5 }
+
+  anxSyncLocalAddr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The Internet address for the Annex's side
+			of the point-to-point link.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'local_address'."
+		::= { anxSyncEntry 6 }
+
+  anxSyncRemoteAddr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The Internet address for the host at the
+			remote end of the point-to-point link.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'remote_address'."
+		::= { anxSyncEntry 7 }
+
+  anxSyncMetric OBJECT-TYPE
+		SYNTAX INTEGER (1..15)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines the hop count to
+			the remote end of the synchronous interface.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'metric'."
+		::= { anxSyncEntry 8 }  
+
+  anxSyncAllowCompression  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, the Annex will use TCP/IP
+			header compression on this link only
+			if the other end of the link initiates
+			the compression.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'allow_compression'."
+		::= { anxSyncEntry 9 }
+
+  anxSyncPppMru    OBJECT-TYPE
+		SYNTAX INTEGER (64..1500)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines the maximum receive
+			unit in bytes.  The default value is 1500.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'ppp_mru'."
+		::= { anxSyncEntry 10 }
+
+  anxSyncPppSecurityProto OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			pap(2),
+			chap(3),
+			chappap(4)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Defines which security protocol will be used
+			to authenticate the remote user.  This
+			parameter must be set and the Annex 
+			enable_security (anxEnableSecurity) must be 
+			enabled before authentication is performed.  
+			The default is none.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'ppp_security_protocol'."
+		::= { anxSyncEntry 11 }
+
+  anxSyncPppUserRemote OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The username used by the Annex to identify 
+			itself if the remote PPP peer asks for 
+			authentication.  Reading this parameter
+			will return either <set> if the username is
+			defined or <unset> if the username is not
+			defined.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'ppp_username_remote'."
+		::= { anxSyncEntry 12 }
+
+  anxSyncPppPasswdRemote OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The username used by the Annex to identify 
+			itself if the remote PPP peer asks for 
+			authentication.  Reading this parameter
+			will return either <set> if the password is
+			defined or <unset> if the password is not
+			defined.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'ppp_password_remote'."
+		::= { anxSyncEntry 13 }
+
+  anxSyncPppNcp OBJECT-TYPE
+		SYNTAX INTEGER {
+			ipcp(1),
+			atcp(2),
+			all(3),
+			ipxcp(4),
+			ipcp-atcp(5),
+			ipcp-ipxcp(6),
+			atcp-ipxcp(7),
+			ipcp-atcp-ipxcp(8),
+			ipcp-ccp(9),
+			atcp-ccp(10),
+			ipxcp-ccp(11),
+			ipcp-atcp-ccp(12),
+			ipcp-ipxcp-ccp(13),
+			atcp-ipxcp-ccp(14),
+			ipcp-atcp-ipxcp-ccp(15)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The protocol running on the interface.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'ppp_ncp'."
+		::= { anxSyncEntry 14 }
+
+  anxSyncLocation OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"A string specifying location information for
+			the port.  The default value is a zero length
+			string.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'location'."
+		::= { anxSyncEntry 15 }
+
+  anxSyncForceCTS  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Allows the control of CTS for the synchronous
+			port.  If disabled, CTS will assume the level
+			of the interface.  If the attached device does
+			not assert CTS, this parameter must be set to
+			enabled for proper operation.  The default value
+			is 'disabled'.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'force_CTS'."
+		::= { anxSyncEntry 16 }
+
+  anxSyncSubNetMask  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The subnet mask address for the 
+			local end of the point-to-point link.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'subnet_mask'."
+		::= { anxSyncEntry 17 }
+
+  anxSyncDialupAddr  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"When enabled, the Annex requests the
+			PPP dialup addresses from the host-based
+			ACP for this synchronous port.
+
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'dialup_addresses'." 
+		::= { anxSyncEntry 18 }
+
+  anxSyncPppSecurity  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The master security switch for this synchronous
+			port.  When enabled, the value of the
+			anxSyncPppSecurityProto object determines the
+			security protocol to use.
+			
+			This MIB object corresponds to the NA/admin 
+			synchronous port parameter 'ppp_security'."
+		::= { anxSyncEntry 19 }
+
+
+--
+-- Modem MIB group(s)
+--
+
+--  The call accounting table.  This is deprecated by the callHistTable.
+
+
+anxmStatsTable	OBJECT-TYPE
+		SYNTAX	SEQUENCE OF AnxmStatsEntry
+		ACCESS	not-accessible
+		STATUS	deprecated
+		DESCRIPTION
+			"Table of phone call statistics and accounting 
+			parameters.  This information is cleared each
+			time the Annex is rebooted.  The maximum number
+			of entries is defined by the current value 
+			of the object anxMaxModemCalls.  When the
+			number of archived calls exceeds the defined
+			maximum, the oldest terminated call is replaced
+			by the new call information."
+		::= { anxModem 1 }
+
+anxmStatsEntry	OBJECT-TYPE
+		SYNTAX	AnxmStatsEntry
+		ACCESS	not-accessible
+		STATUS	deprecated
+		DESCRIPTION
+			"The modem statistics and accounting parameter 
+			objects."
+		INDEX { anxmStatsIndex }
+		::= { anxmStatsTable 1 }
+
+AnxmStatsEntry	::= SEQUENCE {
+		anxmStatsIndex		INTEGER,
+		anxmStatsPort		INTEGER,
+		anxmStatsModemType	DisplayString,
+		anxmStatsTime		DisplayString,
+		anxmStatsNumber		DisplayString,
+		anxmStatsDuration	TimeTicks,
+		anxmStatsUsername	DisplayString,
+		anxmStatsStatus		INTEGER
+		}
+
+anxmStatsIndex	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"A unique number generated to identify the
+			particular call."
+		::= { anxmStatsEntry 1 }
+
+anxmStatsPort	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"The port number on which phone call took place."
+		::= { anxmStatsEntry 2 }
+
+anxmStatsModemType	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..16))
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"The type of modem which was on the port at the
+			 time of the call."
+		::= { anxmStatsEntry 3 }
+
+anxmStatsTime	OBJECT-TYPE
+		SYNTAX	DisplayString
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"The time when the phone call was initiated."
+		::= { anxmStatsEntry 4 }
+
+anxmStatsNumber	OBJECT-TYPE
+		SYNTAX	DisplayString (SIZE (0..24))
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"The number to which this call was made.  If
+			the call was not initiated by the Annex, this
+			is value is returned as a zero length string."
+		::= { anxmStatsEntry 5 }
+
+anxmStatsDuration	OBJECT-TYPE
+		SYNTAX	TimeTicks
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"Duration of the phone call."
+		::= { anxmStatsEntry 6 }
+
+anxmStatsUsername	OBJECT-TYPE
+		SYNTAX	DisplayString (SIZE (2..32))
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"Name of the user associated with this port at
+			the time of the call."
+		::= { anxmStatsEntry 7 }
+
+anxmStatsStatus	OBJECT-TYPE
+		SYNTAX	INTEGER {
+			active(1),
+			exitNormal(2),
+			exitAbort(3)
+		}
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"Describes the status of the call; active, 
+			normal termination, or aborted."
+		::= { anxmStatsEntry 8 }
+
+
+--  This new object is a member of the async portEntry configuration
+--  table.  This should really be done via an AUGMENTS definition when
+--  we support the SNMPv2 SMI.  Please refer to the Annex MIB for more
+--  information.
+
+anxpModemTable OBJECT-TYPE
+		SYNTAX	SEQUENCE OF AnxpModemEntry
+  		ACCESS  not-accessible
+    		STATUS  mandatory
+  		DESCRIPTION
+			"A table of modem configuration information
+			for the ports."
+		::= { anxModem 2 }
+							    
+anxpModemEntry OBJECT-TYPE
+		SYNTAX    AnxpModemEntry
+		ACCESS    not-accessible
+		STATUS    mandatory
+		DESCRIPTION
+			"A row in the port's modem configuration table."
+		INDEX     { anxpModemIndex }
+		::= { anxpModemTable 1 }
+
+AnxpModemEntry	::= SEQUENCE {
+		anxpModemIndex		INTEGER,
+		anxpModemConfig		INTEGER,
+		anxpModemReset          INTEGER,
+		anxpModemStatus		INTEGER,
+		anxpModemBChannel	INTEGER,
+		anxpModemWhenBusy	INTEGER,
+		anxpModemTotalCalls	Counter,
+		anxpModemRingFail	Counter,
+		anxpModemOffhookFail    Counter,
+		anxpModemDcdFail        Counter,
+		anxpModemConsecFail     Counter,
+		anxpModemFirmware	DisplayString
+		}
+
+anxpModemIndex	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"The port number for this modem configuration."
+		::= { anxpModemEntry 1 }
+
+anxpModemConfig OBJECT-TYPE
+		SYNTAX INTEGER {
+			unknown(1),
+			none(2),
+			dialinautobaud(3),
+			dialin(4),
+			dialinoutautobaud(5),
+			dialinout(6),
+			dialout(7),
+			autodetect(8),
+			autoadapt(9),
+			ipx(10)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The purpose for which this modem is configured.
+			When set, this object will change a set of parameters
+			to configure the modem for the specified purpose.
+			The value 'unknown' is read only, and may be returned
+			upon read if the modem is not configured to one of
+			the states listed above.  Setting this object to
+			'unknown' will return an error.
+			The value 'none(2)' is not valid for hardware types
+			csmim-t1 and ra6100.
+			For RA6300, only valid option is dialin(4)."
+		::= { anxpModemEntry 2 }
+
+anxpModemReset	OBJECT-TYPE
+		SYNTAX	INTEGER {
+			ready(1),
+			execute(2)
+			}
+		ACCESS	read-write
+		STATUS	deprecated
+		DESCRIPTION
+			"A control to force the internal modem into a 
+			clean, initial state, through a hardware 
+			reset. In response to a get-request or 
+			get-next-request, the agent always returns 
+			'ready' as the value. Settingthe value to 
+			execute(2) - Busy out modem. If the modem is 
+				     busy, then busy it after call is
+				     completed.
+
+			For RA6300, this MIB object corresponds to the 
+			NA/admin port parameter  'modem -u <modem number>'.
+
+			This is valid only for T1CSMIM and RA6300 
+			boards."
+		::= { anxpModemEntry 3 }
+
+anxpModemStatus	OBJECT-TYPE
+		SYNTAX	INTEGER {
+			available(1),
+			busied-out(2),
+			failed(3),
+			used(4)
+			}
+		ACCESS	read-write
+		STATUS	deprecated
+		DESCRIPTION
+			"This object sets the status of the modem.
+		Explanation of the values are as follows:
+			1 - Make modem available if busied out.
+			2 - Busy out a modem.
+			3 - Boot-up diagnostic has marked this modem
+			    as failed.
+			4 - Modem is handling a call.
+
+		This MIB object corresponds to the NA/admin
+		port parameter 'modem -m <modem number>'. 
+		This object valid for RA6300 only."
+		::= { anxpModemEntry 4 }
+
+anxpModemBChannel	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"This object returns the B channel number 
+		that is using the modem. This object is valid only if
+		the status of the modem is used.
+
+		This MIB object displays the similar information
+		as the NA/admin command 'modem -m <modem number>' and
+		the modem status is used.
+		This object valid for RA6300 only."
+		::= { anxpModemEntry 5 }
+
+-- this object may be removed
+anxpModemWhenBusy	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"This object returns when the modem was 
+		busied out. This object is valid only when the modem
+		status is busied-out(2).
+
+		This MIB object displays the similar information
+		as the NA/admin command 'modem -m <modem number>' and
+		the modem status is busied out.
+		This object valid for RA6300 only." 
+		::= { anxpModemEntry 6 }
+
+-- the following 5 objects gives the statistics of call failures on a modem. 
+-- A call can fail at various stage. When a call arrives it is termed as line
+-- seizure. After a line is seized the ring is asserted by the modem and then 
+-- the modem goes offhook. Finally when the modem accepts a call it asserts
+-- (raises) the DCD.
+-- These objects could be used to help to identify a bad modem.
+
+anxpModemTotalCalls	OBJECT-TYPE
+		SYNTAX	Counter
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"This object maintains the count of number of times
+		the line is seized on a modem. The line is seized when a call 
+		arrives on that line." 
+		::= { anxpModemEntry 7 }
+
+anxpModemRingFail	OBJECT-TYPE
+		SYNTAX	Counter
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"This object maintains the count of number of times
+		the modem failed to ring on a call. The counter is maintained 
+		since the last reboot."
+		::= { anxpModemEntry 8 }
+
+anxpModemOffhookFail	OBJECT-TYPE
+		SYNTAX	Counter
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"This object maintains the count of number of times
+		the modem failed to go offhook on a call. The counter is 
+		maintained since the last reboot."
+		::= { anxpModemEntry 9 }
+
+anxpModemDcdFail	OBJECT-TYPE
+		SYNTAX	Counter
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"This object maintains the count of number of times
+		the modem failed to assert DCD on a call. The DCD is asserted
+		when a call is accepted by the modem. The counter is 
+		maintained since the last reboot."
+		::= { anxpModemEntry 10 }
+
+anxpModemConsecFail	OBJECT-TYPE
+		SYNTAX	Counter
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"This object maintains the count of number of times
+		the modem failed to accept a call consecutively. The counter
+		gets initialized on every successfull call or when the counter
+		value reaches threshold and the modem is busyied out.
+		This object along with the above fail statistics objects could
+		help in isolating a bad modem."
+		::= { anxpModemEntry 11 }
+
+anxpModemFirmware	OBJECT-TYPE
+		SYNTAX	DisplayString (SIZE (1..80))
+		ACCESS	read-only
+		STATUS	deprecated
+		DESCRIPTION
+			"Modem firmware version string.
+			Note: If the object returns a Nosuchname then
+			it is possible that modem is being upgraded by
+			AFD or some other tool."
+		::= { anxpModemEntry 12 }
+
+END
+
+
+
+
+
+
+

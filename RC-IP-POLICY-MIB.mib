@@ -1,0 +1,2544 @@
+
+RC-IP-POLICY-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, IpAddress
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, RowStatus
+        FROM SNMPv2-TC
+    rcIpPolicy, rcIpGenPolicy
+        FROM RC-IP-MIB
+    EnableValue
+        FROM RAPID-CITY;
+
+
+rcIpPolicyMib MODULE-IDENTITY
+       LAST-UPDATED     "200511300000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "Yu-Ten Lee
+                         Postal:        Nortel Networks, Inc.
+                                              4655 Great America Parkway
+                                              Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-2560
+                         Fax:          408-495-6680
+                         E-mail:     ylee@nortelnetworks.com"
+
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200511300000Z" -- 30 Nov 2005
+       DESCRIPTION "Version 7:  Expanded range of rcIpRoutePolicyMatchProtocol
+                                to 0-255."
+
+       REVISION "200511220000Z" -- 22 Nov 2005
+       DESCRIPTION "Version 6: Updated rcIpRedistributeProtocol & rcIpRoutePrefProtocol"
+
+       REVISION "200508290000Z" -- 29 Aug 2005
+       DESCRIPTION "Version 5: Modified IPRoute and IP redistribute MIB to add ISIS 
+                    related values. Modified IP RedistributeMetricType description."
+
+       REVISION "200504140000Z" -- 14 Apr 2005
+       DESCRIPTION "Version 4: Modified rcIpRoutePolicyMatchProtocol mib object"
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcIpPolicy 0 }
+
+-- IP Policy Address Table
+
+rcIpPolicyAddrTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the 
+		      rcIpPolicyAddrTable."
+        ::= { rcIpPolicy 1 }
+
+rcIpPolicyAddrTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpPolicyAddrEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to store different types list entries.
+                      Each row in the table contains a list entry that is
+                      used by a set of announce policies."
+        ::= { rcIpPolicy 2 }
+ 
+rcIpPolicyAddrEntry OBJECT-TYPE
+        SYNTAX        RcIpPolicyAddrEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Route entry attributes."
+        INDEX         {rcIpPolicyAddrIpAddr}
+        ::= { rcIpPolicyAddrTable 1 }
+ 
+RcIpPolicyAddrEntry ::= SEQUENCE {
+                        rcIpPolicyAddrIpAddr IpAddress,
+                        rcIpPolicyAddrId   Integer32,
+                        rcIpPolicyAddrAddrListIdListSize INTEGER,
+                        rcIpPolicyAddrAddrListIdList OCTET STRING,
+                        rcIpPolicyAddrRowStatus RowStatus
+                        }
+
+
+rcIpPolicyAddrIpAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "The network address for this type of list entry. This 
+                      value is required for all types of lists."
+        ::= { rcIpPolicyAddrEntry 1 }
+ 
+rcIpPolicyAddrId OBJECT-TYPE
+        SYNTAX	      Integer32
+        MAX-ACCESS	  read-only
+        STATUS	      deprecated
+        DESCRIPTION   "Identifier of this entry. Used internally to identify
+		      this entry."
+        ::= { rcIpPolicyAddrEntry 2 }
+
+rcIpPolicyAddrAddrListIdListSize OBJECT-TYPE
+        SYNTAX	      INTEGER (0..128)
+        MAX-ACCESS	  read-only
+        STATUS	      deprecated
+        DESCRIPTION   "Used to indicate the number of id(s) in the
+		      rcIpPolicyAddrListIdList variable."
+        ::= { rcIpPolicyAddrEntry 3 }
+
+rcIpPolicyAddrAddrListIdList OBJECT-TYPE
+        SYNTAX	      OCTET STRING (SIZE(256))	
+        MAX-ACCESS	  read-only
+        STATUS	      deprecated
+        DESCRIPTION   "Used to indicate zero or more rcIpPolicyAddrListEntry(s)
+		      that are referring to this entry.  Each list-id identifier 
+                      is stored as two bytes in this array starting from 
+                      offset zero.  Any unused bytes should be set to zero."
+        ::= { rcIpPolicyAddrEntry 4 }
+
+rcIpPolicyAddrRowStatus OBJECT-TYPE
+        SYNTAX		RowStatus
+        MAX-ACCESS		read-write
+        STATUS		deprecated
+        DESCRIPTION	"Row status of this entry."
+        ::= { rcIpPolicyAddrEntry 5 }
+
+
+-- Ip Policy Network Table
+
+rcIpPolicyNetTableSize OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the 
+		      rcIpPolicyNetTable."
+        ::= { rcIpPolicy 3 }
+
+rcIpPolicyNetTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpPolicyNetEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to store different types list entries.
+                      Each row in the table contains a list entry that is
+                      used by a set of announce policies."
+        ::= { rcIpPolicy 4 }
+ 
+rcIpPolicyNetEntry OBJECT-TYPE
+        SYNTAX        RcIpPolicyNetEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Route entry attributes."
+        INDEX         {rcIpPolicyNetAddr, rcIpPolicyNetMask }
+        ::= { rcIpPolicyNetTable 1 }
+ 
+RcIpPolicyNetEntry ::= SEQUENCE {
+                        rcIpPolicyNetAddr IpAddress,
+                        rcIpPolicyNetMask IpAddress,
+                        rcIpPolicyNetId   Integer32,
+                        rcIpPolicyNetNetListIdListSize INTEGER,
+                        rcIpPolicyNetNetListIdList OCTET STRING,
+                        rcIpPolicyNetRowStatus RowStatus
+                        }
+
+rcIpPolicyNetAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "The network address for this type of list entry. This 
+                      value is required for all types of lists."
+        ::= { rcIpPolicyNetEntry 1 }
+ 
+rcIpPolicyNetMask OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "The route mask for this type of list entry. This 
+                      value is meaningful only if rcIpPolicyNetEntry 
+                      is equal to exactNet(1), rangeNet(2), advertiseNet(3).
+                      For other types it should have the value 0.0.0.0."
+        ::= { rcIpPolicyNetEntry 2 }
+
+rcIpPolicyNetId OBJECT-TYPE
+        SYNTAX	      Integer32 
+        MAX-ACCESS	  read-only
+        STATUS	      deprecated
+        DESCRIPTION   "Used internally to recognize this entry."
+        ::= { rcIpPolicyNetEntry 3 }
+
+rcIpPolicyNetNetListIdListSize OBJECT-TYPE
+        SYNTAX	      INTEGER (0..128)
+        MAX-ACCESS	  read-only
+        STATUS	      deprecated
+        DESCRIPTION   "Used to indicate the number of id(s) in the 
+		      rcIpPolicyNetListIdList variable."
+        ::= { rcIpPolicyNetEntry 4 }
+
+rcIpPolicyNetNetListIdList OBJECT-TYPE
+        SYNTAX	      OCTET STRING (SIZE(256))	
+        MAX-ACCESS	  read-only
+        STATUS	      deprecated
+        DESCRIPTION   "Used to indicate zero or more rcIpPolicyNetListEntry(s)  
+                      that are referring to this entry.  Each list-id identifier
+                      is stored as two bytes in this array starting from 
+                      offset zero.  Any unused bytes should be set to zero."
+        ::= { rcIpPolicyNetEntry 5 }
+
+rcIpPolicyNetRowStatus OBJECT-TYPE
+        SYNTAX		RowStatus
+        MAX-ACCESS		read-write
+        STATUS		deprecated
+        DESCRIPTION	"Row status of this entry."
+        ::= { rcIpPolicyNetEntry 6 }
+
+
+-- IP Policy Address List Table
+
+rcIpPolicyAddrListTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION  "Used to indicate the number of entries in the
+                      rcIpPolicyAddrListTable."
+        ::= { rcIpPolicy 5 }
+ 
+rcIpPolicyAddrListTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpPolicyAddrListEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to group rcIpPolicyAddrEntry(s) 
+                      into a list."
+        ::= { rcIpPolicy 6 }
+
+rcIpPolicyAddrListEntry OBJECT-TYPE
+        SYNTAX        RcIpPolicyAddrListEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Route entry attributes."
+        INDEX         { rcIpPolicyAddrListId }
+        ::= { rcIpPolicyAddrListTable 1 }
+ 
+RcIpPolicyAddrListEntry ::= SEQUENCE {
+                  rcIpPolicyAddrListId INTEGER,
+                  rcIpPolicyAddrListName DisplayString,
+                  rcIpPolicyAddrListIdListSize INTEGER,
+                  rcIpPolicyAddrListIdList OCTET STRING,
+                  rcIpPolicyAddrListPolicyIdListSize INTEGER,
+                  rcIpPolicyAddrListPolicyIdList OCTET STRING,
+                  rcIpPolicyAddrListRowStatus RowStatus
+                  }
+
+rcIpPolicyAddrListId OBJECT-TYPE
+        SYNTAX        INTEGER (1..1000)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "A value that uniquely identifies this list of 
+                       rcIpPolicyAddrListEntry."
+        ::= { rcIpPolicyAddrListEntry 1 }
+ 
+rcIpPolicyAddrListName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..15))
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "An administratively-assigned name for this list."
+        ::= { rcIpPolicyAddrListEntry 3 }
+ 
+rcIpPolicyAddrListIdListSize OBJECT-TYPE
+        SYNTAX        INTEGER (0..128)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+         DESCRIPTION  "Used to indicate the number of rcIpPolicyAddrNetEntry 
+                      id(s) in the rcIpPolicyAddrListIdList variable."
+        ::= { rcIpPolicyAddrListEntry 4 }
+ 
+rcIpPolicyAddrListIdList OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(256))
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate zero or more AddrListId  that
+                      are associated to this list.  Each AddrList identifier
+                      is stored as two bytes in this array starting from
+                      offset zero.  Any unused bytes should be set to zero."
+        ::= { rcIpPolicyAddrListEntry 5 }
+
+rcIpPolicyAddrListPolicyIdListSize OBJECT-TYPE
+        SYNTAX        INTEGER (0..128)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of policy id(s) in the 
+                      Policy Id list. That are referring to this list."
+        ::= { rcIpPolicyAddrListEntry 6 }
+
+rcIpPolicyAddrListPolicyIdList OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(256))
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate zero or more policies  that
+                      are referring to this entry.  Each policy identifier
+                      is stored as two bytes in this array starting from
+                      offset zero.  Any unused bytes should be set to zero."
+        ::= { rcIpPolicyAddrListEntry 7 }
+
+
+rcIpPolicyAddrListRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-write
+        STATUS          deprecated
+        DESCRIPTION     "Row status of this entry."
+        ::= { rcIpPolicyAddrListEntry 8 }
+ 
+
+-- RIP Announce Policy Table
+
+rcIpPolicyRipAnnounceTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      rcIpPolicyRipAnnounceTable."
+        ::= { rcIpPolicy 7 }
+
+rcIpPolicyRipAnnounceTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpPolicyRipAnnounceEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to store set of announce policies 
+		      configured for RIP routing protocol. The Number
+                      of entries is given by rcIpPolicyNumRipPolicies."
+        ::= { rcIpPolicy 8 }
+
+rcIpPolicyRipAnnounceEntry OBJECT-TYPE
+        SYNTAX        RcIpPolicyRipAnnounceEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing configuration information for a 
+                      particular announce policy."
+        INDEX         { rcIpPolicyRipAnnounceId }
+        ::= { rcIpPolicyRipAnnounceTable 1 }
+
+RcIpPolicyRipAnnounceEntry ::= SEQUENCE {
+                rcIpPolicyRipAnnounceId INTEGER,
+                rcIpPolicyRipAnnounceName DisplayString,
+                rcIpPolicyRipAnnounceEnable TruthValue,
+		rcIpPolicyRipAnnounceExactNetListId INTEGER,
+		rcIpPolicyRipAnnounceRangeNetListId INTEGER,
+		rcIpPolicyRipAnnounceRipGatewayListId INTEGER,
+		rcIpPolicyRipAnnounceRipInterfaceListId INTEGER,
+		rcIpPolicyRipAnnounceOspfRouterListId INTEGER,
+		rcIpPolicyRipAnnounceAnnounceInterfaceListId INTEGER,
+                rcIpPolicyRipAnnouncePrecedence INTEGER,
+                rcIpPolicyRipAnnounceRouteSource INTEGER,
+		rcIpPolicyRipAnnounceAdvertiseNetListId INTEGER,
+                rcIpPolicyRipAnnounceAction INTEGER,
+                rcIpPolicyRipAnnounceOspfRouteType INTEGER,
+                rcIpPolicyRipAnnounceRipMetric INTEGER,
+                rcIpPolicyRipAnnounceRowStatus RowStatus 
+                }
+
+rcIpPolicyRipAnnounceId OBJECT-TYPE
+        SYNTAX        INTEGER (1..1000)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "A value that uniquely identifies the policy
+                      associated with this entry."
+        ::= { rcIpPolicyRipAnnounceEntry 1 }
+
+rcIpPolicyRipAnnounceName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..15))
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "An administratively-assigned name for this policy."
+        ::= { rcIpPolicyRipAnnounceEntry 2 }
+
+rcIpPolicyRipAnnounceEnable OBJECT-TYPE
+        SYNTAX        TruthValue 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "It indicates whether this policy is enabled or not.
+                      The policy should be applied only if it is set to 'true'."
+	DEFVAL        { true }
+        ::= { rcIpPolicyRipAnnounceEntry 3 }
+
+rcIpPolicyRipAnnounceExactNetListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of 'exact' type entries
+                      that are configured for this policy.
+
+ 		      An entry with type 'exactNet' or 'rangeNet' represents
+                      the network list.  This indicates which networks will
+                      match a particular announce policy. 
+ 
+                      An entry with a 'exact' type means to only match the
+                      specific network advertisement (netaddr & mask).
+
+                      An 'exact' entry with addr=0.0.0.0 and mask=0.0.0.0
+                      means 'match the default route'.
+
+                      If set to '0', this policy applies to all the routes."
+
+        ::= { rcIpPolicyRipAnnounceEntry 4 }
+
+rcIpPolicyRipAnnounceRangeNetListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate zero or more 'range' network entries  
+                      that are associated with this policy.  
+
+                      An entry with a 'range' type means to match any network
+		      number that falls in the range indicated by the addr &
+                      mask.
+
+                      A 'range' entry with addr=0.0.0.0 and mask=0.0.0.0
+                      means 'match any route'.
+
+                      If set to '0', this policy applies to all the routes."
+
+        ::= { rcIpPolicyRipAnnounceEntry 5 }
+
+rcIpPolicyRipAnnounceRipGatewayListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to identify the RIP-gatewayList in the list 
+                      that are associated with this policy. 
+
+                      This field has meaning only for RIP sourced routes and 
+                      if RIP is included as a RouteSource. 
+                      The list contains one or more rip-routers (other side
+                      of the interface) addresses that could send RIP updates 
+                      to this router.  If a router 
+                      address is included in this list, this policy applies to 
+                      RIP advertisements from that router.
+ 
+                      If set to '0', this policy applies to RIP updates
+                      received from any rip routers/interfaces."
+ 
+        ::= { rcIpPolicyRipAnnounceEntry 6 }
+
+rcIpPolicyRipAnnounceRipInterfaceListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the 
+                      ripInterfaceIdList that are configured for this policy.
+
+                      This field has meaning only for RIP sourced routes and
+                      if RIP is included as a RouteSource. The list contains 
+                      one or more rip-interface addresses on this router.
+                      If an interface address is incuded in this list, this
+                      policy applies to RIP advertisements received on that
+                      interface.
+
+                      A value of '0' indicates thtat this policy applies to
+                      RIP updates received on any rip-interface."
+
+        ::= { rcIpPolicyRipAnnounceEntry 7 }
+
+rcIpPolicyRipAnnounceOspfRouterListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000) 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the 
+                      OspfRouteIds that are configured for this policy.
+
+                      This field has meaning only for OSPF sourced routes and
+                      if OSPF is included as a RouteSource. The list contains
+                      one or more router IDs of OSPF routers. If a routerId 
+                      is included in this list, this policy applies to
+                      OSPF advertisements received from that router.
+
+                      A value of '0' indicates that this policy applies to
+                      any OPSF routes received from any router."
+
+        ::= { rcIpPolicyRipAnnounceEntry 8 }
+
+rcIpPolicyRipAnnounceAnnounceInterfaceListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the 
+                      AnnounceInterfaceids that are configured for this policy.
+
+                      The list contains one or more outbound interface 
+                      addresses. If the outbound interface address in this
+                      list, the policy applies to RIP updates/advertisements
+                      sent through this  interface. 
+
+                      A value of '0' indicates that this policy applies to
+                      any outbound RIP interface on this router."
+
+        ::= { rcIpPolicyRipAnnounceEntry 9 }
+
+rcIpPolicyRipAnnouncePrecedence OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535) 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Is used while comparing this policy rule with other 
+                      policy that a given route may match.  A rule with a 
+                      higher precedence value will be chosen over one with 
+                      a smaller value. In the case of a tie, the PolicyId is 
+                      used (larger wins)."
+        ::= { rcIpPolicyRipAnnounceEntry 10 }
+
+rcIpPolicyRipAnnounceRouteSource OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 direct(1),
+			 static(2),
+			 rip(4),
+			 ospf(8),
+			 any(15) 
+		      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Is represented as bitset to indicate route sources. 
+                      It can contain one or more route sources. If the route 
+                      source is in this bit map, then a route from that source 
+                      that meets the other criteria of this policy will match 
+                      the policy."
+        DEFVAL        { any }
+        ::= { rcIpPolicyRipAnnounceEntry 11 }
+
+rcIpPolicyRipAnnounceAdvertiseNetListId OBJECT-TYPE 
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      AdvertiseNetList that are configured for this policy.
+
+                      This has meaning only if the Action is set to 'announce'.
+                      It is useful to send or advertise networks that differ 
+                      from actual network in the routing table. Also allows 
+                      advertisement of an aggregate or default along with the 
+                      actual network.  Aggregation is useful if a number of
+                      routes in the table falls in a certain range. Can save
+                      space by sending aggregate route instead of the individual
+                      routes. 
+    
+                      Actual network/route is included in the update
+                      only if there is a match or there there is an entry
+                      (address & mask pair) 255.255.255.255/255.255.255.255   
+                      in the list."
+
+        ::= { rcIpPolicyRipAnnounceEntry 12 }
+
+rcIpPolicyRipAnnounceAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 announce(1),
+			 ignore(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "It indicates whether the route should be announced 
+                      or not."
+        DEFVAL  { ignore }
+        ::= { rcIpPolicyRipAnnounceEntry 13 }
+
+rcIpPolicyRipAnnounceOspfRouteType OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 type1(1),
+                         type2(2),
+                         external(3),
+                         internal(4),
+                         any(5)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Ospf Route type. It applies to OSPF sourced routes only.
+		      'type1' means to apply this policy to only type1 OSPF 
+                      external routes. 'type2' means to apply this policy to 
+                      only type2 OSPF external routes. 'internal' means 'match 
+                      ospf specfic routes'. 'any' means apply this policy to 
+                      all OSPF external routes."		
+         DEFVAL  { any }
+        ::= { rcIpPolicyRipAnnounceEntry 14 }
+
+rcIpPolicyRipAnnounceRipMetric OBJECT-TYPE
+        SYNTAX        INTEGER (0..15)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "RIP metric. The value is meaningful only if the action 
+                      is set to 'announce'. This is optional export metric 
+                      to use when advertising a route that matches this policy.
+                      If set to zero, the routing table metric calculated for 
+                      RIP is is used."
+        DEFVAL        {0}
+        ::= { rcIpPolicyRipAnnounceEntry 15 }
+
+rcIpPolicyRipAnnounceRowStatus OBJECT-TYPE
+        SYNTAX		RowStatus
+        MAX-ACCESS		read-write
+        STATUS		deprecated
+        DESCRIPTION	"Row status of this entry."
+        ::= { rcIpPolicyRipAnnounceEntry 16 }
+
+-- OSPF Announce policy table.
+
+rcIpPolicyOspfAnnounceTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      rcIpPolicyOspfAnnounceTable."
+        ::= { rcIpPolicy 9 }
+
+
+rcIpPolicyOspfAnnounceTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpPolicyOspfAnnounceEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to store set of announce policies 
+		      configured for OSPF routing protocol. The Number
+                      of entries is given by rcIpPolicyNumOspfPolicies."
+        ::= { rcIpPolicy 10 }
+
+rcIpPolicyOspfAnnounceEntry OBJECT-TYPE
+        SYNTAX        RcIpPolicyOspfAnnounceEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing configuration information for a 
+                      particular announce policy."
+        INDEX         { rcIpPolicyOspfAnnounceId }
+        ::= { rcIpPolicyOspfAnnounceTable 1 }
+
+RcIpPolicyOspfAnnounceEntry ::= SEQUENCE {
+                rcIpPolicyOspfAnnounceId INTEGER,
+                rcIpPolicyOspfAnnounceName DisplayString,
+                rcIpPolicyOspfAnnounceEnable TruthValue,
+		rcIpPolicyOspfAnnounceExactNetListId INTEGER,
+		rcIpPolicyOspfAnnounceRangeNetListId INTEGER,
+		rcIpPolicyOspfAnnounceRipGatewayListId INTEGER,
+		rcIpPolicyOspfAnnounceRipInterfaceListId INTEGER,
+                rcIpPolicyOspfAnnouncePrecedence INTEGER,
+                rcIpPolicyOspfAnnounceRouteSource INTEGER,
+		rcIpPolicyOspfAnnounceAdvertiseNetListId INTEGER,
+                rcIpPolicyOspfAnnounceAction INTEGER,
+                rcIpPolicyOspfAnnounceExtMetricType INTEGER,
+                rcIpPolicyOspfAnnounceExtMetric INTEGER,
+                rcIpPolicyOspfAnnounceRowStatus RowStatus 
+                }
+
+rcIpPolicyOspfAnnounceId OBJECT-TYPE
+        SYNTAX        INTEGER (2001..3000)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "A value that uniquely identifies the policy
+                      associated with this entry."
+        ::= { rcIpPolicyOspfAnnounceEntry 1 }
+
+rcIpPolicyOspfAnnounceName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..15))
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "An administratively-assigned name for this policy."
+        ::= { rcIpPolicyOspfAnnounceEntry 2 }
+
+rcIpPolicyOspfAnnounceEnable OBJECT-TYPE
+        SYNTAX        TruthValue 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "It indicates whether this policy is enabled or not.
+                      The policy should be applied only if it is set to 
+		      'true'."
+	DEFVAL        { true }
+        ::= { rcIpPolicyOspfAnnounceEntry 3 }
+
+rcIpPolicyOspfAnnounceExactNetListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of 'exact' type entries
+                      that are configured for this policy.
+ 
+                      An entry with type 'exactNet' or 'rangeNet' represents
+                      the network list.  This indicates which networks will
+                      match a particular announce policy.
+ 
+                      An entry with a 'exact' type means to only match the
+                      specific network advertisement (netaddr & mask).
+ 
+                      An 'exact' entry with addr=0.0.0.0 and mask=0.0.0.0
+                      means 'match the default route'.
+ 
+                      If set to '0', this policy applies to all the routes."
+ 
+        ::= { rcIpPolicyOspfAnnounceEntry 4 }
+
+rcIpPolicyOspfAnnounceRangeNetListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate zero or more 'range' network entries
+                      that are associated with this policy.
+ 
+                      An entry with a 'range' type means to match any network
+                      number that falls in the range indicated by the addr &
+                      mask.
+ 
+                      A 'range' entry with addr=0.0.0.0 and mask=0.0.0.0
+                      means 'match any route'.
+ 
+                      If set to '0', this policy applies to all the routes."
+
+        ::= { rcIpPolicyOspfAnnounceEntry 5 }
+
+rcIpPolicyOspfAnnounceRipGatewayListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to identify the RIP-gatewayList in the list
+                      that are associated with this policy.
+ 
+                      This field has meaning only for RIP sourced routes and
+                      if RIP is included as a RouteSource.
+                      The list contains one or more rip-routers (other side
+                      of the interface) addresses that could send RIP updates
+                      to this router.  If a router
+                      address is included in this list, this policy applies to
+                      RIP advertisements from that router.
+ 
+                      If set to '0', this policy applies to RIP updates
+                      received from any rip routers/interfaces."
+
+        ::= { rcIpPolicyOspfAnnounceEntry 6 }
+
+rcIpPolicyOspfAnnounceRipInterfaceListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      ripInterfaceIdList that are configured for this policy.
+ 
+                      This field has meaning only for RIP sourced routes and
+                      if RIP is included as a RouteSource. The list contains
+                      one or more rip-interface addresses on this router.
+                      If an interface address is incuded in this list, this
+                      policy applies to RIP advertisements received on that
+                      interface.
+ 
+                      A value of '0' indicates thtat this policy applies to
+                      RIP updates received on any rip-interface."
+
+        ::= { rcIpPolicyOspfAnnounceEntry 7 }
+
+
+rcIpPolicyOspfAnnouncePrecedence OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535) 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Is used while comparing this policy rule with other 
+                      policy that a given route may match.  A rule with a 
+                      higher precedence value will be chosen over one with 
+                      a smaller value. In the case of a tie, the PolicyId is 
+                      used (larger wins)."
+        ::= { rcIpPolicyOspfAnnounceEntry 8 }
+
+rcIpPolicyOspfAnnounceRouteSource OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 direct(1),
+			 static(2),
+			 rip(4),
+			 any(7) 
+		      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Is represented as bit map to indicate route sources. 
+                      It can contain one or more route sources. If the route 
+                      source is in this bit map, then a route from that source 
+                      that meets the other criteria of this policy will match 
+                      the policy."
+        DEFVAL        { any }
+        ::= { rcIpPolicyOspfAnnounceEntry 9 }
+
+rcIpPolicyOspfAnnounceAdvertiseNetListId OBJECT-TYPE 
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      AdvertiseNetList that are configured for this policy.
+ 
+                      This has meaning only if the Action is set to 'announce'.
+                      It is useful to send or advertise networks that differ
+                      from actual network in the routing table. Also allows
+                      advertisement of an aggregate or default along with the
+                      actual network.  Aggregation is useful if a number of
+                      routes in the table falls in a certain range. Can save
+                      space by sending aggregate route instead of the individual
+                      routes.
+ 
+                      Actual network/route is included in the update
+                      only if there is a match or there there is an entry
+                      (address & mask pair) 255.255.255.255/255.255.255.255
+                      in the list."
+
+        ::= { rcIpPolicyOspfAnnounceEntry 10 }
+
+rcIpPolicyOspfAnnounceAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 announce(1),
+			 ignore(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "It indicates whether the route should be announced 
+                      or not."
+         DEFVAL  { ignore }
+        ::= { rcIpPolicyOspfAnnounceEntry 11 }
+
+rcIpPolicyOspfAnnounceExtMetricType OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 type1(1),
+                         type2(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Ospf External metric type. It is used to indicate
+		      what type of the external metric it is. 'type1' means to 
+                      the cost is 'internal ospf cost + ExtMetric'. 
+                      'type2' means the ospf-metric is equal to 'type2'."
+         DEFVAL  { type2 }
+        ::= { rcIpPolicyOspfAnnounceEntry 12 }
+
+rcIpPolicyOspfAnnounceExtMetric OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "OSPF External metric. The value is meaningful only if 
+                      the action is set to 'announce'. This is optional export 
+                      metric to use when advertising a route that matches this 
+                      policy. Value '0' is used to indicate that route's actual
+                      cost is used to announce."
+        DEFVAL        { 0 }
+        ::= { rcIpPolicyOspfAnnounceEntry 13 }
+
+rcIpPolicyOspfAnnounceRowStatus OBJECT-TYPE
+        SYNTAX		RowStatus
+        MAX-ACCESS		read-write
+        STATUS		deprecated
+        DESCRIPTION	"Row status of this entry."
+        ::= { rcIpPolicyOspfAnnounceEntry 14 }
+ 
+-- IP Accept Policy Groups
+
+-- RIP Accept policy table.
+
+rcIpPolicyRipAcceptTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      rcIpPolicyRipAcceptTable."
+        ::= { rcIpPolicy 11 }
+
+rcIpPolicyRipAcceptTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpPolicyRipAcceptEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to store set of accept policies 
+		      configured for RIP routing protocol. The Number
+                      of entries is given by rcIpPolicyNumRipPolicies."
+        ::= { rcIpPolicy 12 }
+
+rcIpPolicyRipAcceptEntry OBJECT-TYPE
+        SYNTAX        RcIpPolicyRipAcceptEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing configuration information for a 
+                      particular accept policy."
+        INDEX         { rcIpPolicyRipAcceptId }
+        ::= { rcIpPolicyRipAcceptTable 1 }
+
+RcIpPolicyRipAcceptEntry ::= SEQUENCE {
+                rcIpPolicyRipAcceptId INTEGER,
+                rcIpPolicyRipAcceptName DisplayString,
+                rcIpPolicyRipAcceptEnable TruthValue,
+		rcIpPolicyRipAcceptExactNetListId INTEGER,
+		rcIpPolicyRipAcceptRangeNetListId INTEGER,
+		rcIpPolicyRipAcceptRipGatewayListId INTEGER,
+		rcIpPolicyRipAcceptRipInterfaceListId INTEGER,
+                rcIpPolicyRipAcceptPrecedence INTEGER,
+                rcIpPolicyRipAcceptAction INTEGER,
+		rcIpPolicyRipAcceptInjectNetListId INTEGER,
+                rcIpPolicyRipAcceptApplyMask IpAddress,
+                rcIpPolicyRipAcceptRowStatus RowStatus 
+                }
+
+rcIpPolicyRipAcceptId OBJECT-TYPE
+        SYNTAX        INTEGER (4001..5000)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "A value that uniquely identifies the policy
+                      associated with this entry."
+        ::= { rcIpPolicyRipAcceptEntry 1 }
+
+rcIpPolicyRipAcceptName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..15))
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "An administratively-assigned name for this policy."
+        ::= { rcIpPolicyRipAcceptEntry 2 }
+
+rcIpPolicyRipAcceptEnable OBJECT-TYPE
+        SYNTAX        TruthValue 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "It indicates whether this policy is enabled or not.
+                      The policy should be applied only if it is set to 'true'."
+	DEFVAL        { true }
+        ::= { rcIpPolicyRipAcceptEntry 3 }
+
+rcIpPolicyRipAcceptExactNetListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of 'exact' type entries
+                      that are configured for this policy.
+
+ 		      An entry with type 'exactNet' or 'rangeNet' represents
+                      the network list.  This indicates which networks will
+                      match a particular accept policy. 
+ 
+                      An entry with a 'exact' type means to only match the
+                      specific network advertisement (netaddr & mask).
+
+                      An 'exact' entry with addr=0.0.0.0 and mask=0.0.0.0
+                      means 'match the default route'."
+        ::= { rcIpPolicyRipAcceptEntry 4 }
+
+rcIpPolicyRipAcceptRangeNetListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate zero or more 'range' network entries  
+                      that are associated with this policy.  
+
+                      An entry with a 'range' type means to match any network
+		      number that falls in the range indicated by the addr &
+                      mask.
+
+                      A 'range' entry with addr=0.0.0.0 and mask=0.0.0.0
+                      means 'match any route'.
+
+                      A null list means 'match any route'."
+        ::= { rcIpPolicyRipAcceptEntry 5 }
+
+rcIpPolicyRipAcceptRipGatewayListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to identify the RIP-gatewayList in the 
+                      PolicyListTable that iares associated with this 
+                      policy. The list contains the addresses of one or more 
+                      routers that could send RIP updates to this router.
+                      If a router address is included in this list, this
+                      policy applies to RIP advertisements from that router.
+ 
+                      If set to '0', this policy applies to RIP updates
+                      from any router."
+
+        ::= { rcIpPolicyRipAcceptEntry 6 }
+
+rcIpPolicyRipAcceptRipInterfaceListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate ListId defined for RipInterfaceList
+                      in the rcIpPolicyListTable that is assiciated 
+                      with this policy. 
+                      The list contains the addresses of one or more interfaces
+                      on this router.  If an interface address is included in 
+                      the list, this policy applies to RIP advertisements 
+                      received on that interface.
+ 
+                      If set to '0', this policy applies to RIP updates
+                      received on any interface."
+
+        ::= { rcIpPolicyRipAcceptEntry 7 }
+
+rcIpPolicyRipAcceptPrecedence OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535) 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Is used while comparing this policy rule with other 
+                      policy that a given route may match.  A rule with a 
+                      higher precedence value will be chosen over one with 
+                      a smaller value. In the case of a tie, the PolicyId is 
+                      used (larger wins)."
+        ::= { rcIpPolicyRipAcceptEntry 8 }
+
+rcIpPolicyRipAcceptAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 accept(1),
+			 ignore(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "It indicates whether the route should be acceptd 
+                      or not."
+         DEFVAL  { accept }
+        ::= { rcIpPolicyRipAcceptEntry 9 }
+
+rcIpPolicyRipAcceptInjectNetListId OBJECT-TYPE 
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the ListId of the InjectNetList
+                      in the rcIpPolicyListTable entry that is assiciated
+                      with for this policy. If teh action is 'accept' and if it
+                      is desired to insert networks into the routing table that
+                      differ from the actual advertised network. For instance,
+                      if a number of networks in a certain range are learned
+                      and an aggregate advertisement could be inserted instead
+                      of the individual networks. 
+
+                      Upon receiving a route that matches this policy, all
+                      networks in this list will be considered for inclusion 
+                      in the routing table. If the list is empty or if the
+                      value of the ListId is '0' then the actual received
+                      network is considered.
+
+                      An encoding of 255.255.255.255/255.255.255.255 means
+                      'match the actual received network.'. This allows
+                      insertion of an aggregate or default along with the 
+                      actual netowrk."
+        ::= { rcIpPolicyRipAcceptEntry 10 }
+
+rcIpPolicyRipAcceptApplyMask OBJECT-TYPE
+        SYNTAX		IpAddress
+        MAX-ACCESS		read-write
+        STATUS		deprecated
+        DESCRIPTION	"If the 'action' is set to 'accept' and the actual
+                        received network will be considered, this is an
+                        optional IP address mask that will be applied to the 
+                        network number from the RIP update.  This is used to 
+                        override the interface's subnet mask in the presence 
+                        of networks with variable length subnet masks."
+        ::= { rcIpPolicyRipAcceptEntry 11 }
+
+rcIpPolicyRipAcceptRowStatus OBJECT-TYPE
+        SYNTAX		RowStatus
+        MAX-ACCESS		read-write
+        STATUS		deprecated
+        DESCRIPTION	"Row status of this entry."
+        ::= { rcIpPolicyRipAcceptEntry 12 }
+
+-- OSPF Accept policy table.
+ 
+rcIpPolicyOspfAcceptTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      rcIpPolicyOspfAcceptTable."
+        ::= { rcIpPolicy 13 }
+
+rcIpPolicyOspfAcceptTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpPolicyOspfAcceptEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to store set of accept policies 
+		      configured for RIP routing protocol. The Number
+                      of entries is given by rcIpPolicyNumRipPolicies."
+        ::= { rcIpPolicy 14 }
+
+rcIpPolicyOspfAcceptEntry OBJECT-TYPE
+        SYNTAX        RcIpPolicyOspfAcceptEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing configuration information for a 
+                      particular accept policy."
+        INDEX         { rcIpPolicyOspfAcceptId }
+        ::= { rcIpPolicyOspfAcceptTable 1 }
+
+RcIpPolicyOspfAcceptEntry ::= SEQUENCE {
+                rcIpPolicyOspfAcceptId INTEGER,
+                rcIpPolicyOspfAcceptName DisplayString,
+                rcIpPolicyOspfAcceptEnable TruthValue,
+		rcIpPolicyOspfAcceptExactNetListId INTEGER,
+		rcIpPolicyOspfAcceptRangeNetListId INTEGER,
+                rcIpPolicyOspfAcceptPrecedence INTEGER,
+                rcIpPolicyOspfAcceptAction INTEGER,
+		rcIpPolicyOspfAcceptInjectNetListId INTEGER,
+                rcIpPolicyOspfAcceptExtType INTEGER,
+                rcIpPolicyOspfAcceptRowStatus RowStatus 
+                }
+
+rcIpPolicyOspfAcceptId OBJECT-TYPE
+        SYNTAX        INTEGER (6001..7000)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "A value that uniquely identifies the policy
+                      associated with this entry."
+        ::= { rcIpPolicyOspfAcceptEntry 1 }
+
+rcIpPolicyOspfAcceptName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..15))
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "An administratively-assigned name for this policy."
+        ::= { rcIpPolicyOspfAcceptEntry 2 }
+
+rcIpPolicyOspfAcceptEnable OBJECT-TYPE
+        SYNTAX        TruthValue 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "It indicates whether this policy is enabled or not.
+                      The policy should be applied only if it is set to 'true'."
+	DEFVAL        { true }
+        ::= { rcIpPolicyOspfAcceptEntry 3 }
+
+rcIpPolicyOspfAcceptExactNetListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of 'exact' type entries
+                      that are configured for this policy.
+
+ 		      An entry with type 'exactNet' or 'rangeNet' represents
+                      the network list.  This indicates which networks will
+                      match a particular accept policy. 
+ 
+                      An entry with a 'exact' type means to only match the
+                      specific network advertisement (netaddr & mask).
+
+                      An 'exact' entry with addr=0.0.0.0 and mask=0.0.0.0
+                      means 'match the default route'."
+        ::= { rcIpPolicyOspfAcceptEntry 4 }
+
+rcIpPolicyOspfAcceptRangeNetListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate zero or more 'range' network entries  
+                      that are associated with this policy.  
+
+                      An entry with a 'range' type means to match any network
+		      number that falls in the range indicated by the addr &
+                      mask.
+
+                      A 'range' entry with addr=0.0.0.0 and mask=0.0.0.0
+                      means 'match any route'.
+
+                      A null list means 'match any route'."
+        ::= { rcIpPolicyOspfAcceptEntry 5 }
+
+rcIpPolicyOspfAcceptPrecedence OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535) 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Is used while comparing this policy rule with other 
+                      policy that a given route may match.  A rule with a 
+                      higher precedence value will be chosen over one with 
+                      a smaller value. In the case of a tie, the PolicyId is 
+                      used (larger wins)."
+        ::= { rcIpPolicyOspfAcceptEntry 6 }
+
+rcIpPolicyOspfAcceptAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 accept(1),
+			 ignore(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "It indicates whether the route should be acceptd 
+                      or not."
+         DEFVAL  { accept }
+        ::= { rcIpPolicyOspfAcceptEntry 7 }
+
+rcIpPolicyOspfAcceptInjectNetListId OBJECT-TYPE 
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the ListId of the InjectNetList
+                      in the rcIpPolicyListTable entry that is assiciated
+                      with for this policy. If teh action is 'accept' and if it
+                      is desired to insert networks into the routing table that
+                      differ from the actual advertised network. For instance,
+                      if a number of networks in a certain range are learned
+                      and an aggregate advertisement could be inserted instead
+                      of the individual networks. 
+
+                      Upon receiving a route that matches this policy, all
+                      networks in this list will be considered for inclusion 
+                      in the routing table. If the list is empty or if the
+                      value of the ListId is '0' then the actual received
+                      network is considered.
+
+                      An encoding of 255.255.255.255/255.255.255.255 means
+                      'match the actual received network.'. This allows
+                      insertion of an aggregate or default along with the 
+                      actual netowrk."
+        ::= { rcIpPolicyOspfAcceptEntry 8 }
+
+rcIpPolicyOspfAcceptExtType OBJECT-TYPE
+        SYNTAX		INTEGER {
+                           type1(1),
+                           type2(2),
+                           any(3)
+                        }
+
+        MAX-ACCESS		read-write
+        STATUS		deprecated
+        DESCRIPTION     "Used to indicate the ospf external type. This 
+                        parameter describes which types of OSPF ASE routes
+                        match this policy. 
+                        'any' means 'match either ASE type 1 or 2'.	
+                        'type1' means 'match any external type 1'.
+                        'type2' means 'match any external type 2"
+        ::= { rcIpPolicyOspfAcceptEntry 9 }
+
+rcIpPolicyOspfAcceptRowStatus OBJECT-TYPE
+        SYNTAX		RowStatus
+        MAX-ACCESS		read-write
+        STATUS		deprecated
+        DESCRIPTION	"Row status of this entry."
+        ::= { rcIpPolicyOspfAcceptEntry 10 }
+
+
+-- IP Policy Network List Table
+
+rcIpPolicyNetListTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      rcIpPolicyNetListTable."
+        ::= { rcIpPolicy 15 }
+ 
+rcIpPolicyNetListTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpPolicyNetListEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to group rcIpPolicyAddrEntry(s) 
+                      into a list."
+        ::= { rcIpPolicy 16 }
+
+rcIpPolicyNetListEntry OBJECT-TYPE
+        SYNTAX        RcIpPolicyNetListEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Route entry attributes."
+        INDEX         { rcIpPolicyNetListId }
+        ::= { rcIpPolicyNetListTable 1 }
+ 
+RcIpPolicyNetListEntry ::= SEQUENCE {
+                  rcIpPolicyNetListId INTEGER,
+                  rcIpPolicyNetListName DisplayString,
+                  rcIpPolicyNetListIdListSize INTEGER,
+                  rcIpPolicyNetListIdList OCTET STRING,
+                  rcIpPolicyNetListPolicyIdListSize INTEGER,
+                  rcIpPolicyNetListPolicyIdList OCTET STRING,
+                  rcIpPolicyNetListRowStatus RowStatus
+                  }
+
+rcIpPolicyNetListId OBJECT-TYPE
+        SYNTAX        INTEGER (1..1000)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "A value that uniquely identifies this list of 
+                       rcIpPolicyNetListEntry."
+        ::= { rcIpPolicyNetListEntry 1 }
+ 
+rcIpPolicyNetListName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..15))
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "An administratively-assigned name for this list."
+        ::= { rcIpPolicyNetListEntry 3 }
+ 
+rcIpPolicyNetListIdListSize OBJECT-TYPE
+        SYNTAX        INTEGER (0..128)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of rcIpPolicyNetEntry 
+                      id(s) in the rcIpPolicyNetListIdList variable."
+        ::= { rcIpPolicyNetListEntry 4 }
+ 
+rcIpPolicyNetListIdList OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(256))
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate zero or more NetListId  that
+                      are associated to this list.  Each NetList identifier
+                      is stored as two bytes in this array starting from
+                      offset zero.  Any unused bytes should be set to zero."
+        ::= { rcIpPolicyNetListEntry 5 }
+
+rcIpPolicyNetListPolicyIdListSize OBJECT-TYPE
+        SYNTAX        INTEGER (0..128)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number of policy id(s) in the 
+                      Policy Id list. That are referring to this list."
+        ::= { rcIpPolicyNetListEntry 6 }
+
+rcIpPolicyNetListPolicyIdList OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(256))
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate zero or more policies  that
+                      are referring to this entry.  Each policy identifier
+                      is stored as two bytes in this array starting from
+                      offset zero.  Any unused bytes should be set to zero."
+        ::= { rcIpPolicyNetListEntry 7 }
+
+rcIpPolicyNetListRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-write
+        STATUS          deprecated
+        DESCRIPTION     "Row status of this entry."
+        ::= { rcIpPolicyNetListEntry 8 }
+
+--IP Gen Policy
+
+-- Ip As Path Access List Table
+
+rcIpAsPathAccessListTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpGenPolicy 1 }
+
+rcIpAsPathAccessListTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpAsPathAccessListEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP As Path Access List table"
+    ::= { rcIpGenPolicy 2 }
+
+rcIpAsPathAccessListEntry OBJECT-TYPE
+        SYNTAX          RcIpAsPathAccessListEntry
+        MAX-ACCESS              not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip As Path Access List Table."
+        INDEX           { rcIpAsPathAccessListId,
+                          rcIpAsPathAccessListMemberId }
+        ::= { rcIpAsPathAccessListTable 1 }
+
+RcIpAsPathAccessListEntry ::=
+        SEQUENCE {
+                rcIpAsPathAccessListId                  INTEGER,
+                rcIpAsPathAccessListMemberId            INTEGER,
+                rcIpAsPathAccessListMode                INTEGER,
+                rcIpAsPathAccessListAsRegularExpression OCTET STRING,
+                rcIpAsPathAccessListRowStatus           RowStatus
+        }
+
+rcIpAsPathAccessListId OBJECT-TYPE
+        SYNTAX        INTEGER (1..1024)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Path Access List entry Id."
+        ::= { rcIpAsPathAccessListEntry 1 }
+
+rcIpAsPathAccessListMemberId OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "frq. at which hello sent."
+        ::= { rcIpAsPathAccessListEntry 2 }
+
+rcIpAsPathAccessListMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          permit(1),
+                          deny(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Path Access List Mode, permit or deny."
+        ::= { rcIpAsPathAccessListEntry 3 }
+
+rcIpAsPathAccessListAsRegularExpression OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(0..256))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IP Path Access List Regular Expression"
+        ::= { rcIpAsPathAccessListEntry 4 }
+
+rcIpAsPathAccessListRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Table row status."
+        ::= { rcIpAsPathAccessListEntry 5 }
+
+
+-- Ip Community Access List Table
+
+rcIpCommunityAccessListTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpGenPolicy 3 }
+
+rcIpCommunityAccessListTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpCommunityAccessListEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP CommunityAccess List table"
+    ::= { rcIpGenPolicy 4 }
+
+rcIpCommunityAccessListEntry OBJECT-TYPE
+        SYNTAX          RcIpCommunityAccessListEntry
+        MAX-ACCESS              not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip CommunityAccess List Table."
+        INDEX           { rcIpCommunityAccessListId,
+                          rcIpCommunityAccessListMemberId }
+        ::= { rcIpCommunityAccessListTable 1 }
+
+RcIpCommunityAccessListEntry ::=
+        SEQUENCE {
+                rcIpCommunityAccessListId        INTEGER,
+                rcIpCommunityAccessListMemberId  INTEGER,
+                rcIpCommunityAccessListMode      INTEGER,
+                rcIpCommunityAccessListCommunity OCTET STRING,
+                rcIpCommunityAccessListRowStatus RowStatus
+        }
+
+rcIpCommunityAccessListId OBJECT-TYPE
+        SYNTAX        INTEGER (1..1024)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "IP CommunityAccess entry List Id"
+        ::= { rcIpCommunityAccessListEntry 1 }
+
+rcIpCommunityAccessListMemberId OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "frq. at which hello sent."
+        ::= { rcIpCommunityAccessListEntry 2 }
+
+rcIpCommunityAccessListMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          permit(1),
+                          deny(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IP Community Access List Mode, permit or deny."
+        ::= { rcIpCommunityAccessListEntry 3 }
+
+rcIpCommunityAccessListCommunity OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(0..256))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IP Community Access List Community string."
+        ::= { rcIpCommunityAccessListEntry 4 }
+
+rcIpCommunityAccessListRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IP Community Access Table Row Status."
+        ::= { rcIpCommunityAccessListEntry 5 }
+
+-- Ip Access List Table
+
+rcIpAccessListTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpGenPolicy 5 }
+
+
+rcIpAccessListTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpAccessListEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP Access List table"
+    ::= { rcIpGenPolicy 6 }
+
+rcIpAccessListEntry OBJECT-TYPE
+        SYNTAX          RcIpAccessListEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip Access List Table."
+        INDEX           { rcIpAccessListId,
+                          rcIpAccessListMode,
+                          rcIpAccessListNetwork,
+                          rcIpAccessListNetworkMask }
+        ::= { rcIpAccessListTable 1 }
+
+RcIpAccessListEntry ::=
+        SEQUENCE {
+                rcIpAccessListId          INTEGER,
+                rcIpAccessListMode        INTEGER,
+                rcIpAccessListNetwork     IpAddress,
+                rcIpAccessListNetworkMask IpAddress,
+                rcIpAccessListName        DisplayString,
+                rcIpAccessListRowStatus   RowStatus
+        }
+
+rcIpAccessListId OBJECT-TYPE
+        SYNTAX        INTEGER (1..99)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpAccessListEntry 1 }
+
+rcIpAccessListMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          permit(1),
+                          deny(2)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpAccessListEntry 2 }
+
+rcIpAccessListNetwork OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpAccessListEntry 3 }
+
+rcIpAccessListNetworkMask OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpAccessListEntry 4 }
+
+rcIpAccessListName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpAccessListEntry 5 }
+
+rcIpAccessListRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpAccessListEntry 6 }
+
+
+-- Ip Extended Access List Table
+
+
+rcIpExtendedAccessListTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpGenPolicy 7 }
+
+
+rcIpExtendedAccessListTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpExtendedAccessListEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP Extended Access List table"
+        ::= { rcIpGenPolicy 8 }
+
+rcIpExtendedAccessListEntry OBJECT-TYPE
+        SYNTAX          RcIpExtendedAccessListEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip Extended Access List Table."
+        INDEX           { rcIpExtendedAccessListId,
+                          rcIpExtendedAccessListMode,
+                          rcIpExtendedAccessListNetwork,
+                          rcIpExtendedAccessListNetworkWildCard,
+                          rcIpExtendedAccessListNetworkMask,
+                          rcIpExtendedAccessListNetworkMaskWildCard }
+        ::= { rcIpExtendedAccessListTable 1 }
+
+RcIpExtendedAccessListEntry ::=
+        SEQUENCE {
+                rcIpExtendedAccessListId                  INTEGER,
+                rcIpExtendedAccessListMode                INTEGER,
+                rcIpExtendedAccessListNetwork             IpAddress,
+                rcIpExtendedAccessListNetworkWildCard     IpAddress,
+                rcIpExtendedAccessListNetworkMask         IpAddress,
+                rcIpExtendedAccessListNetworkMaskWildCard IpAddress,
+                rcIpExtendedAccessListName                DisplayString,
+                rcIpExtendedAccessListRowStatus           RowStatus
+        }
+
+rcIpExtendedAccessListId OBJECT-TYPE
+        SYNTAX        INTEGER (100..199)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpExtendedAccessListEntry 1 }
+
+rcIpExtendedAccessListMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          permit(1),
+                          deny(2)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpExtendedAccessListEntry 2 }
+
+rcIpExtendedAccessListNetwork OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpExtendedAccessListEntry 3 }
+
+rcIpExtendedAccessListNetworkWildCard OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpExtendedAccessListEntry 4 }
+
+rcIpExtendedAccessListNetworkMask OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpExtendedAccessListEntry 5 }
+
+rcIpExtendedAccessListNetworkMaskWildCard OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpExtendedAccessListEntry 6 }
+
+rcIpExtendedAccessListName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpExtendedAccessListEntry 7 }
+
+rcIpExtendedAccessListRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpExtendedAccessListEntry 8 }
+
+-- Ip Prefix List Table
+
+rcIpPrefixListTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpGenPolicy 9 }
+
+
+rcIpPrefixListTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpPrefixListEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP Prefix List table"
+        ::= { rcIpGenPolicy 10 }
+
+rcIpPrefixListEntry OBJECT-TYPE
+        SYNTAX          RcIpPrefixListEntry
+        MAX-ACCESS              not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip Prefix List Table."
+        INDEX           { rcIpPrefixListId,
+                          rcIpPrefixListPrefix,
+                          rcIpPrefixListPrefixMaskLen }
+        ::= { rcIpPrefixListTable 1 }
+
+RcIpPrefixListEntry ::=
+        SEQUENCE {
+                rcIpPrefixListId               Integer32,
+                rcIpPrefixListPrefix           IpAddress,
+                rcIpPrefixListPrefixMaskLen    INTEGER,
+                rcIpPrefixListMaskLenFrom      INTEGER,
+                rcIpPrefixListMaskLenUpto      INTEGER,
+                rcIpPrefixListName             DisplayString,
+                rcIpPrefixListRowStatus        RowStatus
+        }
+
+rcIpPrefixListId OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "ListId"
+        ::= { rcIpPrefixListEntry 1 }
+
+rcIpPrefixListPrefix OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Is a member of a specific prefix list.
+                       Adding the prefix to the given prefix list"
+        ::= { rcIpPrefixListEntry 2 }
+
+rcIpPrefixListPrefixMaskLen OBJECT-TYPE
+        SYNTAX        INTEGER (0..32)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "prefix mask length"
+        ::= { rcIpPrefixListEntry 3 }
+
+rcIpPrefixListMaskLenFrom OBJECT-TYPE
+        SYNTAX        INTEGER (0..32)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "used with mask len"
+        ::= { rcIpPrefixListEntry 4 }
+
+rcIpPrefixListMaskLenUpto OBJECT-TYPE
+        SYNTAX        INTEGER (0..32)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "used with mask len"
+        ::= { rcIpPrefixListEntry 5 }
+
+rcIpPrefixListName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(1..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "list name"
+        ::= { rcIpPrefixListEntry 6 }
+
+rcIpPrefixListRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "row status"
+        ::= { rcIpPrefixListEntry 7 }
+
+
+
+-- Ip Route Policy Table
+
+rcIpRoutePolicyTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpGenPolicy 11 }
+
+rcIpRoutePolicyApply OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpGenPolicy 12 }
+
+rcIpRoutePolicyTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpRoutePolicyEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP Route Map table"
+        ::= { rcIpGenPolicy 13 }
+
+rcIpRoutePolicyEntry OBJECT-TYPE
+        SYNTAX          RcIpRoutePolicyEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip Route Map Table."
+        INDEX           { rcIpRoutePolicyId, rcIpRoutePolicySequenceNumber }
+        ::= { rcIpRoutePolicyTable 1 }
+
+RcIpRoutePolicyEntry ::=
+        SEQUENCE {
+                rcIpRoutePolicyId                          Integer32,
+                rcIpRoutePolicySequenceNumber              Integer32,
+                rcIpRoutePolicyName                        DisplayString,
+                rcIpRoutePolicyEnable                      TruthValue,
+                rcIpRoutePolicyMode                        INTEGER,
+                rcIpRoutePolicyMatchProtocol               INTEGER,
+                rcIpRoutePolicyMatchAsPath                 DisplayString,
+                rcIpRoutePolicyMatchCommunity              DisplayString,
+                rcIpRoutePolicyMatchCommunityExact         EnableValue,
+                rcIpRoutePolicyMatchNetwork                DisplayString,
+                rcIpRoutePolicyMatchIpRouteSource          DisplayString,
+                rcIpRoutePolicyMatchNextHop                DisplayString,
+                rcIpRoutePolicyMatchInterface              DisplayString,
+                rcIpRoutePolicyMatchRouteType              INTEGER,
+                rcIpRoutePolicyMatchMetric                 INTEGER,
+                rcIpRoutePolicyMatchTag                    DisplayString,
+                rcIpRoutePolicySetRoutePreference          INTEGER,
+                rcIpRoutePolicySetAsPath                   DisplayString,
+                rcIpRoutePolicySetAsPathMode               INTEGER,
+                rcIpRoutePolicySetAutomaticTag             EnableValue,
+                rcIpRoutePolicySetCommunityNumber          DisplayString,
+                rcIpRoutePolicySetCommunityMode            INTEGER,
+                rcIpRoutePolicySetMetricTypeInternal       Integer32,
+                rcIpRoutePolicySetMetric                   INTEGER,
+                rcIpRoutePolicySetMetricType               INTEGER,
+                rcIpRoutePolicySetNextHop                  IpAddress,
+                rcIpRoutePolicySetOrigin                   INTEGER,
+                rcIpRoutePolicySetLocalPref                Integer32,
+                rcIpRoutePolicySetOriginEgpAs              Integer32,
+                rcIpRoutePolicySetTag                      Integer32,
+                rcIpRoutePolicySetWeight                   Integer32,
+                rcIpRoutePolicySetInjectNetList            DisplayString,
+                rcIpRoutePolicyRowStatus                   RowStatus,
+                rcIpRoutePolicySetMask                   IpAddress,
+                rcIpRoutePolicyNssaPbit                   EnableValue
+        }
+
+rcIpRoutePolicyId OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Index used to identify a group of policies in
+                       the route policy tableRoute map id"
+        ::= { rcIpRoutePolicyEntry 1 }
+
+rcIpRoutePolicySequenceNumber OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "second index used to identify a specific policy
+                       with in the route policy group (grouped by Id).
+                       This field allows users to specify different
+                       MATCH, SET parameters and an action."
+        ::= { rcIpRoutePolicyEntry 2 }
+
+rcIpRoutePolicyName OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(1..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Is used to group a set of policies with different
+            sequence number. Id & Name have one-on-one
+                       relationship. Different policy groups can
+                       contain same sequence number, whereas with in
+                       a group the sequence number must be different."
+        ::= { rcIpRoutePolicyEntry 3 }
+
+rcIpRoutePolicyEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Value specified here indicate whether
+                       this policy is enabled or not. If
+                       disabled policy sould not be used."
+               DEFVAL        { false }
+        ::= { rcIpRoutePolicyEntry 4 }
+
+rcIpRoutePolicyMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          permit(1),
+                          deny(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "specifies the action to be taken when this
+                       policy is selected for a specific route.
+                       This can be permit or deny or continue.
+                       Permit indicates allow the route, deny indicates
+                       ignore the route. Continue means continue
+                       checking the next match criteria set in the
+                       next policy seq, if none take the default action
+                       in the given context."
+               DEFVAL        { permit }
+        ::= { rcIpRoutePolicyEntry 5 }
+
+
+rcIpRoutePolicyMatchProtocol OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Match protocol. Used for RIP and DVMRP announce policy only.
+                       Value is one of multiple (logical 'OR) of the following values: 
+                      direct(1): enables direct match-protocol
+                      static(2): enables static match-protocol
+                      rip(4): enables rip match-protocol
+                      ospf(8): enables ospf match-protocol
+                      ebgp(16): enables ebgp match-protocol
+                      dvmrp(32): enables dvmrp match-protocol
+                      ibgp(64): enables ibgp match-protocol
+                      isis(128): enables isis match-protocol
+                      any(255): enables all match-protocols"
+        ::= { rcIpRoutePolicyEntry 6 }
+
+rcIpRoutePolicyMatchAsPath OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Applicable to BGP protocol only. Match the BGP
+                       autonomous system path. This will override the
+                         BGP neighbor filter list info."
+        ::= { rcIpRoutePolicyEntry 7 }
+
+rcIpRoutePolicyMatchCommunity OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Applicable to BGP protocol only. Filter
+                       incoming/outgoing updates based on communities."
+        ::= { rcIpRoutePolicyEntry 8 }
+
+rcIpRoutePolicyMatchCommunityExact OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "If enabled indicates the match has be an exact
+                       (i.e., all of the communities specified in the
+                       path has to be matched)."
+        DEFVAL         {disable}
+        ::= { rcIpRoutePolicyEntry 9 }
+
+rcIpRoutePolicyMatchNetwork OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "can specify one or more prefix list name or id(s)"
+        DEFVAL        {""}
+        ::= { rcIpRoutePolicyEntry 10 }
+
+rcIpRoutePolicyMatchIpRouteSource OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "In case of Rip routes this is equivalent to
+                       RipInterface. In case of DVMRP routes this is
+                       equivalent to DVMRP gateway. Can specify one
+                       or more prefix list name(s) or id(s) seperated by comma."
+        DEFVAL        {""}
+        ::= { rcIpRoutePolicyEntry 11 }
+
+rcIpRoutePolicyMatchNextHop OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "In case of Rip routes this is equivalent to
+                       RipInterface. In case of DVMRP routes this is
+                       equivalent to DVMRP gateway. Can specify one
+                       or more prefix list name(s) or id(s) seperated by comma."
+        DEFVAL        {""}
+        ::= { rcIpRoutePolicyEntry 12 }
+
+rcIpRoutePolicyMatchInterface OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Match received interface. Only for rip routes.
+                       Ignored in all other cases."
+        DEFVAL        {""}
+        ::= { rcIpRoutePolicyEntry 13 }
+
+rcIpRoutePolicyMatchRouteType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          any(0),
+                          local(1),
+                          internal(2),
+                          external(3),
+                          externaltype1(4),
+                          externaltype2(5)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "For BGP this choice refers to locally generated
+                       routes external routes learned via ebgp nbr. For
+            OSPF internal refers to intra and inter area
+                       routes (belongs to local autonomous system).
+                       External (type1|type2) refers to the routes
+                       learned from other ASs and imported as either
+                       type1 or type2. if type1/type2 is specified
+                       then match only type1/type2."
+        DEFVAL         {any}
+        ::= { rcIpRoutePolicyEntry 14 }
+
+rcIpRoutePolicyMatchMetric OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Match mec field in the incoming advertisement."
+        DEFVAL        { 0 }
+        ::= { rcIpRoutePolicyEntry 15 }
+
+rcIpRoutePolicyMatchTag OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "specifies a list of tag(s), that will be used
+                       during the match criteria process.contains one
+                       or more tag values.."
+        ::= { rcIpRoutePolicyEntry 16 }
+
+rcIpRoutePolicySetRoutePreference OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "if non-zero specifies the route preference
+                       value to be assigned to the routes that applies
+                       this policy.contains one or more tag values.."
+        ::= { rcIpRoutePolicyEntry 17 }
+
+rcIpRoutePolicySetAsPath OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The AS path vaule to be used whether the
+                       SetAsPathMode is Tag or Prepend.as-path string.."
+        ::= { rcIpRoutePolicyEntry 18 }
+
+rcIpRoutePolicySetAsPathMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          tag(1),
+                          prepend(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "It can be either tag or prepend tag.
+                       applicable only while redistributing routes to
+                       BGP.Converts the tag of a route into AS path."
+        DEFVAL         {prepend}
+        ::= { rcIpRoutePolicyEntry 19 }
+
+rcIpRoutePolicySetAutomaticTag OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        DEFVAL        {disable}
+        ::= { rcIpRoutePolicyEntry 20 }
+
+rcIpRoutePolicySetCommunityNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "this value can be a number (1..42949672000)
+                       or no-export or no-advertise. Applicable to
+                       BGP advertisments.community number."
+        ::= { rcIpRoutePolicyEntry 21 }
+
+rcIpRoutePolicySetCommunityMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          unchanged(0),
+                          none(1),
+                          append(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "this value can be either append or none
+                       unchanged - keep the community attribute in the
+                                   route path as it is.
+                       none - remove the community in the route path
+                       additive - adds the community-number specified
+                                  in SetCommunityNumber to the
+                                  community list attribute.  Applicable
+                       to BGP advertisments."
+        DEFVAL         {unchanged}
+        ::= { rcIpRoutePolicyEntry 22 }
+
+rcIpRoutePolicySetMetricTypeInternal OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Indicates to set the MED value for routes
+                       advertised to ebgp nbrs to the IGP metric value."
+        DEFVAL         {0}
+        ::= { rcIpRoutePolicyEntry 23 }
+
+rcIpRoutePolicySetMetric OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Value of the metric to be used while sending an
+                       update for the routes that match the matching
+                       criteria in this route policy.
+                       Default - 0 indicates the internal value defined
+            for protocol"
+        DEFVAL        { 0 }
+        ::= { rcIpRoutePolicyEntry 24 }
+
+rcIpRoutePolicySetMetricType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          type1(1),
+                          type2(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Metric type for the routes to be imported into
+                       OSPF routing protocol, which passed the matching
+            criteria configured in this route policy."
+            DEFVAL        { type2 }
+        ::= { rcIpRoutePolicyEntry 25 }
+
+rcIpRoutePolicySetNextHop OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IpAddress of the next hop router.  Ignored for
+                       DVMRP routes."
+        DEFVAL   { '00000000'H }    -- 0.0.0.0
+        ::= { rcIpRoutePolicyEntry 26 }
+
+rcIpRoutePolicySetOrigin OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          unchanged(0),
+                          igp(1),
+                          egp(2),
+                          incomplete(3)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "igp/egp/incomplete Applicable to BGP protocol
+                       only. If not set uses the route origin from
+                       the Ip routing table (protocol)."
+        DEFVAL         {unchanged}
+        ::= { rcIpRoutePolicyEntry 27 }
+
+rcIpRoutePolicySetLocalPref OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "this value will be used during route decision
+                       process in the BGP protocol. Applicable to BGP
+                       only."
+        DEFVAL         {0}
+        ::= { rcIpRoutePolicyEntry 28 }
+
+rcIpRoutePolicySetOriginEgpAs OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "indicates the Remote autonomous sys number.
+                       Applicable to BGP only."
+        DEFVAL         {0}
+        ::= { rcIpRoutePolicyEntry 29 }
+
+rcIpRoutePolicySetTag OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Value to be used for setting tag of the
+                       destination routing protocol. If not specified
+                       forward the tag value in the source routing
+                       protocol. Value 0 indicates not set"
+        DEFVAL         {0}
+        ::= { rcIpRoutePolicyEntry 30 }
+
+rcIpRoutePolicySetWeight OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Should be using with match as-path condition.
+                       Weight value for the routing table. For BGP
+                       this value will override the weight configured
+                       through NetworkTableEntry or FilterListWeight or
+                       NeighborWeight. Used for BGP only.Value 0
+                       indicates not set"
+        DEFVAL         {0}
+        ::= { rcIpRoutePolicyEntry 31 }
+
+rcIpRoutePolicySetInjectNetList OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "specifies the prefix list to be used either
+                       for injecting the routes into the routing
+                       table or to include the networks in the
+                       advertisement. Ignored for DVMRP."
+        DEFVAL        {""}
+        ::= { rcIpRoutePolicyEntry 32 }
+
+rcIpRoutePolicyRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "row status"
+        ::= { rcIpRoutePolicyEntry 33 }
+
+rcIpRoutePolicySetMask OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Set Mask Ip Address"
+        DEFVAL   { '00000000'H }    -- 0.0.0.0
+        ::= { rcIpRoutePolicyEntry 34 }
+
+rcIpRoutePolicyNssaPbit OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Set/Reset P bit in specified type 7 LSA.
+                       By default P bit is always set in case user
+                       set it to disable state for particular route
+                       policy than all type 7 LSAs associated with
+                       that route policy will have P bit cleared,
+                       with this intact NSSA ABR will not perform
+                       translation of these LSAs to type 5."
+        DEFVAL        { enable }
+        ::= { rcIpRoutePolicyEntry 35 }
+
+
+-- Ip Redistribute Table
+
+rcIpRedistributeTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpGenPolicy 14 }
+
+rcIpRedistributeApply OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+               DEFVAL        { true }
+        ::= { rcIpGenPolicy 15 }
+
+rcIpRedistributeTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpRedistributeEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP Redistribute table"
+        ::= { rcIpGenPolicy 16 }
+
+rcIpRedistributeEntry OBJECT-TYPE
+        SYNTAX          RcIpRedistributeEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip Redistribute Table."
+        INDEX           { rcIpRedistributeProtocol,
+                           rcIpRedistributeRouteSource }
+        ::= { rcIpRedistributeTable 1 }
+
+RcIpRedistributeEntry ::=
+        SEQUENCE {
+                rcIpRedistributeProtocol         INTEGER,
+                rcIpRedistributeRouteSource      INTEGER,
+                rcIpRedistributeEnable           EnableValue,
+                rcIpRedistributeMetric           INTEGER,
+                rcIpRedistributeMetricType       INTEGER,
+                rcIpRedistributeMatchRouteType   INTEGER,
+                rcIpRedistributeSetTag           Integer32,
+                rcIpRedistributeSubnets          INTEGER,
+                rcIpRedistributeRoutePolicy      DisplayString,
+                rcIpRedistributeASNumber         Integer32,
+                rcIpRedistributeWeight           Integer32,
+                rcIpRedistributeDefaultOriginate Integer32,
+                rcIpRedistributeRowStatus        RowStatus,
+                rcIpRedistributeLevel            INTEGER
+        }
+
+rcIpRedistributeProtocol OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          ospf(1),
+                          bgp(2),
+                          isis(3),
+                          ospfv3(4)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Protocol is any one of the dynamic routing
+                       protocol, which  is interested in receiving
+                       the external routing info."
+        ::= { rcIpRedistributeEntry 1 }
+
+rcIpRedistributeRouteSource OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          direct(1),
+                          static(2),
+                          rip(3),
+                          ospf(4),
+                          bgp(5),
+                          isis(6)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "equivalent to the owner field in the routing
+                       table. This field indicates that the protocol
+                       is interested in knowing/not-knowing the routes
+                       learned from this source."
+        ::= { rcIpRedistributeEntry 2 }
+
+rcIpRedistributeEnable OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable/Disable. By default this is enabled."
+        DEFVAL        { disable }
+        ::= { rcIpRedistributeEntry 3 }
+
+rcIpRedistributeMetric OBJECT-TYPE
+        SYNTAX        INTEGER (0..16777215)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Value of the metric to be announced in the advertisement.
+                       The range specified for ISIS is for other protocols that range
+                       between (0 .. 65535)"
+        DEFVAL        { 0 }
+        ::= { rcIpRedistributeEntry 4 }
+
+rcIpRedistributeMetricType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          type1(1),
+                          type2(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "specifies the type of the metric type, useful
+                       for ISIS, OSPF and  BGP only. In case of ISIS
+                       type1 is treated as internal and type2 is
+                       treated as external."
+        DEFVAL        { type2 }
+        ::= { rcIpRedistributeEntry 5 }
+
+rcIpRedistributeMatchRouteType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          internal(1),
+                          external1(2),
+                          external2(3)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "used to filter a route based on the route type.
+                       applicable to BGP."
+        ::= { rcIpRedistributeEntry 6 }
+
+rcIpRedistributeSetTag OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Tag value to be set in the advertisment."
+        ::= { rcIpRedistributeEntry 7 }
+
+rcIpRedistributeSubnets OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          allow(1),
+                          supress(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "applicable to OSPF only. Indicates that all the
+                       subnets need to be advertised individually."
+        DEFVAL        { allow }
+        ::= { rcIpRedistributeEntry 8 }
+
+rcIpRedistributeRoutePolicy OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "specify the route policy to achieve the final
+                       granularity in filtering to determine whether
+                       or not a specific route should be advertised
+                       to the given protocol.Route map name"
+        ::= { rcIpRedistributeEntry 9 }
+
+rcIpRedistributeASNumber OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Autonomous system number. Used only for the
+                       BGP protocol."
+        ::= { rcIpRedistributeEntry 10 }
+
+rcIpRedistributeWeight OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "used only for the BGP protocol."
+        ::= { rcIpRedistributeEntry 11 }
+
+rcIpRedistributeDefaultOriginate OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "indicates the given protocol will
+                        originate/advertise a default route."
+        ::= { rcIpRedistributeEntry 12 }
+
+rcIpRedistributeRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "row status"
+        ::= { rcIpRedistributeEntry 13 }
+
+rcIpRedistributeLevel OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          level2(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "This is for ISIS.  This sets the redistribute
+                       level only.  Set this to level2 to distribute the routes in
+                       L2 LSPs.  If the router is at level1 then setting redistribute
+                       at level2 does not have any significance."
+        ::= { rcIpRedistributeEntry 14 }
+
+-- IP Ospf In Filter Table
+
+rcIpOspfInFilterTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpGenPolicy 17 }
+
+rcIpOspfInFilterApply OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpGenPolicy 18 }
+
+rcIpOspfInFilterTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpOspfInFilterEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP Ospf In Filter table"
+        ::= { rcIpGenPolicy 19 }
+
+rcIpOspfInFilterEntry OBJECT-TYPE
+        SYNTAX          RcIpOspfInFilterEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip Ospf In Filter Table."
+        INDEX           { rcIpOspfInFilterAdvertisingRtr }
+        ::= { rcIpOspfInFilterTable 1 }
+
+RcIpOspfInFilterEntry ::=
+        SEQUENCE {
+                rcIpOspfInFilterAdvertisingRtr  IpAddress,
+                rcIpOspfInFilterEnable          EnableValue,
+                rcIpOspfInFilterMetricType      INTEGER,
+                rcIpOspfInFilterPolicyName      DisplayString,
+                rcIpOspfInFilterRowStatus       RowStatus
+        }
+
+rcIpOspfInFilterAdvertisingRtr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpOspfInFilterEntry 1 }
+
+rcIpOspfInFilterEnable OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IfIndex"
+        DEFVAL        { disable }
+        ::= { rcIpOspfInFilterEntry 2 }
+
+rcIpOspfInFilterMetricType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          type1(1),
+                          type2(2),
+                          any(3)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        DEFVAL        { any }
+        ::= { rcIpOspfInFilterEntry 3 }
+
+rcIpOspfInFilterPolicyName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpOspfInFilterEntry 4 }
+
+rcIpOspfInFilterRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpOspfInFilterEntry 5 }
+
+-- Ip Route Pref Table
+
+
+rcIpRoutePrefTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpGenPolicy 20 }
+
+rcIpRoutePrefTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpRoutePrefEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP Route Pref table"
+        ::= { rcIpGenPolicy 21 }
+
+rcIpRoutePrefEntry OBJECT-TYPE
+        SYNTAX          RcIpRoutePrefEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip Route Pref Table."
+        INDEX           { rcIpRoutePrefProtocol }
+        ::= { rcIpRoutePrefTable 1 }
+
+RcIpRoutePrefEntry ::=
+        SEQUENCE {
+                rcIpRoutePrefProtocol    INTEGER,
+                rcIpRoutePrefDefault     INTEGER,
+                rcIpRoutePrefConfigured  INTEGER
+        }
+
+rcIpRoutePrefProtocol OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          local(1),
+                          static(2),
+                          mpls(3),
+                          ospfIntra(4),
+                          ospfInter(5),
+                          isisLevel1(6),
+                          isisLevel2(7),
+                          ebgp(8),
+                          rip(9),
+                          ospfExternal1(10),
+                          ospfExternal2(11),
+                          ibgp(12),
+                          staticv6(13),
+                          ospfv3Intra(14),
+                          ospfv3Inter(15),
+                          ospfv3External1(16),
+                          ospfv3External2(17)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Protocol"
+        ::= { rcIpRoutePrefEntry 1 }
+
+rcIpRoutePrefDefault OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Shows the default preference value for the given
+                       protocol."
+        ::= { rcIpRoutePrefEntry 2 }
+
+rcIpRoutePrefConfigured OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "This value is configurable by the user"
+        ::= { rcIpRoutePrefEntry 3 }
+
+
+END

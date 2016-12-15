@@ -1,0 +1,348 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-VIRTUALSEGMENT-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion Virtual Segment MIB Release 2.0.4
+-- Revision 03/02/99
+
+-- Copyright 1994-99 Nortel Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+        OBJECT-TYPE
+                FROM RFC-1212
+        StatusIndicator, sysConfig, Boolean
+                FROM CENTILLION-ROOT-MIB
+        BridgeGroupId
+                FROM CENTILLION-BRIDGEGROUP-MIB
+        DisplayString
+                FROM RFC1213-MIB;
+
+
+-- Textual Conventions
+
+-- The following textual convention describes the type of virtual segments
+-- in the system.
+--
+VirtualSegmentTypeId ::= 
+        INTEGER {
+                other(1),       -- none of the following
+                token-ring(2),
+                ethernet(3)
+        }
+
+
+-- Groups
+
+virtualSegmentGroup     OBJECT IDENTIFIER ::= { sysConfig 23 }
+
+
+-- SECTION 2: Virtual Segment Group
+--
+-- The virtual segment group contains information pertaining to all
+-- virtual segments in the system.
+--
+
+virtualSegmentConfigNumber OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The total number of configured virtual segments in the 
+                system."
+        ::= { virtualSegmentGroup 1 }
+
+virtualSegmentActiveNumber OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The total number of active virtual segments in the system."
+        ::= { virtualSegmentGroup 2 }
+
+
+virtualSegmentTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF VirtualSegmentEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "The Virtual Segment table. The virtual segment table contains
+                information pertaining the each virtual segment in the system."
+        ::= { virtualSegmentGroup 3 }
+
+virtualSegmentEntry OBJECT-TYPE
+        SYNTAX  VirtualSegmentEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "A single entry in the virtual segment table. Virtual segments
+                may be added by specifying a valid status for a non-existant
+                entry in the table. Note that if no other values are
+                specified in the set request, they are defaulted to a
+                value as appropriate to the type of virtual Segment."
+        INDEX   { virtualSegmentType, virtualSegmentId }
+        ::= { virtualSegmentTable 1 }
+
+VirtualSegmentEntry ::= SEQUENCE {
+        virtualSegmentType
+                VirtualSegmentTypeId,
+        virtualSegmentId
+                INTEGER,
+        virtualSegmentStatus
+                StatusIndicator,
+        virtualSegmentIfIndex
+                INTEGER,
+        virtualSegmentConfiguredPortNumber
+                INTEGER,
+        virtualSegmentActivePortNumber
+                INTEGER,
+        virtualSegmentSpecific
+                OBJECT IDENTIFIER,
+        virtualSegmentAdminEncapsulation
+                INTEGER,
+        virtualSegmentBridgeGroupIdentifier
+                BridgeGroupId,
+        virtualSegmentGroupName
+                DisplayString,
+        virtualSegmentGroupServer
+                Boolean
+        }
+
+virtualSegmentType OBJECT-TYPE
+        SYNTAX  VirtualSegmentTypeId
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The virtual segment type. When the type is ethernet, a MLT 
+                 group will be created.  When the type is token ring, a token
+                 ring vsegment is created." 
+        ::= { virtualSegmentEntry 1 }
+
+virtualSegmentId OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The virtual segment identifier. The identifier is interpreted
+                based upon the virtualSegmentType object. For example, the 
+                virtualSegmentIdentifier for a token-ring VSegment 
+                is the ring number.
+                This identifier must be unique across local VSegments within 
+                the specific virtualSegmentType."
+        ::= { virtualSegmentEntry 2 }
+
+virtualSegmentStatus OBJECT-TYPE
+        SYNTAX  StatusIndicator
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The current status of the virtual Segment entry. VSegments may
+                be added by specifiying a valid status, and removed by
+                specifying an invalid status."
+        ::= { virtualSegmentEntry 3 }
+
+virtualSegmentIfIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The value of the instance of the ifIndex object, defined
+                in MIB-II, for the interface corresponding to this VSegment."
+        ::= { virtualSegmentEntry 4 }
+
+virtualSegmentConfiguredPortNumber OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The number of ports configured in this VSegment."
+        ::= { virtualSegmentEntry 5 }
+
+virtualSegmentActivePortNumber OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The number of active ports in this VSegment."
+        ::= { virtualSegmentEntry 6 }
+
+virtualSegmentSpecific OBJECT-TYPE
+        SYNTAX  OBJECT IDENTIFIER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The object identifier to reference the corresponding instance
+                in a VSegment specific MIB. If this information is not present,
+                its value is set to the OBJECT IDENTIFIER { 0 0 }."
+        ::= { virtualSegmentEntry 7 }
+
+virtualSegmentAdminEncapsulation OBJECT-TYPE
+        SYNTAX  INTEGER {
+                other(1),               -- none of the following
+                iso88025-tokenRing(2),
+                ethernet-iso88023(3),   -- both ethernet & iso88023
+                ethernet-csmacd(4),
+                iso88023-csmacd(5)
+                }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The encapulation used for generating management frames for
+                multicast, broadcast and unknown destinations. The default
+                values are specific to the virtualSemgentTypeId and are
+                assigned as follows:
+                        token-ring:     iso88025-tokenRing,
+                        ethernet:       ethernet-iso88023
+                Allowable values are also dependant on the 
+                virtualSegmentTypeId."
+        ::= { virtualSegmentEntry 8 }
+
+virtualSegmentBridgeGroupIdentifier OBJECT-TYPE
+        SYNTAX  BridgeGroupId
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The spanning tree group identifier corresponding to this
+                virtual segment."
+        ::= { virtualSegmentEntry 9 }
+
+virtualSegmentGroupName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE(0..20))
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The MLT group name corresponding to this virtual 
+                segment.  This value is used for ethernet vsegment type 
+                and is ignored for a token ring vsegment type."
+        ::= { virtualSegmentEntry 10 }
+
+virtualSegmentGroupServer OBJECT-TYPE
+        SYNTAX  Boolean
+        ACCESS  read-write
+        STATUS  deprecated
+        DESCRIPTION
+                "Used to indicate a server is attached to this MLT
+                 group. Default condition is false (no server attached
+                 to this MLT group)."
+        DEFVAL  { false }
+        ::= { virtualSegmentEntry 11 }
+
+
+
+-- SECTION 3: Virtual Segment Port Configuration Table
+--
+-- This table defines the port configuration for a virtual Segment.
+--
+
+virtualSegmentPortTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF VirtualSegmentPortEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "The Virtual Segment port configuration table. This table 
+                contains information pertaining to the ports belonging to a
+                virtual segment."
+        ::= { virtualSegmentGroup 4 }
+
+virtualSegmentPortEntry OBJECT-TYPE
+        SYNTAX  VirtualSegmentPortEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "An entry in the virtual Segment port table. Entries are 
+                added by specifying the virtualSegmentPortType,
+                 virtualSegmentPortIdentifier, 
+                virtualSegmentPortCardNumber, and virtualSegmentPortPortNumber.
+                Entries may be deleted simply by invalidating the 
+                virtualSegmentPortStatus object."
+        INDEX   { virtualSegmentPortType, 
+                  virtualSegmentPortId, 
+                  virtualSegmentPortCardNumber, 
+                  virtualSegmentPortPortNumber }
+        ::= { virtualSegmentPortTable 1 }
+
+VirtualSegmentPortEntry ::= SEQUENCE {
+        virtualSegmentPortType
+                VirtualSegmentTypeId,
+        virtualSegmentPortId
+                INTEGER,
+        virtualSegmentPortCardNumber
+                INTEGER,
+        virtualSegmentPortPortNumber
+                INTEGER,
+        virtualSegmentPortStatus
+                StatusIndicator,
+        virtualSegmentPortIfIndex
+                INTEGER
+        }
+
+virtualSegmentPortType OBJECT-TYPE
+        SYNTAX  VirtualSegmentTypeId
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The virtual segment type of which this port is a member."
+        ::= { virtualSegmentPortEntry 1 }
+
+virtualSegmentPortId OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The virtual segment identifier of which this port is 
+                a member."
+        ::= { virtualSegmentPortEntry 2 }
+
+virtualSegmentPortCardNumber OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The card number for this port in the virtual Segment."
+        ::= { virtualSegmentPortEntry 3 }
+
+virtualSegmentPortPortNumber OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The port number for this port in the virtual Segment."
+        ::= { virtualSegmentPortEntry 4 }
+
+virtualSegmentPortStatus OBJECT-TYPE
+        SYNTAX  StatusIndicator
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The current status of the entry. Entries may be added by
+                specifying a value of valid, and removed by setting the
+                status to invalid."
+        ::= { virtualSegmentPortEntry 5 }
+
+virtualSegmentPortIfIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The value for this object identifies the instance of
+                the ifIndex object defined in MIB-II, for the interface
+                corresponding to this port. If no such entry exists, the
+                value 0 may be returned."
+        ::= { virtualSegmentPortEntry 6 }
+
+
+END

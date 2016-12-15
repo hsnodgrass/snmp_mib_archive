@@ -1,0 +1,568 @@
+
+BAY-STACK-LLDP-X-AVAYA-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress, InetAddressPrefixLength
+        FROM INET-ADDRESS-MIB
+    lldpLocPortNum, lldpRemTimeMark, lldpRemLocalPortNum, lldpRemIndex,
+    lldpPortConfigEntry
+        FROM LLDP-MIB
+    bayStackMibs
+        FROM SYNOPTICS-ROOT-MIB;
+
+bayStackLldpXAvayaMib MODULE-IDENTITY
+    LAST-UPDATED "201010290000Z"
+    ORGANIZATION "Nortel Ltd."
+    CONTACT-INFO "nortel.com"
+    DESCRIPTION
+        "This MIB module is an extension to the standard LLDP-EXT-MED MIB."
+
+    REVISION    "201010290000Z"  -- October 29, 2010
+    DESCRIPTION "Ver 1:  Initial version."
+
+    ::= { bayStackMibs 39 }
+
+bsLldpXAvayaNotifications OBJECT IDENTIFIER ::= { bayStackLldpXAvayaMib 0 }
+bsLldpXAvayaObjects       OBJECT IDENTIFIER ::= { bayStackLldpXAvayaMib 1 }
+
+-- ===========================================================================
+-- Avaya-specific TLV group
+-- Organizationally Defined Information Extension - Avaya vendor specific tlvs
+-- ===========================================================================
+
+-- LLDP IEEE 802.1 extension MIB groups
+bsLldpXAvayaConfig     OBJECT IDENTIFIER ::= { bsLldpXAvayaObjects 1 }
+bsLldpXAvayaLocalData  OBJECT IDENTIFIER ::= { bsLldpXAvayaObjects 2 }
+bsLldpXAvayaRemoteData OBJECT IDENTIFIER ::= { bsLldpXAvayaObjects 3 }
+
+-- ===========================================================================
+-- Avaya vendor specific - Configuration
+-- ===========================================================================
+
+bsLldpXAvayaPortConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table that controls selection of LLDP TLVs to be transmitted
+        on individual ports."
+    ::= { bsLldpXAvayaConfig 1 }
+
+bsLldpXAvayaPortConfigEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "LLDP configuration information that controls the
+        transmission of Avaya vendor specific TLVs on
+        LLDP transmission capable ports.
+
+        This configuration object augments the lldpPortConfigEntry of
+        the LLDP-MIB, therefore it is only present along with the port
+        configuration defined by the associated lldpPortConfigEntry
+        entry.
+
+        Each active bsLldpXAvayaPortConfigEntry must be from non-volatile
+        storage (along with the corresponding lldpPortConfigEntry)
+        after a re-initialization of the management system."
+    AUGMENTS { lldpPortConfigEntry }
+    ::= { bsLldpXAvayaPortConfigTable 1 }
+
+BsLldpXAvayaPortConfigEntry ::= SEQUENCE {
+    bsLldpXAvayaPortConfigTLVsTxEnable BITS
+}
+
+bsLldpXAvayaPortConfigTLVsTxEnable OBJECT-TYPE
+    SYNTAX  BITS {
+                poeConservationLevel(0),
+                callServer(1),
+                fileServer(2),
+                framingTlv(3)
+            }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The bsLldpXAvayaPortConfigTLVsTxEnable, defined as a bitmap,
+        includes the basic set of LLDP Avaya TLVs whose transmission is
+        allowed on the local LLDP agent by the network management.
+        Each bit in the bitmap corresponds to a TLV type associated
+        with a specific optional TLV.
+
+        The bit 'poeConservationLevel(0)' indicates that LLDP agent should
+        transmit 'Poe Conservation Level TLV'.
+
+        The bit 'callServer(1)' indicates that LLDP agent should
+        transmit 'Call Server TLV'.
+
+         The bit 'fileServer(2)' indicates that LLDP agent should
+        transmit 'File Server TLV'.
+
+        The bit 'FramingTlv(3)' indicates that LLDP agent should transmit
+        '802.1q Framing TLV'.
+
+        The default value for lldpPortConfigTLVsTxEnable object is
+        empty set, which means no enumerated values are set.
+
+        The value of this object must be restored from non-volatile
+        storage after a re-initialization of the management system."
+    DEFVAL { { } }
+    ::= { bsLldpXAvayaPortConfigEntry 1 }
+
+
+-- ===========================================================================
+-- Avaya specific  - Local Device Information
+-- ===========================================================================
+
+-- ===========================================================================
+-- bsLldpXAvayaLocPortTable: poe conservation level and dot1q-framing
+-- Information Table
+-- ===========================================================================
+
+bsLldpXAvayaLocPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaLocPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one row per port with information
+         about the Poe conservation level and layer 2 priority tagging
+         between PSE and PD."
+     ::= { bsLldpXAvayaLocalData 1 }
+
+bsLldpXAvayaLocPortEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaLocPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a particular port component."
+    INDEX { lldpLocPortNum }
+    ::= { bsLldpXAvayaLocPortTable 1 }
+
+BsLldpXAvayaLocPortEntry ::= SEQUENCE {
+    bsLldpXAvayaLocPortPoeConsLevelRequest Integer32,
+    bsLldpXAvayaLocPortDot1QFramingRequest INTEGER
+}
+
+bsLldpXAvayaLocPortPoeConsLevelRequest OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Information about requested poe conservation level
+         advertised to the PD device."
+    ::= { bsLldpXAvayaLocPortEntry 1 }
+
+bsLldpXAvayaLocPortDot1QFramingRequest OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    tagged(1),
+                    untagged(2),
+                    auto(3)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+         "Information about layer2 priority tagging between
+         the switch and ip phone"
+    ::= { bsLldpXAvayaLocPortEntry 2 }
+
+-- ===========================================================================
+-- bsLldpXAvayaLocCallServerTable
+-- ===========================================================================
+
+bsLldpXAvayaLocCallServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaLocCallServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one row per call server address.
+        All the call server ip addresses are used to be advertised to
+        Avaya IP Phones."
+    ::= { bsLldpXAvayaLocalData 2 }
+
+bsLldpXAvayaLocCallServerEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaLocCallServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about call servers."
+    INDEX { bsLldpXAvayaLocCallServerNum }
+    ::= { bsLldpXAvayaLocCallServerTable 1 }
+
+BsLldpXAvayaLocCallServerEntry ::= SEQUENCE {
+    bsLldpXAvayaLocCallServerNum         Integer32,
+    bsLldpXAvayaLocCallServerAddressType InetAddressType,
+    bsLldpXAvayaLocCallServerAddress     InetAddress
+}
+
+bsLldpXAvayaLocCallServerNum OBJECT-TYPE
+    SYNTAX      Integer32 (1..8)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the call server id."
+    ::= { bsLldpXAvayaLocCallServerEntry 1 }
+
+bsLldpXAvayaLocCallServerAddressType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Call Server Ip Address Type."
+    ::= { bsLldpXAvayaLocCallServerEntry 2 }
+
+bsLldpXAvayaLocCallServerAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Call Server Ip Address."
+    ::= { bsLldpXAvayaLocCallServerEntry 3 }
+
+-- ===========================================================================
+-- bsLldpXAvayaLocFileServerTable
+-- ===========================================================================
+
+bsLldpXAvayaLocFileServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaLocFileServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one row per file server address.
+        All the file server ip addresses are used to be advertised to
+        Avaya IP Phones."
+    ::= { bsLldpXAvayaLocalData 3 }
+
+
+bsLldpXAvayaLocFileServerEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaLocFileServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about file server ip address"
+    INDEX { bsLldpXAvayaLocFileServerNum }
+    ::= { bsLldpXAvayaLocFileServerTable 1 }
+
+BsLldpXAvayaLocFileServerEntry ::= SEQUENCE {
+    bsLldpXAvayaLocFileServerNum         Integer32,
+    bsLldpXAvayaLocFileServerAddressType InetAddressType,
+    bsLldpXAvayaLocFileServerAddress     InetAddress
+}
+
+bsLldpXAvayaLocFileServerNum OBJECT-TYPE
+    SYNTAX      Integer32 (1..4)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the file server id."
+    ::= { bsLldpXAvayaLocFileServerEntry 1 }
+
+bsLldpXAvayaLocFileServerAddressType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "File Server ip address Type "
+    ::= { bsLldpXAvayaLocFileServerEntry 2 }
+
+bsLldpXAvayaLocFileServerAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "File Server ip address"
+    ::= { bsLldpXAvayaLocFileServerEntry 3 }
+
+-- ===========================================================================
+-- LLDP-AVAYA  - Remote Devices Information
+-- ===========================================================================
+
+-- ===========================================================================
+-- bsLldpXAvayaRemTable
+-- ===========================================================================
+
+bsLldpXAvayaRemTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaRemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one or more rows per physical network
+        connection known to this agent."
+    ::= { bsLldpXAvayaRemoteData 1 }
+
+bsLldpXAvayaRemEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaRemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a particular remote device component."
+    INDEX { lldpRemTimeMark,
+            lldpRemLocalPortNum,
+            lldpRemIndex }
+    ::= { bsLldpXAvayaRemTable 1 }
+
+BsLldpXAvayaRemEntry ::= SEQUENCE {
+    bsLldpXAvayaRemCurrentConsLevel Integer32,
+    bsLldpXAvayaRemTypicalPower     Integer32,
+    bsLldpXAvayaRemMaxPower         Integer32
+}
+
+bsLldpXAvayaRemCurrentConsLevel OBJECT-TYPE
+    SYNTAX      Integer32(1..243)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the current conservation level
+        configured on the remote device."
+    ::= { bsLldpXAvayaRemEntry 1 }
+
+bsLldpXAvayaRemTypicalPower OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the typical power on the remote device."
+    ::= { bsLldpXAvayaRemEntry 2 }
+
+bsLldpXAvayaRemMaxPower OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+         "This object represents the max power on the remote device."
+    ::= { bsLldpXAvayaRemEntry 3 }
+
+-- ===========================================================================
+-- bsLldpXAvayaCallServerRemTable
+-- ===========================================================================
+
+bsLldpXAvayaRemCallServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaRemCallServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one or more rows per physical network
+        connection known to this agent. "
+    ::= { bsLldpXAvayaRemoteData 2 }
+
+bsLldpXAvayaRemCallServerEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaRemCallServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a particular remote device component."
+    INDEX { lldpRemTimeMark,
+        lldpRemLocalPortNum,
+        lldpRemIndex}
+    ::= { bsLldpXAvayaRemCallServerTable 1 }
+
+BsLldpXAvayaRemCallServerEntry ::= SEQUENCE {
+    bsLldpXAvayaRemPortCallServerAddressType InetAddressType,
+    bsLldpXAvayaRemPortCallServerAddress     InetAddress
+}
+
+bsLldpXAvayaRemPortCallServerAddressType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the in use call server ip address type"
+    ::= { bsLldpXAvayaRemCallServerEntry 1 }
+
+bsLldpXAvayaRemPortCallServerAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the in use call server ip address "
+    ::= { bsLldpXAvayaRemCallServerEntry 2 }
+
+-- ===========================================================================
+-- bsLldpXAvayaRemFileServerTable
+-- ===========================================================================
+
+bsLldpXAvayaRemFileServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaRemFileServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        " This table contains one or more rows per physical network
+        connection known to this agent."
+    ::= { bsLldpXAvayaRemoteData  3 }
+
+bsLldpXAvayaRemFileServerEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaRemFileServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a particular remote device component."
+    INDEX { lldpRemTimeMark,
+            lldpRemLocalPortNum,
+            lldpRemIndex }
+    ::= { bsLldpXAvayaRemFileServerTable 1 }
+
+BsLldpXAvayaRemFileServerEntry ::= SEQUENCE {
+    bsLldpXAvayaRemPortFileServerAddressType InetAddressType,
+    bsLldpXAvayaRemPortFileServerAddress     InetAddress
+}
+
+bsLldpXAvayaRemPortFileServerAddressType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the in use file server ip address type"
+    ::= { bsLldpXAvayaRemFileServerEntry 1 }
+
+bsLldpXAvayaRemPortFileServerAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the in use file server ip address"
+    ::= { bsLldpXAvayaRemFileServerEntry 2 }
+
+-- ===========================================================================
+-- bsLldpXAvayaRemPoeConsLevelTable
+-- ===========================================================================
+
+bsLldpXAvayaRemPoeConsLevelTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaRemPoeConsLevelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        " This table contains one or more rows per physical network
+        connection known to this agent."
+    ::= { bsLldpXAvayaRemoteData 4 }
+
+bsLldpXAvayaRemPoeConsLevelEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaRemPoeConsLevelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a particular remote device component."
+    INDEX { lldpRemTimeMark,
+        lldpRemLocalPortNum,
+        lldpRemIndex,
+        bsLldpXAvayaRemPoeConsLevelValue }
+    ::= { bsLldpXAvayaRemPoeConsLevelTable 1 }
+
+BsLldpXAvayaRemPoeConsLevelEntry ::= SEQUENCE {
+    bsLldpXAvayaRemPoeConsLevelValue Integer32
+}
+
+
+bsLldpXAvayaRemPoeConsLevelValue OBJECT-TYPE
+    SYNTAX      Integer32(1..1024)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the conservation level supported by remote
+        device."
+    ::= { bsLldpXAvayaRemPoeConsLevelEntry 2 }
+
+-- ===========================================================================
+-- bsLldpXAvayaRemDot1QTable
+-- ===========================================================================
+
+bsLldpXAvayaRemDot1QTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaRemDot1QEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        " This table contains one or more rows per physical network
+        connection known to this agent."
+    ::= { bsLldpXAvayaRemoteData 5 }
+
+bsLldpXAvayaRemDot1QEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaRemDot1QEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a particular remote device component."
+    INDEX { lldpRemTimeMark,
+        lldpRemLocalPortNum,
+        lldpRemIndex}
+    ::= { bsLldpXAvayaRemDot1QTable 1 }
+
+BsLldpXAvayaRemDot1QEntry ::= SEQUENCE {
+    bsLldpXAvayaRemDot1QFraming INTEGER
+}
+
+bsLldpXAvayaRemDot1QFraming OBJECT-TYPE
+    SYNTAX      INTEGER {
+         tagged(1),
+         untagged(2),
+         auto(3)
+       }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains information about Layer 2 priority tagging  "
+    ::= { bsLldpXAvayaRemDot1QEntry 1 }
+
+-- ===========================================================================
+-- bsLldpXAvayaRemPhoneIpTable
+-- ===========================================================================
+
+bsLldpXAvayaRemPhoneIpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF BsLldpXAvayaRemPhoneIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one or more rows per physical network
+        connection known to this agent. "
+    ::= { bsLldpXAvayaRemoteData  6 }
+
+bsLldpXAvayaRemPhoneIpEntry OBJECT-TYPE
+    SYNTAX      BsLldpXAvayaRemPhoneIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a particular remote device component."
+    INDEX { lldpRemTimeMark,
+        lldpRemLocalPortNum,
+        lldpRemIndex}
+    ::= { bsLldpXAvayaRemPhoneIpTable 1 }
+
+BsLldpXAvayaRemPhoneIpEntry ::= SEQUENCE {
+      bsLldpXAvayaRemPortPhoneAddressType    InetAddressType,
+      bsLldpXAvayaRemPortPhoneAddress        InetAddress,
+      bsLldpXAvayaRemPortPhoneAddressMask    InetAddressPrefixLength,
+      bsLldpXAvayaRemPortPhoneGatewayAddress InetAddress
+}
+
+bsLldpXAvayaRemPortPhoneAddressType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains phone ip address type of the remote device."
+    ::= { bsLldpXAvayaRemPhoneIpEntry 1 }
+
+bsLldpXAvayaRemPortPhoneAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains phone ip address of the remote device."
+    ::= { bsLldpXAvayaRemPhoneIpEntry 2 }
+
+bsLldpXAvayaRemPortPhoneAddressMask OBJECT-TYPE
+    SYNTAX      InetAddressPrefixLength
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains phone ip address mask of the remote device."
+    ::= { bsLldpXAvayaRemPhoneIpEntry 3 }
+
+bsLldpXAvayaRemPortPhoneGatewayAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains phone gateway ip address of the remote device."
+    ::= { bsLldpXAvayaRemPhoneIpEntry 4 }
+
+END
+

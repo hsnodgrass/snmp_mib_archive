@@ -1,0 +1,578 @@
+ADAPTECDURALINK-MIB DEFINITIONS ::= BEGIN
+ 
+IMPORTS
+Counter,  enterprises
+FROM RFC1155-SMI
+OBJECT-TYPE
+FROM RFC-1212
+DisplayString, PhysAddress
+FROM RFC1213-MIB;
+
+ 
+ 
+ 
+adaptec                         OBJECT IDENTIFIER ::= {enterprises 795}
+products                        OBJECT IDENTIFIER ::= {adaptec 3 }
+nic                             OBJECT IDENTIFIER ::= {products 1 }
+npg                             OBJECT IDENTIFIER ::= {nic 2 }
+duralink                        OBJECT IDENTIFIER ::= {npg 3 }
+
+ 
+ 
+
+-- The Information group
+
+			information                             OBJECT IDENTIFIER ::= {duralink 1}
+
+			numInterfaces   OBJECT-TYPE
+				SYNTAX  INTEGER
+				ACCESS  read-only
+				STATUS  mandatory
+				DESCRIPTION
+		      "The number of Adaptec network interfaces 
+		       present on this system."
+				::= {information 1}
+
+			numPorts                OBJECT-TYPE
+				SYNTAX  INTEGER
+				ACCESS  read-only
+				STATUS  mandatory
+				DESCRIPTION
+		      "The number of Adaptec network ports
+		       present on this system."
+				::= {information 2}
+
+			numCards                OBJECT-TYPE
+				SYNTAX  INTEGER
+				ACCESS  read-only
+				STATUS  mandatory
+				DESCRIPTION
+		      "The number of Adaptec network adapters
+		       present on this system."
+				::= {information 3}
+
+
+-- Interface Statistics Table
+
+
+
+	  interfaceStatsTable OBJECT-TYPE
+	      SYNTAX  SEQUENCE OF InterfaceStatsEntry
+	      ACCESS  not-accessible
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The table listing Adaptec network interface statistics."
+	      ::= {duralink 2}
+
+	  interfaceStatsEntry OBJECT-TYPE
+	      SYNTAX  InterfaceStatsEntry
+	      ACCESS  not-accessible
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "Each entry lists statistics for a single network interface."
+	      INDEX   { iInterfaceIndex }
+	      ::= { interfaceStatsTable 1 }
+
+	  InterfaceStatsEntry ::=
+	      SEQUENCE {
+		  iInterfaceIndex
+		      INTEGER,
+		  iInterfaceName
+		      DisplayString,
+		  iInterfacePorts
+		      INTEGER,
+		  iPermNetAddress
+		      PhysAddress,
+		  iCurrentNetAddress
+		      PhysAddress,
+		  iDataRate
+		      INTEGER,
+		  iTotalPacketsTransmitted
+		      Counter,
+		  iTotalBytesTransmitted
+		      Counter,
+		  iTotalPacketsReceived
+		      Counter,
+		  iTotalBytesReceived
+		      Counter,
+		  iTotalTransmitErrors
+		      Counter,
+		  iTotalReceiveErrors
+		      Counter,
+          iInterfaceType
+              INTEGER
+	      }
+
+	  iInterfaceIndex OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "A unique value assigned to each interface
+					  This is an increasing numeric value ranging between
+					  1 and the value of NumInterfaces."
+	      ::= { interfaceStatsEntry 1 }
+
+	  iInterfaceName OBJECT-TYPE
+	      SYNTAX  DisplayString (SIZE (0..80))
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The descriptive name assigned to the interface
+		      at the time the interface was configured."
+	      ::= { interfaceStatsEntry 2 }
+ 
+	  iInterfacePorts OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The number of ports in the interface.
+		      An interface may consist of one or more ports."
+	      ::= { interfaceStatsEntry 3 }
+ 
+	  iPermNetAddress OBJECT-TYPE
+	      SYNTAX  PhysAddress
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The permanent network address assigned to this interface.
+		      This is the node address stored permanently in the adapter."
+	      ::= { interfaceStatsEntry 4 }
+
+	  iCurrentNetAddress OBJECT-TYPE
+	      SYNTAX  PhysAddress
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The network address currently assigned this interface.
+		      This address may be administered by software."
+	      ::= { interfaceStatsEntry 5 }
+
+	  iDataRate OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the rate at which data is transferred over this interface, measured in MPBS."
+	      ::= { interfaceStatsEntry 6 }
+
+	  iTotalPacketsTransmitted OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of packets transmitted over this interface."
+	      ::= { interfaceStatsEntry 7 }
+
+	  iTotalBytesTransmitted OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of bytes transmitted over this interface."
+	      ::= { interfaceStatsEntry 8 }
+
+	  iTotalPacketsReceived OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of packets received over this interface."
+	      ::= { interfaceStatsEntry 9 }
+
+	  iTotalBytesReceived OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of bytes received over this interface."
+	      ::= { interfaceStatsEntry 10 }
+
+	  iTotalTransmitErrors OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of Transmit errors seen on this interface."
+	      ::= { interfaceStatsEntry 11 }
+
+	  iTotalReceiveErrors OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of Receive errors seen on this interface."
+	      ::= { interfaceStatsEntry 12 }
+
+	  iInterfaceType OBJECT-TYPE
+	      SYNTAX  INTEGER {
+			standalone          (1),
+			failover            (2),
+			loadBalanced	    (3)
+				}
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the interface type.
+		      standalone indicates a single port configuration.
+		      failover indicates a two port group supporting failover resiliency.
+		      loadBalanced indicates a multiple port group providing load balancing."
+	      ::= { interfaceStatsEntry 13 }
+
+  
+ 
+
+
+-- Port Statistics Table
+
+
+
+	  portStatsTable OBJECT-TYPE
+	      SYNTAX  SEQUENCE OF PortStatsEntry
+	      ACCESS  not-accessible
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The table listing Adaptec network port statistics."
+	      ::= {duralink 3}
+
+	  portStatsEntry OBJECT-TYPE
+	      SYNTAX  PortStatsEntry
+	      ACCESS  not-accessible
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "Each entry lists statistics for a single network port."
+	      INDEX   { pInterfaceIndex,
+			pPortIndex }
+	      ::= { portStatsTable 1 }
+
+	  PortStatsEntry ::=
+	      SEQUENCE {
+		  pInterfaceIndex
+		      INTEGER,
+		  pPortIndex
+		      INTEGER,
+		  pPortName
+		      DisplayString,
+		  pCardNumber
+		      INTEGER,
+		  pCardPortNumber
+		      INTEGER,
+		  pPermNetAddress
+		      PhysAddress,
+		  pCurrentNetAddress
+		      PhysAddress,
+		  pDataRate
+		      INTEGER,
+		  pTotalPacketsTransmitted
+		      Counter,
+		  pTotalBytesTransmitted
+		      Counter,
+		  pTotalPacketsReceived
+		      Counter,
+		  pTotalBytesReceived
+		      Counter,
+		  pTotalTransmitErrors
+		      Counter,
+		  pTotalReceiveErrors
+		      Counter,
+		  pStatus
+		      INTEGER
+	      }
+
+	  pInterfaceIndex OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "A unique value assigned to each interface
+		       This is an increasing numeric value ranging between
+		       1 and the value of NumInterfaces."
+	      ::= { portStatsEntry 1 }
+
+	  pPortIndex OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "A unique value assigned to each port on a particular interface.
+		       This is an increasing numeric value ranging between
+		       1 and the value of iInterfacePorts for the interface indexed by iInterfaceIndex."
+	      ::= { portStatsEntry 2 }
+
+	  pPortName OBJECT-TYPE
+	      SYNTAX  DisplayString (SIZE (0..80))
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The descriptive name assigned to the port.
+		      This may not be supported by all operating systems."
+	      ::= { portStatsEntry 3 }
+
+
+	  pCardNumber OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The  value of cpCardIndex that corresponds to this port."
+	      ::= { portStatsEntry 4 }
+
+	  pCardPortNumber OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The  value of cpPortIndex that corresponds to this port."
+	      ::= { portStatsEntry 5 }
+
+	  pPermNetAddress OBJECT-TYPE
+	      SYNTAX  PhysAddress
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The permanent network address assigned to this port.
+		      This is the node address stored permanently in the adapter."
+	      ::= { portStatsEntry 6 }
+
+	  pCurrentNetAddress OBJECT-TYPE
+	      SYNTAX  PhysAddress
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The network address currently assigned to this port.
+		      This address may be administered by software."
+	      ::= { portStatsEntry 7 }
+
+	  pDataRate OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the rate at which data is transferred over this port, measured in MPBS."
+	      ::= { portStatsEntry 8 }
+
+	  pTotalPacketsTransmitted OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of packets transmitted over this port."
+	      ::= { portStatsEntry 9 }
+
+	  pTotalBytesTransmitted OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of bytes transmitted over this port."
+	      ::= { portStatsEntry 10 }
+
+	  pTotalPacketsReceived OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of packets received over this port."
+	      ::= { portStatsEntry 11 }
+
+	  pTotalBytesReceived OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This is the total number of bytes received over this port."
+	      ::= { portStatsEntry 12 }
+
+	  pTotalTransmitErrors OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+			"This is the total number of transmit errors seen on this port."
+	      ::= { portStatsEntry 13 }
+
+	  pTotalReceiveErrors OBJECT-TYPE
+	      SYNTAX  Counter
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+			"This is the total number of receive errors seen on this port."
+	      ::= { portStatsEntry 14 }
+
+
+	  pStatus OBJECT-TYPE
+	      SYNTAX            INTEGER {
+				portActive          (1),
+				portDown            (2),
+				portInStandby   (3),
+				portDisabled    (4)
+						}
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The current status of the port. portActive indicates a functioning port.
+		      portDown indicates a port that is not functioning.
+		      portDisabled indicates a port that has been down for some time or has
+		      demonstrated a serious problem which should be addressed by the system
+		      administrator. portInStandby indicates a port which is designated as a backup
+		      in a failover interface."
+	      ::= { portStatsEntry 15 }
+
+
+
+-- card information Table
+
+
+
+	  cardInformationTable OBJECT-TYPE
+	      SYNTAX  SEQUENCE OF CardInformationEntry
+	      ACCESS  not-accessible
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "A table listing Adaptec network card information."
+	      ::= {duralink 4}
+
+	  cardInformationEntry OBJECT-TYPE
+	      SYNTAX  CardInformationEntry
+	      ACCESS  not-accessible
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "Each entry lists information about a single network card."
+	      INDEX   { cCardIndex }
+	      ::= { cardInformationTable 1 }
+
+	  CardInformationEntry ::=
+	      SEQUENCE {
+		  cCardIndex
+		      INTEGER,
+		  cCardDescription
+		      DisplayString,
+		  cPortsOnCard
+		      INTEGER
+	      }
+
+	  cCardIndex OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "A unique value assigned to each network card.
+		       This is an increasing numeric value ranging between
+		       1 and the value of NumCards."
+	      ::= { cardInformationEntry 1 }
+
+	  cCardDescription OBJECT-TYPE
+	      SYNTAX  DisplayString (SIZE (0..80))
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The descriptive name assigned to the network card."
+	      ::= { cardInformationEntry 2 }
+ 
+	  cPortsOnCard OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The number of ports on the network card."
+	      ::= { cardInformationEntry 3 }
+ 
+-- card port information Table
+
+
+
+	  cardPortInfoTable OBJECT-TYPE
+	      SYNTAX  SEQUENCE OF CardPortInfoEntry
+	      ACCESS  not-accessible
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This table indicates the interface and port number associated
+		      with each port on all installed network cards."
+	      ::= {duralink 5}
+
+	  cardPortInfoEntry OBJECT-TYPE
+	      SYNTAX  CardPortInfoEntry
+	      ACCESS  not-accessible
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "Each entry lists information for a single port on a network card."
+	      INDEX   { cpCardIndex,
+			cpPortIndex }
+	      ::= { cardPortInfoTable 1 }
+
+	  CardPortInfoEntry ::=
+	      SEQUENCE {
+		  cpCardIndex
+		      INTEGER,
+		  cpPortIndex
+		      INTEGER,
+		  cpInterfaceNumber
+		      INTEGER,
+		  cpPortNumber
+		      INTEGER,
+          cpTableNumber1
+              INTEGER               
+	      }
+
+	  cpCardIndex OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "A unique value assigned to each network card.
+		       This is an increasing numeric value ranging between
+		       1 and the value of NumCards."
+	      ::= { cardPortInfoEntry 1 }
+
+	  cpPortIndex OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "A unique value assigned to each port on a particular network card.
+		       This is an increasing numeric value ranging between
+		       1 and the value of cPortsOnCard for the card indexed by cCardIndex."
+	      ::= { cardPortInfoEntry 2 }
+
+	  cpInterfaceNumber OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The  value of pInterfaceIndex that corresponds to this port.
+		       If this port is not part of an interface it will be set to 0"
+	      ::= { cardPortInfoEntry 3 }
+
+	  cpPortNumber OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The  value of pPortIndex that corresponds to this port.
+		      If this port is not part of an interface it will be set to 0"
+	      ::= { cardPortInfoEntry 4 }
+
+
+	  cpTableNumber1 OBJECT-TYPE
+	      SYNTAX  INTEGER
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "The value of Lan Adapter component table rows that correspond to this port.
+		      This provides a mapping to entries in an SNMP implementation of the
+		      Desktop Management Interface Lan Adapter Component.
+		      If this port is not in use on the system this value will be set to 0"
+	      ::= { cardPortInfoEntry 5 }
+
+
+
+duralinkStatusTrap TRAP-TYPE
+	ENTERPRISE duralink
+	VARIABLES { pInterfaceIndex, pPortIndex, pStatus}
+	DESCRIPTION
+		"The port status has changed."
+	::= 1 
+
+ 
+	  END

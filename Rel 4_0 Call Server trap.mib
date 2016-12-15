@@ -1,0 +1,270 @@
+-- ADDED: MODULE-IDENTITY, mollahajian (June 2002)
+-- MISC: RENAME: TRAP_MIB trap =
+-- EDITION AB01, SL1LIB JUREK.67 (96/09/20 16:12:56) 
+ 
+-- ASYNCRONOUS UPDATE - MIB	
+-- The following are Epilogue extensions
+ 
+        ASYNC-UPDATE-MIB
+ 
+			--FORCE-INCLUDE <asn1.h>
+			--FORCE-INCLUDE <mib.h>
+			--FORCE-INCLUDE <snmpdefs.h>
+			--FORCE-INCLUDE <snmp.h>
+			--FORCE-INCLUDE <auxfuncs.h>
+	
+--
+DEFINITIONS ::= BEGIN
+ 
+IMPORTS
+		OBJECT-TYPE, enterprises, MODULE-IDENTITY
+				FROM SNMPv2-SMI
+		TRAP-TYPE
+				FROM RFC-1215
+		DisplayString
+				FROM SNMPv2-TC;
+ 
+trapMIB MODULE-IDENTITY
+	LAST-UPDATED "0206190000Z"
+	ORGANIZATION "Nortel Networks"
+	CONTACT-INFO 
+	"Postal: Nortel Networks
+	 	 250 Sidney Street
+	 	 Belleville ON K8P 3Z3
+	 Tel   : +1 613 967 5000"
+
+	DESCRIPTION  
+	"The MIB module to describe the asyncUpdate and traps"
+	::= { smp 53 }	 
+
+nt			OBJECT IDENTIFIER ::= { enterprises 562 }
+ 
+meridian		OBJECT IDENTIFIER ::= { nt 3 }
+ 
+experimental		OBJECT IDENTIFIER ::= { meridian 0 }
+ 
+modules			OBJECT IDENTIFIER ::= { meridian 1 }
+ 
+common			OBJECT IDENTIFIER ::= { meridian 2 }
+ 
+smp			OBJECT IDENTIFIER ::= { meridian 3 }
+ 
+asyncUpdate		OBJECT IDENTIFIER ::= { smp 5 }
+ 
+alarmTrap		OBJECT IDENTIFIER ::= { smp 7 }
+ 
+
+ 
+-- *********************************************************************
+--	        ASYNCHRONOUS UPDATE OBJECTS
+-- *********************************************************************
+ 
+objectIdentifier
+	OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..64) )
+		MAX-ACCESS		not-accessible
+		STATUS		current
+		DESCRIPTION
+                        "Object that causes Update"
+	::=  { asyncUpdate 1 }
+ 
+ 
+instanceIdentifier
+	OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..64) )
+		MAX-ACCESS		not-accessible
+		STATUS		current
+		DESCRIPTION
+                        "Instance of Object that causes Update"
+	::=  { asyncUpdate 2 }
+ 
+ 
+trapData1
+	OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..128) )
+		MAX-ACCESS		not-accessible
+		STATUS		current
+		DESCRIPTION
+			"Optional Update Message #1"
+	::=  { asyncUpdate 3 }
+ 
+trapData2
+	OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..128) )
+		MAX-ACCESS		not-accessible
+		STATUS		current
+		DESCRIPTION
+                        "Optional Update Message #2"
+	::=  { asyncUpdate 4 }
+ 
+ 
+ 
+ 
+-- ---------------------------------------------------------------------
+--		Basic SMP Trap Types
+-- ---------------------------------------------------------------------
+ 
+attrChange	
+	TRAP-TYPE
+		ENTERPRISE		asyncUpdate
+		VARIABLES 	{ objectIdentifier, instanceIdentifier,							
+ 				trapData1, trapData2						}
+		DESCRIPTION
+			"The generic Alarm Trap conveying attribute value change info from a Meridian 1 		switch to an SMP manager."
+	::= 1
+ 
+stateChange		
+	TRAP-TYPE
+		ENTERPRISE		asyncUpdate
+		VARIABLES 	{ objectIdentifier, instanceIdentifier,							
+ 				trapData1, trapData2						}
+		DESCRIPTION
+			"The generic Alarm Trap conveying state change info from a Meridian 1 switch to an SMP manager."
+	::= 2
+ 
+instanceCreation	
+	TRAP-TYPE
+		ENTERPRISE		asyncUpdate
+		VARIABLES 	{ objectIdentifier, instanceIdentifier,		
+ 				trapData1, trapData2						}
+		DESCRIPTION
+			"The generic Alarm Trap conveying object creation info from a Meridian 1 switch to an SMP manager."
+	::= 3
+ 
+instanceDeletion	
+	TRAP-TYPE
+		ENTERPRISE		asyncUpdate
+		VARIABLES 	{ objectIdentifier, instanceIdentifier,							
+ 				trapData1, trapData2						}
+		DESCRIPTION
+			"The generic Alarm Trap conveying object deletion info from a Meridian 1 switch to an SMP manager."
+	::= 4
+ 
+commandResults	
+	TRAP-TYPE
+		ENTERPRISE		asyncUpdate
+		VARIABLES 	{ objectIdentifier, instanceIdentifier				,		
+ 				trapData1, trapData2						}
+		DESCRIPTION
+			"The generic Alarm Trap conveying command result info from a Meridian 1 switch to an SMP manager."
+	::= 5
+ 
+ 
+ 
+ 
+ 
+-- ---------------------------------------------------------------------
+--		Alarm Trap
+-- ---------------------------------------------------------------------
+alarmSeqNum	OBJECT-TYPE
+		SYNTAX		INTEGER
+		MAX-ACCESS		read-only
+		STATUS		current
+		DESCRIPTION
+			"Index into the table"
+	::=  { alarmTrap 1 }
+ 
+alarmTime	OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..32) )
+		MAX-ACCESS		read-only
+		STATUS		current
+		DESCRIPTION
+			"Time stamp"
+	::=  { alarmTrap 2 }
+ 
+alarmSeverity    OBJECT-TYPE
+		SYNTAX		INTEGER {
+			info 		(0),
+			minor		(1),
+			major		(2),
+			critical	(3),
+			warning		(4),
+			cleared		(5)
+                                       	}
+		MAX-ACCESS     	read-only
+		STATUS          current
+		DESCRIPTION
+			"Specifies the severity of the alarm."
+	::= { alarmTrap 3 }
+ 
+alarmErrorCode	OBJECT-TYPE
+		SYNTAX		DisplayString	 ( SIZE (0..8) )	
+		MAX-ACCESS		read-only
+		STATUS		current
+		DESCRIPTION
+			"Error code"
+	::=  { alarmTrap 4 }
+ 
+alarmComponentId	OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..15) )
+		MAX-ACCESS		read-only
+		STATUS		current
+		DESCRIPTION
+			"Identifies the alarm source component."
+	::= { alarmTrap 5 }
+ 
+alarmComponentAddress		OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..15) )
+		MAX-ACCESS		read-only
+		STATUS		current
+		DESCRIPTION
+			"Identifies the address of the alarm source 		
+			component."
+	::= { alarmTrap 6 }
+	
+alarmDescriptiveText		OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..240) )
+		MAX-ACCESS		read-only
+		STATUS		current
+		DESCRIPTION
+			"Description of the alarm"
+	::= { alarmTrap 7 }
+	
+alarmOperatorData		OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..160) )
+		MAX-ACCESS		read-only
+		STATUS		current
+		DESCRIPTION
+			"Provides data to the craftsperson
+			to isolate and correct the problem."
+	::= { alarmTrap 8 }
+	
+alarmExpertData	OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..160) )
+		MAX-ACCESS		read-only
+		STATUS		current
+		DESCRIPTION
+			"Provides extra data to the craftsperson
+			to isolate and correct the problem."
+	::= { alarmTrap 9 }
+ 
+ 
+alarmCounts	OBJECT-TYPE
+		SYNTAX		DisplayString ( SIZE (0..15) )
+		MAX-ACCESS		read-only
+		STATUS		current
+		DESCRIPTION
+			"Number of critical, major, and minor alarms."
+		::= { alarmTrap 10 }
+ 
+newAlarm
+	TRAP-TYPE
+		ENTERPRISE		asyncUpdate
+		VARIABLES 	{ alarmSeqNum,
+				alarmTime,
+				alarmSeverity,
+				alarmErrorCode,
+			 	alarmComponentId,
+				alarmComponentAddress,
+				alarmDescriptiveText,
+				alarmOperatorData,
+				alarmExpertData,
+				alarmCounts
+			    }
+		DESCRIPTION
+			"The Alarm Trap conveying full information about the new alarm."
+	::= 10
+ 
+ 
+ 
+END

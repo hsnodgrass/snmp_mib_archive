@@ -1,0 +1,579 @@
+RC-PIM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, experimental,
+    Integer32, IpAddress, TimeTicks  FROM SNMPv2-SMI
+    RowStatus                        FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP  FROM SNMPv2-CONF
+    InterfaceIndexOrZero             FROM IF-MIB
+    rcPim			     FROM RAPID-CITY;
+
+rcPimMib MODULE-IDENTITY
+    LAST-UPDATED "200805180000Z"
+    ORGANIZATION "Nortel Networks, Rapid-City Group"
+    CONTACT-INFO "Yu-Ten Lee
+                  Nortel Networks
+	          4655 Great America Pkwy.
+	          Santa Clara, CA 95052-8185 
+		  Tel:           408-495-2560
+                  Fax:           408-495-6680
+                  E-mail:        ylee@nortelnetworks.com"
+
+    DESCRIPTION		"Enterprise MIB for the Accelar product family."
+
+    REVISION "200805180000Z" -- 18 May 2008
+    DESCRIPTION "Version 5: Fixed new smilint errors."
+    
+    REVISION "200805130000Z" -- 13 May 2008
+    DESCRIPTION "Version 4: Changed syntax of rcPimInterfaceIfIndex, rcPimRPSetComponent, rcPimComponentIndex."
+
+    REVISION "200705220000Z" -- 22 May 2007
+    DESCRIPTION "Version 3: Fix access level definition. Change access level of rcPimInterfaceMode, 
+                 rcPimInterfaceHelloInterval, rcPimInterfaceJoinPruneInterval, rcPimInterfaceCBSRPreference, 
+                 rcPimInterfaceCBSREnable, and rcPimComponentCRPHoldTime from 'read-write' to 'read-create'"
+
+    REVISION "200612130000Z" -- 13 December 2006
+    DESCRIPTION "Version 2: Updated the syntax of index objects to not-accessible"
+
+    REVISION "200608310000Z" -- 31 Aug 2006
+    DESCRIPTION "Version 1: Initial revision"
+
+   ::= { rcPim 0 }
+
+rcPimMIBObjects OBJECT IDENTIFIER ::= { rcPim 1 }
+
+rcPimScalars OBJECT IDENTIFIER ::= { rcPimMIBObjects 1 }
+
+rcPimJoinPruneInterval OBJECT-TYPE
+    SYNTAX     Integer32 (1..18724)
+    UNITS      "seconds"
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+            "The default interval at which periodic PIM-SM Join/Prune
+            messages are to be sent."
+    ::= { rcPimScalars 1 }
+
+-- The PIM Interface Table
+
+rcPimInterfaceTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF RcPimInterfaceEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The (conceptual) table listing the router's PIM interfaces.
+            IGMP and PIM are enabled on all interfaces listed in this
+            table."
+    ::= { rcPimMIBObjects 2 }
+
+rcPimInterfaceEntry OBJECT-TYPE
+    SYNTAX     RcPimInterfaceEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "An entry (conceptual row) in the rcPimInterfaceTable."
+    INDEX      { rcPimInterfaceIfIndex }
+    ::= { rcPimInterfaceTable 1 }
+
+RcPimInterfaceEntry ::= SEQUENCE {
+    rcPimInterfaceIfIndex            InterfaceIndexOrZero,
+    rcPimInterfaceAddress            IpAddress,
+    rcPimInterfaceNetMask            IpAddress,
+    rcPimInterfaceMode               INTEGER,
+    rcPimInterfaceDR                 IpAddress,
+    rcPimInterfaceHelloInterval      Integer32,
+    rcPimInterfaceStatus             RowStatus,
+    rcPimInterfaceJoinPruneInterval  Integer32,
+    rcPimInterfaceCBSRPreference     Integer32,
+    rcPimInterfaceCBSREnable         INTEGER
+}
+
+rcPimInterfaceIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndexOrZero
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The ifIndex value of this PIM interface."
+    ::= { rcPimInterfaceEntry 1 }
+
+rcPimInterfaceAddress OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The IP address of the PIM interface."
+    ::= { rcPimInterfaceEntry 2 }
+
+rcPimInterfaceNetMask OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The network mask for the IP address of the PIM interface."
+    ::= { rcPimInterfaceEntry 3 }
+
+rcPimInterfaceMode OBJECT-TYPE
+    SYNTAX     INTEGER { dense(1), sparse(2), sparseDense(3) }
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "The configured mode of this PIM interface.  A value of
+            sparseDense is only valid for PIMv1."
+    DEFVAL     { dense }
+    ::= { rcPimInterfaceEntry 4 }
+
+rcPimInterfaceDR OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The Designated Router on this PIM interface.  For point-
+            to-point interfaces, this object has the value 0.0.0.0."
+    ::= { rcPimInterfaceEntry 5 }
+
+rcPimInterfaceHelloInterval OBJECT-TYPE
+    SYNTAX     Integer32
+    UNITS      "seconds"
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "The frequency at which PIM Hello messages are transmitted
+            on this interface."
+    DEFVAL     { 30 }
+    ::= { rcPimInterfaceEntry 6 }
+
+rcPimInterfaceStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "The status of this entry.  Creating the entry enables PIM
+            on the interface; destroying the entry disables PIM on the
+            interface."
+    ::= { rcPimInterfaceEntry 7 }
+
+rcPimInterfaceJoinPruneInterval OBJECT-TYPE
+    SYNTAX     Integer32 (1..18724)
+    UNITS      "seconds"
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "The frequency at which PIM Join/Prune messages are
+            transmitted on this PIM interface.  The default value of
+            this object is the rcPimJoinPruneInterval."
+    ::= { rcPimInterfaceEntry 8 }
+
+rcPimInterfaceCBSRPreference OBJECT-TYPE
+    SYNTAX     Integer32 (-1..255)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "The preference value for the local interface as a candidate
+            bootstrap router.  The value of -1 is used to indicate that
+            the local interface is not a candidate BSR interface."
+    DEFVAL     { -1 }
+    ::= { rcPimInterfaceEntry 9 }
+
+rcPimInterfaceCBSREnable OBJECT-TYPE
+    SYNTAX     INTEGER {
+                  enabled(1),
+                  disabled(2)
+               } 
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "Enable/disable Candidate BSR on rcPim local interface."
+    DEFVAL     { disabled }
+    ::= { rcPimInterfaceEntry 10 }
+
+
+-- The PIM Neighbor Table
+
+rcPimNeighborTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF RcPimNeighborEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The (conceptual) table listing the router's PIM neighbors."
+    ::= { rcPimMIBObjects 3 }
+
+rcPimNeighborEntry OBJECT-TYPE
+    SYNTAX     RcPimNeighborEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "An entry (conceptual row) in the rcPimNeighborTable."
+    INDEX      { rcPimNeighborAddress }
+    ::= { rcPimNeighborTable 1 }
+
+RcPimNeighborEntry ::= SEQUENCE {
+    rcPimNeighborAddress      IpAddress,
+    rcPimNeighborIfIndex      Integer32,
+    rcPimNeighborUpTime       TimeTicks,
+    rcPimNeighborExpiryTime   TimeTicks
+}
+
+rcPimNeighborAddress OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The IP address of the PIM neighbor for which this entry
+            contains information."
+    ::= { rcPimNeighborEntry 1 }
+
+rcPimNeighborIfIndex OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The value of ifIndex for the interface used to reach this
+            PIM neighbor."
+    ::= { rcPimNeighborEntry 2 }
+
+rcPimNeighborUpTime OBJECT-TYPE
+    SYNTAX     TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The time since this PIM neighbor (last) became a neighbor
+            of the local router."
+    ::= { rcPimNeighborEntry 3 }
+
+rcPimNeighborExpiryTime OBJECT-TYPE
+    SYNTAX     TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The minimum time remaining before this PIM neighbor will be
+            aged out."
+    ::= { rcPimNeighborEntry 4 }
+
+
+-- The PIM RP-Set Table
+
+rcPimRPSetTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF RcPimRPSetEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The (conceptual) table listing PIM information for
+            candidate Rendezvous Points (RPs) for IP multicast groups.
+            When the local router is the BSR, this information is
+            obtained from received Candidate-RP-Advertisements.  When
+            the local router is not the BSR, this information is
+            obtained from received RP-Set messages."
+    ::= { rcPimMIBObjects 6 }
+
+rcPimRPSetEntry OBJECT-TYPE
+    SYNTAX     RcPimRPSetEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "An entry (conceptual row) in the rcPimRPSetTable."
+    INDEX      { rcPimRPSetComponent, rcPimRPSetGroupAddress,
+                 rcPimRPSetGroupMask, rcPimRPSetAddress }
+    ::= { rcPimRPSetTable 1 }
+
+RcPimRPSetEntry ::= SEQUENCE {
+    rcPimRPSetGroupAddress    IpAddress,
+    rcPimRPSetGroupMask       IpAddress,
+    rcPimRPSetAddress         IpAddress,
+    rcPimRPSetHoldTime        Integer32,
+    rcPimRPSetExpiryTime      TimeTicks,
+    rcPimRPSetComponent       InterfaceIndexOrZero
+}
+
+rcPimRPSetGroupAddress OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The IP multicast group address which, when combined with
+            rcPimRPSetGroupMask, gives the group prefix for which this
+            entry contains information about the Candidate-RP."
+    ::= { rcPimRPSetEntry 1 }
+
+rcPimRPSetGroupMask OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The multicast group address mask which, when combined with
+            rcPimRPSetGroupAddress, gives the group prefix for which this
+            entry contains information about the Candidate-RP."
+    ::= { rcPimRPSetEntry 2 }
+
+rcPimRPSetAddress OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The IP address of the Candidate-RP."
+    ::= { rcPimRPSetEntry 3 }
+
+rcPimRPSetHoldTime OBJECT-TYPE
+    SYNTAX     Integer32 (0..255)
+    UNITS      "seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The holdtime of a Candidate-RP.  If the local router is not
+            the BSR, this value is 0."
+    ::= { rcPimRPSetEntry 4 }
+
+rcPimRPSetExpiryTime OBJECT-TYPE
+    SYNTAX     TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The minimum time remaining before the Candidate-RP will be
+            declared down.  If the local router is not the BSR, this
+            value is 0."
+    ::= { rcPimRPSetEntry 5 }
+
+rcPimRPSetComponent OBJECT-TYPE
+    SYNTAX     InterfaceIndexOrZero
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "A number uniquely identifying the component.  Each protocol
+            instance connected to a separate domain should have a
+            different index value."
+    ::= { rcPimRPSetEntry 6 }
+
+
+-- The PIM Candidate-RP Table
+
+rcPimCandidateRPTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF RcPimCandidateRPEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The (conceptual) table listing the IP multicast groups for
+            which the local router is to advertise itself as a
+            Candidate-RP when the value of rcPimCandidateRPHoldTime is
+            non-zero.  If this table is empty, then the local router
+            will advertise itself as a Candidate-RP for all groups
+            (providing the value of rcPimCandidateRPHoldTime is non-
+            zero)."
+    ::= { rcPimMIBObjects 11 }
+
+rcPimCandidateRPEntry OBJECT-TYPE
+    SYNTAX     RcPimCandidateRPEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "An entry (conceptual row) in the rcPimCandidateRPTable."
+    INDEX      { rcPimCandidateRPGroupAddress,
+                 rcPimCandidateRPGroupMask, rcPimCandidateRPAddress }
+    ::= { rcPimCandidateRPTable 1 }
+
+RcPimCandidateRPEntry ::= SEQUENCE {
+    rcPimCandidateRPGroupAddress    IpAddress,
+    rcPimCandidateRPGroupMask       IpAddress,
+    rcPimCandidateRPAddress         IpAddress,
+    rcPimCandidateRPRowStatus       RowStatus
+}
+
+rcPimCandidateRPGroupAddress OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The IP multicast group address which, when combined with
+            rcPimCandidateRPGroupMask, identifies a group prefix for which
+            the local router will advertise itself as a Candidate-RP."
+    ::= { rcPimCandidateRPEntry 1 }
+
+rcPimCandidateRPGroupMask OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The multicast group address mask which, when combined with
+            rcPimCandidateRPGroupMask, identifies a group prefix for which
+            the local router will advertise itself as a Candidate-RP."
+    ::= { rcPimCandidateRPEntry 2 }
+
+rcPimCandidateRPAddress OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The (unicast) address of the interface which will be
+            advertised as a Candidate-RP."
+    ::= { rcPimCandidateRPEntry 3 }
+
+rcPimCandidateRPRowStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "The status of this row, by which new entries may be
+            created, or old entries deleted from this table."
+    ::= { rcPimCandidateRPEntry 4 }
+    
+-- The PIM Component Table
+
+rcPimComponentTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF RcPimComponentEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The (conceptual) table containing objects specific to a PIM
+            domain.  One row exists for each domain to which the router
+            is connected."
+    ::= { rcPimMIBObjects 12 }
+
+rcPimComponentEntry OBJECT-TYPE
+    SYNTAX     RcPimComponentEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "An entry (conceptual row) in the rcPimComponentTable."
+    INDEX      { rcPimComponentIndex }
+    ::= { rcPimComponentTable 1 }
+
+RcPimComponentEntry ::= SEQUENCE {
+    rcPimComponentIndex              InterfaceIndexOrZero,
+    rcPimComponentBSRAddress         IpAddress,
+    rcPimComponentBSRExpiryTime      TimeTicks,
+    rcPimComponentCRPHoldTime        Integer32,
+    rcPimComponentStatus             RowStatus
+}
+
+rcPimComponentIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndexOrZero
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "A number uniquely identifying the component.  Each protocol
+            instance connected to a separate domain should have a
+            different index value."
+    ::= { rcPimComponentEntry 1 }
+
+rcPimComponentBSRAddress OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The IP address of the bootstrap router (BSR) for the local
+            PIM region."
+    ::= { rcPimComponentEntry 2 }
+
+rcPimComponentBSRExpiryTime OBJECT-TYPE
+    SYNTAX     TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The minimum time remaining before the bootstrap router in
+            the local domain will be declared down.  For candidate BSRs,
+            this is the time until the component sends an RP-Set
+            message.  For other routers, this is the time until it may
+            accept an RP-Set message from a lower candidate BSR."
+    ::= { rcPimComponentEntry 3 }
+
+rcPimComponentCRPHoldTime OBJECT-TYPE
+    SYNTAX     Integer32 (0..255)
+    UNITS      "seconds"
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "The holdtime of the component when it is a candidate RP in
+            the local domain.  The value of 0 is used to indicate that
+            the local system is not a Candidate-RP."
+    DEFVAL     { 0 }
+    ::= { rcPimComponentEntry 4 }
+
+rcPimComponentStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "The status of this entry.  Creating the entry creates
+            another protocol instance; destroying the entry disables a
+            protocol instance."
+    ::= { rcPimComponentEntry 5 }
+
+-- conformance information
+
+rcPimMIBConformance OBJECT IDENTIFIER ::= { rcPim 2 }
+rcPimMIBCompliances OBJECT IDENTIFIER ::= { rcPimMIBConformance 1 }
+rcPimMIBGroups      OBJECT IDENTIFIER ::= { rcPimMIBConformance 2 }
+
+rcPimSparseV2MIBCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for routers running PIM Sparse
+            Mode and implementing the PIM MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { rcPimV2MIBGroup }
+
+    OBJECT     rcPimInterfaceStatus
+    MIN-ACCESS read-only
+    DESCRIPTION
+             "Write access is not required."
+
+    ::= { rcPimMIBCompliances 2 }
+
+rcPimDenseV2MIBCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for routers running PIM Dense Mode
+            and implementing the PIM MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { rcPimDenseV2MIBGroup }
+
+    OBJECT     rcPimInterfaceStatus
+    MIN-ACCESS read-only
+    DESCRIPTION
+             "Write access is not required."
+
+    ::= { rcPimMIBCompliances 3 }
+
+
+-- units of conformance
+
+rcPimV2MIBGroup OBJECT-GROUP
+    OBJECTS { rcPimJoinPruneInterval, rcPimNeighborIfIndex,
+              rcPimNeighborUpTime, rcPimNeighborExpiryTime,
+              rcPimInterfaceAddress, rcPimInterfaceNetMask,
+              rcPimInterfaceDR, rcPimInterfaceHelloInterval,
+              rcPimInterfaceStatus, rcPimInterfaceJoinPruneInterval,
+              rcPimInterfaceCBSRPreference, rcPimInterfaceMode,
+              rcPimRPSetHoldTime, rcPimRPSetExpiryTime,
+              rcPimComponentBSRAddress, rcPimComponentBSRExpiryTime,
+              rcPimComponentCRPHoldTime, rcPimComponentStatus
+
+            }
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects to support management of PIM Sparse
+            Mode (version 2) routers."
+    ::= { rcPimMIBGroups 2 }
+
+rcPimDenseV2MIBGroup OBJECT-GROUP
+    OBJECTS { rcPimNeighborIfIndex,
+              rcPimNeighborUpTime, rcPimNeighborExpiryTime,
+              rcPimInterfaceAddress, rcPimInterfaceNetMask,
+              rcPimInterfaceDR, rcPimInterfaceHelloInterval,
+              rcPimInterfaceStatus, rcPimInterfaceMode
+            }
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects to support management of PIM Dense
+            Mode (version 2) routers."
+    ::= { rcPimMIBGroups 5 }
+
+rcPimV2CandidateRPMIBGroup OBJECT-GROUP
+    OBJECTS { rcPimCandidateRPAddress,
+              rcPimCandidateRPRowStatus
+            }
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects to support configuration of which
+            groups a router is to advertise itself as a Candidate-RP."
+    ::= { rcPimMIBGroups 3 }
+    
+END

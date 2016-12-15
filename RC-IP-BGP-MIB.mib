@@ -1,0 +1,2518 @@
+
+RC-IP-BGP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, IpAddress
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, RowStatus
+        FROM SNMPv2-TC
+    rcIpBgp
+        FROM RC-IP-MIB
+    rcStat, EnableValue
+        FROM RAPID-CITY;
+
+
+rcIpBgpMib MODULE-IDENTITY
+       LAST-UPDATED     "200511220000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "Yu-Ten Lee
+                         Postal:        Nortel Networks, Inc.
+                                        4655 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-2560
+                         Fax:           408-495-6680
+                         E-mail:        ylee@baynetworks.com"
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200511220000Z" -- 22 Nov 2005
+       DESCRIPTION "Version 7: Updated rcIpBgpGeneralGroupMaxEqualcostRoutes"
+
+       REVISION "200510210000Z" -- 21 Oct 2005
+       DESCRIPTION "Version 6: Added a Integer32 mib attribute: rcIpBgpPathAttrReuseTimeRemain to rcIpBgpDampenedPathAttrTable"
+
+       REVISION "200504140000Z" -- 14 Apr 2005
+       DESCRIPTION "Version 5: Modified rcIpBgpGeneralGroupDebugMask &                     rcIpBgpPeerDebugMask"
+
+       REVISION "200502160000Z" -- 16 Feb 2005
+       DESCRIPTION "Version 4: Gave range to rcIpBgpConfederationPeers"
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcIpBgp 0 }
+
+-- Ip BGP
+
+rcIpBgpGeneralGroup OBJECT IDENTIFIER ::= { rcIpBgp 1 }
+
+rcIpBgpGeneralGroupLocalAs OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Local Autonomous system number"
+        ::= { rcIpBgpGeneralGroup 1 }
+
+rcIpBgpGeneralGroupAdminStatus OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Disable or Enable group administrative"
+        DEFVAL { enable }
+        ::= { rcIpBgpGeneralGroup 2 }
+
+rcIpBgpGeneralGroupDefaultMetric OBJECT-TYPE
+        SYNTAX        INTEGER (-1..2147483647)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The default-metric is used in conjunction with
+                       the redistribute router configuration command to cause
+                       the bgp routing protocol to use this metric as MED"
+        DEFVAL        { -1 }
+        ::= { rcIpBgpGeneralGroup 3 }
+
+rcIpBgpGeneralGroupDefaultLocalPreference OBJECT-TYPE
+        SYNTAX        INTEGER (0..2147483647)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   " Default local preference attribute value to be used "
+        DEFVAL {100}
+        ::= { rcIpBgpGeneralGroup 4 }
+
+rcIpBgpGeneralGroupDefaultInformationOriginate OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "allows the redistribution of network 0.0.0.0 into BGP"
+        DEFVAL {false}
+        ::= { rcIpBgpGeneralGroup 5 }
+
+rcIpBgpGeneralGroupBestPathMissingAsWorst OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable to consider a missing MED attribute in a path
+                       as having a value of infinity, making the path without a
+                       MED value the least desirable path. To return the router
+                       to the default (assign a value of 0 to the missing MED),
+                        set the value to disable."
+        DEFVAL        {enable}
+        ::= { rcIpBgpGeneralGroup 6 }
+
+rcIpBgpGeneralGroupBestPathMedConfed OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To enable MED comparison among paths learned from
+                       confederation peers. Disable to prevent considering
+                       the MED attribute in comparing paths"
+        DEFVAL          {disable}
+        ::= { rcIpBgpGeneralGroup 7 }
+
+rcIpBgpGeneralGroupIgnoreIllegalRouterId OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Configures BGP to overlook an illegal router ID.
+                       Enables or disable accepting a connection from a peer
+                       that sends its open message with a router ID of 0."
+        DEFVAL          {disable}
+        ::= { rcIpBgpGeneralGroup 8 }
+
+rcIpBgpGeneralGroupAlwaysCompareMed OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable to allow the comparison of the Multi Exit
+                       Discriminator (MED) for paths from neighbors in
+                       different autonomous systems."
+        DEFVAL        {disable}
+        ::= { rcIpBgpGeneralGroup 9 }
+
+rcIpBgpGeneralGroupAutoPeerRestart OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable the feature that automatically restarts the
+                       connection to a BGP peer when the connection goes down."
+        DEFVAL        {enable}
+        ::= { rcIpBgpGeneralGroup 10 }
+
+rcIpBgpGeneralGroupAutoSummary OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable BGP to summarize networks based on class limlts
+                       (Class A,B,C networks)."
+        DEFVAL        {enable}
+        ::= { rcIpBgpGeneralGroup 11 }
+
+rcIpBgpGeneralGroupSynchronization OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enables and disables the router from accepting routes
+                       from BGP peers without waiting for an update from the
+                       IBGP."
+        DEFVAL        {enable}
+        ::= { rcIpBgpGeneralGroup 12 }
+
+rcIpBgpGeneralGroupMaxEqualcostRoutes OBJECT-TYPE
+        SYNTAX        INTEGER (1..8)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Sets the number of maximum number of equal-cost routes
+                       that can be stored in the routing table."
+        DEFVAL          {1}
+        ::= { rcIpBgpGeneralGroup 13 }
+
+rcIpBgpGeneralGroupIbgpReportImportRoute OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Configure BGP to report imported routes to an interior
+                       BGP peer."
+        DEFVAL        {enable}
+        ::= { rcIpBgpGeneralGroup 14 }
+
+rcIpBgpGeneralGroupAggregate OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   " "
+        DEFVAL        {enable}
+        ::= { rcIpBgpGeneralGroup 15 }
+
+rcIpBgpGeneralGroupFlapDampEnable OBJECT-TYPE
+        SYNTAX  EnableValue 
+        MAX-ACCESS  read-write
+        STATUS  current
+        DESCRIPTION "Enabled or Disabled"
+        DEFVAL  { disable }
+        ::= { rcIpBgpGeneralGroup 16 }
+
+rcIpBgpGeneralGroupDebugMask OBJECT-TYPE
+        SYNTAX          INTEGER (0..511) 
+        MAX-ACCESS     read-write
+        STATUS         current
+        DESCRIPTION    " value is one of multiple (logiacally by 'OR' of
+                         following value:
+                                 none (0),
+                                 error(1),
+                                 packet(2),
+                                 event(4),
+                                 trace(8),
+                                 warning(16),
+                                 state(32),
+                                 init(64),
+                                 filter(128),
+                                 update(256),
+                                 all(511)
+                        all(511): Enables all debugging messages.
+                        none(0): Disables all debugging messages.
+                        error(1): Enables disolay of debug error messages.
+                        packet(2): Enables display of debug packet messages.
+                        event(4): Enables display of debug event messages.
+                        trace(8): Enables display debug trace messages.
+                        warning(16): Enables display debug warning messages.
+                        state(32): Enables display of debug state transition 
+                               messages.
+                        init(64): Enables display of debug initialization messages.
+                        filter(128): Enables display of debug messages related to 
+                                filtering.
+                        update(256): Enables display of debug messages related to
+                                sending and receiving updates."
+        DEFVAL {0}
+        ::= { rcIpBgpGeneralGroup 17 }
+
+rcIpBgpGeneralGroupTrapEnable  OBJECT-TYPE
+        SYNTAX      EnableValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION ""
+        DEFVAL       { disable }
+        ::= { rcIpBgpGeneralGroup 18 }
+
+rcIpBgpGeneralGroupQuickStart  OBJECT-TYPE
+        SYNTAX      EnableValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Enable the flag to avoid flap penalty and trigger
+                     the peer start event quickly"
+        DEFVAL       { disable }
+        ::= { rcIpBgpGeneralGroup 19 }
+
+rcIpBgpGeneralGroupDeterministicMed  OBJECT-TYPE
+        SYNTAX      EnableValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Enable to allow the comparison of the Multi Exit
+                     Discriminator (MED) for paths from neighbors in
+                     same autonomous system."
+        DEFVAL       { disable }
+        ::= { rcIpBgpGeneralGroup 20 }
+
+
+rcIpBgpAggregateTableSize OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Size of Aggregate Table"
+        ::= { rcIpBgp 2 }
+
+rcIpBgpAggregateTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpBgpAggregateEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "To specify the list of aggregate prefixes to be
+                         created  by the BGP routing process and the options
+                         to be used while aggregating."
+        ::= { rcIpBgp 3 }
+
+rcIpBgpAggregateEntry OBJECT-TYPE
+        SYNTAX          RcIpBgpAggregateEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIpBgp Aggregate Address In Table."
+        INDEX           { rcIpBgpAggregateAddress,
+                          rcIpBgpAggregateMask }
+        ::= { rcIpBgpAggregateTable 1 }
+
+RcIpBgpAggregateEntry ::=
+        SEQUENCE {
+                  rcIpBgpAggregateAddress                IpAddress,
+                  rcIpBgpAggregateMask                   IpAddress,
+                  rcIpBgpAggregateAsSetGenerate          EnableValue,
+                  rcIpBgpAggregateSummaryOnly            EnableValue,
+                  rcIpBgpAggregateSuppressPolicy         DisplayString,
+                  rcIpBgpAggregateAdvertisePolicy        DisplayString,
+                  rcIpBgpAggregateAttributePolicy        DisplayString,
+                  rcIpBgpAggregateRowStatus              RowStatus
+                 }
+
+rcIpBgpAggregateAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Prefix to create an aggregate address in BGP routing table."
+        ::= { rcIpBgpAggregateEntry 1 }
+
+rcIpBgpAggregateMask OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Mask for the aggregrate"
+        ::= { rcIpBgpAggregateEntry 2 }
+
+rcIpBgpAggregateAsSetGenerate OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable Generates autonomous system set path
+                       information."
+        DEFVAL        {disable}
+        ::= { rcIpBgpAggregateEntry 3 }
+
+rcIpBgpAggregateSummaryOnly OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Filters all more specific routes from updates."
+        DEFVAL        {disable}
+        ::= { rcIpBgpAggregateEntry 4 }
+
+rcIpBgpAggregateSuppressPolicy OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Name of route policy used to select the
+                       routes to be suppressed."
+        ::= { rcIpBgpAggregateEntry 5 }
+
+rcIpBgpAggregateAdvertisePolicy OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Name of route policy used to select the
+                       routes to create AS-SET origin communities."
+        ::= { rcIpBgpAggregateEntry 6 }
+
+rcIpBgpAggregateAttributePolicy OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Name of route policy used to set the
+                       attribute of the aggregate route."
+        ::= { rcIpBgpAggregateEntry 7 }
+
+rcIpBgpAggregateRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Row status for create/delete."
+        ::= { rcIpBgpAggregateEntry 8 }
+
+rcIpBgpConfederationGroup OBJECT IDENTIFIER ::= { rcIpBgp 4 }
+
+rcIpBgpConfederationIdentifier OBJECT-TYPE
+        SYNTAX        INTEGER  (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Confederation AS identifier"
+        ::= { rcIpBgpConfederationGroup 1 }
+
+rcIpBgpConfederationPeers OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The string represents ConfederatoinPeers as <length,
+                       value>. Maximum size 255,if any, will not be recorded 
+                       by this object.
+                       The length is a 1-octet field containing the numbner 
+                       of peers in the value field.
+                       The value field contains one or more peers (AS numbers
+                       which are part of the confederation).
+                       Each AS is represented in the octet
+                       string as a pair of octets according to the
+                       following algorithm:
+                          first-byte-of-pair = ASNumber / 256;
+                          second-byte-of-pair = ASNumber & 255;"
+        ::= { rcIpBgpConfederationGroup 2 }
+
+
+rcIpBgpRouteReflectorGroup OBJECT IDENTIFIER ::= { rcIpBgp 5 }
+
+rcIpBgpRouteReflectionEnable OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable Route Reflection on this router"
+        DEFVAL        {disable}
+        ::= { rcIpBgpRouteReflectorGroup 1 }
+
+rcIpBgpRouteReflectorClusterId OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Cluster ID of this router acting as a route reflector"
+        ::= { rcIpBgpRouteReflectorGroup 2 }
+
+rcIpBgpRouteReflectorClientToClientReflection OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "When this router is configured as a route reflector, and
+                       the clients are fully meshed, a Disable value disables
+                       reflection of routes from one client to another."
+        DEFVAL  {disable}
+        ::= { rcIpBgpRouteReflectorGroup 3 }
+
+rcIpBgpNetworkTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Network Prefix table size"
+        ::= { rcIpBgp 6 }
+
+rcIpBgpNetworkTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpBgpNetworkEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The networks in this table are either static/directly
+                         connected or learned routes. Bgp advertises these
+                         network provided they are reachable and are in the IP
+                         routing table"
+        ::= { rcIpBgp 7 }
+
+rcIpBgpNetworkEntry OBJECT-TYPE
+        SYNTAX          RcIpBgpNetworkEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry In NetworkTable."
+        INDEX           { rcIpBgpNetworkAddr,
+                          rcIpBgpNetworkMask }
+        ::= { rcIpBgpNetworkTable 1 }
+
+RcIpBgpNetworkEntry ::=
+        SEQUENCE {
+                  rcIpBgpNetworkAddr      IpAddress,
+                  rcIpBgpNetworkMask      IpAddress,
+                  rcIpBgpNetworkRowStatus RowStatus,
+                  rcIpBgpNetworkMetric    INTEGER
+                 }
+
+rcIpBgpNetworkAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Network prefix that BGP will advertise."
+        ::= { rcIpBgpNetworkEntry 1 }
+
+rcIpBgpNetworkMask OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Network mask"
+        ::= { rcIpBgpNetworkEntry 2 }
+
+rcIpBgpNetworkRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Row status for create/delete."
+        ::= { rcIpBgpNetworkEntry 3 }
+
+rcIpBgpNetworkMetric OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Value of the metric to be used while sending
+                       an update for the routes from the network table.
+                       Indicates to set the MED value for the routes
+                       advertised to ebgp peers."
+        DEFVAL        { 0 }
+        ::= { rcIpBgpNetworkEntry 4 }
+
+
+-- Bgp Peer Table
+
+rcIpBgpPeerTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "BGP peer table size"
+        ::= { rcIpBgp 8 }
+
+rcIpBgpPeerTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpBgpPeerEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP BGP Peer table"
+        ::= { rcIpBgp 9 }
+
+rcIpBgpPeerEntry OBJECT-TYPE
+        SYNTAX          RcIpBgpPeerEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip rcIpBgp Peer Table."
+        INDEX           { rcIpBgpPeerIpAddress }
+        ::= { rcIpBgpPeerTable 1 }
+
+RcIpBgpPeerEntry ::=
+        SEQUENCE {
+                rcIpBgpPeerEnable                INTEGER,
+                rcIpBgpPeerIpAddress             IpAddress,
+                rcIpBgpPeerRemoteAs              INTEGER,
+                rcIpBgpPeerGroupName             DisplayString,
+                rcIpBgpPeerDefaultOriginate      EnableValue,
+                rcIpBgpPeerEbgpMultiHop          EnableValue,
+                rcIpBgpPeerAdvertisementInterval INTEGER,
+                rcIpBgpPeerPassword              DisplayString,
+                rcIpBgpPeerWeight                INTEGER,
+                rcIpBgpPeerMaxPrefix             INTEGER,
+                rcIpBgpPeerNextHopSelf           TruthValue,
+                rcIpBgpPeerRoutePolicyIn         DisplayString,
+                rcIpBgpPeerRoutePolicyOut        DisplayString,
+                rcIpBgpPeerRouteReflectorClient  TruthValue,
+                rcIpBgpPeerSoftReconfigurationIn EnableValue,
+                rcIpBgpPeerSoftReconfiguration   INTEGER,
+                rcIpBgpPeerRemovePrivateAs       EnableValue,
+                rcIpBgpPeerRowStatus             RowStatus,
+                rcIpBgpPeerMD5Authentication     EnableValue,
+                rcIpBgpPeerDebugMask             INTEGER,
+                rcIpBgpPeerSendCommunity         EnableValue,
+                rcIpBgpPeerUpdateSourceInterface IpAddress,
+                rcIpBgpPeerBgpMplsCutThroughType INTEGER,
+                rcIpBgpPeerBgpMplsCutThroughId   INTEGER,
+                rcIpBgpPeerState                 INTEGER,
+                rcIpBgpPeerLastError             OCTET STRING
+        }
+
+rcIpBgpPeerEnable OBJECT-TYPE
+        SYNTAX  INTEGER {
+                    enabled(1),
+                    disabled(2)
+                }
+        MAX-ACCESS  read-write
+        STATUS  current
+        DESCRIPTION
+                "Enable/Disable: controls whether the peer connection is enabled
+                or disabled"
+        DEFVAL  { disabled }
+        ::= { rcIpBgpPeerEntry 1 }
+
+rcIpBgpPeerIpAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The Ip address of this peer"
+        ::= { rcIpBgpPeerEntry 2 }
+
+rcIpBgpPeerRemoteAs OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Remote Autonomous system number of this peer"
+        ::= { rcIpBgpPeerEntry 3 }
+
+rcIpBgpPeerGroupName OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Peer group name to which this peer belongs (optional)"
+        ::= { rcIpBgpPeerEntry 4 }
+
+rcIpBgpPeerDefaultOriginate OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To allow a BGP speaker (the local router) to send
+                       the default route 0.0.0.0 to a neighbor for use as
+                       a default route"
+        DEFVAL        {disable}
+        ::= { rcIpBgpPeerEntry 5 }
+
+rcIpBgpPeerEbgpMultiHop OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To accept and attempt BGP connections to external
+                       peers residing on networks that are not directly
+                       connected"
+        DEFVAL          {disable}
+        ::= { rcIpBgpPeerEntry 6 }
+
+rcIpBgpPeerAdvertisementInterval OBJECT-TYPE
+        SYNTAX        INTEGER (5..120)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To set the minimum interval between the sending of
+                       BGP routing updates Time in seconds. Integer from 5
+                       to 120."
+        DEFVAL        { 30 }
+        ::= { rcIpBgpPeerEntry 7 }
+
+rcIpBgpPeerPassword OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..80))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To enable MD5 authentication on a TCP connection
+                       between two BGP peers Case-sensitive password of
+                       up to 80 character"
+        ::= { rcIpBgpPeerEntry 8 }
+
+rcIpBgpPeerWeight OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To assign an absolute weight to a BGP network.
+                       It can be an integer from 0 to  65535."
+        DEFVAL        { 100 }
+        ::= { rcIpBgpPeerEntry 9 }
+
+rcIpBgpPeerMaxPrefix OBJECT-TYPE
+        SYNTAX        INTEGER (0..2147483647)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Sets a limit on the number of routes that will be
+                       accepted from a neighbor. A value of zero indicates no
+                       limit"
+        DEFVAL          {12000}
+        ::= { rcIpBgpPeerEntry 10 }
+
+rcIpBgpPeerNextHopSelf  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Set NextHop Attribute to local router address before
+                       sending updates to remote peer"
+        DEFVAL        { false }
+        ::= { rcIpBgpPeerEntry 11 }
+
+rcIpBgpPeerRoutePolicyIn OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Route Policy Name that will be applied to all networks
+                       learned from this peer"
+        ::= { rcIpBgpPeerEntry 12 }
+
+rcIpBgpPeerRoutePolicyOut OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Route policy name that will be applied to all outgoing
+                       updates"
+        ::= { rcIpBgpPeerEntry 13 }
+
+rcIpBgpPeerRouteReflectorClient OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Indicates whether this peer is a route reflector client."
+        DEFVAL        {false}
+        ::= { rcIpBgpPeerEntry 14 }
+
+rcIpBgpPeerSoftReconfigurationIn OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "If Peer soft reconfiguration is enabled in the in-bound
+                       direction, policy can be changed and routes can
+                       re-learned without having to reset the bgp connection.
+                       Enabling soft reconfig-in causes all bgp routes to be
+                       stored in local memory (even non-best routes)"
+        DEFVAL        {enable}
+        ::= { rcIpBgpPeerEntry 15 }
+
+rcIpBgpPeerSoftReconfiguration OBJECT-TYPE
+        SYNTAX        INTEGER {
+                                in (1),
+                                out(2),
+                                none(3)
+                              }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "If rcIpBgpPeerSoftReconfigurationIn is enabled in the
+                       in-bound direction, policy can be changed and routes can
+                       re-learned without having to reset the bgp connection by
+                       setting rcIpBgpPeerSoftReconfiguration to in(1). Setting
+                       the value to out (2) forces the neighbor to send out all
+                       the updates to the remote neighbor without resetting the
+                       connection."
+        DEFVAL        {none}
+        ::= { rcIpBgpPeerEntry 16 }
+
+rcIpBgpPeerRemovePrivateAs OBJECT-TYPE
+        SYNTAX       EnableValue
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Enable and disable private AS number from being
+                      stripped when sending an update"
+        DEFVAL          { enable  }
+        ::= { rcIpBgpPeerEntry 17 }
+
+rcIpBgpPeerRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Used to create/delete entries in the Table."
+        ::= { rcIpBgpPeerEntry 18 }
+
+rcIpBgpPeerMD5Authentication  OBJECT-TYPE
+        SYNTAX            EnableValue
+        MAX-ACCESS        read-write
+        STATUS            current
+        DESCRIPTION "Enable and Disable MD5 authentication"
+        DEFVAL             { disable }
+        ::= { rcIpBgpPeerEntry 19 }
+
+rcIpBgpPeerDebugMask OBJECT-TYPE
+        SYNTAX          INTEGER (0..511) 
+        MAX-ACCESS     read-write
+        STATUS         current
+        DESCRIPTION    " value is one of multiple (logiacally by 'OR' of
+                         following value:
+                                 none (0),
+                                 error(1),
+                                 packet(2),
+                                 event(4),
+                                 trace(8),
+                                 warning(16),
+                                 state(32),
+                                 init(64),
+                                 filter(128),
+                                 update(256),
+                                 all(511)
+                        all(511): Enables all debugging messages.
+                        none(0): Disables all debugging messages.
+                        error(1): Enables disolay of debug error messages.
+                        packet(2): Enables display of debug packet messages.
+                        event(4): Enables display of debug event messages.
+                        trace(8): Enables display debug trace messages.
+                        warning(16): Enables display debug warning messages.
+                        state(32): Enables display of debug state transtion
+                               messages.
+                        init(64): Enables display of debug initialization messages.
+                        filter(128): Enables display of debug messages related to
+                                filtering.
+                        update(256): Enables display of debug messages related to
+                                sending and receiving updates."
+        DEFVAL {0}
+        ::=  { rcIpBgpPeerEntry 20 }
+
+rcIpBgpPeerSendCommunity  OBJECT-TYPE
+        SYNTAX      EnableValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "----------------------------"
+        DEFVAL       { disable }
+        ::= { rcIpBgpPeerEntry 21 }
+
+rcIpBgpPeerUpdateSourceInterface  OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The IP address to be used for Circuitless IP."
+        ::= { rcIpBgpPeerEntry 22 }
+
+rcIpBgpPeerBgpMplsCutThroughType  OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        lsp(1),
+                        lspgroup(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Specifies whether the BGP to MPLS cut through being
+                       used is an LSP or an LSP group."
+        ::= { rcIpBgpPeerEntry 23 }
+
+rcIpBgpPeerBgpMplsCutThroughId  OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The ID of LSP or LSP group being used for BGP to MPLS
+                       cut through."
+        ::= { rcIpBgpPeerEntry 24 }
+
+rcIpBgpPeerState OBJECT-TYPE
+        SYNTAX     INTEGER {
+                            idle(1),
+                            connect(2),
+                            active(3),
+                            opensent(4),
+                            openconfirm(5),
+                            established(6)
+                   }
+        MAX-ACCESS     read-only
+        STATUS     current
+        DESCRIPTION
+                   "The BGP peer connection state."
+        ::= { rcIpBgpPeerEntry 25 }
+
+rcIpBgpPeerLastError OBJECT-TYPE
+        SYNTAX     OCTET STRING (SIZE (2))
+        MAX-ACCESS     read-only
+        STATUS     current
+        DESCRIPTION
+                  "The last error code and subcode seen by this
+                   peer on this connection.  If no error has
+                   occurred, this field is zero.  Otherwise, the
+                   first byte of this two byte OCTET STRING
+                   contains the error code, and the second byte
+                   contains the subcode."
+        ::= { rcIpBgpPeerEntry 26}
+
+-- IP rcIpBgp Peer Group Table
+
+rcIpBgpPeerGroupTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "BGP Peer Group table size"
+        ::= { rcIpBgp 10 }
+
+rcIpBgpPeerGroupTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpBgpPeerGroupEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP rcIpBgp Peer Group table. This table contains rows
+                         which are template configuration parameters which are
+                         shared by a group of peers. Peers belonging to the
+                         same group will refer to the same row in this table
+                         using a peer group name"
+        ::= { rcIpBgp 11 }
+
+rcIpBgpPeerGroupEntry OBJECT-TYPE
+        SYNTAX          RcIpBgpPeerGroupEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip rcIpBgp Peer Group Table."
+        INDEX           { rcIpBgpPeerGroupIndex }
+        ::= { rcIpBgpPeerGroupTable 1 }
+
+RcIpBgpPeerGroupEntry ::=
+        SEQUENCE {
+                rcIpBgpPeerGroupEnable                  EnableValue,
+                rcIpBgpPeerGroupIndex                   INTEGER,
+                rcIpBgpPeerGroupGroupName               DisplayString,
+                rcIpBgpPeerGroupRemoteAs                INTEGER,
+                rcIpBgpPeerGroupDefaultOriginate        INTEGER,
+                rcIpBgpPeerGroupEbgpMultiHop            INTEGER,
+                rcIpBgpPeerGroupAdvertisementInterval   INTEGER,
+                rcIpBgpPeerGroupKeepAlive               INTEGER,
+                rcIpBgpPeerGroupHoldTime                INTEGER,
+                rcIpBgpPeerGroupWeight                  INTEGER,
+                rcIpBgpPeerGroupMaxPrefix               INTEGER,
+                rcIpBgpPeerGroupNextHopSelf             TruthValue,
+                rcIpBgpPeerGroupRoutePolicyIn           DisplayString,
+                rcIpBgpPeerGroupRoutePolicyOut          DisplayString,
+                rcIpBgpPeerGroupRouteReflectorClient    TruthValue,
+                rcIpBgpPeerGroupSoftReconfigurationIn   EnableValue,
+                rcIpBgpPeerGroupSoftReconfiguration     INTEGER,
+                rcIpBgpPeerGroupPassword                DisplayString,
+                rcIpBgpPeerGroupRemovePrivateAs         EnableValue,
+                rcIpBgpPeerGroupRowStatus               RowStatus,
+                rcIpBgpPeerGroupMD5Authentication       EnableValue,
+                rcIpBgpPeerGroupSendCommunity           EnableValue,
+                rcIpBgpPeerGroupUpdateSourceInterface   IpAddress
+        }
+
+rcIpBgpPeerGroupEnable OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Allows disabling a group of peers"
+        DEFVAL        { disable }
+        ::= { rcIpBgpPeerGroupEntry 1 }
+
+rcIpBgpPeerGroupIndex OBJECT-TYPE
+        SYNTAX        INTEGER (1..1024)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Index in to the Peer Group Table"
+        DEFVAL              {1}
+        ::= { rcIpBgpPeerGroupEntry 2 }
+
+rcIpBgpPeerGroupGroupName OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Name of the BGP peer group to which this neighbor belong"
+        ::= { rcIpBgpPeerGroupEntry 3 }
+
+rcIpBgpPeerGroupRemoteAs OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Remote Autonomous system number of this peer group
+                       (optional)"
+        ::= { rcIpBgpPeerGroupEntry 4 }
+
+rcIpBgpPeerGroupDefaultOriginate OBJECT-TYPE
+        SYNTAX        INTEGER {
+                               enable(1),
+                               disable(2)
+                              }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enabling this attribute allows a BGP speaker
+                      (the local router) to send the default route 0.0.0.0 to
+                      the group of neighbors for use as a default route."
+        DEFVAL { disable }
+        ::= { rcIpBgpPeerGroupEntry 5 }
+
+rcIpBgpPeerGroupEbgpMultiHop OBJECT-TYPE
+        SYNTAX        INTEGER {
+                               enable(1),
+                               disable(2)
+                                }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To accept and attempt BGP connections to external
+                       peers residing on networks that are not directly
+                       connected"
+        DEFVAL { disable }
+        ::= { rcIpBgpPeerGroupEntry 6 }
+
+rcIpBgpPeerGroupAdvertisementInterval OBJECT-TYPE
+        SYNTAX        INTEGER (1..120)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To set the minimum interval between the sending of
+                       BGP routing updates Time in seconds. Integer from 1
+                       to 120."
+        DEFVAL          {30}
+        ::= { rcIpBgpPeerGroupEntry 7 }
+
+rcIpBgpPeerGroupKeepAlive OBJECT-TYPE
+        SYNTAX        INTEGER (1..21845)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To set the time interval in seconds between the sending
+                       of BGP keep alive messages to remote peers."
+        DEFVAL          {60}
+        ::= { rcIpBgpPeerGroupEntry 8 }
+
+rcIpBgpPeerGroupHoldTime OBJECT-TYPE
+        SYNTAX        INTEGER (3..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To configure the hold time for the group of peers in
+                       seconds. Usually set to three times the value of the
+                       Keepalive time"
+        DEFVAL          {180}
+        ::= { rcIpBgpPeerGroupEntry 9 }
+
+rcIpBgpPeerGroupWeight OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To assign an absolute weight to a BGP network.
+                       Absolute weight, or importance.
+                       It can be an integer from 0 to  65535."
+        DEFVAL          {100}
+        ::= { rcIpBgpPeerGroupEntry 10 }
+
+rcIpBgpPeerGroupMaxPrefix OBJECT-TYPE
+        SYNTAX        INTEGER (0..2147483647)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Sets a limit on the number of routes that will be
+                       accepted from this group of neighbors. A value of zero
+                       indicates no limit"
+        DEFVAL          {12000}
+        ::= { rcIpBgpPeerGroupEntry 11 }
+
+rcIpBgpPeerGroupNextHopSelf     OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Set NextHop Attribute to local router address before
+                       sending updates to remote peers"
+        DEFVAL        { false }
+        ::= { rcIpBgpPeerGroupEntry 12 }
+
+rcIpBgpPeerGroupRoutePolicyIn OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Route Policy Name that will be applied to all networks
+                       learned from this group of peers"
+        ::= { rcIpBgpPeerGroupEntry 13 }
+
+rcIpBgpPeerGroupRoutePolicyOut OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Route policy name that will be applied to all
+                       outgoing updates to this group of peers"
+        ::= { rcIpBgpPeerGroupEntry 14 }
+
+rcIpBgpPeerGroupRouteReflectorClient OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Indicates whether this group of peers is a route reflector client."
+        DEFVAL        { false }
+        ::= { rcIpBgpPeerGroupEntry 15 }
+
+rcIpBgpPeerGroupSoftReconfigurationIn OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "If Peer soft reconfiguration is enabled in the in bound
+                       direction, policy can be changed and routes can
+                       re-learned without having to reset the bgp connection.
+                       Enabling soft reconfig-in causes all bgp routes to be
+                       stored in local memory (even non-best routes)"
+        DEFVAL        {enable}
+        ::= { rcIpBgpPeerGroupEntry 16 }
+
+rcIpBgpPeerGroupSoftReconfiguration OBJECT-TYPE
+        SYNTAX        INTEGER {
+                                in (1),
+                                out(2)
+                              }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "If Peer soft reconfiguration-in is enabled in the in
+                       bound direction, policy can be changed and routes can
+                       re-learned without having to reset the bgp connection by
+                       setting rcIpBgpPeerGroupSoftReconfiguration to in(1).
+                       Setting the value to out (2) forces the neighbor to send
+                       out all the updates to the remote neighbor without
+                       resetting the connection."
+        ::= { rcIpBgpPeerGroupEntry 17 }
+
+rcIpBgpPeerGroupPassword OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(0..80))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To enable MD5 authentication on  TCP connections
+                       between this local speaker and this group of BGP peers.
+                       Case-sensitive password of up to 80 character"
+        ::= { rcIpBgpPeerGroupEntry 18 }
+
+rcIpBgpPeerGroupRemovePrivateAs OBJECT-TYPE
+        SYNTAX       EnableValue
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Enable and disable private AS number from being
+                      stripped when sending an update"
+        DEFVAL          { enable  }
+        ::= { rcIpBgpPeerGroupEntry 19 }
+
+rcIpBgpPeerGroupRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "row status"
+        ::= { rcIpBgpPeerGroupEntry 20 }
+
+rcIpBgpPeerGroupMD5Authentication  OBJECT-TYPE
+        SYNTAX      EnableValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Enable and Disable MD5 authentication"
+        DEFVAL       { disable }
+        ::= { rcIpBgpPeerGroupEntry 21 }
+
+rcIpBgpPeerGroupSendCommunity  OBJECT-TYPE
+        SYNTAX      EnableValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "----------------------------"
+        DEFVAL       { disable }
+        ::= { rcIpBgpPeerGroupEntry 22 }
+
+rcIpBgpPeerGroupUpdateSourceInterface OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The IP address to used for circuitless IP for this peer group."
+        ::= { rcIpBgpPeerGroupEntry 23 }
+
+rcIpBgpRcvdDampenedPathAttrTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpBgp 12 }
+
+rcIpBgpRcvdDampenedPathAttrTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpBgpDampenedPathAttrEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "This table contains info about paths to destination
+                       networks received from all BGP-4 peers"
+        ::= { rcIpBgp 13 }
+
+rcIpBgpDampenedPathAttrEntry OBJECT-TYPE
+        SYNTAX        RcIpBgpDampenedPathAttrEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Information about a path to a networks"
+        INDEX         { rcIpBgpPathAttrIpAddrPrefix,
+                        rcIpBgpPathAttrIpAddrPrefixLen,
+                        rcIpBgpPathAttrPeer
+                      }
+        ::=  { rcIpBgpRcvdDampenedPathAttrTable 1 }
+
+RcIpBgpDampenedPathAttrEntry ::=
+           SEQUENCE {
+
+                   rcIpBgpPathAttrPeer              IpAddress,
+                   rcIpBgpPathAttrIpAddrPrefixLen   INTEGER,
+                   rcIpBgpPathAttrIpAddrPrefix      IpAddress,
+                   rcIpBgpPathAttrFlapPenalty       Integer32,
+                   rcIpBgpPathAttrFlapCount         Integer32,
+                   rcIpBgpPathAttrRouteDampened     INTEGER,
+                   rcIpBgpPathAttrReuseTime         Integer32,
+                   rcIpBgpPathAttrReuseTimeRemain   Integer32
+           }
+
+rcIpBgpPathAttrPeer OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The IP address of the peer where the path info was
+                       learned"
+        ::=   { rcIpBgpDampenedPathAttrEntry 1 }
+
+rcIpBgpPathAttrIpAddrPrefixLen OBJECT-TYPE
+        SYNTAX        INTEGER (0..32)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Length in bits of the IP address prefix in the network
+                       Layer Reachablity Information field."
+        ::=   { rcIpBgpDampenedPathAttrEntry 2 }
+
+rcIpBgpPathAttrIpAddrPrefix OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "An Ip address prefix in the NLRI Information field.
+                       This object is an IP address containing the prefix
+                       with length specified by rcIpBgpPathAttrIpAddrPrefixLen
+                       are zeroed."
+        ::=   { rcIpBgpDampenedPathAttrEntry 3 }
+
+rcIpBgpPathAttrFlapPenalty OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION "Penalty value based on number of route flaps"
+        ::= { rcIpBgpDampenedPathAttrEntry 4 }
+
+rcIpBgpPathAttrFlapCount OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times a route flapped since the last time the
+                      penalty was reset to zero"
+        ::= { rcIpBgpDampenedPathAttrEntry 5 }
+
+rcIpBgpPathAttrRouteDampened OBJECT-TYPE
+        SYNTAX  INTEGER {
+                    announced(1),
+                    suppressed(2)
+                }
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "Shows whether this route is currently suppressed from
+                     being announced"
+        ::= { rcIpBgpDampenedPathAttrEntry 6 }
+
+rcIpBgpPathAttrReuseTime OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Re use time "
+        ::= { rcIpBgpDampenedPathAttrEntry 7 }
+
+rcIpBgpPathAttrReuseTimeRemain OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Re use time Remain is the number of seconds
+                       before the route will be reused"
+        ::= { rcIpBgpDampenedPathAttrEntry 8 }
+
+rcIpBgp4PathAttrTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpBgp 14 }
+
+rcIpBgp4PathAttrTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpBgp4PathAttrEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "This table contains info about paths to destination
+                       networks received from all BGP-4 peers"
+        ::= { rcIpBgp 15 }
+
+rcIpBgp4PathAttrEntry OBJECT-TYPE
+        SYNTAX        RcIpBgp4PathAttrEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "--------------"
+        INDEX         { rcIpBgp4PathAttrIpAddrPrefix,
+                        rcIpBgp4PathAttrIpAddrPrefixLen,
+                        rcIpBgp4PathAttrPeer
+                      }
+        ::=  { rcIpBgp4PathAttrTable 1 }
+
+RcIpBgp4PathAttrEntry ::=
+           SEQUENCE {
+                   rcIpBgp4PathAttrPeer              IpAddress,
+                   rcIpBgp4PathAttrIpAddrPrefixLen   INTEGER,
+                   rcIpBgp4PathAttrIpAddrPrefix      IpAddress,
+                   rcIpBgp4PathAttrCommunities       OCTET STRING,
+                   rcIpBgp4PathAttrOriginateId       IpAddress,
+                   rcIpBgp4PathAttrClusterId         OCTET STRING
+           }
+
+rcIpBgp4PathAttrPeer OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The IP address of the peer where the path info was
+                       learned"
+        ::=   { rcIpBgp4PathAttrEntry 1 }
+
+rcIpBgp4PathAttrIpAddrPrefixLen OBJECT-TYPE
+        SYNTAX        INTEGER (0..32)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Length in bits of the IP address prefix in the network
+                       Layer Reachablity Information field."
+        ::=   { rcIpBgp4PathAttrEntry 2 }
+
+rcIpBgp4PathAttrIpAddrPrefix OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "An Ip address prefix in the NLRI Information field.
+                       This object is an IP address containing the prefix
+                       with length specified by rcIpBgpPathAttrIpAddrPrefixLen
+                       are zeroed."
+        ::=   { rcIpBgp4PathAttrEntry 3 }
+
+rcIpBgp4PathAttrCommunities OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(255))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The string represents community path attributes as <length,value>
+                        The length is a 1-octet field containing the numbner of community
+                        numbers in the value field.The value field contains one or more
+                        Community numbers,each community is represented in the octet
+                        string as 4 octets.The community numbers in the string beyond
+                        maximum size 255,if any, will not be recorded by this object."
+        ::=   { rcIpBgp4PathAttrEntry 4 }
+
+rcIpBgp4PathAttrOriginateId OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The IP address of the route who originates the routes"
+        ::=   { rcIpBgp4PathAttrEntry 5 }
+
+rcIpBgp4PathAttrClusterId OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(255))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The string represents Cluster Id path attributes as <length,value>
+                        The length is a 1-octet field containing the number of Cluster Id
+                        numbers in the value field.The value field contains one or more
+                        Cluster Id numbers,each Cluster Id is represented in the octet
+                        string as 4 octets,each four octets is the IpAddress of the
+                        router acting as a route reflector.The Cluster Id numbers in the
+                        string beyond maximum size 255,if any, will not be recorded by
+                        this object."
+        ::=   { rcIpBgp4PathAttrEntry 6 }
+
+rcStatBgp                       OBJECT IDENTIFIER ::= { rcStat 10 }
+
+rcStatBgpStarts OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times BGP connection started"
+        ::= { rcStatBgp 1 }
+
+rcStatBgpStops OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times BGP connection stopped"
+        ::= { rcStatBgp 2 }
+
+rcStatBgpOpens OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times BGP opens TCP"
+        ::= { rcStatBgp 3 }
+
+rcStatBgpCloses OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times BGP closes TCP"
+        ::= { rcStatBgp 4 }
+
+rcStatBgpFails OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times TCP attempts failed"
+        ::= { rcStatBgp 5 }
+
+rcStatBgpFatals OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times TCP crashes due to fatal error"
+        ::= { rcStatBgp 6 }
+
+rcStatBgpConnExps OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times TCP retry timer expired"
+        ::= { rcStatBgp 7 }
+
+rcStatBgpHoldExps OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times hold timer expired"
+        ::= { rcStatBgp 8 }
+
+rcStatBgpKeepExps OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times keepalive timer expired"
+        ::= { rcStatBgp 9 }
+
+rcStatBgpRxOpens OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of OPENs BGP receives"
+        ::= { rcStatBgp 10 }
+
+rcStatBgpRxKeeps OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of KEEPALIVEs BGP recieves"
+        ::= { rcStatBgp 11 }
+
+rcStatBgpRxUpdates OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of UPDATEs BGP recieves "
+        ::= { rcStatBgp 12 }
+
+rcStatBgpRxNotifys OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number NOTIFICATIONs BGP recieves "
+        ::= { rcStatBgp 13 }
+
+rcStatBgpTxOpens OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of OPENs BGP transmitted"
+        ::= { rcStatBgp 14 }
+
+rcStatBgpTxKeeps OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of KEEPALIVEs BGP transmitted"
+        ::= { rcStatBgp 15 }
+
+rcStatBgpTxUpdates OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of UPDATEs BGP transmits"
+        ::= { rcStatBgp 16 }
+
+rcStatBgpTxNotifys OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of NOTIFICATIONs BGP transmits"
+        ::= { rcStatBgp 17 }
+
+rcStatBgpBadEvents OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of invalid events FSM received"
+        ::= { rcStatBgp 18 }
+
+rcStatBgpSyncFails OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of times FDB sync failed"
+        ::= { rcStatBgp 19 }
+
+rcStatBgpTrEvent OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Trace event"
+        ::= { rcStatBgp 20 }
+
+-- Rx
+rcStatBgpRxECodeHeader OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Header errors received"
+        ::= { rcStatBgp 21 }
+
+rcStatBgpRxECodeOpen OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Open errors received"
+        ::= { rcStatBgp 22 }
+
+rcStatBgpRxECodeUpdate OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Update errors received"
+        ::= { rcStatBgp 23 }
+
+rcStatBgpRxECodeHoldtimer OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Holdtimer errors received"
+        ::= { rcStatBgp 24 }
+
+rcStatBgpRxECodeFSM OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total FSM errors received"
+        ::= { rcStatBgp 25 }
+
+rcStatBgpRxECodeCease OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Cease errors received"
+        ::= { rcStatBgp 26 }
+
+-- Header
+rcStatBgpRxHdrCodeNoSync OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Header  Not Synchronized errors received"
+        ::= { rcStatBgp 27 }
+
+rcStatBgpRxHdrCodeInvalidMsgLen OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Header Invalid msg len errors received"
+        ::= { rcStatBgp 28 }
+
+rcStatBgpRxHdrCodeInvalidMsgType OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Header Invalid msg type errors received"
+        ::= { rcStatBgp 29 }
+
+
+-- Open
+rcStatBgpRxOpCodeBadVer OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors received: Bad Version"
+        ::= { rcStatBgp 30 }
+
+rcStatBgpRxOpCodeBadAs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors received: Bad AS Number"
+        ::= { rcStatBgp 31 }
+
+rcStatBgpRxOpCodeBadRtID OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors received: Bad BGP Rtr ID"
+        ::= { rcStatBgp 32 }
+
+rcStatBgpRxOpCodeUnsuppOption OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors received: Unsupported Option"
+        ::= { rcStatBgp 33 }
+
+rcStatBgpRxOpCodeAuthFail OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors received: Auth Failures"
+        ::= { rcStatBgp 34 }
+
+rcStatBgpRxOpCodeBadHold OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors received: Bad Hold Value"
+        ::= { rcStatBgp 35 }
+
+-- Update
+
+rcStatBgpRxUpdCodeMalformedAttrList OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received:Malformed Attr List"
+        ::= { rcStatBgp 36 }
+
+rcStatBgpRxUpdCodeWelknownAttrUnrecog OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: Welknown Attr Unrecog"
+        ::= { rcStatBgp 37 }
+
+rcStatBgpRxUpdCodeWelknownAttrMiss OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: Welknown Attr Missing"
+        ::= { rcStatBgp 38 }
+
+rcStatBgpRxUpdCodeAttrFlagError OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: Attr Flag Error"
+        ::= { rcStatBgp 39 }
+
+rcStatBgpRxUpdCodeAttrLenError OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: Attr Len Error"
+        ::= { rcStatBgp 40 }
+
+rcStatBgpRxUpdCodeBadORIGINAttr OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: Bad ORIGIN Attr"
+        ::= { rcStatBgp 41 }
+
+rcStatBgpRxUpdCodeASRoutingLoop OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: AS Routing Loop"
+        ::= { rcStatBgp 42 }
+
+rcStatBgpRxUpdCodeBadNHAttr OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: Bad NEXT-HOP Attr"
+        ::= { rcStatBgp 43 }
+
+rcStatBgpRxUpdCodeOptionalAttrError OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: Optional Attr Error"
+        ::= { rcStatBgp 44 }
+
+rcStatBgpRxUpdCodeBadNetworkField OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: Bad Network Field"
+        ::= { rcStatBgp 45 }
+
+rcStatBgpRxUpdCodeMalformedASPath OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors received: Malformed AS Path"
+        ::= { rcStatBgp 46 }
+
+-- Tx
+rcStatBgpTxECodeHeader OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Header errors transmitted"
+        ::= { rcStatBgp 47 }
+
+rcStatBgpTxECodeOpen OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Open errors transmitted"
+        ::= { rcStatBgp 48 }
+
+rcStatBgpTxECodeUpdate OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Update errors transmitted"
+        ::= { rcStatBgp 49 }
+
+rcStatBgpTxECodeHoldtimer OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Holdtimer errors transmitted"
+        ::= { rcStatBgp 50 }
+
+rcStatBgpTxECodeFSM OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total FSM errors transmitted"
+        ::= { rcStatBgp 51 }
+
+rcStatBgpTxECodeCease OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total Cease errors transmitted"
+        ::= { rcStatBgp 52 }
+
+-- Header
+rcStatBgpTxHdrCodeNoSync OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Header  Not Synchronized errors transmitted"
+        ::= { rcStatBgp 53 }
+
+rcStatBgpTxHdrCodeInvalidMsgLen OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Header Invalid msg len errors transmitted"
+        ::= { rcStatBgp 54 }
+
+rcStatBgpTxHdrCodeInvalidMsgType OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Header Invalid msg type errors transmitted"
+        ::= { rcStatBgp 55 }
+
+
+-- Open
+rcStatBgpTxOpCodeBadVer OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors transmitted: Bad Version"
+        ::= { rcStatBgp 56 }
+
+rcStatBgpTxOpCodeBadAs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors transmitted: Bad AS Number"
+        ::= { rcStatBgp 57 }
+
+rcStatBgpTxOpCodeBadRtID OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors transmitted: Bad BGP Rtr ID"
+        ::= { rcStatBgp 58 }
+
+rcStatBgpTxOpCodeUnsuppOption OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors transmitted: Unsupported Option"
+        ::= { rcStatBgp 59 }
+
+rcStatBgpTxOpCodeAuthFail OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors transmitted: Auth Failures"
+        ::= { rcStatBgp 60 }
+
+rcStatBgpTxOpCodeBadHold OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Open errors transmitted: Bad Hold Value"
+        ::= { rcStatBgp 61 }
+
+-- Update
+
+rcStatBgpTxUpdCodeMalformedAttrList OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted:Malformed Attr List"
+                ::= { rcStatBgp 62 }
+
+rcStatBgpTxUpdCodeWelknownAttrUnrecog OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: Welknown Attr Unrecog"
+        ::= { rcStatBgp 63 }
+
+rcStatBgpTxUpdCodeWelknownAttrMiss OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: Welknown Attr Missing"
+        ::= { rcStatBgp 64 }
+
+rcStatBgpTxUpdCodeAttrFlagError OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: Attr Flag Error"
+        ::= { rcStatBgp 65 }
+
+rcStatBgpTxUpdCodeAttrLenError OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: Attr Len Error"
+        ::= { rcStatBgp 66 }
+
+rcStatBgpTxUpdCodeBadORIGINAttr OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: Bad ORIGIN Attr"
+        ::= { rcStatBgp 67 }
+
+rcStatBgpTxUpdCodeASRoutingLoop OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: AS Routing Loop"
+        ::= { rcStatBgp 68 }
+
+rcStatBgpTxUpdCodeBadNHAttr OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: Bad NEXT-HOP Attr"
+        ::= { rcStatBgp 69 }
+
+rcStatBgpTxUpdCodeOptionalAttrError OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: Optional Attr Error"
+        ::= { rcStatBgp 70 }
+
+rcStatBgpTxUpdCodeBadNetworkField OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: Bad Network Field"
+        ::= { rcStatBgp 71 }
+
+rcStatBgpTxUpdCodeMalformedASPath OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Update errors transmitted: Malformed AS Path"
+        ::= { rcStatBgp 72 }
+
+rcStatBgpReset OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "reset Bgp global stats"
+        DEFVAL          {disable}
+        ::= { rcStatBgp 73 }
+
+-- BGP Peer Stats
+
+rcStatBgpPeerTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcStatBgpPeerEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to store Bgp Peer statistics."
+        ::= { rcStat 11 }
+
+rcStatBgpPeerEntry OBJECT-TYPE
+        SYNTAX        RcStatBgpPeerEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Bgp Peer statistics"
+        INDEX         { rcStatBgpPeerAddr }
+        ::= { rcStatBgpPeerTable 1 }
+
+RcStatBgpPeerEntry ::= SEQUENCE {
+         rcStatBgpPeerAddr                           IpAddress,
+         rcStatBgpPeerStarts                         Counter32,
+         rcStatBgpPeerStops                          Counter32,
+         rcStatBgpPeerOpens                          Counter32,
+         rcStatBgpPeerCloses                         Counter32,
+         rcStatBgpPeerFails                          Counter32,
+         rcStatBgpPeerFatals                         Counter32,
+         rcStatBgpPeerConnExps                       Counter32,
+         rcStatBgpPeerHoldExps                       Counter32,
+         rcStatBgpPeerKeepExps                       Counter32,
+         rcStatBgpPeerTxMsgs                         Counter32,
+         rcStatBgpPeerTxOpens                        Counter32,
+         rcStatBgpPeerTxKeeps                        Counter32,
+         rcStatBgpPeerTxUpdates                      Counter32,
+         rcStatBgpPeerTxNotifys                      Counter32,
+         rcStatBgpPeerRxMsgs                         Counter32,
+         rcStatBgpPeerRxInCompPkts                   Counter32,
+         rcStatBgpPeerRxOpens                        Counter32,
+         rcStatBgpPeerRxKeeps                        Counter32,
+         rcStatBgpPeerRxUpdates                      Counter32,
+         rcStatBgpPeerRxNotifys                      Counter32,
+         rcStatBgpPeerBadEvents                      Counter32,
+         rcStatBgpPeerSyncFails                      Counter32,
+         rcStatBgpPeerRcvdTooShort                   Counter32,
+         rcStatBgpPeerNoMarker                       Counter32,
+         rcStatBgpPeerDropped                        Counter32,
+         rcStatBgpPeerBadMsgTypes                    Counter32,
+         rcStatBgpPeerTrEvent                        Counter32,
+         rcStatBgpPeerTxRoutes                       Counter32,
+         rcStatBgpPeerRxRoutesAdded                  Counter32,
+         rcStatBgpPeerRxRoutesReplaced               Counter32,
+         rcStatBgpPeerRxNlri                         Counter32,
+         rcStatBgpPeerRxValidUpdates                 Counter32,
+-- Rx
+         rcStatBgpPeerRxECodeHeader                  Counter32,
+         rcStatBgpPeerRxECodeOpen                    Counter32,
+         rcStatBgpPeerRxECodeUpdate                  Counter32,
+         rcStatBgpPeerRxECodeHoldtimer               Counter32,
+         rcStatBgpPeerRxECodeFSM                     Counter32,
+         rcStatBgpPeerRxECodeCease                   Counter32,
+         rcStatBgpPeerRxHdrCodeNoSync                Counter32,
+         rcStatBgpPeerRxHdrCodeInvalidMsgLen         Counter32,
+         rcStatBgpPeerRxHdrCodeInvalidMsgType        Counter32,
+         rcStatBgpPeerRxOpCodeBadVer                 Counter32,
+         rcStatBgpPeerRxOpCodeBadAs                  Counter32,
+         rcStatBgpPeerRxOpCodeBadRtID                Counter32,
+         rcStatBgpPeerRxOpCodeUnsuppOption           Counter32,
+         rcStatBgpPeerRxOpCodeAuthFail               Counter32,
+         rcStatBgpPeerRxOpCodeBadHold                Counter32,
+         rcStatBgpPeerRxUpdCodeMalformedAttrList     Counter32,
+         rcStatBgpPeerRxUpdCodeWelknownAttrUnrecog   Counter32,
+         rcStatBgpPeerRxUpdCodeWelknownAttrMiss      Counter32,
+         rcStatBgpPeerRxUpdCodeAttrFlagError         Counter32,
+         rcStatBgpPeerRxUpdCodeAttrLenError          Counter32,
+         rcStatBgpPeerRxUpdCodeBadORIGINAttr         Counter32,
+         rcStatBgpPeerRxUpdCodeASRoutingLoop         Counter32,
+         rcStatBgpPeerRxUpdCodeBadNHAttr             Counter32,
+         rcStatBgpPeerRxUpdCodeOptionalAttrError     Counter32,
+         rcStatBgpPeerRxUpdCodeBadNetworkField       Counter32,
+         rcStatBgpPeerRxUpdCodeMalformedASPath       Counter32,
+-- Tx
+         rcStatBgpPeerTxECodeHeader                  Counter32,
+         rcStatBgpPeerTxECodeOpen                    Counter32,
+         rcStatBgpPeerTxECodeUpdate                  Counter32,
+         rcStatBgpPeerTxECodeHoldtimer               Counter32,
+         rcStatBgpPeerTxECodeFSM                     Counter32,
+         rcStatBgpPeerTxECodeCease                   Counter32,
+         rcStatBgpPeerTxHdrCodeNoSync                Counter32,
+         rcStatBgpPeerTxHdrCodeInvalidMsgLen         Counter32,
+         rcStatBgpPeerTxHdrCodeInvalidMsgType        Counter32,
+         rcStatBgpPeerTxOpCodeBadVer                 Counter32,
+         rcStatBgpPeerTxOpCodeBadAs                  Counter32,
+         rcStatBgpPeerTxOpCodeBadRtID                Counter32,
+         rcStatBgpPeerTxOpCodeUnsuppOption           Counter32,
+         rcStatBgpPeerTxOpCodeAuthFail               Counter32,
+         rcStatBgpPeerTxOpCodeBadHold                Counter32,
+         rcStatBgpPeerTxUpdCodeMalformedAttrList     Counter32,
+         rcStatBgpPeerTxUpdCodeWelknownAttrUnrecog   Counter32,
+         rcStatBgpPeerTxUpdCodeWelknownAttrMiss      Counter32,
+         rcStatBgpPeerTxUpdCodeAttrFlagError         Counter32,
+         rcStatBgpPeerTxUpdCodeAttrLenError          Counter32,
+         rcStatBgpPeerTxUpdCodeBadORIGINAttr         Counter32,
+         rcStatBgpPeerTxUpdCodeASRoutingLoop         Counter32,
+         rcStatBgpPeerTxUpdCodeBadNHAttr             Counter32,
+         rcStatBgpPeerTxUpdCodeOptionalAttrError     Counter32,
+         rcStatBgpPeerTxUpdCodeBadNetworkField       Counter32,
+         rcStatBgpPeerTxUpdCodeMalformedASPath       Counter32,
+         rcStatBgpPeerReset                          EnableValue
+
+        }
+
+rcStatBgpPeerAddr        OBJECT-TYPE
+         SYNTAX         IpAddress
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "----------------------------"
+                ::= { rcStatBgpPeerEntry 1 }
+
+rcStatBgpPeerStarts        OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times peer BGP connection started"
+                ::= { rcStatBgpPeerEntry 2 }
+
+rcStatBgpPeerStops         OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times peer BGP connection stopped"
+         ::= { rcStatBgpPeerEntry 3 }
+
+rcStatBgpPeerOpens         OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times peer opens TCP"
+         ::= { rcStatBgpPeerEntry 4 }
+
+rcStatBgpPeerCloses        OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times peer closes TCP"
+         ::= { rcStatBgpPeerEntry 5 }
+
+rcStatBgpPeerFails         OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times peer TCP attempts failed"
+         ::= { rcStatBgpPeerEntry 6 }
+
+rcStatBgpPeerFatals        OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times peer TCP crashes due to fatal error"
+         ::= { rcStatBgpPeerEntry 7 }
+
+rcStatBgpPeerConnExps      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times peer TCP retry timer expired"
+         ::= { rcStatBgpPeerEntry 8 }
+
+rcStatBgpPeerHoldExps      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times peer hold timer expired"
+         ::= { rcStatBgpPeerEntry 9 }
+
+rcStatBgpPeerKeepExps      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times peer keepalive timer expired"
+         ::= { rcStatBgpPeerEntry 10 }
+
+rcStatBgpPeerTxMsgs        OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total messages send by the peer"
+         ::= { rcStatBgpPeerEntry 11 }
+
+rcStatBgpPeerTxOpens       OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Opens sent by the peer"
+         ::= { rcStatBgpPeerEntry 12 }
+
+rcStatBgpPeerTxKeeps       OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Keepalives sent by the peer"
+         ::= { rcStatBgpPeerEntry 13 }
+
+rcStatBgpPeerTxUpdates     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Updates sent by the peer"
+         ::= { rcStatBgpPeerEntry 14 }
+
+rcStatBgpPeerTxNotifys     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Notifications sent by the peer"
+         ::= { rcStatBgpPeerEntry 15 }
+
+rcStatBgpPeerRxMsgs        OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total messages received by the peer"
+         ::= { rcStatBgpPeerEntry 16 }
+
+rcStatBgpPeerRxInCompPkts  OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Incomplete message received by the peer"
+         ::= { rcStatBgpPeerEntry 17 }
+
+rcStatBgpPeerRxOpens       OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Opens received by the peer"
+         ::= { rcStatBgpPeerEntry 18 }
+
+rcStatBgpPeerRxKeeps       OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Keepalives received by the peer"
+         ::= { rcStatBgpPeerEntry 19 }
+
+rcStatBgpPeerRxUpdates     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Updates received by the peer"
+         ::= { rcStatBgpPeerEntry 20 }
+
+rcStatBgpPeerRxNotifys     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Notifications received by the peer"
+         ::= { rcStatBgpPeerEntry 21 }
+
+rcStatBgpPeerBadEvents     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of invalid events received by the peer"
+         ::= { rcStatBgpPeerEntry 22 }
+
+rcStatBgpPeerSyncFails     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of times FDB sync failed of the peer"
+         ::= { rcStatBgpPeerEntry 23 }
+
+rcStatBgpPeerRcvdTooShort  OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of messages recieved by the peer that is too sho
+rt"
+         ::= { rcStatBgpPeerEntry 24 }
+
+rcStatBgpPeerNoMarker      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of messages without marker recieved by the peer"
+         ::= { rcStatBgpPeerEntry 25 }
+
+rcStatBgpPeerDropped       OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of messages the peer has dropped"
+         ::= { rcStatBgpPeerEntry 26 }
+
+rcStatBgpPeerBadMsgTypes   OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of messages with invalid message type"
+         ::= { rcStatBgpPeerEntry 27 }
+
+rcStatBgpPeerTrEvent       OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Peer trace event"
+         ::= { rcStatBgpPeerEntry 28 }
+
+rcStatBgpPeerTxRoutes      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of NLRI sent by peer"
+         ::= { rcStatBgpPeerEntry 29 }
+
+rcStatBgpPeerRxRoutesAdded         OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of routes added into loc_rib by this peer"
+         ::= { rcStatBgpPeerEntry 30 }
+
+rcStatBgpPeerRxRoutesReplaced      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of routes replaced by the routes received by the
+ peer"
+         ::= { rcStatBgpPeerEntry 31 }
+
+rcStatBgpPeerRxNlri        OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of NLRI received by the peer"
+         ::= { rcStatBgpPeerEntry 32 }
+
+rcStatBgpPeerRxValidUpdates        OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Number of valid UPDATEs received by the peer"
+         ::= { rcStatBgpPeerEntry 33 }
+
+rcStatBgpPeerRxECodeHeader       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Header"
+         ::= { rcStatBgpPeerEntry 34 }
+
+rcStatBgpPeerRxECodeOpen       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Open"
+         ::= { rcStatBgpPeerEntry 35 }
+
+rcStatBgpPeerRxECodeUpdate       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Update"
+         ::= { rcStatBgpPeerEntry 36 }
+
+rcStatBgpPeerRxECodeHoldtimer       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Hold"
+         ::= { rcStatBgpPeerEntry 37 }
+
+rcStatBgpPeerRxECodeFSM       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Fsm"
+         ::= { rcStatBgpPeerEntry 38 }
+
+rcStatBgpPeerRxECodeCease       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Cease"
+         ::= { rcStatBgpPeerEntry 39 }
+
+rcStatBgpPeerRxHdrCodeNoSync     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Header errors peer received: Not Synchronized"
+         ::= { rcStatBgpPeerEntry 40 }
+
+rcStatBgpPeerRxHdrCodeInvalidMsgLen     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Header errors peer received: Invalid message length"
+         ::= { rcStatBgpPeerEntry 41 }
+
+rcStatBgpPeerRxHdrCodeInvalidMsgType     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Header errors peer received: Invalid message type"
+         ::= { rcStatBgpPeerEntry 42 }
+
+rcStatBgpPeerRxOpCodeBadVer      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Bad Version"
+         ::= { rcStatBgpPeerEntry 43 }
+
+rcStatBgpPeerRxOpCodeBadAs      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Bad AS number"
+         ::= { rcStatBgpPeerEntry 44 }
+
+rcStatBgpPeerRxOpCodeBadRtID      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Bad BGP ID"
+         ::= { rcStatBgpPeerEntry 45 }
+
+rcStatBgpPeerRxOpCodeUnsuppOption      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Unsupported Options"
+         ::= { rcStatBgpPeerEntry 46 }
+
+rcStatBgpPeerRxOpCodeAuthFail      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Authorization failures"
+         ::= { rcStatBgpPeerEntry 47 }
+
+rcStatBgpPeerRxOpCodeBadHold      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Bad Hold value"
+         ::= { rcStatBgpPeerEntry 48 }
+
+rcStatBgpPeerRxUpdCodeMalformedAttrList     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 49 }
+
+rcStatBgpPeerRxUpdCodeWelknownAttrUnrecog     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 50 }
+
+rcStatBgpPeerRxUpdCodeWelknownAttrMiss     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 51 }
+
+rcStatBgpPeerRxUpdCodeAttrFlagError     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 52 }
+
+rcStatBgpPeerRxUpdCodeAttrLenError     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 53 }
+
+rcStatBgpPeerRxUpdCodeBadORIGINAttr     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 54 }
+
+rcStatBgpPeerRxUpdCodeASRoutingLoop     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 55 }
+
+rcStatBgpPeerRxUpdCodeBadNHAttr     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 56 }
+
+rcStatBgpPeerRxUpdCodeOptionalAttrError     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 57 }
+
+rcStatBgpPeerRxUpdCodeBadNetworkField     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 58 }
+
+rcStatBgpPeerRxUpdCodeMalformedASPath     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 59 }
+
+rcStatBgpPeerTxECodeHeader       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Header"
+         ::= { rcStatBgpPeerEntry 60 }
+
+rcStatBgpPeerTxECodeOpen       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Open"
+         ::= { rcStatBgpPeerEntry 61 }
+
+rcStatBgpPeerTxECodeUpdate       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Update"
+         ::= { rcStatBgpPeerEntry 62 }
+
+rcStatBgpPeerTxECodeHoldtimer       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Hold"
+         ::= { rcStatBgpPeerEntry 63 }
+
+rcStatBgpPeerTxECodeFSM       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Fsm"
+         ::= { rcStatBgpPeerEntry 64 }
+
+rcStatBgpPeerTxECodeCease       OBJECT-TYPE
+         SYNTAX          Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Total errors peer received: Cease"
+         ::= { rcStatBgpPeerEntry 65 }
+
+rcStatBgpPeerTxHdrCodeNoSync     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Header errors peer received: Not Synchronized"
+         ::= { rcStatBgpPeerEntry 66 }
+
+rcStatBgpPeerTxHdrCodeInvalidMsgLen     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Header errors peer received: Invalid message length"
+         ::= { rcStatBgpPeerEntry 67 }
+
+rcStatBgpPeerTxHdrCodeInvalidMsgType     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Header errors peer received: Invalid message type"
+         ::= { rcStatBgpPeerEntry 68 }
+
+rcStatBgpPeerTxOpCodeBadVer      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Bad Version"
+         ::= { rcStatBgpPeerEntry 69 }
+
+rcStatBgpPeerTxOpCodeBadAs      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Bad AS number"
+         ::= { rcStatBgpPeerEntry 70 }
+
+rcStatBgpPeerTxOpCodeBadRtID      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Bad BGP ID"
+         ::= { rcStatBgpPeerEntry 71 }
+
+rcStatBgpPeerTxOpCodeUnsuppOption      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Unsupported Options"
+         ::= { rcStatBgpPeerEntry 72 }
+
+rcStatBgpPeerTxOpCodeAuthFail      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Authorization failures"
+         ::= { rcStatBgpPeerEntry 73 }
+
+rcStatBgpPeerTxOpCodeBadHold      OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Open errors peer received: Bad Hold value"
+         ::= { rcStatBgpPeerEntry 74 }
+
+rcStatBgpPeerTxUpdCodeMalformedAttrList     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 75 }
+
+rcStatBgpPeerTxUpdCodeWelknownAttrUnrecog     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 76 }
+
+rcStatBgpPeerTxUpdCodeWelknownAttrMiss     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 77 }
+
+rcStatBgpPeerTxUpdCodeAttrFlagError     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 78 }
+
+rcStatBgpPeerTxUpdCodeAttrLenError     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 79 }
+
+rcStatBgpPeerTxUpdCodeBadORIGINAttr     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 80 }
+
+rcStatBgpPeerTxUpdCodeASRoutingLoop     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 81 }
+
+rcStatBgpPeerTxUpdCodeBadNHAttr     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 82 }
+
+rcStatBgpPeerTxUpdCodeOptionalAttrError     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 83 }
+
+rcStatBgpPeerTxUpdCodeBadNetworkField     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 84 }
+
+rcStatBgpPeerTxUpdCodeMalformedASPath     OBJECT-TYPE
+         SYNTAX         Counter32
+         MAX-ACCESS     read-only
+         STATUS         current
+         DESCRIPTION    "Update errors peer received: Malformed Attr List"
+         ::= { rcStatBgpPeerEntry 85 }
+
+rcStatBgpPeerReset OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "reset peer stats"
+        DEFVAL          {disable}
+        ::= { rcStatBgpPeerEntry 86 }
+
+
+END

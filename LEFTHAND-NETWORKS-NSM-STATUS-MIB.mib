@@ -1,0 +1,133 @@
+-- ****************************************************************************
+-- LEFTHAND-NETWORKS-NSM-STATUS-MIB
+-- Management Information Base for SNMP Network Management
+--
+-- This MIB provides SNMP status information for a storage node.
+
+-- This MIB must be loaded after:
+--                                LEFTHAND-NETWORKS-GLOBAL-REG-MIB.mib
+--                                LEFTHAND-NETWORKS-NSM-MIB.mib
+--
+-- The LeftHand Networks Enterprise number is 9804.
+-- The ASN.1 prefix to, and including the LeftHand Networks Enterprise is:
+--     1.3.6.1.4.1.9804
+-- ****************************************************************************
+-- Copyright 2009,2010 Hewlett-Packard Development Company, L.P.
+-- Copyright 2008,2009 LeftHand Networks, Inc.
+-- All Rights Reserved.
+--
+-- Hewlett-Packard Company shall not be liable for technical or
+-- editorial errors or omissions contained herein. The information in
+-- this document is provided "as is" without warranty of any kind and
+-- is subject to change without notice. The warranties for HP products
+-- are set forth in the express limited warranty statements
+-- accompanying such products. Nothing herein should be construed as
+-- constituting an additional warranty.
+--
+-- Confidential computer software. Valid license from HP required for
+-- possession, use or copying. Consistent with FAR 12.211 and 12.212,
+-- Commercial Computer Software, Computer Software Documentation, and
+-- Technical Data for Commercial Items are licensed to the U.S.
+-- Government under vendor's standard commercial license.
+-- ****************************************************************************
+
+LEFTHAND-NETWORKS-NSM-STATUS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY, OBJECT-TYPE
+		FROM SNMPv2-SMI
+	OBJECT-GROUP, MODULE-COMPLIANCE
+		FROM SNMPv2-CONF
+	TEXTUAL-CONVENTION, DisplayString
+		FROM SNMPv2-TC
+	lhnModules, lhnNsm
+		FROM LEFTHAND-NETWORKS-GLOBAL-REG-MIB
+	lhnNsmStatus
+		FROM LEFTHAND-NETWORKS-NSM-MIB;
+
+-- lhnNsm is imported but never used, this will create a smilint warning
+-- however, it's necessary for some MIB compilers
+
+--
+-- Module definition and a brief description of this mib.
+--
+lhnNsmStatusModule MODULE-IDENTITY
+    LAST-UPDATED        "201006230000Z"
+    ORGANIZATION        "Hewlett Packard Company, StorageWorks Division"
+    CONTACT-INFO        "Product Support
+                         Product URL: www.hp.com/go/p4000
+                         Support URL: www.itrc.hp.com
+                         Product Phone: www.hp.com/go/contact
+                                        1-800-786-7967 (US only)
+                         Support Phone: www.hp.com/go/contact
+                                        1-800-334-5144 (US only)"
+    DESCRIPTION         "HP StorageWorks P4000 SNMP Agent Status"
+    REVISION            "201006230000Z"
+    DESCRIPTION         "SAN/iQ 7.0, SAN/iQ 8.0, SAN/iQ 8.1, SAN/iQ 8.5"
+
+	::= { lhnModules 99 }
+
+--******************************************************************************
+--
+-- Conformance
+--
+--******************************************************************************
+
+lhnNsmStatusModuleConformance OBJECT IDENTIFIER
+	::= { lhnNsmStatusModule 1 }
+
+lhnNsmStatusModuleCompliances OBJECT IDENTIFIER
+	::= { lhnNsmStatusModuleConformance 1 }
+
+lhnNsmStatusModuleGroups OBJECT IDENTIFIER
+	::= { lhnNsmStatusModuleConformance 2 }
+
+lefthandNetworksNsmStatusMibCompliance MODULE-COMPLIANCE
+	STATUS current
+	DESCRIPTION "The compliance statement."
+	MODULE
+	MANDATORY-GROUPS {
+			lefthandNetworksNsmStatusGroup
+		}
+	::= { lhnNsmStatusModuleCompliances 1 }
+
+lefthandNetworksNsmStatusGroup OBJECT-GROUP
+	OBJECTS {           
+					status,
+					statusMessage,
+					statusSNMPD
+			}
+	STATUS current
+	DESCRIPTION "The default group for all NSM Status objects."
+	::= { lhnNsmStatusModuleGroups 1 }
+
+--******************************************************************************
+--
+-- NSM Status Module Objects
+--
+--******************************************************************************
+
+status OBJECT-TYPE
+	SYNTAX INTEGER { online( 1 ), offline( 2 ) }
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The HP LeftHand Networks NSM SNMP daemon status."
+	::= { lhnNsmStatus 1 }
+
+statusMessage OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The HP LeftHand Networks NSM SNMP status."
+	::= { lhnNsmStatus 2 }
+
+statusSNMPD OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The HP LeftHand Networks NSM SNMP daemon status."
+	::= { lhnNsmStatus 3 }
+
+END
+
+-- END: some MIB compilers require a CR/LF after the END statement --

@@ -1,0 +1,1676 @@
+--------------------------------------------------------------------------------
+--
+-- DELL vendor unique environmental monitoring MIB 
+--
+--------------------------------------------------------------------------------
+VM-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    enterprises			FROM RFC1155-SMI
+    Gauge			FROM RFC1155-SMI
+    TimeTicks			FROM RFC1155-SMI
+    IpAddress			FROM RFC-1155-SMI
+    OBJECT-TYPE			FROM RFC-1212
+    DisplayString		FROM RFC-1213
+    TRAP-TYPE			FROM RFC-1215;
+
+--------------------------------------------------------------------------------
+--
+-- DELL specific object identifiers.
+--
+--------------------------------------------------------------------------------
+dell                	OBJECT IDENTIFIER ::= {enterprises 674}
+server             	OBJECT IDENTIFIER ::= {dell 10890}
+drac2                   OBJECT IDENTIFIER ::= {server 5}
+
+--------------------------------------------------------------------------------
+--
+-- Management/monitoring MIB object groups.
+--
+--------------------------------------------------------------------------------
+identification			OBJECT IDENTIFIER ::= { drac2 1 }
+module				OBJECT IDENTIFIER ::= { drac2 2 }
+configAdmin			OBJECT IDENTIFIER ::= { drac2 3 }
+configAlert			OBJECT IDENTIFIER ::= { drac2 4 }
+configNetwork			OBJECT IDENTIFIER ::= { drac2 5 }
+configModem			OBJECT IDENTIFIER ::= { drac2 6 }
+control				OBJECT IDENTIFIER ::= { drac2 7 }
+voltage				OBJECT IDENTIFIER ::= { drac2 20 }
+temperature			OBJECT IDENTIFIER ::= { drac2 21 }
+battery				OBJECT IDENTIFIER ::= { drac2 25 }
+healthStatus			OBJECT IDENTIFIER ::= { drac2 26 }
+traps				OBJECT IDENTIFIER ::= { drac2 100 }
+
+--------------------------------------------------------------------------------
+--
+-- Identification Group 
+--
+-- This object group provides information about the agent and the 
+-- vendor unique MIB.
+--
+--------------------------------------------------------------------------------
+
+idManufacturer 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..63))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The name of the manufacturer that produces this 
+				module."
+    ::= { identification 1 }
+
+idProduct 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..63))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The name of the product that produces this 
+				module."
+    ::= { identification 2 }
+
+idAgentRevMajor 		OBJECT-TYPE
+    SYNTAX			INTEGER (1..255)
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The major revision level of the agent that 
+				implements this MIB."
+    ::= { identification 3 }
+
+idAgentRevMinor 		OBJECT-TYPE
+    SYNTAX			INTEGER (1..255)
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The minor revision level of the agent that 
+				implements this MIB."
+    ::= { identification 4 }
+
+idMibRevMajor OBJECT-TYPE
+    SYNTAX			INTEGER (1..255)
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The major revision level of this MIB. A change 
+				in the major revision level could mean a 
+				possible  compatibility problem with older 
+				versions of the	MIB."
+    ::= { identification 5 }
+
+idMibRevMinor OBJECT-TYPE
+    SYNTAX			INTEGER (1..255)
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The minor revision level of this MIB. A change 
+				in the minor revision level may represent some 
+				minor additional support, changes to documenta-
+				tion or fixes to errors in a previous revision. 
+				Backward  compatibility is maintained as long as
+				the major revision level is the same."
+    ::= { identification 6 }
+
+
+--------------------------------------------------------------------------------
+--
+-- Module group.
+--
+-- This group contains information about  system modules. This might be
+-- a processor, a MegaRAC card, a second MegaRAC, the host motherboard, 
+-- devices connected to the I2C bus, a chassis, a power supply etc. Each entry 
+-- in the other tables are linked back to a module in this table.
+--
+--------------------------------------------------------------------------------
+										
+modNumber 			OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the module 
+				table."
+    ::= { module 1 }
+
+ModEntry ::=
+    SEQUENCE { 
+	modIndex		INTEGER,
+	modFwRevMajor		INTEGER,
+	modFwRevMinor		INTEGER,
+	modType			INTEGER,
+	modFwRelDate		DisplayString,
+	modPciBridge		DisplayString,
+	modNetworkCtrl		DisplayString,
+	modPcmciaHost		DisplayString,
+	modPcCardMfgr		DisplayString,
+	modPcCardName		DisplayString,
+	modBattery		DisplayString,
+	modVoltCount		INTEGER,
+	modTempCount		INTEGER,
+	modFanCount		INTEGER,
+	modSwitchCount		INTEGER,
+	modFaultCount		INTEGER,
+	modUpTime		TimeTicks,
+	modStartDelay		INTEGER,
+	modRecoveryTimeout	INTEGER,
+	modAutoRecoveryEnable	INTEGER,
+	modHeartBeadEnable	INTEGER,
+	modAccessControl	DisplayString,
+	modEthernetAddress	DisplayString
+}
+
+modTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF ModEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row describes a module in the system that
+				is supplying environmental data or supporting 
+				management via the SNMP agent. There may be only
+				one row in this	table, but there must be at 
+				least one row."
+    ::= { module 2 }
+
+modEntry 			OBJECT-TYPE
+    SYNTAX			ModEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    INDEX			{ modIndex }
+    ::= { modTable 1 }
+
+modIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Index of the module entry."
+    ::= { modEntry 1 }
+
+modFwRevMajor 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This is the firmware major version."
+    ::= { modEntry 2 }
+
+modFwRevMinor 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This is the firmware minor version."
+    ::= { modEntry 3 }
+
+modType OBJECT-TYPE
+    SYNTAX			INTEGER {
+		    		    unknown(0),
+				    dell_remote_assistant_card[v2.0](1),
+				    motherboard(2), 
+				    processor(3),
+				    chassis(4),
+				    powerSupply(5),
+				    diskDrive(6),
+				    cdrom(7),
+				    tapeDrive(8)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The type of this module."
+    ::= { modEntry 4 }
+
+modFwRelDate	 		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..63))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The release date of the firmware."
+    ::= { modEntry 5 }
+
+modPciBridge 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..63))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"PCI bridge description."
+    ::= { modEntry 6 }
+
+modNetworkCtrl 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..63))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Network Controller information"
+    ::= { modEntry 7 }
+
+modPcmciaHost 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..63))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Describes the PCMCIA host controller."
+    ::= { modEntry 8 }
+
+modPcCardMfgr 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..63))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Describes the manufacturer of the PC Card."
+    ::= { modEntry 9 }
+
+modPcCardName 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..63))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The name of the PC Card."
+    ::= { modEntry 10 }
+
+modBattery 			OBJECT-TYPE
+    SYNTAX			DisplayString(SIZE(0..31))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The battery description."
+    ::= { modEntry 11 }
+
+modVoltCount 		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Total number of volatges to monitor."
+    ::= { modEntry 12 }
+
+modTempCount 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Total number of temparature zone to monitor."
+    ::= { modEntry 13 }
+
+modFanCount 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Total number of fans to monitor."
+    ::= { modEntry 14 }
+
+modSwitchCount 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Total number of switch inputs associated with 
+				this module."
+    ::= { modEntry 15}
+
+modFaultCount 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Total number of fault inputs associated with 
+				this module."
+    ::= { modEntry 16 }
+
+modUpTime 			OBJECT-TYPE
+    SYNTAX			TimeTicks
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Length of time since last system power-up or 
+				last time the system was reset (whichever is most 
+				recent). This up-time is relative only to the 
+				module itself."
+    ::= { modEntry 17}
+
+modStartDelay 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Delay in minutes to look for auto reset."
+    ::= { modEntry 18 }
+
+modRecoveryTimeout		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Timeout for auto server recovery."
+    ::= { modEntry 19 }
+
+
+modAutoRecoveryEnable		OBJECT-TYPE
+    SYNTAX			INTEGER
+				{
+				  disable (0),
+				  enable (1)
+				}
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"AutoRecovery enable / disable."
+    ::= { modEntry 20 }
+
+modHeartBeatEnable		OBJECT-TYPE
+    SYNTAX			INTEGER
+				{
+				  disable(0),
+				  enable(1)
+				}
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Heartbeat enable / disable."
+    ::= { modEntry 21 }
+
+modAccessControl		OBJECT-TYPE
+    SYNTAX			DisplayString(SIZE(0..64))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The access control of the card."
+    ::= { modEntry 22 }
+
+modEthernetAddress		OBJECT-TYPE
+    SYNTAX			DisplayString(SIZE(0..17))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This is the Ethernet address of the DRAC."
+    ::= { modEntry 23 }
+
+--------------------------------------------------------------------------------
+--
+-- Administration Configuration group.
+--
+-- This group contains information about administration configuration 
+-- parameters. Each set is associated with a particular module.
+--
+--------------------------------------------------------------------------------
+cfgAdminNumber 			OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the configuration 
+				table."
+    ::= { configAdmin 1 }
+
+CfgAdminEntry ::=
+    SEQUENCE {
+	cfgAdminModIndex	INTEGER,
+	cfgAdminIndex		INTEGER,
+	cfgAdminAlias		DisplayString,
+	cfgAdminPassword	DisplayString,
+	cfgAdminSessionCallback	DisplayString,
+	cfgAdminPagerNumber	DisplayString,
+	cfgAdminPagerSubscriber	DisplayString,
+	cfgAdminPagerType	INTEGER,
+	cfgAdminPagerMask	INTEGER,
+	cfgAdminCustomPagerCode	DisplayString,
+	cfgAdminTestPager	INTEGER
+    }
+
+cfgAdminTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF CfgAdminEntry
+    ACCESS			not-accessible
+
+
+    STATUS			mandatory
+    DESCRIPTION			"This table contains configuration parameter 
+				information."
+    ::= { configAdmin 2 }
+
+cfgAdminEntry 			OBJECT-TYPE
+    SYNTAX			CfgAdminEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row contains parameters related to a 
+				configuration set."
+    INDEX			{ cfgAdminModIndex, cfgAdminIndex }
+    ::= { cfgAdminTable 1 }
+
+
+cfgAdminModIndex 		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A link into the module table (modTable). This 
+				identifies which device this configuration set is 
+				associated with."
+    ::= { cfgAdminEntry 1 }
+
+cfgAdminIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This column is used to identify a particular 
+				configuration set."
+    ::= { cfgAdminEntry 2 }
+
+cfgAdminAlias			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..14))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The log on alias of an administrator."
+    ::= { cfgAdminEntry 3 }
+
+cfgAdminPassword		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..14))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The log on password of an administrator."
+    ::= { cfgAdminEntry 4 }
+
+cfgAdminSessionCallback		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The number to call back for a session request."
+    ::= { cfgAdminEntry 5 }
+
+cfgAdminPagerNumber		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The pager number to call for alert condition 
+				notification."
+    ::= { cfgAdminEntry 6 }
+
+cfgAdminPagerSubscriber		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The pager subscriber string for alpha-numeric paging."
+    ::= { cfgAdminEntry 7 }
+
+cfgAdminPagerType		OBJECT-TYPE
+    SYNTAX			INTEGER {
+		    		    none(0),
+				    numeric(1),
+				    alphanumeric(2)
+				}
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The paging mechanism, numeric or alpha-numeric ."
+    ::= { cfgAdminEntry 8 }
+
+cfgAdminPagerMask		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The pager mask. This describes the alert notification
+				enable/disable for diffrent level of severity."
+    ::= { cfgAdminEntry 9 }
+
+cfgAdminCustomPagerCode		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The numeric/alpha-numeric code to be sent out
+				in case of alert notification using pager."
+    ::= { cfgAdminEntry 10 }
+
+cfgAdminTestPager		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"This variable is to test the pager."
+    ::= { cfgAdminEntry 11 }
+
+
+------------------------------------------------------------------------------------
+--
+-- Alert Configuration group.
+--
+-- This group contains information about alert notification configuration 
+-- parameters. Each set is associated with a particular module.
+--
+----------------------------------------------------------------------------------
+cfgAlertNumber 			OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the configuration 
+				table."
+    ::= { configAlert 1 }
+
+CfgAlertEntry ::=
+    SEQUENCE {
+	cfgAlertModIndex		INTEGER,
+	cfgAlertIndex			INTEGER,
+	cfgAlertTrapSendIPAddress	DisplayString,
+	cfgAlertTrapSendCommunity	DisplayString,
+	cfgAlertNotificationNumber	DisplayString
+    }
+
+cfgAlertTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF CfgAlertEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"This table contains configuration parameter 
+				information."
+    ::= { configAlert 2 }
+
+cfgAlertEntry 			OBJECT-TYPE
+    SYNTAX			CfgAlertEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row contains parameters related to a 
+				configuration set."
+    INDEX			{ cfgAlertModIndex, cfgAlertIndex }
+    ::= { cfgAlertTable 1 }
+
+
+cfgAlertModIndex		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A link into the module table (modTable). This 
+				identifies which device this configuration set is 
+				associated with."
+    ::= { cfgAlertEntry 1 }
+
+cfgAlertIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This column is used to identify a particular 
+				configuration set."
+    ::= { cfgAlertEntry 2 }
+
+cfgAlertTrapSendIPAddress	OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..16))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The IP address of trap destination."
+    ::= { cfgAlertEntry 3 }
+
+cfgAlertTrapSendCommunity	OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..63))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The community name for sending trap."
+    ::= { cfgAlertEntry 4 }
+
+cfgAlertTrapCallBackNumber OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The callback number in case of alert."
+    ::= { cfgAlertEntry 5 }
+
+
+------------------------------------------------------------------------------------
+--
+-- Network Configuration group.
+--
+-- This group contains information about network configuration 
+-- parameters. Each set is associated with a particular module.
+--
+----------------------------------------------------------------------------------
+cfgNetNumber 			OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the configuration 
+				table."
+    ::= { configNetwork 1 }
+
+CfgNetEntry ::=
+    SEQUENCE {
+	cfgNetModIndex		INTEGER,
+	cfgNetIndex		INTEGER,
+	cfgNetIPAddress		DisplayString,
+	cfgNetSubnetMask	DisplayString,
+	cfgNetGateway		DisplayString
+    }
+
+cfgNetTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF CfgNetEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"This table contains configuration parameter 
+				information."
+    ::= { configNetwork 2 }
+
+cfgNetEntry 			OBJECT-TYPE
+    SYNTAX			CfgNetEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row contains parameters related to a 
+				configuration set."
+    INDEX			{ cfgNetModIndex, cfgNetIndex }
+    ::= { cfgNetTable 1 }
+
+
+
+
+cfgNetModIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A link into the module table (modTable). This 
+				identifies which device this configuration set is 
+				associated with."
+    ::= { cfgNetEntry 1 }
+
+cfgNetIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This column is used to identify a particular 
+				configuration set."
+    ::= { cfgNetEntry 2 }
+
+cfgNetIPAddress			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..16))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The Internet Protocol address of this network
+				port."
+    ::= { cfgNetEntry 3 }
+
+cfgNetSubnetMask		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..16))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The Internet Protocol subnet mask of this
+				network port."
+    ::= { cfgNetEntry 4 }
+
+cfgNetGateway			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..16))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The Internet Protocol address of the LAN
+				gateway."
+    ::= { cfgNetEntry 5 }
+
+------------------------------------------------------------------------------------
+--
+-- Modem Configuration group.
+--
+-- This group contains information about modem configuration 
+-- parameters. Each set is associated with a particular module.
+--
+----------------------------------------------------------------------------------
+cfgModemNumber 			OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the configuration 
+				table."
+    ::= { configModem 1 }
+
+CfgModemEntry ::=
+    SEQUENCE {
+	cfgModemModIndex	INTEGER,
+	cfgModemIndex		INTEGER,
+	cfgModemBaudRate	INTEGER,
+	cfgModemDialMode	INTEGER,
+	cfgModemExtraInitString	DisplayString,
+	cfgModemPwrOnDelay	INTEGER,
+	cfgModemSignalDelay	INTEGER,
+	cfgModemRingDelay	INTEGER,
+	cfgModemCDDelay		INTEGER,
+	cfgModemResponseDelay	INTEGER,
+	cfgModemHangUpDelay	INTEGER,
+	cfgModemConnectTimeout	INTEGER,
+	cfgModemDetectTimeout	INTEGER
+    }
+
+cfgModemTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF CfgModemEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"This table contains configuration parameter 
+				information."
+    ::= { configModem 2 }
+
+cfgModemEntry 			OBJECT-TYPE
+    SYNTAX			CfgModemEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row contains parameters related to a 
+				configuration set."
+    INDEX			{ cfgModemModIndex, cfgModemIndex }
+    ::= { cfgModemTable 1 }
+
+
+
+cfgModemModIndex 		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A link into the module table (modTable). This 
+				identifies which device this configuration set is 
+				associated with."
+    ::= { cfgModemEntry 1 }
+
+cfgModemIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This column is used to identify a particular 
+				configuration set."
+    ::= { cfgModemEntry 2 }
+
+cfgModemBaudRate		OBJECT-TYPE
+    SYNTAX			INTEGER 
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Baud rate."
+    ::= { cfgModemEntry 3 }
+
+cfgModemDialMode		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Dial mode."
+    ::= { cfgModemEntry 4 }
+
+cfgModemExtraInitString		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..79))
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Extra initialization string."
+    ::= { cfgModemEntry 5 }
+
+cfgModemPwrOnDelay		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Power-on delay."
+    ::= { cfgModemEntry 6 }
+
+cfgModemSignalDelay		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Signal delay."
+    ::= { cfgModemEntry 7 }
+
+cfgModemRingDelay		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Ring delay."
+    ::= { cfgModemEntry 8 }
+
+cfgModemCDDelay			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"CD delay."
+    ::= { cfgModemEntry 9 }
+
+cfgModemResponseDelay		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Response delay."
+    ::= { cfgModemEntry 10 }
+
+cfgModemHangUpDelay		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Hang up delay."
+    ::= { cfgModemEntry 11 }
+
+cfgModemConnectTimeout		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"Connect timeout."
+    ::= { cfgModemEntry 12 }
+
+cfgModemDetectTimeout		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"DetectTimeout."
+    ::= { cfgModemEntry 13 }
+										
+
+--------------------------------------------------------------------------------
+--
+-- Control group.
+--
+-- This group contains information about each control parameter
+-- in the system. Each  control set is associated with a particular 
+-- module.
+--
+--------------------------------------------------------------------------------
+ctlNumber 			OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the control table."
+    ::= { control 1 }
+
+CtlEntry ::=
+    SEQUENCE {
+	ctlModIndex		INTEGER,
+	ctlIndex		INTEGER,
+	ctlSystemReset		INTEGER,
+	ctlSystemShutdown	INTEGER,
+	ctlSystemPwrCycle	INTEGER,
+	ctlCardShutdown		INTEGER,
+	ctlCardSoftReset	INTEGER,
+	ctlCardHardReset	INTEGER,
+	ctlFlushGPNV		INTEGER
+    }
+
+ctlTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF CtlEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"This table contains control parameter 
+				information."
+    ::= { control 2 }
+
+ctlEntry 			OBJECT-TYPE
+    SYNTAX			CtlEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row contains parameters related to a control
+				set."
+    INDEX			{ ctlModIndex, ctlIndex }
+    ::= { ctlTable 1 }
+
+
+
+ctlModIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A link into the module table (modTable). This 
+				identifies which device this control set is 
+				associated with."
+    ::= { ctlEntry 1 }
+
+ctlIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This column is used to identify a particular 
+				control set."
+    ::= { ctlEntry 2 }
+
+ctlSystemReset 			OBJECT-TYPE
+    SYNTAX			INTEGER -- {normal(0), reset(1) }
+    MAX-ACCESS			read-write
+    STATUS			current
+    DESCRIPTION			"Setting this variable causes software or 
+				hardware to reset to the state it has immediately 
+				after a power-on boot. Applications are either 
+				reset or shutdown, depending on what is normal 
+				for the module."
+    ::= { ctlEntry 3 }
+
+ctlSystemShutdown		OBJECT-TYPE
+    SYNTAX			INTEGER -- { normal(0), shutdown(1) }
+    MAX-ACCESS			read-write
+    STATUS			current
+    DESCRIPTION			"Setting this variable causes the OS for a
+				graceful shutdown."
+    ::= { ctlEntry 4 }
+
+ctlSystemPwrCycle 		OBJECT-TYPE
+    SYNTAX			INTEGER -- { normal(0),  cycle(1) }
+    MAX-ACCESS			read-write
+    STATUS			current
+    DESCRIPTION			"Setting this variable causes the software or 
+				hardware to go to the state it has before an 
+				operating system boots (if possible), turns the 
+				power to the hardware off, turns the power to the 
+				hardware back on, and then boots to the normal 
+				running state."
+    ::= { ctlEntry 5 }
+
+ctlCardShutdown			OBJECT-TYPE
+    SYNTAX			INTEGER -- { normal(0), shutdown(1) }
+    ACCESS			read-write
+    STATUS			current
+    DESCRIPTION			"This variable is to shutdown the card."
+    ::= { ctlEntry 6 }
+
+ctlCardSoftReset		OBJECT-TYPE
+    SYNTAX			INTEGER -- { normal(0), shutdown(1) }
+    ACCESS			read-write
+    STATUS			current
+    DESCRIPTION			"This variable is to generate a software
+				reset to the card."
+    ::= { ctlEntry 7 }
+
+ctlCardHardReset		OBJECT-TYPE
+    SYNTAX			INTEGER -- { normal(0), shutdown(1) }
+    ACCESS			read-write
+    STATUS			current
+    DESCRIPTION			"This variable is to generate a hardware 
+				reset to the card."
+    ::= { ctlEntry 8 }
+
+ctlCardFlushGPNV		OBJECT-TYPE
+    SYNTAX			INTEGER -- { normal(0), flush(1) }
+    ACCESS			read-write
+    STATUS			current
+    DESCRIPTION			"This variable is to flush the content of the
+				General Purpose Non Volatile (GPNV) memory of DRAC2."
+    ::= { ctlEntry 9 }
+
+
+--------------------------------------------------------------------------------
+--
+-- Voltage group.
+--
+-- This group contains information about each voltage measurement channel 
+-- in the system. Each channel is associated with a particular module.
+--
+--------------------------------------------------------------------------------
+voltNumber 			OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the voltage 
+				table."
+    ::= { voltage 1 }
+
+VoltEntry ::=
+    SEQUENCE {
+	voltModIndex		INTEGER,
+	voltIndex		INTEGER,
+	voltType		INTEGER,
+	voltDescr		DisplayString,
+	voltReading		DisplayString,
+	voltLimitLowCritical	DisplayString,
+	voltLimitHighCritical	DisplayString,
+	voltLimitLowWarning	DisplayString,
+	voltLimitHighWarning	DisplayString,
+	voltItemStatus		INTEGER,
+	voltLastAlarm		TimeTicks,
+	voltTrapSystem		DisplayString,
+	voltTrapGroup		DisplayString,
+	voltTrapMessage		DisplayString
+    }
+
+voltTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF VoltEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"This table contains voltage measurement 
+				information."
+    ::= { voltage 2 }
+
+voltEntry 			OBJECT-TYPE
+    SYNTAX			VoltEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row contains parameters related to a 
+				voltage measurement channel."
+    INDEX			{ voltModIndex, voltIndex }
+    ::= { voltTable 1 }
+
+
+
+voltModIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A link into the module table (modTable). This
+				identifies which environmental device is 
+				associated with this voltage."
+    ::= { voltEntry 1 }
+
+voltIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This column is used to identify a particular 
+				voltage	measurement channel."
+    ::= { voltEntry 2 }
+
+voltType 			OBJECT-TYPE
+    SYNTAX			INTEGER {
+		    		    wallAdapter(0),
+				    pciVolt(1),
+				    plus3(2),
+		    		    plus5(3),
+		   		    minus5(4),
+		    		    plus12(5),
+		   		    minus12(6),
+				    plus15(7),
+				    minus15(8)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The type of the voltage measurement channel."
+    ::= { voltEntry 3 }
+
+voltDescr 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A description of the voltage measurement 
+				channel."
+    ::= { voltEntry 4 }
+
+voltReading			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Volts"
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The measured voltage."
+    ::= { voltEntry 5 }
+
+voltLimitLowCritical		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Volts"
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The low limit for the measured voltage. If the 
+				measured value falls below this limit a trap is 
+				sent."
+    ::= { voltEntry 6 }
+
+voltLimitHighCritical		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Volts"
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The high limit for the measured voltage. If the 
+				measured value rises above this limit a trap is 
+				sent."
+    ::= { voltEntry 7 }
+
+voltLimitLowWarning		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Volts"
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The low limit for the measured voltage. If the 
+				measured value falls below this limit a trap is 
+				sent."
+    ::= { voltEntry 8 }
+
+voltLimitHighWarning		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Volts"
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The high limit for the measured voltage. If the 
+				measured value rises above this limit a trap is 
+				sent."
+    ::= { voltEntry 9 }
+
+voltItemStatus			OBJECT-TYPE
+    SYNTAX			INTEGER {
+				    undetermined(0),
+				    other(1),
+				    unknown(2),
+				    ok(3),
+				    warning(4),
+				    critical(5),
+				    non-recoverable(6)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This is the status of the particular voltage item"
+    ::= { voltEntry 10 }
+
+voltLastAlarm 			OBJECT-TYPE
+    SYNTAX			TimeTicks
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The time of the last alarm condition."
+    ::= { voltEntry 11 }
+
+voltTrapSystem			OBJECT-TYPE
+    SYNTAX			OCTET STRING
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Name of the system generating the alert"
+    ::= {voltEntry 12}
+
+voltTrapGroup			OBJECT-TYPE
+    SYNTAX			OCTET STRING
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"DMI group generating the alert"
+    ::= {voltEntry 13}
+
+voltTrapMessage			OBJECT-TYPE
+    SYNTAX			OCTET STRING
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Alert message"
+    ::= {voltEntry 14}
+								
+--------------------------------------------------------------------------------
+--
+-- Temperature group.
+--
+-- This group contains infromation about each temperature measurement 
+-- channel in the system. Each channel is associated with a particular
+-- module.
+--
+--------------------------------------------------------------------------------
+tempNumber 			OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the temperature 
+				table."
+    ::= { temperature 1 }
+
+TempEntry ::=
+    SEQUENCE {
+	tempModIndex		INTEGER,
+	tempIndex		INTEGER,
+	tempType		INTEGER,
+	tempDescr		DisplayString,
+	tempReading		DisplayString,
+	tempLowCritical		DisplayString,
+	tempHighCritical	DisplayString,
+	tempLowWarning		DisplayString,
+	tempHighWarning		DisplayString,
+	tempItemStatus		INTEGER,
+	tempLastAlarm		TimeTicks,
+	tempTrapSystem		DisplayString,
+	tempTrapGroup		DisplayString,
+	tempTrapMessage		DisplayString
+    }
+
+
+tempTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF TempEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"This table contains temperature measurement 
+				information."
+    ::= { temperature 2 }
+
+tempEntry 			OBJECT-TYPE
+    SYNTAX			TempEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row contains parameters related to a 
+				temperature measurement channel."
+    INDEX			{ tempModIndex, tempIndex }
+    ::= { tempTable 1 }
+
+
+
+tempModIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A link into the module table (modTable). This 
+				identifies which environmental device this 
+				temperature is associated with."
+    ::= { tempEntry 1 }
+
+tempIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This column is used to identify a particular 
+				temperature measurement channel."
+    ::= { tempEntry 2 }
+
+tempType 			OBJECT-TYPE
+    SYNTAX			INTEGER {
+		    		    ambient(0),
+				    zone1(1),
+				    zone2(2),
+		    		    zone3(3),
+		   		    zone4(4),
+		    		    zone5(5),
+		   		    zone6(6),
+				    zone7(7),
+				    zone8(8)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The type of the voltage measurement channel."
+    ::= { tempEntry 3 }
+
+tempDescr 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A description of the temperature measurement 
+				channel."
+    ::= { tempEntry 4 }
+
+tempReading 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Degrees Celcius"
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The measured temperature."
+    ::= { tempEntry 5 }
+
+tempLowCritical			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Degrees Celcius"
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The high limit for the measured temperature. If 
+				the measured value rises above this limit a trap 
+				is sent."
+    ::= { tempEntry 6 }
+
+tempHighCritical		OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Degrees Celcius"
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The high limit for the measured temperature. If 
+				the measured value rises above this limit a trap 
+				is sent."
+    ::= { tempEntry 7 }
+
+tempLowWarning 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Degrees Celcius"
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The high limit for the measured temperature. If 
+				the measured value rises above this limit a trap 
+				is sent."
+    ::= { tempEntry 8 }
+
+tempHighWarning			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    UNITS			"Degrees Celcius"
+    ACCESS			read-write
+    STATUS			mandatory
+    DESCRIPTION			"The high limit for the measured temperature. If 
+				the measured value rises above this limit a trap 
+				is sent."
+    ::= { tempEntry 9 }
+
+tempItemStatus			OBJECT-TYPE
+    SYNTAX			INTEGER {
+				    undetermined(0),
+				    other(1),
+				    unknown(2),
+				    ok(3),
+				    warning(4),
+				    critical(5),
+				    non-recoverable(6)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This is the status of the particular temperature item"
+    ::= { tempEntry 10 }
+										
+tempLastAlarm 			OBJECT-TYPE
+    SYNTAX			TimeTicks
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The time of the last alarm condition."
+    ::= { tempEntry 11 }
+
+tempTrapSystem			OBJECT-TYPE
+    SYNTAX			OCTET STRING
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Name of the system generating the alert"
+    ::= {tempEntry 12}
+
+tempTrapGroup			OBJECT-TYPE
+    SYNTAX			OCTET STRING
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"DMI group generating the alert"
+    ::= {tempEntry 13}
+
+tempTrapMessage			OBJECT-TYPE
+    SYNTAX			OCTET STRING
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Alert message"
+    ::= {tempEntry 14}
+
+--------------------------------------------------------------------------------
+--
+-- Battery group.
+--
+-- This section contains information about each Battery in the system. Each
+-- Battery set is associated with a particular module.
+--
+--------------------------------------------------------------------------------
+batteryNumber 			OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the battery table."
+    ::= { battery 1 }
+
+BatteryEntry ::=
+    SEQUENCE {
+	batteryModIndex		INTEGER,
+	batteryIndex		INTEGER,
+	batteryType		INTEGER,
+	batteryDescr		DisplayString,
+	batteryCharge		INTEGER,
+	batteryChargeCount	INTEGER,
+	batteryChargePercent	INTEGER,
+	batteryStatus		INTEGER,
+	batteryLastAlarm	TimeTicks,
+	batteryTrapSystem	DisplayString,
+	batteryTrapGroup	DisplayString,
+	batteryTrapMessage	DisplayString
+    }
+
+batteryTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF BatteryEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"This table contains battery information."
+    ::= { battery 2 }
+
+batteryEntry 			OBJECT-TYPE
+    SYNTAX			BatteryEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row contains parameters related to a 
+				battery."
+    INDEX			{ batteryModIndex, batteryIndex }
+    ::= { batteryTable 1 }
+
+
+
+batteryModIndex 		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A link into the module table (modTable). This 
+				identifies which device this battery is 
+				associated with."
+    ::= { batteryEntry 1 }
+
+batteryIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This column is used to identify a particular 
+				battery."
+    ::= { batteryEntry 2 }
+
+batteryType 			OBJECT-TYPE
+    SYNTAX			INTEGER {
+		    		    unknown(0),
+				    standardDryCell(1),
+		    		    lithiumION(2),
+				    nickelCadmium(3),
+				    metalHydride(4)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The type of the battery input."
+    ::= { batteryEntry 3 }
+
+batteryDescr 			OBJECT-TYPE
+    SYNTAX			DisplayString (SIZE(0..31))
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A description of the battery."
+    ::= { batteryEntry 4 }
+
+batteryChargeStatus		OBJECT-TYPE
+    SYNTAX			INTEGER {
+				    notCharging(0),
+				    fastCharging(1),
+				    trickleCharging(2)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Charging status of the battery."
+    ::= { batteryEntry 5 }
+
+batteryFastChargeCount		OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Fast charge counts of the battery."
+    ::= { batteryEntry 6 }
+
+batteryChargePercent		OBJECT-TYPE
+    SYNTAX			INTEGER(0..100)
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The percentage of charge remaining in the
+				battery."
+    ::= { batteryEntry 7 }
+
+batteryStatus			OBJECT-TYPE
+    SYNTAX			INTEGER {
+				    undetermined(0),
+				    other(1),
+				    unknown(2),
+				    ok(3),
+				    warning(4),
+				    critical(5),
+				    non-recoverable(6)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The status of the battery."
+    ::= { batteryEntry 8 }
+
+batteryLastAlarm 		OBJECT-TYPE
+    SYNTAX			TimeTicks
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The time of the last alarm condition."
+    ::= { batteryEntry 9 }
+
+batteryTrapSystem		OBJECT-TYPE
+    SYNTAX			OCTET STRING
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Name of the system generating the alert"
+    ::= {batteryEntry 10}
+
+batteryTrapGroup		OBJECT-TYPE
+    SYNTAX			OCTET STRING
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"DMI group generating the alert"
+    ::= {batteryEntry 11}
+
+batteryTrapMessage		OBJECT-TYPE
+    SYNTAX			OCTET STRING
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"Alert message"
+    ::= {batteryEntry 12}
+
+--------------------------------------------------------------------------------
+--
+-- Health Status group.
+--
+-- This section contains information about the health information of the server.
+-- Groups supported: monitor card, system agent and IPMI controller
+--------------------------------------------------------------------------------
+healthStatusNumber 		OBJECT-TYPE
+    SYNTAX			Gauge
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The present number of rows in the battery table."
+    ::= { healthStatus 1 }
+
+HealthEntry ::=
+    SEQUENCE {
+	healthModIndex			INTEGER,
+	healthIndex			INTEGER,
+	healthType			INTEGER,
+	overallHealthStatus		INTEGER,
+	overallVoltageStatus		INTEGER,
+	overallTemperatureStatus	INTEGER,
+	overallBatteryStatus		INTEGER
+    }
+
+healthTable 			OBJECT-TYPE
+    SYNTAX			SEQUENCE OF HealthEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"This table contains card's health information."
+    ::= { healthStatus 2 }
+
+healthEntry 			OBJECT-TYPE
+    SYNTAX			HealthEntry
+    ACCESS			not-accessible
+    STATUS			mandatory
+    DESCRIPTION			"Each row contains parameters related to a health status."
+    INDEX			{ healthModIndex, healthIndex }
+    ::= { healthTable 1 }
+
+
+
+healthModIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"A link into the module table (healthTable). This 
+				identifies which health status is associated with."
+    ::= { healthEntry 1 }
+
+healthIndex 			OBJECT-TYPE
+    SYNTAX			INTEGER
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"This column is used to identify a particular 
+				haelth information."
+    ::= { healthEntry 2 }
+
+healthType 			OBJECT-TYPE
+    SYNTAX			INTEGER {
+		    		    unknown(0),
+		    		    overallCard(1),
+				    overallSystem(2),
+				    overallIPMI(3)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"The particular health status type."
+    ::= { healthEntry 3 }
+
+overallHealthStatus 		OBJECT-TYPE
+    SYNTAX			INTEGER {
+				    undetermined(0),
+				    other(1),
+				    unknown(2),
+				    ok(3),
+				    warning(4),
+				    critical(5),
+				    non-recoverable(6)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"An overall report of the health of the card."
+    ::= { healthEntry 4 }
+
+overallVoltageStatus		OBJECT-TYPE
+    SYNTAX			INTEGER {
+				    undetermined(0),
+				    other(1),
+				    unknown(2),
+				    ok(3),
+				    warning(4),
+				    critical(5),
+				    non-recoverable(6)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"An ovearall report of the monitored voltages."
+    ::= { healthEntry 5 }
+
+overallTemperatureStatus	OBJECT-TYPE
+    SYNTAX			INTEGER {
+				    undetermined(0),
+				    other(1),
+				    unknown(2),
+				    ok(3),
+				    warning(4),
+				    critical(5),
+				    non-recoverable(6)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"An overall report of the monitored temperatures."
+    ::= { healthEntry 6 }
+
+overallBatteryStatus 		OBJECT-TYPE
+    SYNTAX			INTEGER {
+				    undetermined(0),
+				    other(1),
+				    unknown(2),
+				    ok(3),
+				    warning(4),
+				    critical(5),
+				    non-recoverable(6)
+				}
+    ACCESS			read-only
+    STATUS			mandatory
+    DESCRIPTION			"An overall report from the battery management."
+    ::= { healthEntry 7 }
+										
+
+
+
+--------------------------------------------------------------------------------
+--
+-- Traps group.
+--
+-- This group defines notifications that are sent. Care must be taken to
+-- insure that no particular notification is sent to a single receiving
+-- entity more often than once every five seconds.
+--
+--------------------------------------------------------------------------------
+
+trapVoltageGood 		TRAP-TYPE
+    ENTERPRISE			{ drac2 }
+    VARIABLES			{ voltTrapSystem, voltTrapGroup, voltTrapMessage, 
+				voltItemStatus, voltReading }
+    DESCRIPTION			"This trap is sent each time a voltage channel 
+				reading comes back in normal range."
+    ::= 4
+
+trapVoltageWarning		TRAP-TYPE
+    ENTERPRISE			{ drac2 }
+    VARIABLES			{ voltTrapSystem, voltTrapGroup, voltTrapMessage, 
+				voltItemStatus, voltReading }
+    DESCRIPTION			"This trap is sent each time a voltage channel 
+				reading goes out of warning range."
+    ::= 5
+
+trapVoltageCritical		TRAP-TYPE
+    ENTERPRISE			{ drac2 }
+    VARIABLES			{ voltTrapSystem, voltTrapGroup, voltTrapMessage, 
+				voltItemStatus, voltReading }
+    DESCRIPTION			"This trap is sent each time a voltage channel 
+				reading goes out of critical range."
+    ::= 6
+
+
+trapTemperatureGood 		TRAP-TYPE
+    ENTERPRISE			{ drac2 }
+    VARIABLES			{ tempTrapSystem, tempTrapGroup, tempTrapMessage, 
+				tempItemStatus, tempReading }
+    DESCRIPTION			"This trap is sent each time a temperature channel 
+				reading	comes back in normal range."
+    ::= 7
+
+trapTemperatureWarning 		TRAP-TYPE
+    ENTERPRISE			{ drac2 }
+    VARIABLES			{ tempTrapSystem, tempTrapGroup, tempTrapMessage, 
+				tempItemStatus, tempReading }
+    DESCRIPTION			"This trap is sent each time a temperature channel 
+				reading goes out of warning range."
+    ::= 8
+
+trapTemperatureCritical		TRAP-TYPE
+    ENTERPRISE			{ drac2 }
+    VARIABLES			{ tempTrapSystem, tempTrapGroup, tempTrapMessage, 
+				tempItemStatus, tempReading }
+    DESCRIPTION			"This trap is sent each time a temperature channel 
+				reading goes out of warning range."
+    ::= 9
+
+trapBatteryGood			TRAP-TYPE
+    ENTERPRISE			{ drac2 }
+    VARIABLES			{ batteryTrapSystem, batteryTrapGroup, batteryTrapMessage, 
+				batteryStatus, batteryChargePercent }
+    DESCRIPTION			"This trap is sent each time a battery with low
+				 charge is re-charged above the specified low
+				threshold."
+    ::= 10
+	
+trapBatteryLow	 		TRAP-TYPE
+    ENTERPRISE			{ drac2 }
+    VARIABLES			{ batteryTrapSystem, batteryTrapGroup, batteryTrapMessage, 
+				batteryStatus, batteryChargePercent }
+    DESCRIPTION			"This trap is sent each time the battery charge
+				 is under the specified low threshold."
+    ::= 11
+
+END

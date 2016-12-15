@@ -1,0 +1,1961 @@
+RC-IPV6-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS 
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, IpAddress, Gauge32, Unsigned32
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, MacAddress, RowStatus, TimeStamp, TEXTUAL-CONVENTION,
+    RowPointer, DateAndTime, StorageType 
+        FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    InterfaceIndex, InterfaceIndexOrZero
+        FROM IF-MIB
+    PhysAddress
+        FROM RFC1213-MIB
+    InetAddressType, InetAddress, InetPortNumber
+        FROM INET-ADDRESS-MIB
+    Ipv6AddressIfIdentifier, Ipv6Address, Ipv6IfIndex
+        FROM IPV6-TC
+    rcIpv6
+        FROM RAPID-CITY
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB;
+
+rcIpv6Mib MODULE-IDENTITY
+       LAST-UPDATED     "200907200000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "Yu-Ten Lee
+          Postal:        Nortel Networks, Inc.
+			 4655 Great America Pkwy.
+			 Santa Clara, CA 95052-8185 
+
+			 Tel:           408-495-2560
+                         Fax:           408-495-6680
+                         E-mail:        ylee@nortelnetworks.com"
+
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200907200000Z" -- 20 July 2009
+       DESCRIPTION "Version 26: Expand range of rcIpv6ConfDhcpIfIndex."
+
+       REVISION "200903120000Z" -- 12 March 2009
+       DESCRIPTION "Version 25: Added table ''rcIpv6RadiusServTable."
+
+
+       REVISION "200901270000Z" -- 27 January 2009
+       DESCRIPTION "Version 24: Added tables 'rcIpv6ConfDhcpRelayTable' and 'rcIpv6DhcpForwardTable '."
+
+       REVISION "200809160000Z" -- 16 September 2008
+       DESCRIPTION "Version 23: Added MIB objects for Ipv6 prefix list"
+                                
+       REVISION "200806300000Z" -- 30 June 2008
+       DESCRIPTION "Version 22: rcIpv6InterfaceIdentifier
+                                rcIpv6InterfaceIdentifierLength 
+                                rcIpv6InterfaceDescr 
+                                rcIpv6InterfaceVlanId 
+                                rcIpv6InterfaceReasmMaxSize 
+                                rcIpv6InterfaceAdminStatus 
+                                rcIpv6InterfaceReachableTime 
+                                rcIpv6InterfaceRetransmitTime 
+                                rcIpv6InterfaceMulticastAdminStatus
+                                rcIpv6AddressType 
+                                rcIpv6AddressPrefixLength 
+                                rcIpv6PrefixUseDefaultVal 
+                                rcIpv6PrefixValidLife 
+                                rcIpv6PrefixPreferredLife 
+                                rcIpv6PrefixAtValidLife 
+                                rcIpv6PrefixAtPreferredLife 
+                                rcIpv6PrefixInfinite 
+                                rcIpv6PrefixOnLinkFlag 
+                                rcIpv6PrefixAutoFlag 
+                                rcIpv6PrefixAddressEui 
+                                rcIpv6PrefixNoAdvertise
+                                rcIpv6StaticRouteDistance 
+                                rcIpv6StaticRoutePreference 
+                                rcIpv6StaticRouteEnable
+                                rcIpv6NetToPhysicalPhysAddress 
+                                rcIpv6NetToPhysicalType
+                                Change MAX-ACCESS of above objects from read-write to read-create."
+       
+       REVISION "200803140000Z" -- 14 March 2008
+       DESCRIPTION "Version 21: Added new TC 'Ipv6NextHdr'."
+
+       REVISION "200802290000Z" -- 29 Feb 2008
+       DESCRIPTION "Version 20:  Fix range of rcIpv6InterfaceReasmMaxSize."
+
+       REVISION "200801150000Z" -- 15 Jan 2008
+       DESCRIPTION "Version 19:  Changed rcIpv6NetToPhysicalInterface to read=create."
+
+       REVISION "200709040000Z" -- 04 Sep 2007
+       DESCRIPTION "Version 17:  Added objects to enable/disable IPv6 globally."
+
+       REVISION "200706270000Z" -- 27 Jun 2007
+       DESCRIPTION "Version 16: Remove status option for rcIpv6StaticRouteStatus:
+			reachableInRtmButNotBestRoute"
+
+       REVISION "200706250000Z" -- 25 June 2006
+       DESCRIPTION "Version 15: Added rcIpv6IcmpErrorQuota"
+
+       REVISION "200705310000Z" -- 31 May 2007
+       DESCRIPTION "Version 14: Added a status option for rcIpv6StaticRouteStatus:
+			reachableInRtmButNotBestRoute"
+
+       REVISION "200604100000Z" -- 10 Apr 2006
+       DESCRIPTION "Version 13: Updated rcIpv6InterfaceReasmMaxSize"
+
+       REVISION "200603210000Z" -- 21 Mar 2006
+       DESCRIPTION "Version 12: Removed  rcIpv6StaticRouteLocalNextHop"
+
+       REVISION "200603160000Z" -- 16 Mar 2006
+       DESCRIPTION "Version 11: Updated rcIpv6StaticRouteStatus"
+
+       REVISION "200602090000Z" -- 09 Feb 2006
+       DESCRIPTION "Version 10: Updated rcIpv6PrefixUseDefaultVal & rcIpv6RouterAdvertUseDefaultVal"
+
+       REVISION "200512060000Z" -- 06 DEC 2005
+       DESCRIPTION "Version 9: Added rcIpv6IcmpNetUnreach and rcIpv6IcmpRedirectMsg mibs"
+
+       REVISION "200512050000Z" -- 05 DEC 2005
+       DESCRIPTION "Version 8: Added rcIpv6InterfaceType in rcIpv6InterfaceTable"
+
+       REVISION "200511280000Z" -- 28 Nov 2005
+       DESCRIPTION "Version 7: Updated MAX-ACCESS for RowStatus from read-write to read-create"
+
+       REVISION "200511230000Z" -- 23 Nov 2005
+       DESCRIPTION "Version 6: Changed range + MAX-ACCESS fields for some ipv6 objects"
+
+       REVISION "200511210000Z" -- 21 Nov 2005
+       DESCRIPTION "Version 5: Removed rcIpv6InterfaceType from rcIpv6InterfaceTable"
+
+       REVISION "200511080000Z" -- 08 Nov 2005
+       DESCRIPTION "Version 4: Changed syntax of rcIpv6RouterAdvertLinkMTU to Unsigned32"
+
+       REVISION "200509200000Z" -- 20 Sep 2005
+       DESCRIPTION "Version 3: Complete overhaul by Padma's team"
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 2: Added version info"
+
+       REVISION "200401010000Z" -- Unknown
+       DESCRIPTION "Version 1: Initial version by Ally Li"  
+
+       ::= { rcIpv6 1 }
+
+-- -------------------------------------------------
+-- Textual convention from ietf-draft-2011-update-11
+-- -------------------------------------------------
+
+IpAddressOriginTC ::= TEXTUAL-CONVENTION
+    STATUS     current
+    DESCRIPTION
+           "The origin of the address.
+
+            manual(2) indicates that the address was manually configured
+            to a specified address, e.g. by user configuration.
+
+            dhcp(4) indicates an address that was assigned to this
+            system by a DHCP server.
+
+            linklayer(5) indicates an address created by IPv6 stateless
+            auto-configuration.
+
+            random(6) indicates an address chosen by the system at
+            random, e.g. an IPv4 address within 169.254/16, or an RFC
+            3041 privacy address."
+    SYNTAX     INTEGER {
+        other(1),
+        manual(2),
+        dhcp(4),
+        linklayer(5),
+        random(6)
+    }
+
+IpAddressStatusTC ::= TEXTUAL-CONVENTION
+    STATUS     current
+    DESCRIPTION
+           "The status of an address.  Most of the states correspond to
+            states from the IPv6 Stateless Address Autoconfiguration
+            protocol [5].
+
+            The preferred(1) state indicates that this is a valid
+            address that can appear as the destination or source address
+            of a packet.
+
+            The deprecated(2) state indicates that this is a valid but
+            deprecated address that should no longer be used as a source
+            address in new communications, but packets addressed to such
+            an address are processed as expected.
+
+            The invalid(3) state indicates that this isn't a valid
+            address and it shouldn't appear as the destination or source
+            address of a packet.
+
+            The inaccessible(4) state indicates that the address is not
+            accessible because the interface to which this address is
+            assigned is not operational.
+
+            The unknown(5) state indicates that the status can not be
+            determined for some reason.
+
+            The tentative(6) state indicates the uniqueness of the
+            address on the link is being verified.  Addresses in this
+            state should not be used for general communication and
+            should only be used to determine the uniqueness of the
+            address.
+
+            The duplicate(7) state indicates the address has been
+            determined to be non-unique on the link and so must not be
+            used.
+
+            In the absence of other information, an IPv4 address is
+            always preferred(1)."
+    REFERENCE "RFC 2462"
+    SYNTAX     INTEGER {
+        preferred(1),
+        deprecated(2),
+        invalid(3),
+        inaccessible(4),
+        unknown(5),
+        tentative(6),
+        duplicate(7)
+    }
+
+-- Textual convention from ietf-draft-2011-update-11
+
+Ipv6NextHdr ::= TEXTUAL-CONVENTION
+   STATUS       current
+   DESCRIPTION  "The ipv6 next header to look for."
+   SYNTAX       INTEGER {
+                  hop-by-hop(0),   -- hop-by-hop
+                  icmpv4(1),       -- icmpv4
+                  igmpv4(2),       -- igmpv4
+                  ipInIp(4),       -- ip in ip encapsulation
+                  tcp(6),          -- tcp
+                  egp(8),          -- egp
+                  udp(17),         -- udp
+                  ipv6(41),        -- ipv6
+                  routing(43),     -- routing extension hdr
+                  frag(44),        -- fragmentation extension hdr
+                  rsvp(46),        -- rsvp
+                  ipsecESP(50),    -- ipsecESP
+                  ipsecAh(51),     -- ipsecAh
+                  icmpv6(58),      -- icmpv6
+                  noNxtHdr(59),    -- not next hdr
+                  destOptions(60), -- destination options extension hdr 
+                  undefined(255)   -- not provisioned
+                 }
+
+
+rcIpv6Notifications		OBJECT IDENTIFIER ::= { rcIpv6Mib 0 }
+rcIpv6Objects		OBJECT IDENTIFIER ::= { rcIpv6Mib 1 }
+
+rcIpv6Scalars		OBJECT IDENTIFIER ::= { rcIpv6Objects 1 }
+
+-- IPv6 ICMP rate limiting
+rcIpv6IcmpErrorInterval OBJECT-TYPE
+        SYNTAX        INTEGER (0..2147483647)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The rate (in milliseconds) at which 
+                      ICMP error messages can be sent out.
+                      A value of zero means not be send any."
+        DEFVAL        { 1000 }
+        ::= { rcIpv6Scalars 1 }
+
+-- IPv6 Multicast Admin Status
+rcIpv6MulticastAdminStatus OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "This indicates the global admin status for 
+                       multicast."
+        DEFVAL        { false }
+        ::= { rcIpv6Scalars 2 }
+
+rcIpv6IcmpNetUnreach OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to set the icmp net unreach feature enable/disable."
+        DEFVAL        { false }
+        ::= { rcIpv6Scalars 3 }
+
+rcIpv6IcmpRedirectMsg OBJECT-TYPE
+        SYNTAX       TruthValue
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "used to set the icmp redirect feature enable/disable."
+        DEFVAL        { false }
+        ::= { rcIpv6Scalars 4 }
+
+rcIpv6IcmpErrorQuota OBJECT-TYPE
+        SYNTAX        INTEGER (0..2000000)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The number of ICMP error messages that can
+                      be sent out during ICMP error interval.
+                      A value of zero means not be send any."
+        DEFVAL        { 50 }
+        ::= { rcIpv6Scalars 5 }
+
+rcIpv6GlobalAdminEnabled OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Indicates whether IPv6 has been administratively
+                       enabled."
+        DEFVAL        { true }
+        ::= { rcIpv6Scalars 6 }
+
+rcIpv6GlobalOperEnabled OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Indicates whether IPv6 is currently enabled."
+        DEFVAL        { true }
+        ::= { rcIpv6Scalars 7 }
+
+-- IPv6 Interface Table
+rcIpv6InterfaceTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpv6InterfaceEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "This table contains list of IPv6 interfaces and
+             per-interface IPv6-specific information."
+        ::= { rcIpv6Objects 2 }
+
+rcIpv6InterfaceEntry OBJECT-TYPE
+        SYNTAX          RcIpv6InterfaceEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of ipv6 interface In Table containing
+                         per-interface information."
+        INDEX           { rcIpv6InterfaceIfIndex }
+        ::= { rcIpv6InterfaceTable 1 }
+
+RcIpv6InterfaceEntry ::=
+        SEQUENCE {
+                  rcIpv6InterfaceIfIndex                InterfaceIndex,
+                  rcIpv6InterfaceIdentifier             Ipv6AddressIfIdentifier,
+                  rcIpv6InterfaceIdentifierLength       INTEGER,
+                  rcIpv6InterfaceDescr                  DisplayString,
+                  rcIpv6InterfaceVlanId                 INTEGER,
+                  rcIpv6InterfaceType                   INTEGER,
+                  rcIpv6InterfaceReasmMaxSize           INTEGER,
+                  rcIpv6InterfacePhysAddress            PhysAddress,
+                  rcIpv6InterfaceAdminStatus            TruthValue,
+                  rcIpv6InterfaceOperStatus             INTEGER,
+                  rcIpv6InterfaceReachableTime          INTEGER,
+                  rcIpv6InterfaceRetransmitTime         INTEGER,
+                  rcIpv6InterfaceMulticastAdminStatus   TruthValue,
+                  rcIpv6InterfaceRowStatus                   RowStatus,
+                  rcIpv6InterfaceDhcpEnabled               TruthValue
+                 }
+
+rcIpv6InterfaceIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "An unique value to identify a physical interface
+                               or a logical interface (VLAN).
+                       For the brouter port it is the ifindex of the
+                       port and in the case of the vlan it is the
+                       ifindex of the vlan."
+        ::= { rcIpv6InterfaceEntry 1 }
+
+rcIpv6InterfaceIdentifier OBJECT-TYPE
+        SYNTAX        Ipv6AddressIfIdentifier
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "IPv6 address
+                       interface identifiers. This is a binary string
+                       of up to 8 octets in network byte-order."
+        ::= { rcIpv6InterfaceEntry 2 }
+
+rcIpv6InterfaceIdentifierLength OBJECT-TYPE
+        SYNTAX        INTEGER (0..64)
+        UNITS         "bits"
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION
+                      "The length of the Interface Identifier in bits."
+        ::= { rcIpv6InterfaceEntry 3 }
+
+rcIpv6InterfaceDescr OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "A textual string containing information about the
+                      interface. This string may be set by network management system."
+        ::= { rcIpv6InterfaceEntry 4 }
+
+rcIpv6InterfaceVlanId OBJECT-TYPE
+        SYNTAX        INTEGER (1..4094)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "A value that uniquely identifies the Virtual LAN
+                      associated with this entry. This value corresponds
+                      to the lower 12 bits in the IEEE 802.1Q VLAN Tag."
+        ::= { rcIpv6InterfaceEntry 5 }
+
+rcIpv6InterfaceType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                      ethernet(1),
+                      pointToPoint(2),
+                      pointToMultipoint(3)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The interface type."
+        ::= { rcIpv6InterfaceEntry 6 }
+
+rcIpv6InterfaceReasmMaxSize    OBJECT-TYPE
+        SYNTAX        INTEGER (1280..9600)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "MTU for this IPv6 interface, this value should
+                       be same for all the ip addresses defined on
+                       this interface."
+        DEFVAL        { 1500 }
+        ::= { rcIpv6InterfaceEntry 7 }
+
+rcIpv6InterfacePhysAddress    OBJECT-TYPE
+        SYNTAX        PhysAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The media-dependent `physical' address, for the
+                       ethernet media it is the MAC address"
+        ::= { rcIpv6InterfaceEntry 8 }
+
+rcIpv6InterfaceAdminStatus OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "The indication of whether IPv6 is enabled (up)
+             or disabled (down) on this interface. This object does not
+             affect the state of the interface itself, only its
+             connection to an IPv6 stack."
+        DEFVAL        { false }
+        ::= { rcIpv6InterfaceEntry 9 }
+
+rcIpv6InterfaceOperStatus OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        up(1),
+                        down(2)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Operating status of the interface."
+        ::= { rcIpv6InterfaceEntry 10 }
+
+rcIpv6InterfaceReachableTime  OBJECT-TYPE
+    SYNTAX     INTEGER (0..3600000)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+           "The time (in milliseconds) a neighbor is considered
+            reachable after receiving a reachability confirmation.
+            REFERENCE  RFC2461, Section 6.3.2"
+    DEFVAL        { 30000 }
+        ::= { rcIpv6InterfaceEntry 11 }
+
+rcIpv6InterfaceRetransmitTime OBJECT-TYPE
+    SYNTAX     INTEGER (0..3600000)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+           "The time (in milliseconds) between retransmissions of
+            Neighbor Solicitation messages to a neighbor when
+            resolving the address or when probing the reachability
+            of a neighbor. REFERENCE RFC2461, Section 6.3.2"
+    DEFVAL        { 15000 }
+        ::= { rcIpv6InterfaceEntry 12 }
+
+rcIpv6InterfaceMulticastAdminStatus OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "This indicates the admin status for multicast
+                       for this interface."
+        DEFVAL        { false }
+        ::= { rcIpv6InterfaceEntry 13 }
+
+rcIpv6InterfaceRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Row status for create/delete."
+        ::= { rcIpv6InterfaceEntry 14 }
+
+rcIpv6InterfaceDhcpEnabled  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Enable or disable DHCP on the specified
+                      interface."
+        DEFVAL        {false}
+        ::= { rcIpv6InterfaceEntry 15 }
+
+-- End of IPv6 Interface Table
+-- IPv6 Address Table
+
+rcIpv6AddressTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF RcIpv6AddressEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "This table contains addressing information relevant
+            to the entity's interfaces.
+
+            This table does not contain multicast address 
+            information. Tables for such information should be 
+            contained in multicast specific MIBs such as RFC3019.
+
+            While this table is writable the user will note that several
+            objects, such as rcIpv6AddressOrigin, are not. The 
+            intention in allowing a user to write to this table is to 
+            allow them to add or remove any entry that isn't permanent.
+            The user should be  allowed to modify objects and entries 
+            when that would not cause inconsistencies within the table.
+            Allowing write access to objects such as rcIpv6AddressOrigin
+            could allow a user to insert an entry and then label it 
+            incorrectly."
+    ::= { rcIpv6Objects 3 }
+
+
+rcIpv6AddressEntry OBJECT-TYPE
+    SYNTAX     RcIpv6AddressEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "An address mapping for a particular interface. Note that 
+            when an address is added to an interface the resulted 
+            prefix is added to that interface." 
+    INDEX { rcIpv6AddressIfIndex, rcIpv6AddressAddr }
+    ::= { rcIpv6AddressTable 1 }
+
+RcIpv6AddressEntry ::= SEQUENCE {
+        rcIpv6AddressIfIndex      InterfaceIndex,
+        rcIpv6AddressAddr         Ipv6Address,
+        rcIpv6AddressType         INTEGER,
+        rcIpv6AddressPrefixLength INTEGER,
+        rcIpv6AddressPrefix       RowPointer,
+        rcIpv6AddressOrigin       IpAddressOriginTC,
+        rcIpv6AddressStatus       IpAddressStatusTC,
+        rcIpv6AddressCreated      TimeStamp,
+        rcIpv6AddressLastChanged  TimeStamp,
+        rcIpv6AddressRowStatus    RowStatus
+    }
+
+rcIpv6AddressIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The index value which uniquely identifies the interface to
+            which this entry is applicable.  The interface identified by
+            a particular value of this index is the same interface as
+            identified by the same value of the IfIndex field in the
+            rcIpv6InterfaceIfIndex."
+    ::= { rcIpv6AddressEntry 1 }
+
+rcIpv6AddressAddr OBJECT-TYPE
+    SYNTAX     Ipv6Address
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The IPv6 address to which this entry's addressing 
+            information pertains. This is one of the ipv6 addresses that
+            this interface(identified by the rcIpv6AddressIfIndex) has. 
+
+            Implementors need to be aware that if the size of
+            ipAddressAddr exceeds 116 octets then OIDS of instances of
+            columns in this row will have more than 128 sub-identifiers
+            and cannot be accessed using SNMPv1, SNMPv2c or SNMPv3."
+    ::= { rcIpv6AddressEntry 2 }
+
+rcIpv6AddressType OBJECT-TYPE
+    SYNTAX     INTEGER {
+                 unicast(1),
+                 anycast(2)
+    }
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+           "The type of address.  It is either unicast or anycast
+            IPv6 addresses (RFC3513).  "
+    DEFVAL { unicast }
+    ::= { rcIpv6AddressEntry 3 }
+
+rcIpv6AddressPrefixLength OBJECT-TYPE
+    SYNTAX     INTEGER (0..128)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+           "Prefix Length value for this address. Cannot be changed
+            after the creation. This field MUST be provided in order
+            to create an entry in this table." 
+    ::= { rcIpv6AddressEntry 4 }
+
+rcIpv6AddressPrefix OBJECT-TYPE
+    SYNTAX     RowPointer
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "A pointer to the row in the prefix table to which this
+            address belongs.  May be { 0 0 } if there is no such row."
+    ::= { rcIpv6AddressEntry 5 }
+
+rcIpv6AddressOrigin OBJECT-TYPE
+    SYNTAX     IpAddressOriginTC
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The origin of the address. The origin of the address, one
+            of: other(1),manual(2), dhcp(4),linklayer(5), random(6)"
+    ::= { rcIpv6AddressEntry 6 }
+
+rcIpv6AddressStatus OBJECT-TYPE
+    SYNTAX     IpAddressStatusTC
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The status of the address, describing if the address can be
+            used for communication. It will One of: preferred(1),
+            deprecated(2),invalid(3),inaccessible(4),unknown(5),
+            tentative(6), duplicate(7)"
+    DEFVAL { preferred }
+    ::= { rcIpv6AddressEntry 7 }
+
+rcIpv6AddressCreated OBJECT-TYPE
+    SYNTAX     TimeStamp
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION "The value of sysUpTime at the time this entry was
+            created.  If this entry was created prior to the last re-
+            initialization of the local network management subsystem,
+            then this object contains a zero value."
+    ::= { rcIpv6AddressEntry 8 }
+
+rcIpv6AddressLastChanged OBJECT-TYPE
+    SYNTAX     TimeStamp
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The value of sysUpTime at the time this entry was last
+            updated.  If this entry was updated prior to the last re-
+            initialization of the local network management subsystem,
+            then this object contains a zero value."
+    ::= { rcIpv6AddressEntry 9 }
+
+rcIpv6AddressRowStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION "The status of this conceptual row.
+            The RowStatus TC requires that this DESCRIPTION clause
+            states under which circumstances other objects in this row
+            can be modified.  The value of this object has no effect on
+            whether other objects in this conceptual row can be
+            modified.
+            A conceptual row can not be made active until the
+            rcIpv6AddressIfIndex has been set to a valid index. Only
+            createAndGo and Delete vlaues are supported. "
+    ::= { rcIpv6AddressEntry 10 }
+
+-- Neighbor Discovery Prefix Table
+
+rcIpv6PrefixTable  OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpv6PrefixEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "This table allows the user to 
+            determine the source of an IP address or set of 
+            IP addresses and allows other tables to
+            share the information via pointer rather than by copying.
+
+            For example when the node configures both a unicast and
+            anycast address for a prefix the ipAddressPrefix objects for
+            those addresses will point to a single row in this table.
+
+
+            This table primarily provides support for IPv6 prefixes and
+            several of the objects are less meaningful for IPv4.  The
+            table continues to allow IPv4 addresses to allow future
+            flexibility.  In order to promote a common configuration
+            this document includes suggestions for default values for
+            IPv4 prefixes.  Each of these values may be overridden if an
+            object is meaningful to the node.
+
+
+            All prefixes used by this entity should be included in this
+            table independent of how the entity learned the prefix.
+            (This table isn't limited to prefixes learned from router
+            advertisements.)  "
+        ::= { rcIpv6Objects 4 }
+
+rcIpv6PrefixEntry OBJECT-TYPE
+        SYNTAX          RcIpv6PrefixEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of ipv6 prefix In the Table."
+        INDEX           { rcIpv6PrefixIfIndex, 
+                          rcIpv6PrefixAddr,
+                          rcIpv6PrefixLength } 
+        ::= { rcIpv6PrefixTable 1 }
+
+RcIpv6PrefixEntry ::=
+        SEQUENCE {
+                  rcIpv6PrefixIfIndex         InterfaceIndex, 
+                  rcIpv6PrefixAddr            Ipv6Address,
+                  rcIpv6PrefixLength          INTEGER,
+                  rcIpv6PrefixVlanId          INTEGER,
+                  rcIpv6PrefixUseDefaultVal   BITS,
+                  rcIpv6PrefixValidLife       Integer32,
+                  rcIpv6PrefixPreferredLife   Integer32,
+                  rcIpv6PrefixAtValidLife     DateAndTime,
+                  rcIpv6PrefixAtPreferredLife DateAndTime,
+                  rcIpv6PrefixInfinite        TruthValue,
+                  rcIpv6PrefixOnLinkFlag      TruthValue,
+                  rcIpv6PrefixAutoFlag        TruthValue,
+                  rcIpv6PrefixAddressEui      INTEGER,
+                  rcIpv6PrefixNoAdvertise     TruthValue,
+                  rcIpv6PrefixRowStatus       RowStatus
+                 }
+
+rcIpv6PrefixIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex 
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "An unique value to identify an ipv6 interface.
+                       For the brouter port it is the ifindex of the
+                       port and in the case of the vlan it is the 
+                       ifindex of the vlan."
+        ::= { rcIpv6PrefixEntry 1 }
+
+rcIpv6PrefixAddr OBJECT-TYPE
+        SYNTAX        Ipv6Address
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Prefix to create an ipv6 address in ipv6 interface 
+                       table."
+        ::= { rcIpv6PrefixEntry 2 }
+
+rcIpv6PrefixLength OBJECT-TYPE
+        SYNTAX        INTEGER (0..128)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Mask to create an ipv6 prefix entry 
+                       either will be advertised or suppressed"
+        ::= { rcIpv6PrefixEntry 3 }
+
+rcIpv6PrefixVlanId OBJECT-TYPE
+        SYNTAX        INTEGER (1..4094)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "A value that uniquely identifies the Virtual LAN
+                      associated with this entry. This value corresponds
+                      to the lower 12 bits in the IEEE 802.1Q VLAN Tag."
+        ::= { rcIpv6PrefixEntry 4 }
+
+
+rcIpv6PrefixUseDefaultVal   OBJECT-TYPE
+       SYNTAX        BITS {
+                         none(1),
+                         valid-life(2),
+                         preferred-life(3),
+                         infinite(4),
+                         no-advertise(5)
+                      }
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Select one of the value to set/use it's value        
+                      to default value. This is a bitmask field, 
+                      setting all the bits means that all the options 
+                      will be reverted to default values."
+        ::= { rcIpv6PrefixEntry 5 }
+
+rcIpv6PrefixValidLife OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Valid lifetime in seconds, indicates
+                      how long this prefix advertised in 
+                      the nbr advertisement is valid."
+        DEFVAL        { 2592000 }
+        ::= { rcIpv6PrefixEntry 6 }
+
+rcIpv6PrefixPreferredLife OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Preferred lifetime in seconds, indicates
+                      how long this prefix advertised in
+                      advertisemt for this prefix."
+        DEFVAL        { 604800 }
+        ::= { rcIpv6PrefixEntry 7 }
+
+rcIpv6PrefixAtValidLife OBJECT-TYPE
+        SYNTAX        DateAndTime  
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Is the date and time, upon reaching this
+                      value the prefix will be expired, 
+                      if configured this option will 
+                      be included in the neighbor advertisement 
+                      for this prefix."
+        ::= { rcIpv6PrefixEntry 8 }
+
+rcIpv6PrefixAtPreferredLife OBJECT-TYPE
+        SYNTAX        DateAndTime
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Is the date and time, upon reaching this
+                      value the prefix will be expired,
+                      if configured this option will be
+                      included in the neighbor advertisement
+                      for this prefix."
+        ::= { rcIpv6PrefixEntry 9 }
+
+rcIpv6PrefixInfinite OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "if set the prefix's valid lifetime will 
+                      not exprie."
+        DEFVAL        { false }
+        ::= { rcIpv6PrefixEntry 10 }
+
+rcIpv6PrefixOnLinkFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "if set then this prefix can be used 
+                      for onlink determination. This value 
+                      be placed in the L-bit field in the prefix
+                      information option. It is a 1 bit flag. "
+        DEFVAL        { true }
+        ::= { rcIpv6PrefixEntry 11 }
+
+rcIpv6PrefixAutoFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "if set then this prefix can be used 
+                      for autonomous address config. This value 
+                      be placed in the auto-flag field in the prefix
+                      information option. It is a 1 bit flag. "
+        DEFVAL        { true }
+        ::= { rcIpv6PrefixEntry 12 }
+
+rcIpv6PrefixAddressEui OBJECT-TYPE
+        SYNTAX     INTEGER {
+                            eui-not-used(1),
+                            eui-used-with-ul-complement(2),
+                            eui-used-without-ul-complement(3)
+                       } 
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Use an EUI-64 interface ID in the low-order
+                       64bits of the address when not specified in the address field.
+                       If enabled use EUI, otherwise use EUI-64 and complement U/L
+                       (Universal/Local bit). This operation should
+                       be allowed for both global and link local
+                       addresses. Once the entry is  create cannot modify this field.
+                       This will be valid to use only when the PrefixLength is 64 or less"
+        DEFVAL        { eui-not-used }
+        ::= { rcIpv6PrefixEntry 13 }
+
+rcIpv6PrefixNoAdvertise OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "if set then this prefix can not be included
+                      in the neighbor advertisement."
+        DEFVAL        { false }
+        ::= { rcIpv6PrefixEntry 14 }
+
+rcIpv6PrefixRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Row status for create/delete."
+        ::= { rcIpv6PrefixEntry 15 }
+
+-- IPV6 Neighbor Discovery Route Advertisement Table
+
+rcIpv6RouterAdvertTable  OBJECT-TYPE
+        SYNTAX          SEQUENCE OF  RcIpv6RouterAdvertEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The table containing information 
+               used to construct router advertisements."
+        ::= { rcIpv6Objects 5 }
+
+rcIpv6RouterAdvertEntry OBJECT-TYPE
+        SYNTAX          RcIpv6RouterAdvertEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION
+           "An entry containing information used to construct 
+            router advertisements."
+        INDEX  { rcIpv6RouterAdvertIfIndex }
+        ::= { rcIpv6RouterAdvertTable 1 }
+
+RcIpv6RouterAdvertEntry ::=
+        SEQUENCE {
+                rcIpv6RouterAdvertIfIndex       InterfaceIndex, 
+                rcIpv6RouterAdvertSendAdverts   TruthValue,
+                rcIpv6RouterAdvertUseDefaultVal BITS,
+                rcIpv6RouterAdvertMaxInterval   INTEGER,
+                rcIpv6RouterAdvertMinInterval   INTEGER,
+                rcIpv6RouterAdvertReachableTime INTEGER,
+                rcIpv6RouterAdvertRetransmitTimer  INTEGER,
+                rcIpv6RouterAdvertDefaultLifeTime  INTEGER,
+                rcIpv6RouterAdvertCurHopLimit      INTEGER,
+                rcIpv6RouterAdvertManagedFlag      TruthValue,
+                rcIpv6RouterAdvertOtherConfigFlag  TruthValue,
+                rcIpv6RouterAdvertDadNsNum      INTEGER,
+                rcIpv6RouterAdvertLinkMTU       Unsigned32
+                 }
+
+rcIpv6RouterAdvertIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex 
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "An unique value to identify an ipv6 interface.
+                       For the brouter port it is the ifindex of the 
+                       port and in the case of the vlan it is the 
+                       ifindex of the vlan."
+        ::= {  rcIpv6RouterAdvertEntry 1 }
+
+rcIpv6RouterAdvertSendAdverts OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+           "A flag indicating whether or not the router sends periodic
+            router advertisements and responds to router solicitations
+            on this interface. REFERENCE RFC2461 Section 6.2.1"
+    DEFVAL { false }
+        ::= {  rcIpv6RouterAdvertEntry 2 }
+
+rcIpv6RouterAdvertUseDefaultVal   OBJECT-TYPE
+       SYNTAX        BITS {
+                      none(1),
+                      send-advertisement(2),
+                      max-interval(3),
+                      min-interval(4),
+                      default-life-time(5),
+                      hop-limit(6),
+                      managed-flag(7),
+                      other-config-flag(8),
+                      dad-ns-num(9)
+                  }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Select one of the value to set/use it's
+                       value to default value, or set all the bits
+                       to indicate all the options will be set to 
+                       their default value."
+        ::= {  rcIpv6RouterAdvertEntry 3 }
+
+rcIpv6RouterAdvertMaxInterval OBJECT-TYPE
+        SYNTAX        INTEGER (4..1800)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Configure the max interval (in seconds) 
+                      at which the transmission of route 
+                      advertisments can occur on this interface.
+                      This must be no less than 4 seconds and
+                      no greater than 1800."
+         DEFVAL        { 600 }
+        ::= {  rcIpv6RouterAdvertEntry 4 }
+
+ rcIpv6RouterAdvertMinInterval OBJECT-TYPE
+        SYNTAX        INTEGER (3..1350)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Configure the min interval (in seconds) 
+                      at which the transmission of route 
+                      advertisments can occur on this interface.
+                      This must be no less than 3 seconds and
+                      no greater than .75* max-interval."
+        DEFVAL        { 200 }
+        ::= {  rcIpv6RouterAdvertEntry 5 }
+
+ rcIpv6RouterAdvertReachableTime OBJECT-TYPE
+        SYNTAX        INTEGER (0..36000000)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The value (in milliseconds) to be placed                               in the router advertisement message
+                      sent by the router. The value zero means 
+                      unspecified (by this router). Used to 
+                      configure the amount of time that a remote
+                      IPv6 node is considered reachable after 
+                      some reachability confirmation event has 
+                      occured.
+                      REFERENCE RFC2461 Section 6.2.1"
+        ::= {  rcIpv6RouterAdvertEntry 6 }
+
+rcIpv6RouterAdvertRetransmitTimer OBJECT-TYPE
+        SYNTAX        INTEGER (0..36000000) 
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The value (in milliseconds) to be placed                               in the retransmit timer field in router 
+                      advertisement message sent from this 
+                      interface. The value zero means 
+                      unspecified (by this router). Used to 
+                      configure the amount of time that router
+                      should wait for the transmit to occur.
+                      REFERENCE RFC2461 Section 6.2.1"
+        ::= {  rcIpv6RouterAdvertEntry 7 }
+
+rcIpv6RouterAdvertDefaultLifeTime OBJECT-TYPE
+        SYNTAX        INTEGER (0|4..9000)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   
+           "The value to be placed in the router lifetime field of
+            router advertisements sent from this interface.  This value
+            MUST be either 0 or between rcIpv6RouterAdvertMaxInterval and
+            9000 seconds.
+
+
+            A value of zero indicates that the router is not to be used
+            as a default router.
+
+            The default is 3 * rcIpv6RouterAdvertMaxInterval.
+            REFERENCE RFC2461 Section 6.2.1"
+        DEFVAL        { 1800 }
+        ::= {  rcIpv6RouterAdvertEntry 8 }
+
+rcIpv6RouterAdvertCurHopLimit OBJECT-TYPE
+        SYNTAX        INTEGER (1..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION
+           "The default value to be placed in the current hop limit
+            field in router advertisements sent from this interface.
+            The value should be set to the current diameter of the
+            Internet.
+
+            A value of zero in the router advertisement indicates that
+            the advertisement isn't specifying a value for curHopLimit.
+
+            The default should be set to the value specified in the IANA
+            web pages (www.iana.org) at the time of implementation.
+            REFERENCE RFC2461 Section 6.2.1"
+
+        DEFVAL        { 30 }
+        ::= {  rcIpv6RouterAdvertEntry 9 }
+
+rcIpv6RouterAdvertManagedFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "if true then the M-bit(Managed address
+                      configureation)  in the router
+                      adverisement will be set. 
+                      REFERENCE RFC2461 Section 6.2.1"
+        DEFVAL        { false }
+        ::= {  rcIpv6RouterAdvertEntry 10 }
+
+rcIpv6RouterAdvertOtherConfigFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "if true then the O-bit (Other stateful 
+                      Configuration) in the router
+                      adverisement will be set. REFERENCE 
+                      RFC2461 Section 6.2.1"
+        DEFVAL        { false }
+        ::= {  rcIpv6RouterAdvertEntry 11 }
+
+rcIpv6RouterAdvertDadNsNum OBJECT-TYPE
+        SYNTAX        INTEGER (0..600)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The number of neighbor solicitation
+                      messages for DAD (Duplicate address 
+                      detection). A value 0 is used to disable
+                      DAD process on this interface. A value 1
+                      is used to send one advertisment without
+                      any retransmissions."
+        ::= {  rcIpv6RouterAdvertEntry 12 }
+
+rcIpv6RouterAdvertLinkMTU OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The value to be placed in MTU options sent by the 
+            router on this interface.  A value of zero 
+            indicates that no MTU options are sent. REFERENCE 
+            RFC2461 Section 6.2.1"
+    ::= { rcIpv6RouterAdvertEntry 13 }
+
+-- IPV6 Static Route Table
+
+rcIpv6StaticRouteTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpv6StaticRouteEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "This table contains list of routes that are
+                         created by the user to destination networks."
+        ::= { rcIpv6Objects 6 }
+
+rcIpv6StaticRouteEntry OBJECT-TYPE
+        SYNTAX          RcIpv6StaticRouteEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry in the static route table for IPv6
+                         can be created for a destination with a specific
+                         prefix length; multiple entries to the same
+                         destination are created either by specifying the
+                         next-hop or interfaceIndex or both to reach the destination.
+                         However if the nexthop Ipv6 address is a link-local
+                         address then IfIndex must be supplied."
+        INDEX           { rcIpv6StaticRouteDest, 
+                          rcIpv6StaticRoutePrefixLength,
+                          rcIpv6StaticRouteNextHop,
+                          rcIpv6StaticRouteIfIndex } 
+        ::= { rcIpv6StaticRouteTable 1 }
+
+RcIpv6StaticRouteEntry ::=
+        SEQUENCE {
+                  rcIpv6StaticRouteDest                  Ipv6Address,
+                  rcIpv6StaticRoutePrefixLength          INTEGER,
+                  rcIpv6StaticRouteNextHop               Ipv6Address,
+                  rcIpv6StaticRouteIfIndex               InterfaceIndex,
+                  rcIpv6StaticRouteDistance              INTEGER,
+                  rcIpv6StaticRouteEnable                TruthValue,
+                  rcIpv6StaticRouteStatus                INTEGER,
+                  rcIpv6StaticRoutePreference            INTEGER,
+                  rcIpv6StaticRouteRowStatus             RowStatus
+                 }
+
+rcIpv6StaticRouteDest OBJECT-TYPE
+        SYNTAX        Ipv6Address
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "The destination IPv6 address of this route.
+                The values for the index objects rcIpv6StaticRouteDest and
+                rcIpv6StaticRoutePrefixLength must be consistent.  When
+                the value of rcIpv6StaticRouteDest (excluding the zone 
+                index, if one is present) is x, then the bitwise 
+                logical-AND of x with the value of the mask formed from
+                the corresponding index object 
+                rcIpv6StaticRoutePrefixLength MUST be equal to x. If 
+                not, then the index pair is not consistent and an 
+                inconsistentName error must be returned on SET or 
+                CREATE requests."
+
+        ::= { rcIpv6StaticRouteEntry 1 }
+
+rcIpv6StaticRoutePrefixLength OBJECT-TYPE
+        SYNTAX        INTEGER (0..128)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Indicates the number of leading one bits which 
+                form the mask to be logical-ANDed with the destination 
+                address before being compared to the value in the
+                rcIpv6StaticRouteDestAddr field."
+        ::= { rcIpv6StaticRouteEntry 2 }
+
+rcIpv6StaticRouteNextHop OBJECT-TYPE
+        SYNTAX        Ipv6Address
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Next hop IPv6 address for this destination.
+                On remote routes, the address of the next system en
+                route.  For non-remote routes, a zero length string. " 
+        ::= { rcIpv6StaticRouteEntry 3 }
+
+rcIpv6StaticRouteIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "The ifIndex value which identifies the local 
+                interface through which the next hop of this route 
+                should be reached.  A value of 0 is valid and 
+                represents the scenario where no interface is specified."
+        ::= { rcIpv6StaticRouteEntry 4 }
+
+rcIpv6StaticRouteDistance OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535 )
+        MAX-ACCESS    read-create 
+        STATUS        current
+        DESCRIPTION   "cost/distance to reach the destination for this
+                      node."
+        DEFVAL        { 1 }
+        ::= { rcIpv6StaticRouteEntry 5 }
+
+rcIpv6StaticRouteStatus OBJECT-TYPE
+       SYNTAX          INTEGER {
+                         notReachable(1),
+                         tryToResolve(2),
+                         reachableNotInRtm(3),
+                         reachableInRtm(4)
+                       }
+        MAX-ACCESS      read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate the current status of entry in routing table.
+			 1. notReachable means the route is unreachable via
+				the specified next hop.
+			 2. tryToResolve means the route's nexthop address
+				requires resolution by sending neighbour solicit message.
+			 3. reachableNotInRtm means the route is reachable via the
+				 specified next hop. It's the alternative route.
+			 4. reachableInRtm means the route is reachable via the specified 
+			         next hop and best route. "
+        ::= { rcIpv6StaticRouteEntry 6 }
+
+rcIpv6StaticRoutePreference OBJECT-TYPE
+        SYNTAX        INTEGER (1..255)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Used to indicate the route preference of this
+                      entry.  If there are more than one route that can
+                      be used to forward IP traffic, the route that has
+                      a highest preference will be used instead of a
+                      lower preference one. The higher the number,
+                      the higher the preference."
+        DEFVAL        { 5 }
+        ::= { rcIpv6StaticRouteEntry 7 }
+
+rcIpv6StaticRouteEnable OBJECT-TYPE
+        SYNTAX         	TruthValue
+        MAX-ACCESS     	read-create
+        STATUS         	current
+        DESCRIPTION    	"Used to enable/disable this entry."
+	    DEFVAL        { true }
+        ::= { rcIpv6StaticRouteEntry 8 }
+
+rcIpv6StaticRouteRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Row status for create/delete."
+        ::= { rcIpv6StaticRouteEntry 9 }
+
+--
+-- the Internet Address Translation table
+--
+
+rcIpv6NetToPhysicalTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF RcIpv6NetToPhysicalEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The IP Address Translation table used for mapping from IP
+            addresses to physical addresses.
+
+            The Address Translation tables contain the IP address to
+            'physical' address equivalences.  Some interfaces do not use
+            translation tables for determining address equivalences
+            (e.g., DDN-X.25 has an algorithmic method); if all
+            interfaces are of this type, then the Address Translation
+            table is empty, i.e., has zero entries.
+
+            While many protocols may be used to populate this table, ARP
+            [10] and Neighbor Discovery [4] are the most likely
+            options."
+    REFERENCE "RFC0826 and RFC2461"
+    ::= { rcIpv6Objects 7 }
+
+rcIpv6NetToPhysicalEntry OBJECT-TYPE
+    SYNTAX     RcIpv6NetToPhysicalEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "Each entry contains one IP address to `physical' address
+            equivalence."
+    INDEX       { rcIpv6NetToPhysicalIfIndex,
+                  rcIpv6NetToPhysicalNetAddress }
+    ::= { rcIpv6NetToPhysicalTable 1 }
+
+RcIpv6NetToPhysicalEntry ::= SEQUENCE {
+        rcIpv6NetToPhysicalIfIndex         InterfaceIndex,
+        rcIpv6NetToPhysicalNetAddress      Ipv6Address,
+        rcIpv6NetToPhysicalPhysAddress     PhysAddress,
+        rcIpv6NetToPhysicalInterface       Integer32,
+        rcIpv6NetToPhysicalLastUpdated     TimeStamp,
+        rcIpv6NetToPhysicalType            INTEGER,
+        rcIpv6NetToPhysicalState           INTEGER,
+        rcIpv6NetToPhysicalRowStatus       RowStatus
+    }
+
+rcIpv6NetToPhysicalIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The index value which uniquely identifies the interface to
+            which this entry is applicable.  The interface identified by
+            a particular value of this index is the same interface as
+            identified by the same value of the IfIndex field in the
+            rcIpv6InterfaceIfIndex."
+    ::= { rcIpv6NetToPhysicalEntry 1 }
+
+rcIpv6NetToPhysicalNetAddress OBJECT-TYPE
+    SYNTAX     Ipv6Address
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The IP Address corresponding to the media-dependent
+            `physical' address.  The address type of this object is
+            specified in rcIpv6NetToPhysicalAddressType.
+
+
+            Implementors need to be aware that if the size of
+            rcIpv6NetToPhysicalNetAddress exceeds 115 octets then OIDS of
+            instances of columns in this row will have more than 128
+            sub-identifiers and cannot be accessed using SNMPv1, SNMPv2c
+            or SNMPv3."
+    ::= { rcIpv6NetToPhysicalEntry 2 }
+
+rcIpv6NetToPhysicalPhysAddress OBJECT-TYPE
+    SYNTAX     PhysAddress (SIZE(0..65535))
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+           "The media-dependent `physical' address.
+
+            As the entries in this table are typically not persistent
+            when this object is written the entity SHOULD NOT save the
+            change to non-volatile storage. In the ethernet case
+            it is a MAC address."
+    ::= { rcIpv6NetToPhysicalEntry 3 }
+
+rcIpv6NetToPhysicalInterface            OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+           "The field represents either a physical port id or the MLT
+            port id. This entry is associated either with
+            a port or with a MLT in a VLAN/Brouter port. If the value is 
+            0 then the interface is CP port."
+    ::= { rcIpv6NetToPhysicalEntry 4 }
+
+rcIpv6NetToPhysicalLastUpdated OBJECT-TYPE
+    SYNTAX     TimeStamp
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The value of sysUpTime at the time this entry was last
+            updated.  If this entry was updated prior to the last re-
+            initialization of the local network management subsystem,
+            then this object contains a zero value."
+    ::= { rcIpv6NetToPhysicalEntry 5 }
+
+rcIpv6NetToPhysicalType OBJECT-TYPE
+    SYNTAX     INTEGER {
+                other(1),        -- none of the following
+                dynamic(2),
+                static(3),
+                local(4)         -- local interface
+            }
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+           "The type of mapping.
+
+            The 'dynamic(2)' type indicates that the IP address to
+            physical addresses mapping has been dynamically resolved
+            using e.g. IPv4 ARP or the IPv6 Neighbor Discovery protocol.
+
+            The 'static(3)' type indicates that the mapping has been
+            statically configured.  Both of these refer to entries that
+            provide mappings for other entities addresses.
+
+            The 'local(4)' type indicates that the mapping is provided
+            for an entity's own interface address.
+
+            As the entries in this table are typically not persistent
+            when this object is written the entity SHOULD NOT save the
+            change to non-volatile storage."
+    DEFVAL { static }
+    ::= { rcIpv6NetToPhysicalEntry 6 }
+
+rcIpv6NetToPhysicalState OBJECT-TYPE
+    SYNTAX     INTEGER {
+                     reachable(1), -- confirmed reachability
+
+                     stale(2),     -- unconfirmed reachability
+
+                     delay(3),     -- waiting for reachability
+                                   -- confirmation before entering
+                                   -- the probe state
+
+                     probe(4),     -- actively probing
+
+                     invalid(5),   -- an invalidated mapping
+
+                     unknown(6),   -- state can not be determined
+                                   -- for some reason.
+
+                     incomplete(7) -- address resolution is being performed.
+                    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The Neighbor Unreachability Detection [4] state for the
+            interface when the address mapping in this entry is used.
+            If Neighbor Unreachability Detection is not in use (eg. for
+            IPv4), this object is always unknown(6).
+            REFERENCE RFC2461"
+    ::= { rcIpv6NetToPhysicalEntry 8 }
+
+rcIpv6NetToPhysicalRowStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+           "The status of this conceptual row.
+
+            The RowStatus TC requires that this DESCRIPTION clause
+            states under which circumstances other objects in this row
+            can be modified.  The value of this object has no effect on
+            whether other objects in this conceptual row can be
+            modified.
+
+            A conceptual row can not be made active until the
+            rcIpv6NetToPhysicalPhysAddress object has been set.
+            Note that if the rcIpv6NetToPhysicalType is set to 
+'invalid' the
+            managed node may delete the entry independent of the state
+            of this object. Only createandGo and Delete operations are 
+            supported"
+    ::= { rcIpv6NetToPhysicalEntry 9 }
+
+rcIpv6PrefixListTableSize OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Size of Ipv6 Prefix List Table"
+        ::= { rcIpv6Scalars 8 }
+
+rcIpv6PrefixListTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpv6PrefixListEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IPv6 Prefix List table"
+        ::= { rcIpv6Objects 8 }
+
+rcIpv6PrefixListEntry OBJECT-TYPE
+        SYNTAX          RcIpv6PrefixListEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ipv6 Prefix List Table."
+        INDEX           { rcIpv6PrefixListId,
+                          rcIpv6PrefixListPrefix,
+                          rcIpv6PrefixListPrefixMaskLen }
+        ::= { rcIpv6PrefixListTable 1 }
+
+RcIpv6PrefixListEntry ::=
+        SEQUENCE {
+                rcIpv6PrefixListId               Unsigned32,
+                rcIpv6PrefixListPrefix           Ipv6Address,
+                rcIpv6PrefixListPrefixMaskLen    Unsigned32,
+                rcIpv6PrefixListMaskLenFrom      Unsigned32,
+                rcIpv6PrefixListMaskLenUpto      Unsigned32,
+                rcIpv6PrefixListName             SnmpAdminString,
+                rcIpv6PrefixListRowStatus        RowStatus
+        }
+
+rcIpv6PrefixListId OBJECT-TYPE
+        SYNTAX        Unsigned32 (0..2147483647)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Id of an IPv6 Prefix List"
+        ::= { rcIpv6PrefixListEntry 1 }
+
+rcIpv6PrefixListPrefix OBJECT-TYPE
+        SYNTAX        Ipv6Address
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Is a member of a specific ipv6 prefix list.
+                       Adding the prefix to the given ipv6 prefix list"
+        ::= { rcIpv6PrefixListEntry 2 }
+
+rcIpv6PrefixListPrefixMaskLen OBJECT-TYPE
+        SYNTAX        Unsigned32 (0..128)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Mask length of the ipv6 prefix added to the prefix list"
+        ::= { rcIpv6PrefixListEntry 3 }
+
+rcIpv6PrefixListMaskLenFrom OBJECT-TYPE
+        SYNTAX        Unsigned32 (0..128)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Lower bound of mask length of the ipv6 prefix added 
+                       to the prefix list"
+        ::= { rcIpv6PrefixListEntry 4 }
+
+rcIpv6PrefixListMaskLenUpto OBJECT-TYPE
+        SYNTAX        Unsigned32 (0..128)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Higher bound of mask length of the ipv6 prefix added 
+                       to the prefix list"
+        ::= { rcIpv6PrefixListEntry 5 }
+
+rcIpv6PrefixListName OBJECT-TYPE
+        SYNTAX        SnmpAdminString (SIZE(1..64))
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Name of the Ipv6 prefix list"
+        ::= { rcIpv6PrefixListEntry 6 }
+
+rcIpv6PrefixListRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Used to create/delete entries in the ipv6 prefix list table"
+        ::= { rcIpv6PrefixListEntry 7 }
+
+--BEGIN OF DHCP RELAY FOR IPV6
+
+rcIpv6ConfDhcpRelayTable OBJECT-TYPE 
+        SYNTAX             SEQUENCE OF RcIpv6ConfDhcpRelayEntry
+        MAX-ACCESS     not-accessible 
+        STATUS              current 
+        DESCRIPTION     "DHCP Relay for Ipv6 configuration table"
+    ::= { rcIpv6Objects  9 }
+
+rcIpv6ConfDhcpRelayEntry OBJECT-TYPE
+        SYNTAX        	RcIpv6ConfDhcpRelayEntry
+        MAX-ACCESS   not-accessible
+        STATUS        	current
+        DESCRIPTION  	"Used to configure DHCP on a particular L3 interface.  An
+		entry is created automatically when the variable
+		rcIpv6InterfaceDhcpEnabled is set to TRUE.  
+	      	Once created this entry will only be deleted if the 
+                 	rcIpv6ConfDhcpRowStatus is set to 'destroy(6)'.  In
+	      	which case, the rcIpv6InterfaceDhcpEnabled is automatically
+	      	reset to the FALSE setting."
+        INDEX         	{ rcIpv6ConfDhcpIfIndex }
+        ::= { rcIpv6ConfDhcpRelayTable 1 }
+ 
+RcIpv6ConfDhcpRelayEntry ::=
+        SEQUENCE {
+                rcIpv6ConfDhcpIfIndex                  Ipv6IfIndex,
+                rcIpv6ConfDhcpMaxHop    	      Unsigned32,
+                rcIpv6ConfDhcpRemoteIdEnabled  TruthValue,
+                rcIpv6ConfDhcpNumRequests       Counter32,
+                rcIpv6ConfDhcpNumReplies	      Counter32,
+                rcIpv6ConfDhcpRowStatus 	      RowStatus
+        }
+ 
+rcIpv6ConfDhcpIfIndex OBJECT-TYPE
+        SYNTAX        	Ipv6IfIndex
+        MAX-ACCESS   not-accessible
+        STATUS        	current
+        DESCRIPTION  	"Interface number.  The number can represent either
+		a physical or logical(VLAN) interface."
+        ::= { rcIpv6ConfDhcpRelayEntry 1 }
+ 
+rcIpv6ConfDhcpMaxHop OBJECT-TYPE
+        SYNTAX        	Unsigned32  (1..32)
+        MAX-ACCESS   read-create
+        STATUS        	current
+        DESCRIPTION  	"Used to indicate the maximum number of hops a 
+		DHCP packet can take from the source device to 
+		the destination device (i.e., DHCP client to 
+		DHCP server)."
+        DEFVAL        	{ 32 }
+        ::= { rcIpv6ConfDhcpRelayEntry 2 }
+
+rcIpv6ConfDhcpRemoteIdEnabled OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS   read-create
+        STATUS        	current
+        DESCRIPTION  	"Used to indicate if remote-id option is enabled."
+        DEFVAL	{ false }
+        ::= { rcIpv6ConfDhcpRelayEntry 3 } 
+
+rcIpv6ConfDhcpNumRequests OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS   read-only
+        STATUS        	current
+        DESCRIPTION  	"The total number of DHCP requests seen on this interface."
+        ::= { rcIpv6ConfDhcpRelayEntry 4 }
+
+rcIpv6ConfDhcpNumReplies OBJECT-TYPE
+        SYNTAX           	Counter32
+        MAX-ACCESS   read-only
+        STATUS        	current
+        DESCRIPTION  	"The total number of DHCP replies seen on this interface."
+        ::= { rcIpv6ConfDhcpRelayEntry 5 }
+ 
+rcIpv6ConfDhcpRowStatus OBJECT-TYPE
+        SYNTAX        	RowStatus
+        MAX-ACCESS   read-create
+        STATUS        	current
+        DESCRIPTION   "An entry is created automatically when the variable
+                      	rcIpv6InterfaceDhcpEnabled is set to TRUE.
+                      	Once created this entry will only be deleted if the
+                      	rcIpv6ConfDhcpRowStatus is set to 'destroy(6)',  In
+                      	which case, the rcIpv6InterfaceDhcpEnabled is automatically
+                      	reset to the FALSE setting."
+        ::= { rcIpv6ConfDhcpRelayEntry 6 }
+
+rcIpv6DhcpForwardTable OBJECT-TYPE 
+        SYNTAX	  SEQUENCE OF RcIpv6DhcpForwardEntry
+        MAX-ACCESS     not-accessible 
+        STATUS        	  current 
+        DESCRIPTION     "DHCP Relay forwarding table."
+    ::= { rcIpv6Objects  10 }
+
+rcIpv6DhcpForwardEntry OBJECT-TYPE
+        SYNTAX        	RcIpv6DhcpForwardEntry
+        MAX-ACCESS  	not-accessible
+        STATUS        	current
+        DESCRIPTION   "An entry used represents a DHCP Relayed message forwarding directive."
+        INDEX         	{ rcIpv6DhcpForwardAgentAddr, rcIpv6DhcpForwardServerAddr }
+        ::= { rcIpv6DhcpForwardTable 1 }
+ 
+RcIpv6DhcpForwardEntry ::=
+        SEQUENCE {
+                rcIpv6DhcpForwardAgentAddr   Ipv6Address,
+                rcIpv6DhcpForwardServerAddr  Ipv6Address,
+                rcIpv6DhcpForwardEnabled      TruthValue,
+                rcIpv6DhcpForwardRowStatus   RowStatus
+        }
+ 
+rcIpv6DhcpForwardAgentAddr OBJECT-TYPE
+        SYNTAX        	Ipv6Address
+        MAX-ACCESS   not-accessible
+        STATUS        	current
+        DESCRIPTION   "The IP address configured on an interface
+                      	(i.e., a locally configured IP address)."
+        ::= { rcIpv6DhcpForwardEntry 1 }
+ 
+rcIpv6DhcpForwardServerAddr OBJECT-TYPE
+        SYNTAX        	Ipv6Address
+        MAX-ACCESS   not-accessible
+        STATUS        	current
+        DESCRIPTION   "The IP address of the DHCP server.  If this
+	              	IP address corresponds to a local interface address, the DHCP packet is multicast out
+       	      	the interface the IP address is assigned to.otherwise,the DHCP packet is sent via unicast to the remote device."
+        ::= { rcIpv6DhcpForwardEntry 2 }
+ 
+rcIpv6DhcpForwardEnabled OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS   read-create
+        STATUS        	current
+        DESCRIPTION  	"Used to indicate whether the entry should be used."
+        DEFVAL        	{ true }
+        ::= { rcIpv6DhcpForwardEntry 3 }
+ 
+rcIpv6DhcpForwardRowStatus OBJECT-TYPE
+        SYNTAX        	RowStatus
+        MAX-ACCESS   read-create
+        STATUS        	current
+        DESCRIPTION  	"Row status of this entry."
+        ::= { rcIpv6DhcpForwardEntry 4 }
+
+--END OF DHCP RELAY FOR IPV6
+
+-- IPv6 Radius Serv Table
+
+rcIpv6RadiusServTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpv6RadiusServEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "The RADIUS table (0 to 10 entries).  This
+                      table lists the information of the RADIUS server."
+        ::= { rcIpv6Objects 11}
+
+rcIpv6RadiusServEntry OBJECT-TYPE
+        SYNTAX        RcIpv6RadiusServEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A RADIUS server table entry."
+        INDEX         { rcIpv6RadiusServAddress,
+                        rcIpv6RadiusServUsedBy }
+        ::= { rcIpv6RadiusServTable 1 }
+
+RcIpv6RadiusServEntry ::=
+        SEQUENCE {
+                rcIpv6RadiusServAddress          Ipv6Address,
+                rcIpv6RadiusServUsedBy            INTEGER,
+                rcIpv6RadiusServPriority            Unsigned32,
+                rcIpv6RadiusServTimeOut             Unsigned32,
+                rcIpv6RadiusServEnable              TruthValue,
+                rcIpv6RadiusServMaxRetries          Unsigned32,
+                rcIpv6RadiusServUdpPort             Unsigned32,
+                rcIpv6RadiusServSecretKey           SnmpAdminString,
+                rcIpv6RadiusServAccessRequests      Counter32,
+                rcIpv6RadiusServAccessAccepts       Counter32,
+                rcIpv6RadiusServAccessRejects       Counter32,
+                rcIpv6RadiusServBadResponses        Counter32,
+                rcIpv6RadiusServPendingRequests     Counter32,
+                rcIpv6RadiusServClientRetries       Counter32,
+                rcIpv6RadiusServAcctEnable          TruthValue,
+                rcIpv6RadiusServAcctUdpPort         Unsigned32,
+                rcIpv6RadiusServAcctOnRequests      Counter32,
+                rcIpv6RadiusServAcctOffRequests     Counter32,
+                rcIpv6RadiusServAcctStartRequests   Counter32,
+                rcIpv6RadiusServAcctStopRequests    Counter32,
+                rcIpv6RadiusServAcctInterimRequests Counter32,
+                rcIpv6RadiusServAcctBadResponses    Counter32,
+                rcIpv6RadiusServAcctPendingRequests Counter32,
+                rcIpv6RadiusServAcctClientRetries   Counter32,
+                rcIpv6RadiusServNasIpAddress        Ipv6Address,
+                rcIpv6RadiusServRoundTripTime       SnmpAdminString,
+                rcIpv6RadiusServAccessChallanges    Counter32,
+                rcIpv6RadiusServSourceIpAddr        Ipv6Address,
+                rcIpv6RadiusServRowStatus           RowStatus
+        }
+
+rcIpv6RadiusServAddress OBJECT-TYPE
+        SYNTAX        Ipv6Address
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Server IP address of the RADIUS authentication server
+                       referred to in this table entry."
+        ::= { rcIpv6RadiusServEntry 1 }
+
+rcIpv6RadiusServUsedBy OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         cli(1),
+                         igap(2),
+                         snmp(3),
+                         eap(4)
+                      }
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "cli(1): for cli login, igap(2): for igap,snmp(3):
+                       for snmp login, eap(4) for EAP PAE Authenticator."
+        ::= { rcIpv6RadiusServEntry 2 }
+
+rcIpv6RadiusServPriority OBJECT-TYPE
+        SYNTAX        Unsigned32 (1..10)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Server priority, used to control which server to choose
+                       first to send authentication."
+        DEFVAL        { 10 }
+        ::= { rcIpv6RadiusServEntry 3 }
+
+rcIpv6RadiusServTimeOut OBJECT-TYPE
+        SYNTAX        Unsigned32 (1..20)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "The time interval in seconds before the client
+                       retransmit the packet."
+        DEFVAL        { 3 }
+        ::= { rcIpv6RadiusServEntry 4 }
+
+rcIpv6RadiusServEnable  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Enable or disable this server."
+        DEFVAL        { true }
+        ::= { rcIpv6RadiusServEntry 5 }
+
+rcIpv6RadiusServMaxRetries OBJECT-TYPE
+        SYNTAX        Unsigned32 (0..6)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Maximum number of retransmissions."
+        DEFVAL        { 1 }
+        ::= { rcIpv6RadiusServEntry 6 }
+
+rcIpv6RadiusServUdpPort OBJECT-TYPE
+        SYNTAX        Unsigned32 (1..65536)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "The UDP port the client is using to send requests
+                       to this server."
+        DEFVAL        { 1812 }
+        ::= { rcIpv6RadiusServEntry 7 }
+
+rcIpv6RadiusServSecretKey OBJECT-TYPE
+        SYNTAX        SnmpAdminString (SIZE (0..32))
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "The identifier of the RADIUS authentication client."
+        ::= { rcIpv6RadiusServEntry 8 }
+
+rcIpv6RadiusServAccessRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-response packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcIpv6RadiusServEntry 9 }
+
+rcIpv6RadiusServAccessAccepts OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-accept packets (valid or
+                         invalid) received from this server."
+        ::= { rcIpv6RadiusServEntry 10 }
+
+rcIpv6RadiusServAccessRejects OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-reject packets (valid or
+                         invalid) received from this server."
+        ::= { rcIpv6RadiusServEntry 11 }
+
+rcIpv6RadiusServBadResponses OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS invalid access-response packets
+                         received from this server."
+        ::= { rcIpv6RadiusServEntry 12 }
+
+rcIpv6RadiusServPendingRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-request packets destined
+                         for this server that have not yet timed out or
+                         received a response. This variable is incremented
+                         when an access-request is sent and decremented due
+                         to receipt of an access-accept, access-reject, a
+                         timeout or retransmission."
+        ::= { rcIpv6RadiusServEntry 13 }
+
+rcIpv6RadiusServClientRetries OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of authentication retransmission to
+                         this server."
+        ::= { rcIpv6RadiusServEntry 14}
+
+rcIpv6RadiusServAcctEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Enable or disable Radius Accounting on this server."
+        DEFVAL        { true }
+        ::= { rcIpv6RadiusServEntry 15 }
+
+rcIpv6RadiusServAcctUdpPort OBJECT-TYPE
+        SYNTAX        Unsigned32 (1..65536)
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "The UDP port the client used to send accounting
+                       requests to this server."
+        DEFVAL        { 1813 }
+        ::= { rcIpv6RadiusServEntry 16 }
+
+rcIpv6RadiusServAcctOnRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-on packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcIpv6RadiusServEntry 17 }
+
+rcIpv6RadiusServAcctOffRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-off packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcIpv6RadiusServEntry 18 }
+
+rcIpv6RadiusServAcctStartRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-start packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcIpv6RadiusServEntry 19 }
+
+rcIpv6RadiusServAcctStopRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-stop packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcIpv6RadiusServEntry 20 }
+
+rcIpv6RadiusServAcctInterimRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-interim packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcIpv6RadiusServEntry 21 }
+
+rcIpv6RadiusServAcctBadResponses OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of Invalid responses received from this
+                         server."
+        ::= { rcIpv6RadiusServEntry 22 }
+
+rcIpv6RadiusServAcctPendingRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting packets that are waiting
+                         be sent to this server. This variable is incremented
+                         whenever any accounting-request is sent to this server and
+                         decremented when an acknowledgement is received or timeout
+                         occurs."
+        ::= { rcIpv6RadiusServEntry 23 }
+
+rcIpv6RadiusServAcctClientRetries OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting packets retransmitted
+                         to this server."
+        ::= { rcIpv6RadiusServEntry 24 }
+
+rcIpv6RadiusServNasIpAddress OBJECT-TYPE
+        SYNTAX          Ipv6Address
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "RADIUS Client NAS Identifier for this server."
+        ::= { rcIpv6RadiusServEntry 25 }
+
+rcIpv6RadiusServRoundTripTime OBJECT-TYPE
+        SYNTAX          SnmpAdminString (SIZE(0..20))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Time different between the instance when
+                         a RADIUS request is sent and the
+                         corresponding response is received."
+        ::= { rcIpv6RadiusServEntry 26 }
+
+rcIpv6RadiusServAccessChallanges OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-challanges packets
+                         sent to this server. This does not include
+                         retransmission."
+        ::= { rcIpv6RadiusServEntry 27 }
+
+rcIpv6RadiusServSourceIpAddr OBJECT-TYPE
+        SYNTAX          Ipv6Address
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION     "source IP address RADIUS packets."
+        ::= { rcIpv6RadiusServEntry 28 }
+
+rcIpv6RadiusServRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Used to create/delete entries."
+        ::= { rcIpv6RadiusServEntry 29 }
+
+END

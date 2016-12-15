@@ -1,0 +1,687 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-FILTERS-MIB DEFINITIONS ::= BEGIN
+
+-- Centillion Filters MIB Release 2.0.5
+-- Revision 04/18/00
+
+-- Copyright 1994-2000 Nortel Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+-- This file defines the MIB for objects for maintenance of the filter
+-- tables and statstics.
+
+-- Imports
+
+IMPORTS
+	DisplayString
+		FROM RFC1213-MIB
+	OBJECT-TYPE
+		FROM RFC-1212
+	StatusIndicator, sysConfig
+		FROM CENTILLION-ROOT-MIB;
+
+
+-- Textual Conventions
+
+-- General filter group names are user-defined ASCII strings up to
+-- 8 characters.
+
+GeneralFilterName ::= DisplayString (SIZE (8))
+
+-- NetBIOS filter names are blank padded ASCII strings of 16
+-- characters.
+
+NetbiosFilterName ::= DisplayString (SIZE(16))
+
+-- NetBIOS Filter actions. Frames are either discarded or forwarded
+-- according to the name and action
+
+NetbiosFilterAction ::=
+	INTEGER {
+		discard(1),
+		forward(2)
+	}
+
+
+-- Groups
+
+filterGroup	OBJECT IDENTIFIER ::= { sysConfig 11 }
+
+
+-- SECTION 2: General Filter Group Table
+
+-- This section defines the filter group table. Filter groups are composed
+-- of some number of filter entries. Each filter group is identified by a
+-- unique filter group name.
+
+filterGroupTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF FilterGroupEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Filter Group Table. Entries are added into the group by
+		specifying values for all objects with the exception
+		of the filterGroupMonitorDests and filterGroupAdditionalDests
+		objects. Entries are deleted simply by specifying the
+		appropriate filterGroupStatus value."
+	::= { filterGroup 1 }
+
+filterGroupEntry OBJECT-TYPE
+	SYNTAX	FilterGroupEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An entry in the filter group table. Table entries are indexed
+		by the unique user-defined group name, and the filter entry
+		index as assigned by the system."
+	INDEX	{ filterGroupName, filterGroupIndex }
+	--	INDEX	{ IMPLIED filterGroupName, filterGroupIndex }
+	::= { filterGroupTable 1 }
+
+FilterGroupEntry ::= SEQUENCE {
+	filterGroupName
+		GeneralFilterName,
+	filterGroupIndex
+		INTEGER,
+	filterGroupStatus
+		StatusIndicator,
+	filterGroupMatch
+		INTEGER,
+	filterGroupType
+		INTEGER,
+	filterGroupOffset
+		INTEGER,
+	filterGroupValue
+		OCTET STRING,
+	filterGroupForward
+		INTEGER,
+	filterGroupNextIfMatch
+		INTEGER,
+	filterGroupNextIfFail
+		INTEGER,
+	filterGroupMonitorDests
+		OCTET STRING,
+	filterGroupAdditionalDests
+		OCTET STRING,
+	filterGroupAlternateDestination
+		OCTET STRING,
+	filterGroupAdditionalDestinations
+		OCTET STRING,
+    filterGroupPriority
+        INTEGER
+	}
+
+filterGroupName OBJECT-TYPE
+	SYNTAX	GeneralFilterName
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"A user-defined unique ASCII string identifying the filter
+		group."
+	::= { filterGroupEntry 1 }
+
+filterGroupIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The index of the filter entry within the filter group. Any
+		filter group entry is uniquely identifable by the group nam
+		and index."
+	::= { filterGroupEntry 2 }
+
+filterGroupStatus OBJECT-TYPE
+	SYNTAX	StatusIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of this filter group entry. Entries may be
+		deleted by setting this object to invalid(2)."
+	::= { filterGroupEntry 3 }
+
+filterGroupMatch OBJECT-TYPE
+	SYNTAX	INTEGER {
+		lt(1),		-- match if less than
+		eq(2),		-- match if equal
+		le(3),		-- match if less than or equal
+		gt(4),		-- match if greater than
+		ne(5),		-- match if not equal
+		ge(6)		-- match if greater than or equal
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The match condition for the filter. Match conditions are in
+		the form of the usual logical operators."
+	::= { filterGroupEntry 4 }
+
+filterGroupType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		macFilter(1),	-- filter offset begins at the MAC header
+		llcFilter(2),	-- filter offset from end of RIF
+		vlanFilter(3)   -- vlan filter
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of filter. MAC filters are defined from the start
+		of the MAC frame. LLC filters are defined from the start
+                of the LLC header (after RIF). VLAN filters operate on
+                a packet's VLAN classification parameters. For a valid
+                VLAN filter, filterGroupOffset be set to 0, and
+                filterGroupValue must contain exactly four bytes of VLAN 
+                filter data as shown below:
+
+            Octet 1
+                 Defines the user priority match criteria for VLAN
+                 filter. Valid values are 0x01 through 0xFF. Each bit
+                 in the octet corresponds to one of the eight available
+                 user priority level as defined by the 802.1Q draft
+                 specification. The least significant bit represents
+                 priority zero, and the most significant bit 
+                 represents priority seven.
+
+            Octet 2
+                 Defines the Canonical Format Indicator (CFI) match 
+                 criteria for VLAN filter. Possible values are 0x00, 0x01 
+                 and 0xFF. The value 0xFF indicates the switch should 
+                 ignore CFI value when filtering.
+
+            Octet 3 and 4
+                 Define 12-bit VLAN ID match criteria for VLAN filter.
+                 Valid values are 0x001 through 0xFFF."
+
+	::= { filterGroupEntry 5 }
+
+filterGroupOffset OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The byte offset from the beginning of the header to the 
+		value to filter."
+	::= { filterGroupEntry 6 }
+
+filterGroupValue OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE (1..12))
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The filter value field. The value is specified as a 
+		hexadecimal string up to 12 bytes."
+	::= { filterGroupEntry 7 }
+
+filterGroupForward OBJECT-TYPE
+	SYNTAX	INTEGER {
+		normClear(1),	-- normal forwarding cleared
+		alt(2),		-- forward to alternate card/ports
+		add(3),		-- forward to addiitional card/ports
+		addAlt(4),	-- forward to additional and alt card/ports
+		norm(5),	-- forward using normal rules
+		normAlt(6),	-- forward to normal and alt card/ports
+		normAdd(7), 	-- forward to normal and add card/ports
+		normAddAlt(8),	-- forward to norm+add+alt card/ports
+		drop(9)		-- frame is dropped
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The forwarding rule for the filter. Forward to normal
+		indicates that the frame should be forwarded as usual."
+	::= { filterGroupEntry 8 }
+
+filterGroupNextIfMatch OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The next filter entry as referenced by the filter index
+		to apply if the filter match succeeds. An entry of 0 indicates
+		that filtering ends for the packet. An entry whose value
+		is larger than the number of filters in the group indicates
+		that the next filter entry to apply is the next filter
+		group (if any) enabled on the port."
+	::= { filterGroupEntry 9 }
+
+filterGroupNextIfFail OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The next filter entry as referenced by the filter index
+		to apply if the filter match fails. An entry of 0 indicates
+		that filtering ends for the packet. An entry whose value
+		is larger than the number of filters in the group indicates
+		that the next filter entry to apply is the next filter
+		group (if any) enabled on the port."
+	::= { filterGroupEntry 10 }
+
+filterGroupAdditionalDests OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE (0..256))
+	ACCESS	read-write
+	STATUS	deprecated
+	DESCRIPTION
+		"This will be replaced by filterGroupAdditionalDestions.
+		A list of up to 256 pairs of additional cards and ports 
+		to send packets matching this filter. Each unsigned int8 
+		is formatted as follows: 
+		the high-order 4 bits represent the card number, the low
+		order 4 bits are the port number."
+	::= { filterGroupEntry 11 }
+
+filterGroupMonitorDests OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE (0..1))
+	ACCESS	read-write
+	STATUS 	deprecated	
+	DESCRIPTION
+		"This will be replaced by filterGroupAlternateDestination.
+		A pair of the monitoring card and port to send packets
+		matching this filter. Each unsigned int8 is formatted 
+		as follows:
+		the high-order 4 bits represent the card number, the low
+		order 4 bits are the port number."
+	::= { filterGroupEntry 12 }
+
+filterGroupAdditionalDestinations OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE (0..512))
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"For 24 ports support. This is to replace 
+		filterGroupAdditionalDests. Setting either 
+		filterGroupAdditionalDests or filterGroupAlternateDestination 
+		is enough. And if both are set, the one set later will be 
+		in effect. Make sure that even number of octets are given.
+		A list of up to 256 pairs of additional cards and ports 
+		to send packets matching this filter. Each pair of octets 
+		is formatted as follows: 
+		the high-order octet represent the card number, the low
+		order octet is the port number."
+	::= { filterGroupEntry 13 }
+
+filterGroupAlternateDestination OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE (0..2))
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"For 24 ports support. This is to replace 
+		filterGroupMonitorDests. Setting either filterGroupMonitorDests
+		filterGroupAlternateDestination is enough. And if both
+		are set, the one set later will be in effect.
+		Make sure that even number of octets are given.
+		A pair of the monitoring card and port to send packets
+		matching this filter. Each pair of octets is formatted 
+		as follows:
+		the high-order byte represent the card number, the low
+		order byte is the port number."
+	::= { filterGroupEntry 14 }
+ 
+filterGroupPriority OBJECT-TYPE
+    SYNTAX  INTEGER {
+        priUnchanged(1),    -- forward without changing priority
+        priNorm(2),         -- forward with normal priority
+        priHigh(3)          -- forward with high priority
+        }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "The forwarding priority for the filter. A value of (1) indicates
+        that forwarding should occur with the native priority defined by
+        802.1Q or other priority classification methods.  Values (2) and
+        (3) override all previous priority classification methods."
+    ::= { filterGroupEntry 15 }
+
+-- Filter Port Table
+--
+-- This section defines the inbound filter port table. The inbound filter 
+-- port table defines the active filter groups associated with the 
+-- inbound packets received by a  card and port. Filters are
+-- configured by first establishing appropriate filter groups, then
+-- applying the groups to some number of cards and ports using this table.
+
+
+filterPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF FilterPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Input Filter Port Table."
+	::= { filterGroup 2 }
+
+filterPortEntry OBJECT-TYPE
+	SYNTAX	FilterPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An entry in the filter group table. Table entries are indexed
+		by the unique user-defined group name, and the filter entry
+		index as assigned by the system."
+	INDEX	{ filterPortCardNumber, filterPortPortNumber, filterPortIndex }
+	::= { filterPortTable 1 }
+
+FilterPortEntry ::= SEQUENCE {
+	filterPortCardNumber
+		INTEGER,
+	filterPortPortNumber
+		INTEGER,
+	filterPortIndex
+		INTEGER,
+	filterPortStatus
+		StatusIndicator,
+	filterPortGroupName
+		GeneralFilterName
+	}
+
+filterPortCardNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The card number to which the filters apply."
+	::= { filterPortEntry 1}
+
+filterPortPortNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The port number to which the filters apply."
+	::= { filterPortEntry 2 }
+
+filterPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each filter group within the port."
+	::= { filterPortEntry 3 }
+
+filterPortStatus OBJECT-TYPE
+	SYNTAX	StatusIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of this filter port entry. Entries may be
+		deleted by setting this object to invalid(2)."
+	::= { filterPortEntry 4 }
+
+filterPortGroupName OBJECT-TYPE
+	SYNTAX	GeneralFilterName
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The filter port group name."
+	::= { filterPortEntry 5 }
+
+
+-- SECTION 3: NetBios Filter Tables
+
+-- This section defines the NetBIOS Name filter table. The table contains
+-- a list of NetBIOS names, along with the action taken upon matching
+-- the name. There are two tables. One listed by card and port numbers, 
+-- the other is based upon virtual ring number.
+
+-- NetBios Filter Port Table
+
+netbiosFilterPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF NetbiosFilterPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The NetBIOS name filter table indexed by card and port
+		numbers. "
+	::= { filterGroup 3 }
+
+netbiosFilterPortEntry OBJECT-TYPE
+	SYNTAX	NetbiosFilterPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An entry in the NetBios filter port table. Table entries
+		are indexed by the card, port and PortIndex as assigned
+		by the system."
+	INDEX	{ netbiosFilterPortCardNumber, netbiosFilterPortPortNumber,
+		  netbiosFilterPortIndex }
+	::= { netbiosFilterPortTable 1 }
+
+NetbiosFilterPortEntry ::= SEQUENCE {
+	netbiosFilterPortCardNumber
+		INTEGER,
+	netbiosFilterPortPortNumber
+		INTEGER,
+	netbiosFilterPortIndex
+		INTEGER,
+	netbiosFilterPortStatus
+		StatusIndicator,
+	netbiosFilterPortName
+		NetbiosFilterName,
+	netbiosFilterPortAction
+		NetbiosFilterAction
+	}
+
+netbiosFilterPortCardNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The card number to which the filters apply."
+	::= { netbiosFilterPortEntry 1}
+
+netbiosFilterPortPortNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The port number to which the filters apply."
+	::= { netbiosFilterPortEntry 2 }
+
+netbiosFilterPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each filter group within the port."
+	::= { netbiosFilterPortEntry 3 }
+
+netbiosFilterPortStatus OBJECT-TYPE
+	SYNTAX	StatusIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of this NetBIOS filter entry. Entries may be
+		deleted by setting this object to invalid(2)."
+	::= { netbiosFilterPortEntry 4 }
+
+netbiosFilterPortName OBJECT-TYPE
+	SYNTAX	NetbiosFilterName
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The NetBIOS name to match for filtering. The name will
+		be blank padded."
+	::= { netbiosFilterPortEntry 5 }
+
+netbiosFilterPortAction OBJECT-TYPE
+	SYNTAX	NetbiosFilterAction
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The action to take upon matching the name filter."
+	::= { netbiosFilterPortEntry 6 }
+
+
+-- NetBios Filter Ring Table
+
+netbiosFilterRingTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF NetbiosFilterRingEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The NetBIOS name filter table indexed by ring number."
+	::= { filterGroup 4 }
+
+netbiosFilterRingEntry OBJECT-TYPE
+	SYNTAX	NetbiosFilterRingEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An entry in the NetBios filter port table. Table entries
+		are indexed by ring number and PortIndex as assigned
+		by the system."
+	INDEX	{ netbiosFilterRingNumber,  netbiosFilterRingIndex }
+	::= { netbiosFilterRingTable 1 }
+
+NetbiosFilterRingEntry ::= SEQUENCE {
+	netbiosFilterRingNumber
+		INTEGER,
+	netbiosFilterRingIndex
+		INTEGER,
+	netbiosFilterRingStatus
+		StatusIndicator,
+	netbiosFilterRingName
+		NetbiosFilterName,
+	netbiosFilterRingAction
+		NetbiosFilterAction
+	}
+
+netbiosFilterRingNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The ring number to which the filters apply."
+	::= { netbiosFilterRingEntry 1}
+
+netbiosFilterRingIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each filter group within the port."
+	::= { netbiosFilterRingEntry 2 }
+
+netbiosFilterRingStatus OBJECT-TYPE
+	SYNTAX	StatusIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of this NetBIOS filter entry. Entries may be
+		deleted by setting this object to invalid(2)."
+	::= { netbiosFilterRingEntry 3 }
+
+netbiosFilterRingName OBJECT-TYPE
+	SYNTAX	NetbiosFilterName
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The NetBIOS name to match for filtering. The name will be
+		blank padded."
+	::= { netbiosFilterRingEntry 4 }
+
+netbiosFilterRingAction OBJECT-TYPE
+	SYNTAX	NetbiosFilterAction
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The action to take upon matching the name filter."
+	::= { netbiosFilterRingEntry 5 }
+
+
+-- Output Filter Port Table
+--
+-- This section defines the output filter port table. The output filter 
+-- port table defines the active filter groups associated with the
+-- outbound packets forwarded by a card and port. Filters 
+-- are configured by first establishing appropriate filter groups, then
+-- applying the groups to some number of cards and ports using this table.
+
+
+outputFilterPortTable OBJECT-TYPE
+      SYNTAX  SEQUENCE OF OutputFilterPortEntry
+      ACCESS  not-accessible
+      STATUS  mandatory
+      DESCRIPTION
+              "Output Filter Port Table."
+      ::= { filterGroup 5 }
+
+outputFilterPortEntry OBJECT-TYPE
+      SYNTAX  OutputFilterPortEntry
+      ACCESS  not-accessible
+      STATUS  mandatory
+      DESCRIPTION
+              "An entry in the filter group table. Table entries are
+              indexed by the unique user-defined group name, and the filter entry
+              index as assigned by the system."
+      INDEX   { outputFilterPortCardNumber, outputFilterPortPortNumber,
+outputFilterPortIndex }
+      ::= { outputFilterPortTable 1 }
+
+OutputFilterPortEntry ::= SEQUENCE {
+      outputFilterPortCardNumber
+              INTEGER,
+      outputFilterPortPortNumber
+              INTEGER,
+      outputFilterPortIndex
+              INTEGER,
+      outputFilterPortStatus
+              StatusIndicator,
+      outputFilterPortGroupName
+              GeneralFilterName
+      }
+
+outputFilterPortCardNumber OBJECT-TYPE
+      SYNTAX  INTEGER
+      ACCESS  read-write
+      STATUS  mandatory
+      DESCRIPTION
+              "The card number to which the filters apply."
+      ::= { outputFilterPortEntry 1}
+
+outputFilterPortPortNumber OBJECT-TYPE
+      SYNTAX  INTEGER
+      ACCESS  read-write
+      STATUS  mandatory
+      DESCRIPTION
+              "The port number to which the filters apply."
+      ::= { outputFilterPortEntry 2 }
+
+outputFilterPortIndex OBJECT-TYPE
+      SYNTAX  INTEGER
+      ACCESS  read-write
+      STATUS  mandatory
+      DESCRIPTION
+              "A unique value for each filter group within the port."
+      ::= { outputFilterPortEntry 3 }
+
+outputFilterPortStatus OBJECT-TYPE
+      SYNTAX  StatusIndicator
+      ACCESS  read-write
+      STATUS  mandatory
+      DESCRIPTION
+              "The status of this filter port entry. Entries may be
+              deleted by setting this object to invalid(2)."
+      ::= { outputFilterPortEntry 4 }
+
+outputFilterPortGroupName OBJECT-TYPE
+      SYNTAX  GeneralFilterName
+      ACCESS  read-write
+      STATUS  mandatory
+      DESCRIPTION
+              "The filter port group name."
+      ::= { outputFilterPortEntry 5 }
+
+
+END
+
+

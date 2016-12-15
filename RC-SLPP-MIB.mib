@@ -1,0 +1,332 @@
+
+RC-SLPP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, NOTIFICATION-TYPE,
+    Unsigned32
+        FROM SNMPv2-SMI
+    TruthValue, MacAddress, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcSlpp, PortSet
+        FROM RAPID-CITY;
+
+rcSlppMib MODULE-IDENTITY
+       LAST-UPDATED "200911090000Z"
+       ORGANIZATION "Bay Networks, Rapid-City Group"
+       CONTACT-INFO "Yu-Ten Lee
+                     Postal:           Nortel Networks, Inc. 
+                                       4655 Great America Parkway 
+                                       Santa Clara, CA 95052-8185 
+                     Tel:           408-495-2560
+                     Fax:           408-495-6680
+                     E-mail:        ylee@nortelnetworks.com"
+
+       DESCRIPTION         "Enterprise MIB for SLPP"
+
+       REVISION "200911090000Z" -- 09 November 2009
+       DESCRIPTION "Version 11:  Added rcnSlppLoopOnDiffVlan."
+                             
+       REVISION "200806180001Z" -- 18 Jun 2008
+       DESCRIPTION "Version 10:  Added rcSlppUniPorts, rcSlppPortPktRxCount.
+                                       Added  range for rcSlppEtherType."
+                             
+       REVISION "200806180000Z" -- 18 Jun 2008
+       DESCRIPTION "Version 9: Change rcSlppPortPktRxThreshold in SEQUENCE of
+                               RcSlppPortEntry SYNTAX from INTEGER to Integer32."
+                             
+       REVISION "200708240000Z" -- 24 August 2007
+       DESCRIPTION "Version 8: Added rcSlppTimeout."
+
+       REVISION "200606040000Z" -- 04 June 2006
+       DESCRIPTION "Version 7: Added rcnSlppPortDownEventNew and two new notification objects."
+
+       REVISION "200605010000Z" -- 01 May 2006
+       DESCRIPTION "Version 6: Updated rcSlppPortPktRxThreshold and rcSlppPortSlppEnable to have 
+       DEFVAL.  Update made on behalf of Yi Zhang, ERS8600 submit #9468."
+
+       REVISION "200604280000Z" -- 28 April 2006
+       DESCRIPTION "Version 5: Updated rcSlppPortPktRxThreshold to read Integer32 (1..500).
+       Update made on behalf of Yi Zhang, ERS8600 submit #9240."
+
+       REVISION "200603300000Z" -- 30 March 2006
+       DESCRIPTION "Version 4: Added rcSlppPortIncomingVlanId and rcSlppPortSrcNodeType.
+       Update made on behalf of Yi Zhang, ERS8600 submit #8286."
+
+       REVISION "200603160000Z" -- 16 March 2006
+       DESCRIPTION "Version 3: Updated rcSlppPortPktRxThreshold to read Integer32 (1..20).
+       Update made on behalf of Yi Zhang, ERS8600 submit #8198."
+
+       REVISION "200508300000Z" -- 30 Aug 2005
+       DESCRIPTION "Version 2: Added rcSlppPortSlppEnable and RowStatus to the vlan
+       and port  tables.  Also, updated the range for objects rcSlppTransmissionInterval and
+       rcSlppPortPktRxThreshold."
+
+       REVISION "200507290000Z" -- 29 July 2005
+       DESCRIPTION "Version 1: Initial version"
+
+        ::= { rcSlpp 1 }
+
+
+rcSlppNotifications OBJECT IDENTIFIER ::= { rcSlppMib 0 }
+rcSlppObjects       OBJECT IDENTIFIER ::= { rcSlppMib 1 }
+rcSlppNotificationObjects OBJECT IDENTIFIER ::= { rcSlppMib 2 }
+
+-- --------------------------------------------------
+-- Scalar Objects
+-- --------------------------------------------------
+
+rcSlppScalars OBJECT IDENTIFIER ::= { rcSlppObjects 1 }
+
+rcSlppGlobalEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Global enable/disable for the simple loop prevention protocol."
+    DEFVAL      { false }
+    ::= { rcSlppScalars 1 }
+
+rcSlppTransmissionInterval OBJECT-TYPE
+    SYNTAX      Integer32 (500..5000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "The interval (in milliseconds) for which loop detection occurs."
+    DEFVAL      { 500 }
+    ::= { rcSlppScalars 2 }
+
+rcSlppEtherType OBJECT-TYPE
+        SYNTAX        Integer32(1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "SLPP Protocol Identification. The value is normally in Hex."
+        DEFVAL        { '8104'h }
+    ::= { rcSlppScalars 3 }
+
+rcSlppTimeout OBJECT-TYPE
+        SYNTAX        Unsigned32 (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "This value specifies the time period for which a port
+                       will remain disabled.  When SLPP disables a port, after
+                       this time period expires, the port will become
+                       re-enabled.  A value of 0 means ports will never
+                       be re-enabled."
+        DEFVAL        { 0 }
+    ::= { rcSlppScalars 4 }
+
+rcSlppUniPorts OBJECT-TYPE
+    SYNTAX       PortSet
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION   "Contains UNI ports added under SLPP global config"
+      ::= { rcSlppScalars 5 }
+
+-- --------------------------------------------------
+-- rcSlppVlanTable
+-- --------------------------------------------------
+
+rcSlppVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF RcSlppVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Table of VLANs for which simple loop detection occur on."
+    ::= { rcSlppObjects 2 }
+
+rcSlppVlanEntry OBJECT-TYPE
+    SYNTAX      RcSlppVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "SLPP VLAN entry. "
+    INDEX       { rcSlppVlanVlanId }
+    ::= { rcSlppVlanTable 1 }
+
+RcSlppVlanEntry ::= SEQUENCE {
+    rcSlppVlanVlanId       Integer32,
+    rcSlppVlanSlppEnable   TruthValue,
+    rcSlppVlanRowStatus    RowStatus
+}
+
+rcSlppVlanVlanId OBJECT-TYPE
+    SYNTAX        Integer32 (1..4094)
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION   "Vlan id for which simple loop detection occurs on."
+    ::= { rcSlppVlanEntry 1 }
+
+rcSlppVlanSlppEnable OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION   "Flag to indicate whether the VLAN entry is active or not for SLPP." 
+    ::= { rcSlppVlanEntry 2 }
+
+rcSlppVlanRowStatus   OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "Used to create/delete entries."
+        ::= { rcSlppVlanEntry 3}
+
+
+-- --------------------------------------------------
+-- rcSlppPortTable
+-- --------------------------------------------------
+
+rcSlppPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF RcSlppPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Table of ports for which simple loop detection occurs on."
+    ::= { rcSlppObjects 3 }
+
+rcSlppPortEntry OBJECT-TYPE
+    SYNTAX      RcSlppPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "SLPP Port entry. "
+    INDEX       { rcSlppPortIfIndex }
+    ::= { rcSlppPortTable 1 }
+
+RcSlppPortEntry ::= SEQUENCE {
+    rcSlppPortIfIndex                     InterfaceIndex,
+    rcSlppPortPktRxThreshold  Integer32,
+    rcSlppPortSlppEnable          TruthValue,
+    rcSlppPortRowStatus            RowStatus,
+    rcSlppPortIncomingVlanId      Integer32,
+    rcSlppPortSrcNodeType         INTEGER,
+    rcSlppPortPktRxCount          Integer32
+}
+
+rcSlppPortIfIndex OBJECT-TYPE
+    SYNTAX        InterfaceIndex
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION   "Port on which simple loop detection occurs on."
+        ::= { rcSlppPortEntry 1 }
+
+rcSlppPortPktRxThreshold OBJECT-TYPE
+    SYNTAX        Integer32 (1..500)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION   "Once the number of SLPP packets received on this port reaches this threshold
+    action will be taken.  Normally, the port will be shutdown."
+    DEFVAL      { 1 }
+        ::= { rcSlppPortEntry 2 }
+
+rcSlppPortSlppEnable OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION   "Flag to indicate whether the port entry is active or not for SLPP." 
+    DEFVAL   { false }
+    ::= { rcSlppPortEntry 3 }
+
+rcSlppPortRowStatus OBJECT-TYPE
+    SYNTAX        RowStatus
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION   "Used to create/delete entries."
+    ::= { rcSlppPortEntry 4 }
+
+rcSlppPortIncomingVlanId OBJECT-TYPE
+    SYNTAX        Integer32 (1..4094)
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "Vlan id of the classified packet on the port brought down by
+       SLPP."
+    ::= { rcSlppPortEntry 5 }
+
+rcSlppPortSrcNodeType OBJECT-TYPE
+    SYNTAX        INTEGER {
+                         none(0),
+                         local(1),
+                         peer(2)
+                  }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION  "The src node type of the received slpp Pkt."
+    ::= { rcSlppPortEntry 6 }
+
+rcSlppPortPktRxCount OBJECT-TYPE
+    SYNTAX        Integer32 (1..500)
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "Total number of SLPP packets received on the port"
+    ::= { rcSlppPortEntry 7 }
+
+-- --------------------------------------------------
+-- Notification Objects
+-- --------------------------------------------------
+
+rcSlppIncomingVlanId OBJECT-TYPE
+    SYNTAX        Integer32 (1..4094)
+    MAX-ACCESS    accessible-for-notify
+    STATUS        current
+    DESCRIPTION   "Vlan id of the classified packet on the port brought down by SLPP."
+    ::= { rcSlppNotificationObjects 1 }
+
+rcSlppSrcMacAddress OBJECT-TYPE
+    SYNTAX              MacAddress
+    MAX-ACCESS   accessible-for-notify
+    STATUS             current
+    DESCRIPTION  "Source MAC address in the classified packet on the port brought
+	down by SLPP."
+        ::= { rcSlppNotificationObjects 2 }
+
+rcSlppRxPortIndex OBJECT-TYPE
+    SYNTAX        InterfaceIndex
+    MAX-ACCESS    accessible-for-notify
+    STATUS        current
+    DESCRIPTION   "Port on which the SLPP packet is received."
+    ::= { rcSlppNotificationObjects 3 }
+
+rcSlppRxVlanId OBJECT-TYPE
+    SYNTAX        Integer32 (1..4094)
+    MAX-ACCESS    accessible-for-notify
+    STATUS        current
+    DESCRIPTION   "Vlan on which the SLPP packet is received."
+    ::= { rcSlppNotificationObjects 4 }
+
+rcSlppTxVlanId OBJECT-TYPE
+    SYNTAX        Integer32 (1..4094)
+    MAX-ACCESS    accessible-for-notify
+    STATUS        current
+    DESCRIPTION   "Vlan on which the SLPP packet is sent."
+    ::= { rcSlppNotificationObjects 5 }
+
+
+-- ----------------------------------------------
+-- Notifications
+-- ----------------------------------------------
+
+rcnSlppPortDownEvent NOTIFICATION-TYPE
+    OBJECTS        { rcSlppPortSlppEnable, rcSlppVlanSlppEnable,
+                                   rcSlppIncomingVlanId, rcSlppSrcMacAddress  }
+    STATUS           obsolete
+    DESCRIPTION   "A port down event that has occurred due to SLPP.  The user is notified
+	of the expected Vlan ID along with the Vlan ID and source MAC address of the
+	packet coming in on the port identified.  The first two objects can be used to lookup
+	instance info for port id and vlan id."
+::= { rcSlppNotifications 1 }
+
+rcnSlppPortDownEventNew NOTIFICATION-TYPE
+    OBJECTS    { rcSlppRxPortIndex, rcSlppRxVlanId, rcSlppIncomingVlanId,
+               rcSlppSrcMacAddress }
+    STATUS         current
+    DESCRIPTION    "A port down event that has occurred due to SLPP. The trap
+        includes the port and its Vlan which receives the packet, and
+        along with the Vlan ID and source MAC address of the packet coming in
+        on the port identified."
+    ::= { rcSlppNotifications 2 }
+
+rcnSlppLoopOnDiffVlan NOTIFICATION-TYPE
+    OBJECTS    { rcSlppRxPortIndex, rcSlppRxVlanId, rcSlppTxVlanId,
+               rcSlppSrcMacAddress }
+    STATUS         current
+    DESCRIPTION
+        "Indicates SLPP received its own packet but with the TX VLAN not
+        equal to the RX VLAN."
+    ::= { rcSlppNotifications 3 }
+
+END

@@ -1,0 +1,717 @@
+-- File: xylo.trp
+--
+--  Bay Networks Enterprise Remote Annex Trap Definitions 
+--
+--  Copyright 1996, 1997 Bay Networks, Inc.  ALL RIGHTS RESERVED.
+--
+--  ALL RIGHTS RESERVED. Licensed Material - Property of Bay Networks, Inc.
+--  This software is made available solely pursuant to the terms of a
+--  software license agreement which governs its use.
+--  Unauthorized duplication, distribution or sale are strictly prohibited.
+--
+--  This information is subject to change without notice, and should
+--  not be construed as a commitment by Bay Networks, Inc.  Bay Networks, Inc.,
+--  assumes no responsibility for any errors that may appear in this
+--  document.
+--
+-- Revision #, (date, author)
+--  1.0 (1/16/96, Abbas) - Initial revision.
+--  1.1 (1/30/96, Abbas) - Changed the name and move the object type to 
+--	Xylo private MIB. Also added 2 objects in the suspectAttackTrap; 
+--	anxpTrapAttackErrcode, anxTrapAttackErrmsg.
+--  1.2 (8/25/96, Abbas) - Added trap for automatic detection of modem failures.
+	  
+-- SECTION 1: Top Level Definitions
+
+XYLOGICS-TRAP-MIB  DEFINITIONS ::= BEGIN 
+
+-- Imports
+ 
+IMPORTS
+        TRAP-TYPE                       FROM RFC-1215
+	
+	sysDescr			FROM RFC1213-MIB
+
+	xylogics  			FROM XYLO-MIB-SMI
+
+	anxTrapUserName,  anxTrapPortIndex,     anxTrapPortType, 
+	anxTrapInetAddr,  anxTrapAttackErrcode, anxTrapAttackErrmsg, 
+	anxTrapDbErrcode, anxTrapDbErrmsg,      
+	wanBpvThreshold,  wanOofThreshold,      wanEsThreshold,
+	wanCvThreshold,   wanEsfThreshold,      wanSesThreshold,
+	wanUasThreshold,  wanBesThreshold,      wanLofcThreshold,
+	wanCssThreshold,  ds0ErrorThreshold,	trapAfdMsg,
+	mdmErrorTrapThresh
+					FROM XYLO-TRAPOBJECTS-MIB
+
+	anxt1ChanIndex, anxt1ChanNumber, anxt1CurrentBpvs, anxt1CurrentOofs,
+	anxt1CurrentEsfs, anxt1CurrentLofcs, anxt1ChanConsecFail,
+	anxt1WanIndex, ss7CurrentGateway,nfasBackupStatus,nfasConnectionStatus
+					FROM XYLO-WAN-MIB
+
+
+	dsx1LineStatus, dsx1CurrentESs, dsx1CurrentPCVs, 
+	dsx1CurrentUASs, dsx1CurrentBESs, dsx1CurrentCSSs,dsx1CurrentSESs
+					FROM RFC1406-MIB
+
+	mdmNumber, mdmStatConsecFail	FROM XYLO-MODEM-MIB
+
+	actcallDeviceType, actcallDeviceNumber, actcallSetupTime,
+  	actcallCallingNumber, actcallCalledNumber, actcallUsername, 
+	callHistDeviceType, callHistDeviceNumber, callHistWANUnitNumber,
+	callHistCalledNumber, callHistUsername, 
+	callHistDisconnectReason, callHistAsyMdmDisconnectReason,
+	callHistSetupTime, callHistIndex, callHistCallingNumber,
+	callHistOctetsRx, callHistOctetsTx, callHistChannel
+					FROM XYLO-CALLMGMT-MIB;
+
+-- SECTION 2: Generic Trap Definitions
+-- The events reported are those defined in RFC 1215. They are:
+-- 	coldstart
+--	warmstart
+--	linkDown
+--	linkUp
+--
+
+-- SECTION 3: Bay Networks Enterprise Remote Annex Trap Definitions
+-- for important events. These traps are proprietary
+-- and are defined in this module. 
+
+	suspectAttackTrap	TRAP-TYPE
+		ENTERPRISE	xylogics
+		VARIABLES	{ anxTrapUserName,
+				  anxTrapPortIndex, 
+				  anxTrapPortType,
+				  anxTrapInetAddr,
+				  anxTrapAttackErrcode,
+				  anxTrapAttackErrmsg }
+		DESCRIPTION 
+			"This trap is sent to the trap host under two 
+			conditions indicated by anxpTrapAttackErrcode :-
+			1. UserName has exceeded the threshold for 
+			consecutive number of attempts to log-in.
+			2. UserName has exceeded the threshold for 
+			number of attempts to log-in over a defined
+			period of time.
+
+			The error message is :
+			WARNING: User account disabled due to suspected
+			attack.
+
+			Note: The time stamp that this trap reports
+			indicates the amount of time that the process
+			generating the trap has been running."
+		::= 1
+ 
+        acpdbmerrorTrap       TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { anxTrapDbErrcode,
+                                anxTrapDbErrmsg }
+                DESCRIPTION
+                        "This trap is sent to the trap host when a database
+			error occurs. The error message can be one of the 
+			following:
+				ERPCD cannot read the database
+				ERPCD cannot write to the database
+				ERPCD detects wrong database protection.
+
+                        Note: The time stamp that this trap reports
+                        indicates the amount of time that the process
+                        generating the trap has been running."
+                ::= 2
+ 
+-- This has been deprecated.  It has been replaced by wanMdmErrorThreshTrap
+-- (trap 32).
+-- Since there is no status indicator I have just commented out the whole 
+-- trap (number  3)
+--        modemerrorTrap       TRAP-TYPE
+--                ENTERPRISE    xylogics
+--                VARIABLES     { trapModemMsg }
+--                DESCRIPTION
+--                        "This trap is sent to the trap host(s) when a modem 
+--			failure is detected automatically and the modem is
+--			busied out.
+--			The modem could be busied out either because the 
+--			percentage failure threshold over the time period 
+--			has been reached or the threshold for consecutive 
+--			failures has been reached.
+--
+--			Note: The message specifies the modem which is 
+--			being busied out."
+--                ::= 3
+ 
+        wanAlarmTrap          TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { dsx1LineStatus,
+				anxt1WanIndex }
+                DESCRIPTION
+                        "This trap is generated when a Red, Yellow or Blue
+			alarm is detected.
+			
+			This trap is supported on the following products:
+			6100, 5391, 5399, 5393, 6300, 8000."
+                ::= 4
+
+        wanAlarmClearTrap     TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { dsx1LineStatus,
+				anxt1WanIndex }
+                DESCRIPTION
+                        "This trap is generated when at least 15 seconds have
+			elapsed without a Red, Yellow or Blue alarm.
+			
+			This trap is supported on the following products:
+			6100, 5391, 5399, 5393, 6300, 8000."
+                ::= 5
+
+        wanBpvThreshTrap      TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { anxt1CurrentBpvs,
+				wanBpvThreshold,
+				anxt1WanIndex }
+                DESCRIPTION
+                        "This trap is generated when the number of bipolar
+			violation errors equals or exceeds the threshold 
+			defined by wanBpvThreshold.
+			
+			This trap is supported on the following products:
+			6100, 5391, 5399, 6300, 5393, 8000."
+                ::= 6
+
+        wanBpvClearTrap       TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { anxt1CurrentBpvs,
+				wanBpvThreshold,
+				anxt1WanIndex }
+                DESCRIPTION
+                        "This trap is generated when a 15 minute interval has
+			terminated without the number of bipolar errors meeting
+			or exceeding wanBpvThreshold.
+			
+			This trap is supported on the following products:
+			6100, 5391, 5399, 6300, 5393, 8000."
+                ::= 7
+
+        wanOofThreshTrap      TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { anxt1CurrentOofs,
+				wanOofThreshold,
+				anxt1WanIndex }
+                DESCRIPTION
+			"This trap is generated when the number of frame
+			 errors equals or exceeds the threshold defined by 
+			 wanOofThreshold.
+			
+			This trap is supported on the following products:
+			6100, 5391, 5399, 6300, 5393, 8000."
+                ::= 8
+
+        wanOofClearTrap       TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { anxt1CurrentOofs,
+				wanOofThreshold,
+				anxt1WanIndex }
+                DESCRIPTION
+			"This trap is generated when a 15 minute interval has
+			terminated without the number of frame errors meeting
+			or exceeding wanOofThreshold.
+			
+			This trap is supported on the following products:
+			6100, 5391, 5399, 6300, 5393, 8000."
+                ::= 9
+
+        wanEsThreshTrap       TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { dsx1CurrentESs,
+				wanEsThreshold,
+				anxt1WanIndex }
+                DESCRIPTION
+			"This trap is generated when the number of errored
+			seconds errors equals or exceeds the threshold
+			defined by wanEsThreshold.
+			
+			This trap is supported on the following products:
+			6100, 5391, 5399, 6300, 5393, 8000."
+                ::= 10
+
+        wanEsClearTrap        TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { dsx1CurrentESs,
+				wanEsThreshold,
+				anxt1WanIndex }
+                DESCRIPTION
+			"This trap is generated when a 15 minute interval has
+			terminated without the number of errored seconds meeting
+			or exceeding wanEsThreshold.
+			
+			This trap is supported on the following products:
+			6100, 5391, 5399, 6300, 5393, 8000."
+                ::= 11
+
+-- call management related traps.
+	callBeginTrap	TRAP-TYPE
+		ENTERPRISE	xylogics
+		VARIABLES	{ anxt1ChanIndex,
+				  anxt1ChanNumber,
+				  actcallSetupTime,
+				  actcallDeviceType,
+				  actcallDeviceNumber,
+				  actcallCallingNumber,
+				  actcallCalledNumber,
+				  actcallUsername
+				}
+		DESCRIPTION
+		"This trap is generated when an incoming call is detected or
+		an outbound call is generated by the RAC. The trap is sent to
+		the trap host defined in the config file. The trap will
+		include above objects as variable bindings. For further
+		description of these objects please see appropriate MIBs.
+		The trap can be enabled or disabled through callBeginTrapObj
+		MIB object.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 12
+
+	callEndTrap	TRAP-TYPE
+		ENTERPRISE	xylogics
+		VARIABLES	{ callHistIndex,
+				  callHistWANUnitNumber,
+				  callHistChannel,
+				  callHistDeviceType,
+				  callHistDeviceNumber,
+				  callHistSetupTime,
+				  callHistCallingNumber,
+				  callHistCalledNumber,
+				  callHistUsername,
+				  callHistOctetsRx,
+				  callHistOctetsTx,
+				  callHistDisconnectReason
+				}
+		DESCRIPTION
+		"This trap is generated when a call has terminated. The trap 
+		is sent to the trap host defined in the config file. The trap 
+		will include above objects as variable bindings. For further
+		description of these objects please see appropriate MIBs.
+		This trap is controlled by callEndTrapThresh, MIB object. This
+		object specifies the number of call that has terminated after 
+		which this trap will be generated by the RAC. Setting the
+		object, callEndTrapThresh to zero will disable the trap
+		generation.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 13
+
+	unexpectDisconnectTrap	TRAP-TYPE
+		ENTERPRISE	xylogics
+		VARIABLES	{ callHistIndex,
+				  callHistWANUnitNumber,
+				  callHistChannel,
+				  callHistDeviceType,
+				  callHistDeviceNumber,
+				  callHistSetupTime,
+				  callHistDisconnectReason,
+				  callHistAsyMdmDisconnectReason
+				}
+		DESCRIPTION
+		"This trap is generated when a call has disconnected 
+		unexpectedly. A call is considered to have disconnected 
+		unexpectedly is the call disconnect reason is:
+		protocolError, localHangup, timeoutHDLC, maxLogonTimeout
+		OR if the call is handled by a modem and the modem disconnect
+		reason is : poorSignalQ, failRetrain.
+		This trap is controlled by unexpectDisconnectTrapThresh
+		MIB object."
+		::= 14
+
+	forcedCallDisconnectTrap	TRAP-TYPE
+		ENTERPRISE	xylogics
+		VARIABLES	{ callHistIndex,
+				  callHistWANUnitNumber,
+				  callHistChannel,
+				  callHistDeviceType,
+				  callHistDeviceNumber,
+				  callHistSetupTime,
+				  callHistCallingNumber,
+				  callHistCalledNumber,
+				  callHistDisconnectReason
+				}
+		DESCRIPTION
+		"This trap is generated when a call is disconnected 
+		due to inactivity. The RAC has following activity timers.
+		Setting off any of these timers will trigger this trap.
+		The timers are :
+		cliInactivityTimeout - the amount of time in minutes that 
+			the RAC (system) waits before hanging up the call. 
+			This is valid if the session is in CLI mode. Not 
+			applicable for any other sessions (PPP etc). 
+			The value of the timer is determined by the object,
+			gpTimerCliInactivity.
+		inactivityTimeout - the amount of time in minutes that the
+			RAC waits before hanging up the call. The timer is
+			independent of the mode of the session. The value of 
+			the timer is determined by the object, 
+			gpTimerInactivityTimer.
+		netInactivityTimeout - this is similar to the inactivity
+			timeout.
+		This trap is controlled by forcedCallDisconnectTrapThresh MIB
+		object."
+		::= 15
+
+-- Network manager application generated trap definition
+        nodeUnreachableTrap       TRAP-TYPE
+                ENTERPRISE    xylogics
+                DESCRIPTION
+                "This trap is generated by Optivity when Optivity 
+		can not ping an Annex. This trap is equivalent to HP 
+		OpenView's OV_Node_Down trap except that it is only generated 
+		for an Annex. This trap will be used only by Bay's Technical 
+		Response Center."
+                ::= 16
+
+-- WAN traps
+        wanCvThreshTrap       TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { dsx1CurrentPCVs,
+				wanCvThreshold,
+                	        anxt1WanIndex }
+                DESCRIPTION
+                        "This trap is generated when the number of CRC6
+                        errors equals or exceeds the threshold 
+			defined wanCvThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+                ::= 17
+ 
+	wanCvClearTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { dsx1CurrentPCVs,
+				wanCvThreshold,
+			        anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when a 15 minute interval has
+			terminated without the number of CRC6 errors
+			meeting or exceeding wanCvThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 18
+ 
+        wanEsfThreshTrap       TRAP-TYPE
+                ENTERPRISE    xylogics
+                VARIABLES     { anxt1CurrentEsfs,
+				wanEsfThreshold,
+				anxt1WanIndex }  
+                DESCRIPTION
+                        "This trap is generated when the number of ESF
+                        errors equals or exceeds the threshold defined by
+			wanEsfThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+                ::= 19
+
+	wanEsfClearTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { anxt1CurrentEsfs,
+				wanEsfThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when a 15 minute interval has
+			terminated without the number of ESF errors
+			meeting or exceeding wanEsfThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 20
+
+	wanSesThreshTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { dsx1CurrentSESs,
+				wanSesThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when the number of severely
+			errored seconds errors equals or exceeds the threshold 
+			defined by wanSesThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 21
+
+	waSesClearTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { dsx1CurrentSESs,
+				wanSesThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when a 15 minute interval has
+			terminated without the number of severely errored 
+			seconds meeting or exceeding wanSesThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 22
+
+	wanUasThreshTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { dsx1CurrentUASs,
+				wanUasThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when the number of unavailable
+			seconds equals or exceeds the threshold defined by 
+			wanUasThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 23
+
+	wanUasClearTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { dsx1CurrentUASs,
+				wanUasThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when a 15 minute interval has
+			terminated without the number of unavailable seconds 
+			meeting or exceeding wanUasThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 24
+
+	wanBesThreshTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { dsx1CurrentBESs,
+				wanBesThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when the number of bursty
+			errored seconds equals or exceeds the threshold 
+			defined by wanBesThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 25
+
+	wanBesClearTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { dsx1CurrentBESs,
+				wanBesThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when a 15 minute interval has
+			terminated without the number of bursty errored 
+			seconds meeting or exceeding wanBesThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 26
+
+	wanLofcThreshTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { anxt1CurrentLofcs,
+				wanLofcThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when the number of loss of
+			frame count errors equals or exceeds the threshold 
+			defined by wanLofcThreshold.
+
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 27
+			
+	wanLofcClearTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { anxt1CurrentLofcs,
+				wanLofcThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when a 15 minute interval has
+			terminated without the number of loss of frame count 
+			errors meeting or exceeding wanLofcThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 28
+
+	wanCssThreshTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { dsx1CurrentCSSs,
+				wanCssThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when the number of controlled
+			slip seconds equals or exceeds the threshold defined by 
+			wanCssThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 29
+
+	wanCssClearTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { dsx1CurrentCSSs,
+				wanCssThreshold,
+				anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when a 15 minute interval has
+			terminated without the number of controlled slip
+			seconds meeting or exceeding wanCssThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 30
+
+	
+	wanFailWanTrap       TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { anxt1WanIndex }
+		DESCRIPTION
+			"This trap is generated when a WAN module fails
+			initialization procedures.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 31
+
+	wanMdmErrorThreshTrap TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { mdmStatConsecFail,
+				mdmErrorTrapThresh,
+				mdmNumber
+			      }
+		DESCRIPTION
+			"This trap is generated when the the number of
+			consecutive modem errors meets or exceeds
+			modem_error_threshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6100, 6300, 8000."
+		::= 32
+
+	modemUnavailableTrap  TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { anxt1ChanIndex,
+				anxt1ChanNumber,
+				actcallCallingNumber,
+				actcallCalledNumber
+			      }
+		DESCRIPTION
+			"This trap is generated when there are no modems
+			available to handle an incoming call.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 33
+
+	ds0ErrorThresholdTrap TRAP-TYPE
+		ENTERPRISE    xylogics
+		VARIABLES     { anxt1ChanConsecFail,
+				ds0ErrorThreshold,
+				anxt1ChanIndex,
+				anxt1ChanNumber }
+		DESCRIPTION
+			"This trap is generated when the number of 
+			consecutive call failures meets or exceeds
+			ds0ErrorThreshold.
+			
+			This trap is supported on the following products:
+			5399, 5393, 6300, 8000."
+		::= 34
+
+       afderrorTrap  TRAP-TYPE
+	ENTERPRISE  xylogics
+	VARIABLES { anxt1WanIndex,
+		    trapAfdMsg }
+	DESCRIPTION
+		"This trap is sent to the trap host(s) when
+		AFD detects a catastrophic error downloading wan
+		modules. The wan module at this point is inoperable.
+
+		This trap is supported on the following products:
+		6100, 5391, 6300, 5393, 5399, 8000"
+	::= 35
+
+	dvsConnectFailure  TRAP-TYPE
+	ENTERPRISE  xylogics
+	VARIABLES { sysDescr }
+	DESCRIPTION
+		"This trap is sent when a DVS connection failure
+		occurs.
+
+		This trap is supported on the following products:
+		5399, 8000"
+	::= 36
+
+       ss7GwConnectTrap  TRAP-TYPE
+	ENTERPRISE  xylogics
+	VARIABLES { ss7CurrentGateway }
+	DESCRIPTION
+		"This trap is sent when the RAS has successfully
+		connected to an ss7 gateway.
+
+		This trap is supported on the following products:
+		5399, 8000"
+	::= 37
+
+       ss7GwDisconnectTrap  TRAP-TYPE
+	ENTERPRISE  xylogics
+	VARIABLES { ss7CurrentGateway }
+	DESCRIPTION
+		"This trap is sent when the RAS loses it's connection
+		to the ss7 gateway.
+
+		This trap is supported on the following products:
+		5399, 8000"
+	::= 38
+
+	operModemImageVersTrap TRAP-TYPE
+        ENTERPRISE  xylogics
+        VARIABLES { operImageModemImage }
+        DESCRIPTION
+               "This trap includes the operational and the modem image version. 
+		This trap is supported on the following products:
+                5399, 8000"
+        ::= 39
+
+        wanVersionTrap TRAP-TYPE        
+        ENTERPRISE  xylogics   
+        VARIABLES { wanVersion }
+        DESCRIPTION    
+               "This trap includes the WAN version string and indicates that a WAN is up. 
+                This trap is supported on the following products:
+                5399, 8000"    
+        ::= 40 
+
+	
+
+       nfasBackupStatusTrap  TRAP-TYPE
+        ENTERPRISE  xylogics
+        VARIABLES { nfasBackupStatus }
+        DESCRIPTION
+                "This trap is sent in nfas to indicate the status of 
+		switch-over.
+ 
+                This trap is supported on the following products:
+                5399, 8000"
+        ::= 41
+
+       nfasConnectionStatusTrap  TRAP-TYPE
+        ENTERPRISE  xylogics
+        VARIABLES { nfasConnectionStatus }
+        DESCRIPTION
+                "This trap is sent in nfas to indicate the status of  
+                of the connection between any of the Primary,Backup
+		and Bearer with one another."
+ 
+                This trap is supported on the following products:
+                5399, 8000"
+        ::= 42 
+END
+
+

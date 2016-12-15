@@ -1,0 +1,1244 @@
+-- SECTION 1: Top Level Definitions
+
+S5-TOKENRING-MIB DEFINITIONS ::= BEGIN
+
+
+-- 5000 Token Ring MIB Release 1.2.1
+-- Revision 04/05/95
+
+-- Copyright 1995 Bay Networks, Inc.
+-- All rights reserved.
+-- This SynOptics SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	Counter, TimeTicks
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	s5Tok
+		FROM S5-ROOT-MIB
+	MacAddress, TimeIntervalSec, TimeIntervalHrd, SrcIndx
+		FROM S5-TCS-MIB;
+
+
+
+-- Token Ring Groups
+
+-- Configuration
+s5TrCfg		OBJECT IDENTIFIER ::= { s5Tok 1 }
+
+-- Statistics
+s5TrStat	OBJECT IDENTIFIER ::= { s5Tok 2 }
+
+-- Ring and Station
+s5TrRing	OBJECT IDENTIFIER ::= { s5Tok 3 }
+
+-- Test Path Group
+s5TrTest	OBJECT IDENTIFIER ::= { s5Tok 4 }
+
+
+
+-- SECTION 2: Ring and Station Information
+
+
+
+-- Ring Info table
+
+s5TrRingInfoTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrRingInfoEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table containing information
+		about selected rings. The entries
+		in the table may come from
+		several different data sources.
+		The number of entries is determined
+		by the number of sources that can
+		provide the information."
+	::= { s5TrRing 1 }
+
+
+s5TrRingInfoEntry OBJECT-TYPE
+	SYNTAX	S5TrRingInfoEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in Token Ring information
+		table. Entries can not be created
+		or deleted via SNMP."
+	INDEX	{ s5TrRingInfoSrcIndx }
+	::= { s5TrRingInfoTable 1 }
+
+
+S5TrRingInfoEntry ::= SEQUENCE {
+	s5TrRingInfoSrcIndx SrcIndx,
+
+	s5TrRingInfoRingNum INTEGER,
+	s5TrRingInfoStaTableOperSize INTEGER,
+	s5TrRingInfoActiveStations INTEGER,
+	s5TrRingInfoDeletes Counter,
+	s5TrRingInfoLastDeleteTime TimeTicks,
+	s5TrRingInfoAgeInterval TimeIntervalSec,
+	s5TrRingInfoMonTime TimeTicks,
+
+	s5TrRingInfoRingState INTEGER,
+	s5TrRingInfoBeaconSender MacAddress,
+	s5TrRingInfoBeaconNaun MacAddress,
+	s5TrRingInfoBeaconType INTEGER,
+	s5TrRingInfoLastBeaconTime TimeTicks,
+	s5TrRingInfoActiveMonitor MacAddress,
+	s5TrRingInfoChanges Counter,
+
+	s5TrRingInfoRingPurgeEvents Counter,
+	s5TrRingInfoBeaconEvents Counter,
+	s5TrRingInfoBeaconTime TimeIntervalHrd,
+	s5TrRingInfoMonitorContentionEvents Counter,
+	s5TrRingInfoNaunChanges Counter,
+	s5TrRingInfoRingPollEvents Counter
+	}
+
+
+s5TrRingInfoSrcIndx OBJECT-TYPE
+	SYNTAX	SrcIndx
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The index of the entry in the table.
+		This index identifies the source of the
+		information. Only those sources that provide
+		these statistics are in this table."
+	::= { s5TrRingInfoEntry 1 }
+
+s5TrRingInfoRingNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..4095)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The ring number of the ring that is being
+		monitored. Each ring in a multiple ring network
+		is assigned a unique number. Together, a ring and
+		bridge number form a route designator. The ring
+		number is obtained by an NMM during the
+		initialization process.
+		Section 3.8.1 of IEEE 802.5 specification. "
+	::= { s5TrRingInfoEntry 2 }
+
+s5TrRingInfoStaTableOperSize OBJECT-TYPE
+	SYNTAX	INTEGER (1..300)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The operational size of the station info
+		table (i.e., table s5TrStaInfoTable). This
+		size is the maximum number of stations for
+		which information can be collected. (Note: 
+		a ring is limited to a maximum 256 active
+		stations.) The station table may also contain
+		entries for inactive stations. The station
+		table may have any combination of active
+		and inactive stations (except the number of
+		active is limited to 256) up to the current
+		value of this object. For example if the value
+		of this object is 112, the station table could
+		contain 100 inactive and 12 active stations."
+	::= { s5TrRingInfoEntry 3 }
+
+s5TrRingInfoActiveStations OBJECT-TYPE
+	SYNTAX	INTEGER (1..256)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of active stations on the
+		ring that is being monitored. This is the
+		number of active stations in the station
+		info table (i.e., table s5TrStaInfoTable)."
+	::= { s5TrRingInfoEntry 4 }
+
+s5TrRingInfoDeletes OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of times stations were removed
+		from table s5TrStaInfoTable due to either
+		aging out or table overflow."
+	::= { s5TrRingInfoEntry 5 }
+
+s5TrRingInfoLastDeleteTime OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime when the last
+		station was removed from table
+		s5TrStaInfoTable. If this has not
+		occurred, then the value is zero."
+	::= { s5TrRingInfoEntry 6 }
+
+s5TrRingInfoAgeInterval OBJECT-TYPE
+	SYNTAX	TimeIntervalSec
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The amount of time used to age stations
+		from table s5TrStaInfoTable. If a station
+		has had a status of inactive in the last
+		time interval, it may be removed from
+		table s5TrStaInfoTable. A value of zero
+		means no aging is to occur."
+	DEFVAL { 0 }
+	::= { s5TrRingInfoEntry 7 }
+
+s5TrRingInfoMonTime OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The length of time that the ring has been
+		monitored by the current source."
+	::= { s5TrRingInfoEntry 8 }
+
+s5TrRingInfoRingState OBJECT-TYPE
+	SYNTAX	INTEGER {
+		normalOperation(1),
+		ringPurge(2),
+		monitorContention(3),
+		beaconFrameStreaming(4),
+		beaconBitStreaming(5),
+		beaconRingSignalLoss(6),
+		beaconSetRecoveryMode(7)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current status of this ring.
+		The states are:
+		  normalOperation(1).........ring operating without
+		        any interruption.
+		  ringPurge(2)...............Active monitor enters
+		        the ring purge state whenever a token error
+		        is detected.
+		  monitorContention(3).......ring enters in monitor
+		        contention state whenever the ring stations
+		        need to establish an active monitor.
+		  beaconFrameStreaming(4)....station which participates
+		        in monitor contention and has monitor
+		        contention timeout expired, receives multiple
+		        claim tokens and cannot solve the contention
+		        within one second.
+		  beaconBitStreaming(5)......station which participates
+		        in monitor contention, has 'monitor timeout'
+		        and does not receive any claim token.
+		  beaconRingSignalLoss(6)....station which has
+		        'contention timeout' and participates in monitor
+		        contention and detects the loss of incoming
+		        signal.
+		  beaconSetRecoveryMode(7)...station before acting as a
+		        recovery station sends out beacon frame with a
+		        recovery mode bit set."
+	::= { s5TrRingInfoEntry 9 }
+
+s5TrRingInfoBeaconSender OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The MAC address of the sender of the
+		last beacon frame detected on the ring.
+		If no beacon frame has been detected,
+		then the value is equal to six octets
+		of zero."
+	::= { s5TrRingInfoEntry 10 }
+
+s5TrRingInfoBeaconNaun OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The MAC address of the NAUN (next active
+		upstream neighbor) in the last beacon frame
+		detected on the ring. If no beacon frame has
+		been detected, then the value is equal to six
+		octets of zero."
+	::= { s5TrRingInfoEntry 11 }
+
+s5TrRingInfoBeaconType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		other(1),
+		recovery(2),
+		signalLoss(3),
+		bitStreaming(4),
+		contentionStreaming(5)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of the last beacon frame detected
+		on the ring. The values are:
+		  other(1).................No beacon seen or
+		        some other type
+		  recovery(2)..............station before acting
+		        as a recovery station sends out a beacon
+		        frame with a recovery mode bit set.
+		  signalLoss(3)............station which has
+		        'contention timeout' and participates in
+		        monitor contention and detects the loss
+		        of incoming signal.
+		  bitStreaming(4)..........station which participates
+		        in monitor contention, has monitor timeout
+		        and does not receive any claim token.
+		  contentionStreaming(5)...station which participates
+		        in monitor contention and has monitor
+		        contention timeout expired, receives multiple
+		        claim tokens and cannot solve the contention
+		        within one second."
+	::= { s5TrRingInfoEntry 12 }
+
+s5TrRingInfoLastBeaconTime OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime when the last beacon
+		frame was detected on the ring. If one has not
+		been detected, then the value is zero."
+	::= { s5TrRingInfoEntry 13 }
+
+s5TrRingInfoActiveMonitor OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The MAC address of the Active Monitor
+		on the ring. If this address is unknown,
+		then the value is equal to six octets
+		of zero."
+	::= { s5TrRingInfoEntry 14 }
+
+s5TrRingInfoChanges OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of add and delete events in the
+		station info table associated with
+		this ring. If no changes have occurred,
+		then the value is zero."
+	::= { s5TrRingInfoEntry 15 }
+
+s5TrRingInfoRingPurgeEvents OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of times that the ring has
+		entered the ring purge state from the normal ring
+		state. The ring purge state that comes from the
+		monitor contention or beacon state is not counted."
+	::= { s5TrRingInfoEntry 16 }
+
+s5TrRingInfoBeaconEvents OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of times that the ring has
+		entered the beaconing state."
+	::= { s5TrRingInfoEntry 17 }
+
+s5TrRingInfoBeaconTime OBJECT-TYPE
+	SYNTAX	TimeIntervalHrd
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total amount of time that the ring has been
+		in the beaconing state. This beacon time is
+		updated anytime whenever the ring enters a
+		beaconing state."
+	::= { s5TrRingInfoEntry 18 }
+
+s5TrRingInfoMonitorContentionEvents OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of times that the ring has
+		entered the monitor contention state from the
+		normal ring state or ring purge state. The
+		monitor contention state that comes from the
+		beacon state is not counted."
+	::= { s5TrRingInfoEntry 19 }
+
+s5TrRingInfoNaunChanges OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of NAUN (Nearest Active
+		Upstream Neighbor) changes that have been
+		measured. This is determined by the number
+		of Report SUA change MAC frames that have
+		been detected."
+	::= { s5TrRingInfoEntry 20 }
+
+s5TrRingInfoRingPollEvents OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of ring poll events that have
+		been detected."
+	::= { s5TrRingInfoEntry 21 }
+
+
+
+-- Station Info Table
+
+s5TrStaInfoTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrStaInfoEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table containing information about
+		the stations on selected rings. The
+		number of rings is determined by the
+		number of data sources. The number of
+		stations is determined by the number
+		on each ring limited by the configured
+		maximum number. An entry will exist
+		for each station that is now or has
+		previously been detected on the ring.
+		This table extends each row in the
+		s5TrRingInfoTable with station
+		information."
+	::= { s5TrRing 2 }
+
+s5TrStaInfoEntry OBJECT-TYPE
+	SYNTAX	S5TrStaInfoEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the station info table.
+		Entries can not be created or
+		deleted via SNMP."
+	INDEX	{ s5TrStaInfoSrcIndx,
+		  s5TrStaInfoAddr }
+	::= { s5TrStaInfoTable 1 }
+
+S5TrStaInfoEntry ::= SEQUENCE {
+	s5TrStaInfoSrcIndx SrcIndx,
+	s5TrStaInfoAddr MacAddress,
+	s5TrStaInfoLastNaun MacAddress,
+	s5TrStaInfoStationStatus INTEGER,
+	s5TrStaInfoFirstEnterTime TimeTicks,
+	s5TrStaInfoLastEnterTime TimeTicks,
+	s5TrStaInfoLastExitTime TimeTicks,
+	s5TrStaInfoDupAddrErrs Counter,
+	s5TrStaInfoInLineErrs Counter,
+	s5TrStaInfoOutLineErrs Counter,
+	s5TrStaInfoInternalErrs Counter,
+	s5TrStaInfoInBurstErrs Counter,
+	s5TrStaInfoOutBurstErrs Counter,
+	s5TrStaInfoInACErrs Counter,
+	s5TrStaInfoOutACErrs Counter,
+	s5TrStaInfoAbortErrs Counter,
+	s5TrStaInfoLostFrameErrs Counter,
+	s5TrStaInfoCongestionErrs Counter,
+	s5TrStaInfoFrameCopiedErrs Counter,
+	s5TrStaInfoFrequencyErrs Counter,
+	s5TrStaInfoTokenErrs Counter,
+	s5TrStaInfoInBeaconErrs Counter,
+	s5TrStaInfoOutBeaconErrs Counter,
+	s5TrStaInfoInsertions Counter
+	}
+
+s5TrStaInfoSrcIndx OBJECT-TYPE
+	SYNTAX	SrcIndx
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The index of the associated entry in
+		table s5TrRingInfoTable.
+		This index identifies the source of the
+		information. Only those sources that provide
+		these statistics are in this table."
+	::= { s5TrStaInfoEntry 1 }
+
+s5TrStaInfoAddr OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The MAC address of the station."
+	::= { s5TrStaInfoEntry 2 }
+
+s5TrStaInfoLastNaun OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The MAC address of the last known NAUN (Next
+		Active Upstream Neighbor) of this station."
+	::= { s5TrStaInfoEntry 3 }
+
+s5TrStaInfoStationStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		active(1),
+		notInRingPoll(2),
+		inactive(3),
+		forcedRemoval(4)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The insertion status of the station
+		on the ring. The values are:
+		  active(1)..........Actively participating in
+		                       ring poll
+		  notInRingPoll(2)...Detected on the ring, but
+		                       not currently participating
+		                       in the ring poll
+		  inactive(3)........No longer on the ring
+		  forcedRemoval(4)...Forced off the ring by
+		                       network management"
+	::= { s5TrStaInfoEntry 4 }
+
+s5TrStaInfoFirstEnterTime OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime at the time the station
+		first entered the ring. If the time is unknown,
+		the value shall be zero."
+	::= { s5TrStaInfoEntry 5 }
+
+s5TrStaInfoLastEnterTime OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime at the time the station
+		last entered the ring. If the time is unknown,
+		the value shall be zero."
+	::= { s5TrStaInfoEntry 6 }
+
+s5TrStaInfoLastExitTime OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime at the time the station
+		last exited the ring. If the time is unknown,
+		the value shall be zero."
+	::= { s5TrStaInfoEntry 7 }
+
+s5TrStaInfoDupAddrErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of times the station experienced
+		a duplicate address error. This error is reported
+		by a station via a Report Monitor Error MAC frame.
+		Section 3.8.8 of IEEE 802.5 specificatiuon."
+	::= { s5TrStaInfoEntry 8 }
+
+s5TrStaInfoInLineErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of line errors reported by
+		by the station in error report frames
+		and detected on the ring.
+		Section 3.8.1 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 9 }
+
+s5TrStaInfoOutLineErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of line errors reported by
+		by the nearest active downstream neighbor
+		of the station in error report frames
+		and detected on the ring.
+		Section 3.8.1 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 10 }
+
+s5TrStaInfoInternalErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of adapter internal errors
+		reported by the station in error report
+		frames and detected on the ring.
+		Section 3.8.2 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 11 }
+
+s5TrStaInfoInBurstErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of burst errors reported by
+		the station in error report frames
+		and detected on the ring.
+		Section 3.8.3 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 12 }
+
+s5TrStaInfoOutBurstErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of burst errors reported by
+		the nearest active downstream neighbor of
+		the station in error report frames and
+		detected on the ring.
+		Section 3.8.3 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 13 }
+
+s5TrStaInfoInACErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of AC (Address Copied) errors
+		reported by the station in error report frames
+		and detected on the ring.
+		Section 3.8.4 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 14 }
+
+s5TrStaInfoOutACErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of AC (Address Copied) errors
+		reported by the nearest active downstream
+		neighbor of the station in error report frames
+		and detected on the ring.
+		Section 3.8.4 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 15 }
+
+s5TrStaInfoAbortErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of abort delimiter transmitted
+		errors reported by the station in error report
+		frames and detected on the ring.
+		Section 3.8.5 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 16 }
+
+s5TrStaInfoLostFrameErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of frames lost errors reported
+		by the station in error report frames and
+		detected on the ring.
+		Section 3.8.6 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 17 }
+
+s5TrStaInfoCongestionErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of receive congestion errors
+		reported by the station in error report
+		frames and detected on the ring.
+		Section 3.8.7 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 18 }
+
+s5TrStaInfoFrameCopiedErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of frame copied errors reported
+		by the station in error report frames and
+		detected on the ring.
+		Section 3.8.8 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 19 }
+
+s5TrStaInfoFrequencyErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of frequency errors reported
+		by the station in error report frames
+		and detected on the ring.
+		Section 3.8.9 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 20 }
+
+s5TrStaInfoTokenErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of token errors reported by
+		the station in error report frames and
+		detected on the ring.
+		Section 3.8.10 of IEEE 802.5 specification."
+	::= { s5TrStaInfoEntry 21 }
+
+s5TrStaInfoInBeaconErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of beacon frames sent by the
+		station and detected on the ring."
+	::= { s5TrStaInfoEntry 22 }
+
+s5TrStaInfoOutBeaconErrs OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Total number of beacon frames detected on the
+		ring that name the station as the NAUN."
+	::= { s5TrStaInfoEntry 23 }
+
+s5TrStaInfoInsertions OBJECT-TYPE
+	SYNTAX	Counter
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of times that the station
+		was detected inserting onto the ring."
+	::= { s5TrStaInfoEntry 24 }
+
+
+
+-- Station Control Table
+
+s5TrStaCtlTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrStaCtlEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table containing control objects
+		and addition information about the
+		stations on selected rings. The
+		number of rings is determined by the
+		number of data sources.
+		This table extends each row in table
+		s5TrStaInfoTable with additional information
+		and control objects."
+	::= { s5TrRing 3 }
+
+s5TrStaCtlEntry OBJECT-TYPE
+	SYNTAX	S5TrStaCtlEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the station control table.
+		Entries can not be created or
+		deleted via SNMP."
+	INDEX	{ s5TrStaCtlSrcIndx,
+		  s5TrStaCtlAddr }
+	::= { s5TrStaCtlTable 1 }
+
+S5TrStaCtlEntry ::= SEQUENCE {
+	s5TrStaCtlSrcIndx SrcIndx,
+	s5TrStaCtlAddr MacAddress,
+	s5TrStaCtlRemove INTEGER,
+	s5TrStaCtlUpdateStats INTEGER,
+	s5TrStaCtlUpdateTime TimeTicks,
+	s5TrStaCtlProductId OCTET STRING,
+	s5TrStaCtlNodeVersion OCTET STRING,
+	s5TrStaCtlPhysDrop OCTET STRING,
+	s5TrStaCtlFuncAddr MacAddress,
+	s5TrStaCtlAuthFuncClass OCTET STRING,
+	s5TrStaCtlAuthAccPriority OCTET STRING,
+	s5TrStaCtlStationId MacAddress,
+	s5TrStaCtlNumGrpAddr MacAddress
+	}
+
+s5TrStaCtlSrcIndx OBJECT-TYPE
+	SYNTAX	SrcIndx
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The first index of the associated entry
+		in table s5TrStaInfoTable.
+		This index identifies the source of the
+		information. Only those sources that provide
+		these statistics are in this table."
+	::= { s5TrStaCtlEntry 1 }
+
+s5TrStaCtlAddr OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The second index of the associated entry
+		in table s5TrStaInfoTable. This index is
+		the MAC address of the station."
+	::= { s5TrStaCtlEntry 2 }
+
+s5TrStaCtlRemove OBJECT-TYPE
+	SYNTAX	INTEGER {
+		stable(1),
+		remove(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This is an action object to send a Remove
+		Station MAC frame to the station. The following
+		value can be written:
+		  remove(2)...causes a frame to be sent
+
+		The following values can be read:
+		  stable(1)...a frame is not currently
+		                being sent
+		  remove(2)...in progress of sending a frame."
+	::= { s5TrStaCtlEntry 3 }
+
+s5TrStaCtlUpdateStats OBJECT-TYPE
+	SYNTAX	INTEGER {
+		other(1),
+		inactive(2),
+		stable(3),
+		update(4)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This is an action object used to cause
+		configuration information for the station
+		to be updated. The following value can
+		be written:
+		  update(4)...causes update to be attempted
+
+		The following values can be read:
+		  other(1)......configuration information not
+		                  currently valid
+		  inactive(2)...the station is currently inactive
+		  stable(3).....configuration information is
+		                  currently valid
+		  update(4).....updating configuration info
+		The object s5TrStaCtlUpdateTime has the
+		time that the configuration was last updated.
+		If a station is currently not on the ring,
+		the value inactive(2) will be returned.
+		A SET with value update(4) to an inactive station
+		will result in a value of inactive(2)."
+	::= { s5TrStaCtlEntry 4 }
+
+s5TrStaCtlUpdateTime OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime at the time the
+		configuration information was last updated
+		(completely). If the information has never
+		been gotten, then the value is zero. The
+		config info is updated whenever a station
+		is first detected on the ring."
+	::= { s5TrStaCtlEntry 5 }
+
+s5TrStaCtlProductId OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..18))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A brief string describing the product specified
+		by the vendor. The value is a zero length string
+		when not valid (or available).
+
+		Section 3.3.2.14 of IEEE 802.5 specification.
+
+		NOTE: The characters in the string are represented
+		in EBCDIC for IBM products, in ASCII for others."
+	::= { s5TrStaCtlEntry 6 }
+
+s5TrStaCtlNodeVersion OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..10))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A string that represents the version of the
+		station software. The value is a zero length
+		string when not valid (or available).
+
+		Section 3.3.2.17 of IEEE 802.5 specification.
+
+		NOTE: The characters in the string are represented
+		in EBCDIC for IBM products, in ASCII for others.
+		The octet string is represented in the following
+		format for IBM products:
+		    octets from 0 to 4 : Feature Code
+		    octets from 5 to 9 : EC level."
+	::= { s5TrStaCtlEntry 7 }
+
+s5TrStaCtlPhysDrop OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(4))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The physical location of the station on the
+		ring. The value is 4 octets of zero when not
+		valid (or available).
+
+		Section 3.3.2.13 of IEEE 802.5 specification."
+	::= { s5TrStaCtlEntry 8 }
+
+s5TrStaCtlFuncAddr OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The functional addresses used by the station.
+		The value is 6 octets of zero when not valid
+		(or available).
+
+		Section 3.3.2.8 of IEEE 802.5 specification."
+	::= { s5TrStaCtlEntry 9 }
+
+s5TrStaCtlAuthFuncClass OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(2))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The functional classes that are allowed to
+		be active in the station.  The value is 2
+		octets of zero when not valid (or available).
+
+		Section 3.3.2.3 of IEEE 802.5 specification."
+	::= { s5TrStaCtlEntry 10 }
+
+s5TrStaCtlAuthAccPriority OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(2))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The maximum priority this station is allowed
+		to use. The value is 2 octets of zero when
+		not valid (or available).
+
+		Section 3.3.2.2 of IEEE 802.5 specification."
+	::= { s5TrStaCtlEntry 11 }
+
+s5TrStaCtlStationId OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This string is used to uniquely identify
+		the station. It may be equal to the station's
+		MAC address. The value is 6 octets of zero
+		when not valid (or available).
+
+		Section 3.3.2.21 of IEEE 802.5 specification."
+	::= { s5TrStaCtlEntry 12 }
+
+s5TrStaCtlNumGrpAddr OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The group address for the station.
+		The value is zero if not valid or
+		no group address has been assigned.
+
+		Section 3.3.2.9 of IEEE 802.5 specification."
+	::= { s5TrStaCtlEntry 13 }
+
+
+
+-- Test Path Group
+
+s5TrTestPathTestTimer OBJECT-TYPE
+	SYNTAX	TimeIntervalHrd
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This is the timeout, in units of hundredths of a second,
+		that the agent will wait for a reply to an LLC TEST
+		command PDU caused by doing a SNMP SET to the object
+		s5TrAgentTpStart with the value startTestSourceRoute(2)
+		or startTestTransparent(3). This timer applies to all
+		entries in table s5TrTestPathTable."
+	DEFVAL { 400 }  -- 4 seconds
+	::={s5TrTest 1}
+
+s5TrTestPathAgeTimer OBJECT-TYPE
+	SYNTAX	TimeIntervalSec (0..65535)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The amount of time, in units of seconds, that
+		an entry remains in table s5TrTestPathTable before
+		it is automatically removed. This value must be larger
+		than the value of s5TrTestPathTimer. This timer
+		applies to all entries in table s5TrTestPathTable.
+		When the value is 0, no entry will be aged out."
+	DEFVAL { 300 } -- 5 minutes
+	::={s5TrTest 2}
+
+s5TrTestPathTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrTestPathEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"This table is used to initiate a 'path test' between
+		the agent and a station in the flatnet.  To start a
+		path test, a SNMP SET operation is attempted with the
+		value of the object s5TrTestTpStart set to
+		startTestSourceRoute(2) or startTestTransparent(3).
+
+		There can only be one test active between the
+		agent and a particular station at any time. 
+
+		The table size has an implementation limit. It is
+		determined by the agent.
+
+		Note:  Performing a path test on a destination station
+		       which does not recognize or reply to 802.2 TEST
+		       command PDU will result in a 'test-failed'."
+	::={s5TrTest 3}
+
+s5TrTestPathEntry OBJECT-TYPE
+	SYNTAX	S5TrTestPathEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the test path table. Entries can be created
+		with a SNMP SET request by setting the object
+		s5TrTestTpStart to either startTestSourceRoute(2) or
+		startTestTransparent(3) or by setting the object 
+		s5TrTestTpRoute to some specific route string, with the 
+		index portion of the object specifying the source 
+		(s5TrTestTpIfIndex) and destination MAC address
+		(s5TrTestTpAddrTo).
+
+		If s5TrTestTpRoute is set to some specific route string 
+		and s5TrTestTpStart is not startTestSourceRoute(2), 
+		startTestTransparent(3), retryTestSourceRoute(4), 
+		retryTestTransparent(5), or clearTest(6), the agent will
+		set s5TrTestTpStart to startTestSourceRoute(2).
+ 		
+		After the entry is created, it will live in the table until it
+		is aged out by the value of s5TrTestPathAgeTimer or
+		until it is removed by setting s5TrTestTpStart to
+		clearTest(6)."
+	INDEX	{ s5TrTestTpIfIndex, s5TrTestTpAddrTo }
+	::={s5TrTestPathTable 1}
+
+S5TrTestPathEntry ::= SEQUENCE {
+	s5TrTestTpIfIndex INTEGER,
+	s5TrTestTpAddrTo OCTET STRING,
+	s5TrTestTpStart  INTEGER,
+	s5TrTestTpStatus INTEGER,
+	s5TrTestTpRoute OCTET STRING,
+	s5TrTestTpDuration TimeIntervalHrd,
+	s5TrTestTpTimeStamp TimeTicks
+}
+
+s5TrTestTpIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..65535)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The index from the ifTable of a token ring interface.
+		This is the source of the TEST command PDU."
+	::={s5TrTestPathEntry 1}
+
+s5TrTestTpAddrTo OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE (6))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The destination MAC address to be used for the
+		testpath operation."
+	::={s5TrTestPathEntry 2}
+
+s5TrTestTpStart OBJECT-TYPE
+	SYNTAX INTEGER {
+		other(1),
+		startTestSourceRoute(2),
+		startTestTransparent(3),
+		retryTestSourceRoute(4),
+		retryTestTransparent(5),
+		clearTest(6)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object is used to start or retry a test or delete an 
+		entry.  The possible values that can be written
+		are:
+
+		  startTestSourceRoute(2)...Start a path test for
+		                            networks using source
+		                            routing bridging.
+		  startTestTransparent(3)...Start a path test for
+		                            networks using
+		                            transparent bridging.
+		  retryTestSourceRoute(4)...Retry the path test for
+		                            networks using source
+		                            routing bridging.
+		  retryTestTransparent(5)...Retry the path test for
+		                            networks using
+		                            transparent bridging.
+		  clearTest(6)..........Delete an entry.
+
+		The possible values that can be read are:
+		  other(1)            none of the following.
+		  startTestSourceRoute(2)...Indicates a path test for
+		                            networks using source
+		                            routing bridging has
+		                            been started.
+		  startTestTransparent(3)...Indicates a path test for
+		                            networks using
+		                            transparent bridging has
+		                            been started.
+		  retryTestSourceRoute(4)...Indicates the path test for
+		                            networks using source
+		                            routing bridging has
+		                            been retried.
+		  retryTestTransparent(5)...Indicates the path test for
+		                            networks using
+		                            transparent bridging has
+		                            been retried.
+		 
+		If s5TrTestTpStart is set to startTestTransparent(3) or
+		retryTestTransparent(5), the value of s5TrTestTpRoute is
+ 		ignored.  A TEST command PDU without source routing
+		information will be sent by the agent.
+
+		If s5TrTestTpStart is set to startTestSourceRoute(2) or
+ 		retryTestSourceRoute(5) and the value 
+		s5TrTestTpRoute is a zero length string, a single-route
+		broadcast TEST command PDU will be sent to explore the
+		route from the agent to s5TrTestTpAddrTo.  If
+		s5TrTestTpRoute contains some specific route, the agent
+		will send a  nonbroadcast TEST command PDU to check
+		this route.
+
+		If a test between the station identified by the 
+		object s5TrTestTpStart and the agent has already been
+		started (so the s5TrTestTpStatus has value  
+		testInProgress(2)),  the agent will return 'no 
+		error' to the SNMP SET request of a start or retry value.
+		However, the agent will not initiate a new TEST
+		command PDU.
+
+		If the test cannot be started because of errors
+		in the SET request, or because of some limitations
+		on the agent side (e.g., the table limit has been
+		exceeded), then the response to the SET request will
+		be SNMP 'bad value' or 'general' error.
+
+		For both start-test and retry-test the age-out time for 
+		the entry will be refreshed (i.e., as if the entry was just 
+		created)."
+	DEFVAL { startTestSourceRoute }
+	::={s5TrTestPathEntry 3}
+
+s5TrTestTpStatus OBJECT-TYPE
+	SYNTAX INTEGER {
+		other(1),
+		testInProgress(2),
+		testPassed(3),
+		testFailed(4)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current status of the test.  The possible values
+		are :
+
+		  testInProgress(2)...The path test is currently in progress.
+		  testPassed(3).......The path test passed.
+		  testFailed(4).......The path test failed.
+
+		If the interval of time between the agent's request
+		and the station's response is less than s5TrTestPathTimer,
+		then the value will be testPassed(3).  If the interval is
+		longer, the value will be testFailed(4). While the
+		agent is waiting for a response, the value will be
+		testInProgress(2)."
+	::={s5TrTestPathEntry 4}
+
+s5TrTestTpRoute OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..15))
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"When this object is written via SNMP it specifies
+		the path to be tested.  If this object is not written
+		when the row is created, it is filled in by the agent
+		when the path test is completed.
+
+		This object is an encoded octet string that specifies
+		the source route path.  The first octet represents the
+		length in octets of the route string that follows.  
+		Each two octets that follow specify a ring number/bridge
+		number pair representing an entry for a hop. The 
+		encoding is 3 nibbles for the ring number, and 1 nibble 
+		for bridge number. The maximum size of this path 
+		represents 7 hops (14 Octets).
+
+		To initiate a test, write to this object with the
+		appropriate route.  If the corresponding table entry
+		s5TrTestTpStart is not set, the agent will set
+		s5TrTestTpStart to startTestSourceRoute(2) and start
+		the test.
+
+		If the agent and the station are both on the same
+		ring, the length octet will be set to zero by agent.
+
+		If a 'Transparent path test' succeeds and the route passes
+		through transparent bridges, then length octet will be
+		set to 1 by agent.  This is to differentiate from the case 
+		that the station and the agent are on the same ring."
+	DEFVAL { "" }  -- Zero length string
+	::={s5TrTestPathEntry 5}
+
+s5TrTestTpDuration OBJECT-TYPE
+	SYNTAX	TimeIntervalHrd
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This specifies the round trip time of a successful
+		test in units of hundreds of a second. This object will be
+		equal to the value of s5TrTestPathTimer if the
+		test has failed"
+	::={s5TrTestPathEntry 6}
+
+s5TrTestTpTimeStamp OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This is the time stamp (i.e., sysUpTime) of the last
+		time that the path test was run successfully."
+	::={s5TrTestPathEntry 7}
+
+
+END

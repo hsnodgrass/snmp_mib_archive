@@ -1,0 +1,600 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-ATMMON-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion ATM Monitoring MIB Release 2.0.3
+-- Revision 11/30/98
+
+-- Copyright 1995-96 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	ifIndex
+	    	FROM RFC1213-MIB
+	Counter, IpAddress	
+		FROM RFC1155-SMI
+	MacAddress, atmMonitor, CardId, PortId
+		FROM CENTILLION-ROOT-MIB;
+
+
+-- Groups
+
+atmPortMonitor		OBJECT IDENTIFIER ::=	{ atmMonitor 1 }
+atmElanMonitor		OBJECT IDENTIFIER ::=	{ atmMonitor 2 }
+atmPvcStatusMonitor	OBJECT IDENTIFIER ::=	{ atmMonitor 3 }
+atmSigMonitor        	OBJECT IDENTIFIER ::=	{ atmMonitor 4 }
+atmCardMonitor          OBJECT IDENTIFIER ::=   { atmMonitor 5 }
+atmStatusEnqMonitor     OBJECT IDENTIFIER ::=   { atmMonitor 6 }
+
+-- SECTION 2: Port Statistics 
+
+-- This group contains information pertaining to ATM port statistics
+
+-- The ATM Port Statistics
+
+atmPortStatTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF AtmPortStatEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM Port Statistics"
+	::= { atmPortMonitor 1 }
+
+atmPortStatEntry OBJECT-TYPE
+	SYNTAX	AtmPortStatEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM Port Statistics.
+		 Each entry is indexed by two fields:
+		 The card number and the port number."
+	INDEX	{ atmStatCardId, atmStatPortId }
+	::= { atmPortStatTable 1 }
+
+AtmPortStatEntry ::= SEQUENCE {
+	atmStatCardId
+		CardId,
+	atmStatPortId
+		PortId,
+	atmSigDetected
+		INTEGER,
+	atmRxBadHecCell
+		Counter,
+	atmRxDmaDropCell
+		Counter,
+	atmRxGoodCell
+		Counter,
+	atmTxDmaDropCell
+		Counter,
+	atmTxGoodCell
+		Counter,
+	atmSuniFifoOverrun
+		Counter
+	}
+
+atmStatCardId OBJECT-TYPE
+	SYNTAX	CardId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION 
+		"This field is the card index "
+	::= {atmPortStatEntry 1 }
+
+atmStatPortId OBJECT-TYPE
+	SYNTAX	PortId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION 
+		"This field is the port index "
+	::= {atmPortStatEntry 2 }
+
+atmSigDetected OBJECT-TYPE
+	SYNTAX	INTEGER {
+		signalpresent(1),
+		nosignal(2)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This bit field indicates if the port receives
+		 signal from the remote ATM port.
+		 1= signal present, 2= no signal."
+	::= { atmPortStatEntry 3 }
+
+atmRxBadHecCell OBJECT-TYPE
+	SYNTAX	Counter	
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of cells received that has a bad ATM
+		 cell header (HEC).  The error is usually due to 
+		 a physical layer problem.  For example, when the
+		 fiber is first connected to the system or a clock
+		 mismatch."
+	::= { atmPortStatEntry 4 }
+
+atmRxDmaDropCell OBJECT-TYPE
+	SYNTAX	Counter	
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of cells received but is discarded by
+		 the ATM header validation checking.  The error
+		 is usually due to a incorrectly configured VPI/VCI
+		 or other configuration error."
+	::= { atmPortStatEntry 5 }
+
+atmRxGoodCell OBJECT-TYPE
+	SYNTAX	Counter	
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of cells received that is valid."
+	::= { atmPortStatEntry 6 }
+
+atmTxDmaDropCell OBJECT-TYPE
+	SYNTAX	Counter	
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of outgoing cells dropped due to 
+		 congestions."
+	::= { atmPortStatEntry 7 }
+
+atmTxGoodCell OBJECT-TYPE
+	SYNTAX	Counter	
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of cells transmitted."
+	::= { atmPortStatEntry 8 }
+
+atmSuniFifoOverrun OBJECT-TYPE
+	SYNTAX	Counter	
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+                "The number of times that the SUNI FIFO overrun status bit has been read
+                 in the true state."
+	::= { atmPortStatEntry 9 }
+
+
+-- SECTION 3: Elan Statistics 
+
+-- This group contains information pertaining to ATM InterSwitch PVC
+
+-- The ATM Elan PVC Statistics
+
+atmElanPvcStatisticTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF AtmElanPvcStatisticEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Tmp ATM Elan PVC statistics"
+	::= { atmElanMonitor 1 }
+
+atmElanPvcStatisticEntry OBJECT-TYPE
+	SYNTAX	AtmElanPvcStatisticEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM Elan PVC statistics.
+		 The Elan ID is used as
+		 the index of the object."
+	INDEX	{ atmElanId }
+	::= { atmElanPvcStatisticTable 1 }
+
+AtmElanPvcStatisticEntry ::= SEQUENCE {
+	atmElanId
+		INTEGER,
+	atmElanPvcInUcastPkt
+		INTEGER,
+	atmElanPvcInMcastPkt
+		INTEGER,
+	atmElanPvcOutUcastPkt
+		INTEGER,
+	atmElanPvcOutMcastPkt
+		INTEGER
+	}
+
+atmElanId OBJECT-TYPE
+	SYNTAX	INTEGER (1..32)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The Elan index."
+	::= { atmElanPvcStatisticEntry 1 }
+
+atmElanPvcInUcastPkt OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of unicast packet that is received from
+		 this Elan PVC."
+	::= { atmElanPvcStatisticEntry 2 }
+
+atmElanPvcInMcastPkt OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of multicast packet that is received from
+		 this Elan PVC."
+	::= { atmElanPvcStatisticEntry 3 }
+
+atmElanPvcOutUcastPkt OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of unicast packet that is transmitted from
+		 this Elan PVC."
+	::= { atmElanPvcStatisticEntry 4 }
+
+atmElanPvcOutMcastPkt OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The number of unicast packet that is transmitted from
+		 this Elan PVC."
+	::= { atmElanPvcStatisticEntry 5 }
+
+
+-- SECTION 4: ATM PVC Status 
+
+atmPvcStatusTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF AtmPvcStatusEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Tmp ATM InterSwitch PVC status"
+	::= { atmPvcStatusMonitor 1 }
+
+atmPvcStatusEntry OBJECT-TYPE
+	SYNTAX	AtmPvcStatusEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM PVC status.
+		 The PVC circuit ID is used as
+		 the index of the object."
+	INDEX	{ atmPvcCktId }
+	::= { atmPvcStatusTable 1 }
+
+AtmPvcStatusEntry ::= SEQUENCE {
+	atmPvcCktId
+		INTEGER,
+	atmPvcElanId
+		INTEGER,
+	atmPvcRemoteSwitchInfoValid
+		INTEGER,
+	atmPvcRemoteSwitchMacAddress
+		MacAddress,
+	atmPvcRemoteSwitchPvcStatus
+		INTEGER,
+	atmPvcSTPState
+		INTEGER,
+	atmPvcRemoteElanId
+		INTEGER,
+	atmPvcRemoteMcpIpAddress
+		IpAddress
+	}
+
+atmPvcCktId OBJECT-TYPE
+	SYNTAX	INTEGER (1..256)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field is the index of the circuit."
+	::= { atmPvcStatusEntry 1 }
+
+atmPvcElanId OBJECT-TYPE
+	SYNTAX	INTEGER (1..32)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field is the index of the elan this circuit belongs to."
+	::= { atmPvcStatusEntry 2 }
+
+atmPvcRemoteSwitchInfoValid OBJECT-TYPE
+	SYNTAX	INTEGER {
+		valid(1),
+		invalid(2)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field is based on the aging timer of a remote
+		 switch.  If the local switch has not received any
+		 packets from the remote switch for a period of time,
+		 then it is declared as non-valid.
+			1 = non-valid
+			2 = valid (normal state of operation)."
+	::= { atmPvcStatusEntry 3 }
+
+atmPvcRemoteSwitchMacAddress OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field lists the remote switch's MAC address.
+		 If the atmInterSwitchPvcRemoteSwitchInfoValid object
+		 is 1, then this field contains the valid info.
+		 Otherwise, this field contains the last learned info."
+	::= { atmPvcStatusEntry 4 }
+
+atmPvcRemoteSwitchPvcStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		up(1),
+		down(2)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field is set if the remote switch receives packets from
+		 this switch.  If atmInterSwitchPvcRemoteSwitchInfoValid
+		 objeect is 1, then this field contains the valid info.
+		 Otherwise, this field contains the last learned info."
+	::= { atmPvcStatusEntry 5 }
+
+atmPvcSTPState OBJECT-TYPE
+	SYNTAX	INTEGER {
+		disabled(1),
+		blocking(2),
+		listening(3),
+		learning(4),
+		forwarding(5)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates the STP port state of the circuit."
+	::= { atmPvcStatusEntry 6 }
+
+atmPvcRemoteElanId OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates the elan ID of the circuit."
+	::= { atmPvcStatusEntry 7 }
+
+atmPvcRemoteMcpIpAddress OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"This is the remote mcp ip address."
+	::= { atmPvcStatusEntry 8 }
+
+
+-- SECTION 5: Signal statistics
+
+-- This group contains information pertaining to ATM signal statistics.
+
+cnCurPtptConns OBJECT-TYPE
+      	SYNTAX  INTEGER       
+      	ACCESS  read-only
+      	STATUS  mandatory
+      	DESCRIPTION
+              "This counter counts the number of current point-to-point
+               calls of the switch." 
+      	::= { atmSigMonitor 1 }
+ 
+cnCurPtmptConns OBJECT-TYPE
+      	SYNTAX  INTEGER 
+      	ACCESS  read-only
+      	STATUS  mandatory
+      	DESCRIPTION
+              "This counter counts the number of current
+               point-to-multipoint calls of the switch."
+      	::= { atmSigMonitor 2 }
+
+cnCurActiveConns OBJECT-TYPE
+      	SYNTAX  INTEGER 
+      	ACCESS  read-only
+      	STATUS  mandatory
+      	DESCRIPTION
+              "This counter counts the number of current
+               active calls of the switch."
+      	::= { atmSigMonitor 3 }
+
+cnCurPortConnsTable OBJECT-TYPE
+      	SYNTAX SEQUENCE OF CnCurPortConnsEntry
+      	ACCESS  not-accessible
+      	STATUS  mandatory
+      	DESCRIPTION
+              "This table contains the point-to-point,
+               point-to-multipoint and active calls per port
+               for all the atm ports in the switch."
+      	::= { atmSigMonitor 4 }
+
+cnCurPortConnsEntry OBJECT-TYPE
+      	SYNTAX CnCurPortConnsEntry
+      	ACCESS  not-accessible
+      	STATUS  mandatory
+      	DESCRIPTION
+              "This entry contains the point-to-point,
+               point-to-multipoint and active calls per port."
+      	INDEX { ifIndex }
+      	::= { cnCurPortConnsTable 1 }
+
+CnCurPortConnsEntry ::=
+      	SEQUENCE {
+      	cnCurPortConnsPtptConns INTEGER,
+      	cnCurPortConnsPtmptConns        INTEGER,
+      	cnCurPortConnsActiveConns     	INTEGER 
+      	}
+
+cnCurPortConnsPtptConns OBJECT-TYPE
+      	SYNTAX INTEGER
+      	ACCESS  read-only
+      	STATUS  mandatory
+      	DESCRIPTION
+              "This entry counts the number of current point-to-point
+               calls per port."
+      	::= { cnCurPortConnsEntry 1 }
+
+cnCurPortConnsPtmptConns OBJECT-TYPE
+      	SYNTAX INTEGER
+      	ACCESS  read-only
+      	STATUS  mandatory
+      	DESCRIPTION
+              "This entry counts the number of current point-to-multipoint
+               calls per port."
+      	::= { cnCurPortConnsEntry 2 }
+
+cnCurPortConnsActiveConns OBJECT-TYPE
+      	SYNTAX INTEGER
+      	ACCESS  read-only
+      	STATUS  mandatory
+      	DESCRIPTION
+              "This entry counts the number of current active
+               calls per port."
+      	::= { cnCurPortConnsEntry 3 }
+
+
+-- SECTION 6: Card Operational
+ 
+-- This group contains information pertaining to ATM card operational
+ 
+-- The ATM Card Operational
+
+atmCardOperTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF AtmCardOperEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "ATM Card Operational values"
+        ::= { atmCardMonitor 1 }
+ 
+atmCardOperEntry OBJECT-TYPE
+        SYNTAX  AtmCardOperEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "ATM Card Operational values.
+                 Each entry is indexed by card number"
+        INDEX   { atmCardOperCardId }
+        ::= { atmCardOperTable 1 }
+
+AtmCardOperEntry ::= SEQUENCE {
+        atmCardOperCardId
+                CardId,
+        atmCardOperExtClockSource
+                INTEGER
+        }
+
+atmCardOperCardId OBJECT-TYPE
+        SYNTAX  CardId
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "This field is the card index "
+        ::= {atmCardOperEntry 1 }
+
+atmCardOperExtClockSource OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                 "This field indicates the operational external
+                 clock source.  The following value is read-only:
+                 0 = Local Oscillator, 1..N = ATM port id for
+                 external clock source.  This object only applies
+                 to ATM MDA modules with SM, MM, or UTP media types."
+        ::= { atmCardOperEntry 2 }
+
+-- SECTION 7: Status Enquiry Statistics
+ 
+-- This group contains information pertaining to ATM status enquiry statistics.
+ 
+cnStsEnqPTPCalls OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+              "The number of current point-to-point calls 
+	      in the status enquiry queue of the switch."
+        ::= { atmStatusEnqMonitor 1 }
+ 
+cnStsEnqActiveParties OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+              "The number of current active parties in 
+	      the status enquiry queue of the switch. 
+	      (This includes point- to-multi-point calls)."
+        ::= { atmStatusEnqMonitor 2 }
+ 
+cnStsEnqSent OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+              "The total number of status enquiry requests sent."
+        ::= { atmStatusEnqMonitor 3 }
+
+cnStsEnqCfmsRecvd OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+              "The number of current status messages 
+	      (in response to status enquiry) received."
+        ::= { atmStatusEnqMonitor 4 }
+ 
+cnStsEnqRetried OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+              "The total number of status enquiry commands retried."
+        ::= { atmStatusEnqMonitor 5 }
+ 
+cnStsEnqTimeOuts OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+              "The total number of status enquiry commands 
+	      timed out i.e The number of calls for which 
+	      status (in response to status enquiry) was 
+	      not received."
+        ::= { atmStatusEnqMonitor 6 }
+ 
+cnStsEnqQueueSize OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+              "The size of the status enquiry queue."
+        ::= { atmStatusEnqMonitor 7 }
+ 
+cnStsEnqCallsCleared OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+              "The number of calls cleared by status enquiry. "
+        ::= { atmStatusEnqMonitor 8 }
+END

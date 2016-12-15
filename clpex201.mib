@@ -1,0 +1,141 @@
+-- SECTION 1: Top Level Definitions
+
+PNNI-EXT-MIB DEFINITIONS ::= BEGIN
+
+
+-- PNNI Extensions MIB Release 2.0.1
+-- Revision 12/21/97
+
+-- Copyright 1997 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	extensions
+		FROM CENTILLION-ROOT-MIB
+	lecsConfIndex
+		FROM LAN-EMULATION-ELAN-MIB;
+
+
+-- PNNI Extensions Groups
+cnPnniExt       OBJECT IDENTIFIER ::= { extensions 5 }
+
+cnPnniMainExt   OBJECT IDENTIFIER ::= { cnPnniExt 1 }
+cnPnnilecsExt   OBJECT IDENTIFIER ::= { cnPnniExt 2 }
+cnPnniTdbOverload   OBJECT IDENTIFIER ::= { cnPnniExt 3 }
+
+
+-- SECTION 2: MIB Objects
+
+-- General PNNI Information
+
+cnPnniAdminStatus OBJECT-TYPE
+	SYNTAX  INTEGER {
+			enabled(1),
+			disabled(2) }
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+		"The desired state of PNNI in the switching system.
+		Setting this object to disabled(2) disables PNNI
+		capability in the switch.  Setting it to enabled(1)
+		enables PNNI capability." 
+	::= { cnPnniMainExt 1 }
+
+cnPnniCurNodes OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The number of PNNI logical nodes currently configured 
+		in the switching system."
+      	::= { cnPnniMainExt 2 }
+
+
+-- LECS Configuration Extention Table
+
+lecsConfExtTable    OBJECT-TYPE
+       SYNTAX SEQUENCE OF LecsConfExtEntry
+       ACCESS not-accessible
+       STATUS mandatory
+       DESCRIPTION
+	       "This table contains the configuration
+	       information that are additional to the 
+	       existing lecsConfTable"
+       ::= { cnPnnilecsExt 1}
+
+lecsConfExtEntry OBJECT-TYPE
+       SYNTAX LecsConfExtEntry
+       ACCESS not-accessible
+       STATUS mandatory
+       DESCRIPTION
+	       "Each entry represents a LECS this
+	       agent maintains in this extension table.
+	       A row in this table is not valid unless
+	       the same row is valid in the lecsConfTable
+	       defined in af1129r5.mib"
+       INDEX { lecsConfIndex }
+       ::= { lecsConfExtTable 1 }
+
+LecsConfExtEntry ::= SEQUENCE {
+       lecsConfExtScope
+	       INTEGER
+       }
+
+lecsConfExtScope   OBJECT-TYPE
+       SYNTAX INTEGER (0..104)
+       ACCESS read-write
+       STATUS mandatory
+       DESCRIPTION
+	       "PNNI scope value"
+       ::= { lecsConfExtEntry 1}
+
+-- PNNI Database Overload Configurable Parameters
+
+cnPnniMemConsumptionLowwater OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+              "The value of low memory watermark. If memory allocated
+              to PNNI task is less than this value, then the
+              Database resynchronization be attempted."
+        ::= { cnPnniTdbOverload 1 }
+
+cnPnniMemConsumptionHighwater OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+              "The value of high memory watermark. If memory allocated
+              to PNNI task is greater than this value, then the
+              node will enter to topology database overload state."
+        ::= { cnPnniTdbOverload 2 }
+
+cnPnniOverLoadRetryTime OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+              "The value of the database resynch attempt timer in
+              seconds."
+        ::= { cnPnniTdbOverload 3 }
+
+
+END
+
+

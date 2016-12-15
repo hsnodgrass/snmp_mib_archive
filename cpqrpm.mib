@@ -1,0 +1,2855 @@
+-- ****************************************************************************
+--
+--                      Rack & Power Manager - (RPM) MIB
+--         Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 2001,2003 Hewlett-Packard Development Company, L.P.
+--
+--      Hewlett-Packard Company shall not be liable for technical or
+--      editorial errors or omissions contained herein. The information in
+--      this document is provided "as is" without warranty of any kind and
+--      is subject to change without notice. The warranties for HP products
+--      are set forth in the express limited warranty statements
+--      accompanying such products. Nothing herein should be construed as
+--      constituting an additional warranty.
+--
+--      Confidential computer software. Valid license from HP required for
+--      possession, use or copying. Consistent with FAR 12.211 and 12.212,
+--      Commercial Computer Software, Computer Software Documentation, and
+--      Technical Data for Commercial Items are licensed to the U.S.
+--      Government under vendor's standard commercial license.
+--
+--      Refer to the READMIB.RDM file for more information about the
+--      organization of the information in the Compaq Enterprise.
+--
+--      The Compaq Enterprise number is 232.
+--      The ASN.1 prefix to, and including the Compaq Enterprise is:
+--           1.3.6.1.4.1.232
+--
+--
+--    The Compaq Enterprise number is 232.
+--    The ASN.1 prefix to, and including the Compaq Enterprise is:
+--       1.3.6.1.4.1.232
+--
+--    MIB Version 1.7
+--
+--    *********************************************************************
+
+CPQRPM-MIB DEFINITIONS ::= BEGIN
+
+   IMPORTS
+      compaq                  FROM CPQHOST-MIB
+      DisplayString           FROM RFC1213-MIB
+      OBJECT-TYPE             FROM RFC-1212
+      TRAP-TYPE               FROM RFC-1215
+      sysName                 FROM RFC1213-MIB;
+
+-- compaq         OBJECT IDENTIFIER ::= { enterprises 232 }
+   cpqRPM         OBJECT IDENTIFIER ::= { compaq 154 }
+      cpqRPMTrapInfo OBJECT IDENTIFIER ::= { cpqRPM 1 }
+      cpqRPMTraps    OBJECT IDENTIFIER ::= { cpqRPM 2 }
+      cpqPMTraps     OBJECT IDENTIFIER ::= { cpqRPM 3 }
+
+
+--***************************************************************************
+--CRPM Trap Info
+--***************************************************************************
+--cpqRPMTrapInfo-group
+
+   cpqRPMTrapDescription   OBJECT-TYPE
+      SYNTAX DisplayString (SIZE (0..255))
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "Text description of the event that caused the trap."
+      ::= { cpqRPMTrapInfo 1 }
+
+   cpqRPMTrapDeviceId      OBJECT-TYPE
+      SYNTAX INTEGER (0..2147483647)
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "A unique numeric identifier for the device that caused the trap."
+      ::= { cpqRPMTrapInfo 2 }
+
+   cpqRPMTrapDeviceName OBJECT-TYPE
+      SYNTAX DisplayString (SIZE (0..50))
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "The text name for the device."
+      ::= { cpqRPMTrapInfo 3 }
+
+   cpqRPMTrapDeviceAddress OBJECT-TYPE
+      SYNTAX DisplayString (SIZE (0..50))
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "The hostname or ip address for the device."
+      ::= { cpqRPMTrapInfo 4 }
+
+   cpqRPMTrapType    OBJECT-TYPE
+      SYNTAX INTEGER
+      {
+         system(1),
+         event(2),
+         change(3),
+         power(4),
+         environment(5)
+      }
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "Indicates the type of the event that caused the trap."
+      ::= { cpqRPMTrapInfo 5 }
+
+   cpqRPMTrapSeverity      OBJECT-TYPE
+      SYNTAX INTEGER
+      {
+         unknown(1),
+         information(2),
+         normal(3),
+         minor(4),
+         major(5),
+         critical(6)
+      }
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "Indicates the severity of the event that caused the trap."
+      ::= { cpqRPMTrapInfo 6 }
+
+   cpqRPMTrapCode    OBJECT-TYPE
+      SYNTAX INTEGER (0..2147483647)
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "A unique identifier for the alarm."
+      ::= { cpqRPMTrapInfo 7 }
+
+   cpqRPMTrapURL  OBJECT-TYPE
+      SYNTAX DisplayString (SIZE (0..255))
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "The URL for the management software."
+      ::= { cpqRPMTrapInfo 8 }
+
+--****************************************************************************
+--Traps
+-- Device-Traps
+
+   cpqRPMTrapDeviceConnected  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a Connection Lost due to one of the following.
+
+          1. The serial cable connected to the UPS has been unplugged.
+          2. The Network cable connected to the UPS has been unplugged.
+
+          Recommendations:
+
+          1. Insure all cables are seated properly.
+          2. check you network to insure it is functioning properly.
+          3. If the UPS is serially connected insure that the Serial
+             Relay Agent is installed and running."
+      --#TYPE         "Device Connected (1)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "APPLICATION"
+      ::= 1
+
+   cpqRPMTrapConnectionLost   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a Connection Lost due to one of the following.
+
+         1. The serial cable connected to the UPS has been unplugged.
+         2. The Network cable connected to the UPS has been unplugged.
+
+         Recommendations:
+
+         1. Insure all cables are seated properly.
+         2. check you network to insure it is functioning properly.
+         3. If the UPS is serially connected insure that the Serial
+            Relay Agent is installed and running."
+      --#TYPE         "Connection Lost (2)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "APPLICATION"
+      ::= 2
+
+
+   cpqRPMTrapLookupFailed  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "CRPM failed to find an IP address for the device hostname."
+      --#TYPE         "DNS Lookup Failed (3)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "APPLICATION"
+      ::= 3
+
+
+   cpqRPMTrapConnectionFailed TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "CRPM failed to connect to a device."
+      --#TYPE         "Connection Failed (4)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "APPLICATION"
+      ::= 4
+
+   cpqRPMTrapDeviceSettingsChanged  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "Device settings have been changed by a user."
+      --#TYPE         "Device Settings Changed (5)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "APPLICATION"
+      ::= 5
+
+
+--****************************************************************************
+-- CMC-Traps
+
+   cpqRPMTrapCMCTemp1BelowMin       TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting temperature 1 below minimum threshold."
+      --#TYPE         "CMC Temperature 1 Below Minimum (10001)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10001
+
+   cpqRPMTrapCMCTemp1AboveWarn         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting temperature 1 above warning threshold."
+      --#TYPE         "CMC Temperature 1 Above Warning (10002)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10002
+
+   cpqRPMTrapCMCTemp1AboveMax       TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting temperature 1 above maximum threshold."
+      --#TYPE         "CMC Temperature 1 Above Maximum (10003)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10003
+
+   cpqRPMTrapCMCTemp1Normal         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting temperature 1 has returned to a normal
+         temperature."
+      --#TYPE         "CMC Temperature 1 Normal (10004)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10004
+
+   cpqRPMTrapCMCTemp2BelowMin       TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting temperature 2 below minimum threshold."
+      --#TYPE         "CMC Temperature 2 Below Minimum (10005)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10005
+
+   cpqRPMTrapCMCTemp2AboveWarn         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting temperature 2 above warning threshold."
+      --#TYPE         "CMC Temperature 2 Above Warning (10006)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10006
+
+   cpqRPMTrapCMCTemp2AboveMax       TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting temperature 2 above maximum threshold."
+      --#TYPE         "CMC Temperature 2 Above Maximum (10007)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10007
+
+   cpqRPMTrapCMCTemp2Normal         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting temperature 2 has returned to a normal
+         temperature."
+      --#TYPE         "CMC Temperature 2 Normal (10008)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10008
+
+
+   cpqRPMTrapCMCVoltUnder           TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting voltage below minimum threshold."
+      --#TYPE         "CMC Voltage Below Minimum (10011)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10011
+
+   cpqRPMTrapCMCVoltOver            TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting voltage above maximum threshold."
+      --#TYPE         "CMC Voltage Above Maximum (10012)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10012
+
+   cpqRPMTrapCMCVoltNormal          TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting voltage has returned to normal."
+      --#TYPE         "CMC Voltage Normal (10013)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10013
+
+   cpqRPMTrapCMCHmdtUnder           TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting humidity below minimum threshold."
+      --#TYPE         "CMC Humidity Below Minimum (10021)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10021
+
+   cpqRPMTrapCMCHmdtOver            TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting humidity above maximum threshold."
+      --#TYPE         "CMC Humidity Above Maximum (10022)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10022
+
+   cpqRPMTrapCMCHmdtNormal          TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting humidity has returned to normal."
+      --#TYPE         "CMC Humidity Normal (10023)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10023
+
+   cpqRPMTrapCMCSmokeDetected       TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting smoke detected."
+      --#TYPE         "CMC Smoke Detected (10031)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10031
+
+   cpqRPMTrapCMCSmokeCleared        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting smoke cleared."
+      --#TYPE         "CMC Smoke Cleared (10032)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10032
+
+   cpqRPMTrapCMCShockDetected       TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting shock detected."
+      --#TYPE         "CMC Shock Detected (10041)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10041
+
+   cpqRPMTrapCMCShockCleared        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting shock cleared."
+      --#TYPE         "CMC Shock Cleared (10042)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10042
+
+   cpqRPMTrapCMCAux1Alarm           TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device has entered an alarm condition for auxiliary input 1."
+      --#TYPE         "CMC Aux 1 Alarm (10051)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10051
+
+   cpqRPMTrapCMCAux1Cleared         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting auxiliary input 1 alarm cleared."
+      --#TYPE         "CMC Aux 1 Alarm Cleared (10052)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10052
+
+   cpqRPMTrapCMCAux2Alarm           TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device has entered an alarm condition for auxiliary input 2."
+      --#TYPE         "CMC Aux 2 Alarm (10053)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10053
+
+   cpqRPMTrapCMCAux2Cleared         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting auxiliary input 2 alarm cleared."
+      --#TYPE         "CMC Aux 2 Alarm Cleared (10054)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10054
+
+   cpqRPMTrapCMCInput1Opened        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting input 1 has been opened."
+      --#TYPE         "CMC Input 1 Opened (10101)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10101
+
+   cpqRPMTrapCMCInput1Closed        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting input 1 has been closed."
+      --#TYPE         "CMC Input 1 Closed (10102)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10102
+
+   cpqRPMTrapCMCInput2Opened        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting input 2 has been opened."
+      --#TYPE         "CMC Input 2 Opened (10103)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10103
+
+   cpqRPMTrapCMCInput2Closed        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting input 2 has been closed."
+      --#TYPE         "CMC Input 2 Closed (10104)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10104
+
+   cpqRPMTrapCMCInput3Opened        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting input 3 has been opened."
+      --#TYPE         "CMC Input 3 Opened (10105)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10105
+
+   cpqRPMTrapCMCInput3Closed        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting input 3 has been closed."
+      --#TYPE         "CMC Input 3 Closed (10106)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10106
+
+   cpqRPMTrapCMCInput4Opened        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting input 4 has been opened."
+      --#TYPE         "CMC Input 4 Opened (10107)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10107
+
+   cpqRPMTrapCMCInput4Closed        TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting input 4 has been closed."
+      --#TYPE         "CMC Input 4 Closed (10108)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10108
+
+
+   cpqRPMTrapCMCLockset1Unlocked    TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting lockset 1 has been unlocked."
+      --#TYPE         "CMC Lockset 1 Unlocked (10111)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10111
+
+   cpqRPMTrapCMCLockset1FailedToLock   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting lockset 1 has failed to lock."
+      --#TYPE         "Lockset 1 Failed To Lock (10112)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10112
+
+   cpqRPMTrapCMCLockset1Error       TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting an error with lockset 1."
+      --#TYPE         "CMC Lockset 1 Error (10113)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10113
+
+   cpqRPMTrapCMCLockset1Locked         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting lockset 1 has been locked."
+      --#TYPE         "CMC Lockset 1 Locked (10114)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10114
+
+   cpqRPMTrapCMCLockset2Unlocked    TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting lockset 2 has been unlocked."
+      --#TYPE         "CMC Lockset 2 Unlocked (10116)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10116
+
+   cpqRPMTrapCMCLockset2FailedToLock   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting lockset 2 has failed to lock."
+      --#TYPE         "CMC Lockset 2 Failed To Lock (10117)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10117
+
+   cpqRPMTrapCMCLockset2Error       TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting an error with lockset 2."
+      --#TYPE         "CMC Lockset 2 Error (10118)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10118
+
+   cpqRPMTrapCMCLockset2Locked         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting lockset 2 has been locked."
+      --#TYPE         "CMC Lockset 2 Locked (10119)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10119
+
+   cpqRPMTrapCMCLockset1Normal         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting lockset 2 is normal."
+      --#TYPE         "CMC Lockset 2 Normal (10134)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10134
+
+   cpqRPMTrapCMCLockset2Normal         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A CMC device is reporting lockset 2 is normal."
+      --#TYPE         "CMC Lockset 2 Normal (10135)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      ::= 10135
+
+--****************************************************************************
+-- UPS-Traps
+
+
+   cpqRPMTrapUPSInputVoltageBelowMin   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting input voltage below minimum threshold."
+      --#TYPE         "UPS Input Voltage Below Minimum (20001)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20001
+
+
+   cpqRPMTrapUPSInputVoltageAboveMax   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting input voltage above maximum threshold."
+      --#TYPE         "UPS Input Voltage Above Maximum (20002)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20002
+
+
+   cpqRPMTrapUPSInputVoltageNormal     TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting input voltage is out of range.
+
+          Recommendations:
+
+          1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+          2. If the UPS remains on battery for an extended period of time it will not be able to sustain the load."
+      --#TYPE         "UPS Input Voltage Normal (20003)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20003
+
+
+   cpqRPMTrapUPSOutputVoltageBelowMin  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting output voltage below minimum threshold."
+      --#TYPE         "UPS Output Voltage Below Minimum (20011)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "UPS"
+      ::= 20011
+
+
+   cpqRPMTrapUPSOutputVoltageAboveMax  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting output voltage above maximum threshold."
+      --#TYPE         "UPS Output Voltage Above Maximum (20012)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "UPS"
+      ::= 20012
+
+   cpqRPMTrapUPSOutputVoltageNormal TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting output voltage is out of Range.
+
+          Recommendations:
+
+          1. Initiate a UPS self test.
+          2. If this error persists contact technical support."
+      --#TYPE         "UPS Output Voltage Normal (21020)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21020
+
+   cpqRPMTrapUPSOutputOverload         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting an overload condition.
+
+         Recommendations:
+
+         1. Reduce the load on the UPS by moving some of the load to another UPS.
+         2. Consider moving to a larger UPS to support the current load."
+      --#TYPE         "UPS Output Overload (20014)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20014
+
+   cpqRPMTrapUPSOutputOverloadCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting an overload condition.
+
+         Recommendations:
+
+         1. Reduce the load on the UPS by moving some of the load to another UPS.
+         2. Consider moving to a larger UPS to support the current load."
+      --#TYPE         "UPS Output Overload Cleared (20015)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20015
+
+   cpqRPMTrapUPSBatteryLow          TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting low battery.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+         2. When utility power is restored, charge the battery to it's full capacity.
+            If the battery level continues to decrease, the UPS will not be able to sustain the output load!"
+      --#TYPE         "UPS Battery Low (21055)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 21055
+
+   cpqRPMTrapUPSBatteryLowCleared          TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting low battery.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+         2. When utility power is restored, charge the battery to it's full capacity.
+            If the battery level continues to decrease, the UPS will not be able to sustain the output load!"
+      --#TYPE         "UPS Battery Low Cleared (21056)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21056
+
+
+   cpqRPMTrapUPSBatteryDepleted     TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is a depleted battery."
+      --#TYPE         "UPS Depleted Battery (20022)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20022
+
+   cpqRPMTrapUPSBatteryLevelNormal     TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting low battery.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+         2. When utility power is restored, charge the battery to it's full capacity.
+            If the battery level continues to decrease, the UPS will not be able to sustain the output load!"
+      --#TYPE         "UPS Battery Level Normal (20023)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20023
+
+   cpqRPMTrapUPSOnBattery           TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting on battery condition.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+            If the UPS remains on battery for an extended time it will not be able to sustain the output load!"
+      --#TYPE         "UPS On Battery (21063)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21063
+
+
+   cpqRPMTrapUPSOnBypass            TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is being bypassed."
+      --#TYPE         "UPS On Bypass (20032)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "UPS"
+      ::= 20032
+
+   cpqRPMTrapUPSOnBuck              TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting an On Buck condition due to the following.
+
+         1. Utility power has increased above recommended utility input levels.
+
+         Recommendation:
+
+         1. Contact an electrician."
+      --#TYPE         "UPS On Buck (21029)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "UPS"
+      ::= 21029
+
+   cpqRPMTrapUPSOnBoost          TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting an On Boost condition due to the following.
+
+         1. Utility power has dropped below recommended utility input levels.
+
+         Recommendation:
+
+         1. Contact an electrician."
+      --#TYPE         "UPS On Boost (21031)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "UPS"
+      ::= 21031
+
+   cpqRPMTrapUPSOnUtilityPower         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting on battery condition.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+            If the UPS remains on battery for an extended time it will not be able to sustain the output load!"
+      --#TYPE         "UPS On Utility Power (21064)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21064
+
+
+   cpqRPMTrapUPSTemperatureLow         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting temperature blow minimum threshold."
+      --#TYPE         "UPS Temperature Low (20101)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20101
+
+
+   cpqRPMTrapUPSTemperatureHigh     TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting temperature above maximum threshold."
+      --#TYPE         "UPS Temperature High (20102)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20102
+
+   cpqRPMTrapUPSTemperatureNormal      TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting temperature is out of range.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is in a well ventilated area.
+         2. Lower the ambient temperature in the area where the UPS is located."
+      --#TYPE         "UPS Temperature Normal (20103)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20103
+
+   cpqRPMTrapUPSInternalFailure     TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting  a general UPS failure.
+
+         Recommendations:
+
+         1. Initiate a UPS self test.
+         2. If this error persists contact technical support."
+      --#TYPE         "UPS Internal Failure (20111)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 20111
+
+   cpqRPMTrapUPSInternalFailureCleared TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting  a general UPS failure.
+
+         Recommendations:
+
+         1. Initiate a UPS self test.
+         2. If this error persists contact technical support."
+      --#TYPE         "UPS Internal Failure Cleared (20112)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20112
+
+   cpqRPMTrapUPSBatteryFailure         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a battery failure.
+
+         Recommendations:
+
+         1. Initiate a UPS self test.
+         2. If this error persists contact technical support.
+         3. Your battery may need to be replaced.
+            The UPS may not be capable of supporting it's load if utility power fails!"
+      --#TYPE         "UPS Battery Failure (20121)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 20121
+
+
+   cpqRPMTrapUPSBatteryFailureCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a battery failure.
+
+         Recommendations:
+
+         1. Initiate a UPS self test.
+         2. If this error persists contact technical support.
+         3. Your battery may need to be replaced.
+            The UPS may not be capable of supporting it's load if utility power fails!"
+      --#TYPE         "UPS Battery Failure Cleared (20122)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20122
+
+   cpqRPMTrapUPSDiagnosticTestFailed   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting a diagnostic test failed.
+
+         Recommendations:
+
+         1. Your battery may need to be replaced.
+         2. If this error persists contact technical support.
+         3. The UPS may not be capable of supporting it's load if utility power fails!"
+      --#TYPE         "UPS Diagnostic Test Failed (20131)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20131
+
+   cpqRPMTrapUPSDiagnosticTestSucceeded   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "A UPS device is reporting a diagnostic test failed.
+
+         Recommendations:
+
+         1. Your battery may need to be replaced.
+         2. If this error persists contact technical support.
+         3. The UPS may not be capable of supporting it's load if utility power fails!"
+      --#TYPE         "UPS Diagnostic Test Succeeded (20132)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20132
+
+
+   cpqRPMTrapUPSInputUnderOverFreq  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "Input (Utility) fault: measured input frequency is outside of either the upper or lower frequency limit specification for normal operation."
+      --#TYPE         "Input Under Or Over Frequency (20141)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20141
+
+
+   cpqRPMTrapUPSInputUnderOverFreqCleared TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "Measured input frequency is normal"
+      --#TYPE         "Input Frequency Normal (20142)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20142
+
+
+   cpqRPMTrapUPSDCStartOccurred  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "The UPS has been started on battery when AC input power is not present.  This alarm is used to record the date and time of this event."
+      --#TYPE         "DC Start Occurred (29998)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 29998
+
+
+   cpqRPMTrapUPSDCStartOccurredCleared TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "The UPS has been started on utility while AC input power is present."
+      --#TYPE         "DC Start Occurred Cleared (29999)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 29999
+
+   cpqRPMTrapUPSBypassNotAvailable  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting bypass not avaliable.
+
+         Recommendations:
+
+         1. Initiate a UPS self test.
+         2. If this error persists contact technical support."
+      --#TYPE         "Bypass Not Available (20161)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "UPS"
+      ::= 20161
+
+   cpqRPMTrapUPSBypassNotAvailableCleared TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting bypass not avaliable.
+
+         Recommendations:
+
+         1. Initiate a UPS self test.
+         2. If this error persists contact technical support."
+      --#TYPE         "Bypass Not Available Cleared (20162)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20162
+
+
+   cpqRPMTrapUPSUtilityFail   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "Indicates that the utility input power is not within predetermined limits.
+          This could be, but is not limited to, over voltage, under voltage, over frequency,
+          under frequency or over current."
+      --#TYPE         "Utility Fail (20171)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20171
+
+
+   cpqRPMTrapUPSUtilityFailCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "Indicates that the utility input power is within predetermined limits."
+      --#TYPE         "Utility Fail Cleared (20172)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20172
+
+
+   cpqRPMTrapUPSUtilityNotPresent   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "Indicates that the utility input is not present.  This differs from
+         alarm #57 in that the detected voltage is zero in this case."
+      --#TYPE         "Utility Not Present (20181)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20181
+
+
+   cpqRPMTrapUPSUtilityNotPresentCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "Indicates that the utility input is present."
+      --#TYPE         "Utility Not Present Cleared (20182)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20182
+
+
+   cpqRPMTrapUPSBypassManualTurnedOn   TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "The bypass has been given a manual turn on command."
+      --#TYPE         "Bypass Manual Turned On (20191)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "UPS"
+      ::= 20191
+
+
+   cpqRPMTrapUPSBypassManualTurnedOff  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "The bypass has been given a manual turn off command."
+      --#TYPE         "Bypass Manual Turned Off (20192)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20192
+
+   cpqRPMTrapUPSSiteWiringFault  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting  a fault in the input wiring, other than
+         Phase Rotation: e.g., Ground/Neutral reversed.
+
+         Recommendations:
+
+         1. Contact an electrician."
+      --#TYPE         "Site Wiring Fault (20201)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 20201
+
+   cpqRPMTrapUPSSiteWiringNormal TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting  a fault in the input wiring, other than
+         Phase Rotation: e.g., Ground/Neutral reversed.
+
+         Recommendations:
+
+         1. Contact an electrician."
+      --#TYPE         "Site Wiring Fault Cleared (20202)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20202
+
+   cpqRPMtrapUPSBypassOffManual TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is operating in manual bypass mode.
+
+         Recommendations:
+
+         1. In bypass mode, the UPS cannot support devices if there is a power failure.
+         2. Once maintenance has been performed return the UPS to normal mode."
+      --#TYPE         "The UPS is no longer on manual bypass (21060)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21060
+
+   cpqRPMtrapUPSBypassONManual TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is operating in manual bypass mode.
+
+         Recommendations:
+
+         1. In bypass mode, the UPS cannot support devices if there is a power failure.
+         2. Once maintenance has been performed return the UPS to normal mode."
+      --#TYPE         "The UPS is on manual bypass (21059)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21059
+
+   cppqRPMtrapUPSStartedOnBatteryCleared TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device has been started  while on battery power. AC input power is not present.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+            If the UPS remains on battery for an extended time it will not be able to sustain the output load!"
+      --#TYPE         "Utility power has been restored (20152)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 20152
+
+   cppqRPMtrapUPSStartedOnBattery TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device has been started  while on battery power. AC input power is not present.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+            If the UPS remains on battery for an extended time it will not be able to sustain the output load."
+      --#TYPE         "The UPS was started without utility power (20151)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "UPS"
+      ::= 20151
+
+   cpqRPMtrapUPSInputOutofRangeCleared TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting input voltage is out of range.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+         2. If the UPS remains on battery for an extended period of time it will not be able to sustain the load."
+      --#TYPE         "Input voltage is normal (21022)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21022
+
+   cpqRPMtrapUPSInputOutofRange TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting input voltage is out of range.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is plugged into an outlet supplied with utility power.
+         2. If the UPS remains on battery for an extended period of time it will not be able to sustain the load."
+      --#TYPE         "Input voltage is out of range (21021)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21021
+
+   cpqRPMtrapUPSTemperatureOutOfRange TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting  temperature is out of range.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is in a well ventilated area.
+         2. Lower the ambient temperature in the area where the UPS is located."
+      --#TYPE         "UPS temperature out of range (21007)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 21007
+
+   cpqRPMtrapUPSTemperatureOutOfRangeCleared TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting temperature is out of range.
+
+         Recommendations:
+
+         1. Check to make sure the UPS is in a well ventilated area.
+         2. Lower the ambient temperature in the area where the UPS is located."
+      --#TYPE         "UPS temperature has returned to normal (21008)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21008
+
+   cpqRPMtrapUPSBypassOnAuto TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is operating in auto bypass mode.
+
+         Recommendations:
+
+         1. In bypass mode, the UPS cannot support devices if there is a power failure.
+         2. Once maintenance has been performed return the UPS to normal mode."
+      --#TYPE         "The UPS is on automatic bypass (21047)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21047
+
+   cpqRPMtrapUPSBypassOnAutoCleared TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is operating in auto bypass mode.
+
+         Recommendations:
+
+         1. In bypass mode, the UPS cannot support devices if there is a power failure.
+         2. Once maintenance has been performed return the UPS to normal mode."
+      --#TYPE         "The UPS is no longer on auto bypass (21048)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21048
+
+   cpqRPMtrapUPSOutputoutofRange TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting output voltage is out of Range.
+
+         Recommendations:
+
+         1. Initiate a UPS self test.
+         2. If this error persists contact technical support."
+      --#TYPE         "Output voltage is out of range (21019)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 21019
+
+   cpqRPMTrapUPSBatteriesDisconnected         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting  batteries are not connected to the UPS.
+
+         Recomendations:
+
+         1. Connect the UPS Batteries.
+            The UPS will not be capable of supporting it's load if the utility power fails!"
+      --#TYPE         "One or more UPS batteries have been disconnected. (21053)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21053
+
+
+   cpqRPMTrapUPSBatteriesDisconnectedCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting  batteries are not connected to the UPS.
+
+         Recomendations:
+
+         1. Connect the UPS Batteries.
+            The UPS will not be capable of supporting it's load if the utility power fails!"
+      --#TYPE         "All UPS batteries have been reconnected. (21054)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21054
+
+   cpqRPMTrapUPSBatteryDischarged         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting batteries are completely discharged.
+
+         Recommendations:
+
+         1. Connect the UPS to utility power to charge the batteries.
+            The UPS will not be able to support it's load if the utility power fails!"
+      --#TYPE         "The UPS batteries are in a discharged condition. (21057)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21057
+
+   cpqRPMTrapUPSBatteryDischargedCleared         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting batteries are completely discharged.
+
+         Recommendations:
+
+         1. Connect the UPS to utility power to charge the batteries.
+            The UPS will not be able to support it's load if the utility power fails!"
+      --#TYPE         "The UPS batteries are in a discharged condition. (21058)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21058
+
+   cpqRPMTrapUPSCheckBreaker  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting an output Breaker or Relay has failed or may be
+         stuck open or closed with this alarm.
+
+         Recommendations:
+
+         1. Check all breakers on the UPS.
+         2. If this error persists contact technical support."
+      --#TYPE         "A UPS circuit breaker needs attention. (21041)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21041
+
+   cpqRPMTrapUPSCheckBreakerCleared         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting an output Breaker or Relay has failed or may be
+         stuck open or closed with this alarm.
+
+         Recommendations:
+
+         1. Check all breakers on the UPS.
+         2. If this error persists contact technical support."
+      --#TYPE         "All breakers are functioning normally. (21042)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21042
+
+
+   cpqRPMTrapUPSEPOInitiated  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting an Emergency Power Off (EPO) command has been
+         received to shutdown the UPS immediately with out delay. This command
+         may come from a local control panel or from a remote source.
+
+         Recommendations:
+
+         1. Turn the UPS on to reapply power to attached equipment."
+      --#TYPE         "Emergency Power Off activated (21037)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 21037
+
+   cpqRPMTrapUPSManualLoadDumped         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "The UPS has been powered off with user interaction."
+      --#TYPE         "UPS output has been manually turned off. (21033)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21033
+
+
+   cpqRPMTrapUPSManualLoadDumpedCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "The UPS has been powered off with user interaction."
+      --#TYPE         "UPS output has been restored (21034)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21034
+
+   cpqRPMTrapUPSCabinetDoorOpen         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a cover panel has been removed while utility power is present.
+
+         Recommendations:
+
+         1. Reinstall all panels.
+         2. If this error persists contact technical support."
+      --#TYPE         "A cover panel has been removed. (21045)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 21045
+
+
+   cpqRPMTrapUPSCabinetDoorOpenCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a cover panel has been removed while utility power is present.
+
+         Recommendations:
+
+         1. Reinstall all panels.
+         2. If this error persists contact technical support."
+      --#TYPE         "A cover panel has been replaced. (21046)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21046
+
+   cpqRPMTrapUPSFanFailure         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a fan failure has occurred.
+
+         Recommendations:
+
+         1. If this error persists contact technical support."
+      --#TYPE         "The UPS has encountered an fan failure. (21035)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 21035
+
+
+   cpqRPMTrapUPSFanFailureCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a fan failure has occurred.
+
+         Recommendations:
+
+         1. If this error persists contact technical support."
+      --#TYPE         "The UPS fan failure has cleared. (21036)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21036
+
+   cpqRPMTrapUPSLossOfRedundancy         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a loss of redundancy due to one of the following.
+         1. One or more of the Electronics Modules has failed
+         2. One or more of the electronics modules has been manually removed.
+         3. The amount of load on the UPS has increased to the point that the UPS
+            is no longer able to support an N+1 configuration.
+
+         Recommendations:
+
+         1. Check the UPS to see if one of the modules has failed.
+         2. Make sure that all modules are securely plugged in.
+         3. Reduce the load to return the N+1 configuration.
+         4. If the amount of load is now going to exceed and N+1 configuration
+            permanently, change the configuration on the front panel of the UPS
+            to Capacity instead of Parallel N+1."
+      --#TYPE         "The UPS N+1 load has been exceeded (21023)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21023
+
+
+   cpqRPMTrapUPSLossOfRedundancyCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a loss of redundancy due to one of the following.
+         1. One or more of the Electronics Modules has failed
+         2. One or more of the electronics modules has been manually removed.
+         3. The amount of load on the UPS has increased to the point that the UPS is no longer
+            able to support an N+1 configuration.
+
+         Recommendations:
+
+         1. Check the UPS to see if one of the modules has failed.
+         2. Make sure that all modules are securely plugged in.
+         3. Reduce the load to return the N+1 configuration.
+         4. If the amount of load is now going to exceed and N+1 configuration permanently,
+            change the configuration on the front panel of the UPS to Capacity instead of Parallel N+1."
+      --#TYPE         "Loss of redundancy cleared or configuration has changed from N+1 to Capacity (21024)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21024
+
+   cpqRPMTrapUPSShutdownImminent         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a shutdown imminent condition.
+
+         Recommendations:
+
+         1. Immediately restore power to the UPS.
+            The UPS will not continue to supply power to devices following the shutdown!"
+      --#TYPE         "A UPS shutdown is imminent. (21013)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 21013
+
+   cpqRPMTrapUPSShutdownImminentCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting a shutdown imminent condition.
+
+         Recommendations:
+
+         1. Immediately restore power to the UPS.
+            The UPS will not continue to supply power to devices following the shutdown!"
+      --#TYPE         "The UPS is no longer in an imminent shutdown state. (21014)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21014
+
+   cpqRPMTrapUPSShutdownPending         TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting shutdown pending condition.
+
+         Recommendations:
+
+         1. Immediately restore power to the UPS.
+            The UPS will not continue to supply power to devices following the shutdown!"
+      --#TYPE         "A UPS shutdown is pending. (21011)"
+      --#SEVERITY     MAJOR
+      --#CATEGORY    "UPS"
+      ::= 21011
+
+
+   cpqRPMTrapUPSShutdownPendingCleared  TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A UPS device is reporting shutdown pending condition.
+
+         Recommendations:
+
+         1. Immediately restore power to the UPS.
+            The UPS will not continue to supply power to devices following the shutdown!"
+      --#TYPE         "The UPS is no longer pending shutdown. (21012)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 21012
+
+--****************************************************************************
+-- Test-Trap
+
+   cpqRPMTestTrap       TRAP-TYPE
+         ENTERPRISE cpqRPMTraps
+         VARIABLES
+       {
+         sysName,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceId,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapDeviceAddress,
+         cpqRPMTrapType,
+         cpqRPMTrapSeverity
+      }
+      DESCRIPTION
+         "This trap is sent to test SNMP setup."
+      --#TYPE         "Test Trap (50001)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "APPLICATION"
+      ::= 50001
+
+--****************************************************************************
+-- PowerManager Traps
+
+   cpqPMTrapCritical TRAP-TYPE
+      ENTERPRISE cpqPMTraps
+       VARIABLES
+      {
+         sysName,
+         cpqRPMTrapCode,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A critical alarm has occurred. Action: Check the Trap Details for more information."
+      --#TYPE         "Critical Alarm (1)"
+      --#SEVERITY     CRITICAL
+      --#CATEGORY    "UPS"
+      ::= 1
+
+   cpqPMTrapWarning TRAP-TYPE
+      ENTERPRISE cpqPMTraps
+       VARIABLES
+      {
+         sysName,
+         cpqRPMTrapCode,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "A warning alarm has occurred. Action: Check the Trap Details for more information."
+      --#TYPE         "Warning Alarm (2)"
+      --#SEVERITY     MINOR
+      --#CATEGORY    "UPS"
+      ::= 2
+
+
+   cpqPMTrapInformation TRAP-TYPE
+      ENTERPRISE cpqPMTraps
+       VARIABLES
+      {
+         sysName,
+         cpqRPMTrapCode,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "An information alarm has occurred. Action: Check the Trap Details for more information."
+      --#TYPE         "Information Alarm (3)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 3
+
+   cpqPMTrapCleared TRAP-TYPE
+      ENTERPRISE cpqPMTraps
+       VARIABLES
+      {
+         sysName,
+         cpqRPMTrapCode,
+         cpqRPMTrapDescription,
+         cpqRPMTrapDeviceName,
+         cpqRPMTrapURL
+      }
+      DESCRIPTION
+         "An alarm has cleared. Action: Check the Trap Details for more information."
+      --#TYPE         "Cleared Alarm (4)"
+      --#SEVERITY     INFORMATIONAL
+      --#CATEGORY    "UPS"
+      ::= 4
+END
+

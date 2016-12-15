@@ -1,0 +1,1293 @@
+
+RC-RADIUS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, IpAddress, TimeTicks
+        FROM SNMPv2-SMI
+    TruthValue, RowStatus, DisplayString, MacAddress
+        FROM SNMPv2-TC
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB
+    InterfaceIndex
+        FROM IF-MIB
+    rcRadius, rcEap
+        FROM RAPID-CITY;
+
+
+rcRadiusMib MODULE-IDENTITY
+       LAST-UPDATED     "200601030000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200601030000Z" -- 03 Jan 2006
+       DESCRIPTION "Version 18: Added rcRadiusPaePortNumber and
+                                rcRadiusEapLastAuthMac."
+
+       REVISION "200512120000Z" -- 12 Dec 2005
+       DESCRIPTION "Version 17: Added rcRadiusEapLastRejMac under rcRadiusGlobalSnmp"
+       REVISION "200505230000Z" -- 23 May 2005
+       DESCRIPTION "Version 16: Added rcEapPortShutDownOnIntrusion"
+       REVISION "200505170000Z" -- 17 May 2005
+       DESCRIPTION "Version 15: Updated the description for rcEapGlobalRadDiscardFilterAgeout"
+       REVISION "200505161800Z" -- 16 May 2005
+       DESCRIPTION "Version 14: Updated the DEF value for rcEapGlobalRadDiscardFilterAgeout"
+       REVISION "200505160000Z" -- 16 May 2005
+       DESCRIPTION "Version 13: Updated rcEapGlobalRadDiscardFilterAgeout"
+       REVISION "200505060000Z" -- 06 May 2005
+       DESCRIPTION "Version 12: Added rcEapPortRadiusMacTable & rcEapGlobalRadDiscardFilterAgeout"
+       REVISION "200501241200Z" -- 24 January 2005
+       DESCRIPTION "Version 11: Updated the desc field of rcEapGlobalRadAuthNonEapClients"       
+       REVISION "200501130000Z" -- 13 January 2005
+       DESCRIPTION "Version 10: Added rcEapGlobalRadAuthNonEapClients and rcEapPortRadAuthNonEapClients mibs"
+       REVISION "200501040000Z" -- 04 January 2005
+       DESCRIPTION "Version 9: Added rcRadiusServSourceIpAddr under Sequence of RcRadiusServEntry "
+       REVISION "200412240000Z" -- 24 December 2004
+       DESCRIPTION "Version 8: Added rcRadiusServSourceIpAddr " 
+       REVISION "200409300000Z" -- 30 Sept 2004
+       DESCRIPTION "Version 7: Change the range rcEapPortGuestVlanId start from 0.
+                             : Import SnmpAdminString, MacAddress, InterfaceIndex type" 
+       REVISION "200409230000Z" -- 23 Sept 2004
+       DESCRIPTION "Version 6: Added rcEapGlobalGuestVlanEnable, rcEapGlobalGuestVlanId , rcEapPortTable, rcEapPortAllowedMacTable, rcEapMultiHostStatusTable, rcEapMultiHostSessionStatsTable mib"
+       REVISION "200409080000Z" -- 08 Sept 2004
+       DESCRIPTION "Version 5: Added rcRadiusGlobalCliCmdCount mib"
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 4: Added version info"  
+
+       ::= { rcRadius 0 }
+
+-- Radius Group
+-- Radius Global Infomation
+
+rcRadiusGlobal   OBJECT IDENTIFIER       ::= { rcRadius 1 }
+
+rcRadiusGlobalEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable/disable this feature."
+	DEFVAL 	      { false }
+        ::= { rcRadiusGlobal 1 }
+
+rcRadiusGlobalMaxNumberServer OBJECT-TYPE
+        SYNTAX        INTEGER (1..10)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Maximum number of RADIUS servers."
+	DEFVAL 	      { 10 }
+        ::= { rcRadiusGlobal 2 }
+
+rcRadiusGlobalAttributeValue OBJECT-TYPE
+        SYNTAX        INTEGER (192..240)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Integer value for Access-Priority attribute."
+        DEFVAL        { 192 }
+        ::= { rcRadiusGlobal 3 }
+
+rcRadiusGlobalServerTableSize OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Used to indicate the number of entries in the
+                        rcRadiusServerTable."
+        ::= { rcRadiusGlobal 4 }
+
+rcRadiusGlobalAcctEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable/disable Radius Accounting feature."
+        DEFVAL        { false }
+        ::= { rcRadiusGlobal 5 }
+
+rcRadiusGlobalAcctAttributeValue OBJECT-TYPE
+        SYNTAX        INTEGER (192..240)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Integer value for User-Command attribute."
+        DEFVAL        { 193 }
+        ::= { rcRadiusGlobal 6 }
+
+rcRadiusGlobalAcctIncludeCli OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Include/Exclude cli-commands in radius
+                       acccounting updates."
+        DEFVAL        { false }
+        ::= { rcRadiusGlobal 7 }
+
+rcRadiusGlobalClearStat OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Clear Radius Statistic for all servers 
+                       configured."
+        DEFVAL        { false }
+        ::= { rcRadiusGlobal 8 }
+
+rcRadiusGlobalMcastAttributeValue OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Integer value for multicast address vendor
+                       specific attribute."
+        DEFVAL        { 90 }
+        ::= { rcRadiusGlobal 9 }
+
+rcRadiusGlobalAuthInfoAttributeValue OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Integer value for Auth-Info vendor specific attribute."
+        DEFVAL        { 91 }
+        ::= { rcRadiusGlobal 10 }
+
+rcRadiusGlobalCommandAccess OBJECT-TYPE
+        SYNTAX        INTEGER (192..240)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Integer value for Command-Access attribute."
+        DEFVAL        { 194 }
+        ::= { rcRadiusGlobal 11 }
+
+rcRadiusGlobalCliCommands OBJECT-TYPE
+        SYNTAX        INTEGER (192..240)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Integer value for Cli-Command attribute."
+        DEFVAL        { 195 }
+        ::= { rcRadiusGlobal 12 }
+
+rcRadiusGlobalIgapLogFSize OBJECT-TYPE
+        SYNTAX        INTEGER (50..8192)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Maximum size for the IGAP accounting time-out
+                       log file in KB."
+        DEFVAL        { 512 }
+        ::= { rcRadiusGlobal 13 }
+
+rcRadiusGlobalCliProfEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable/disable Radius CLI Profiling."
+        DEFVAL        { false }
+        ::= { rcRadiusGlobal 14 }
+
+rcRadiusGlobalAuthInvalidServerAddress OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of Access Responses from unknown or
+                       invalid Radius servers."
+        ::= { rcRadiusGlobal 15 }
+
+rcRadiusGlobalSourceIpFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Flag to include configured IP address as source 
+                       address in RADIUS packets."
+        DEFVAL        { false }
+        ::= { rcRadiusGlobal 16 }
+
+rcRadiusGlobalIgapPasswdAttr OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         standard(1),
+                         authinfo(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "When this variable is set to standard(1), password in
+                       IGAP join request is sent in standard RADIUS password
+                       attribute. When set to authinfo(2), the password is
+                       encoded in Auth-Info attribute."
+        DEFVAL        { standard }
+        ::= { rcRadiusGlobal 17 }
+
+rcRadiusGlobalCliCmdCount OBJECT-TYPE
+        SYNTAX        INTEGER (1..40)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Integer value for Cli-Command-count."
+        DEFVAL        { 40 }
+        ::= { rcRadiusGlobal 18 }
+
+
+
+-- Radius Server Table Infomation
+
+rcRadiusServerTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcRadiusServerEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "The RADIUS table (0 to 10 entries).  This
+                      table lists the information of the RADIUS server."
+        ::= { rcRadius 2 }
+
+rcRadiusServerEntry OBJECT-TYPE
+        SYNTAX        RcRadiusServerEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A RADIUS server table entry."
+        INDEX         { rcRadiusServerAddress}
+        ::= { rcRadiusServerTable 1 }
+
+RcRadiusServerEntry ::=
+        SEQUENCE {
+                rcRadiusServerPriority            INTEGER,
+                rcRadiusServerAddress             IpAddress,
+                rcRadiusServerTimeOut             INTEGER,
+                rcRadiusServerEnable              TruthValue,
+                rcRadiusServerMaxRetries          INTEGER,
+                rcRadiusServerUdpPort             INTEGER,
+                rcRadiusServerSecretKey           DisplayString,
+                rcRadiusServerAccessRequests      Counter32,
+                rcRadiusServerAccessAccepts       Counter32,
+                rcRadiusServerAccessRejects       Counter32,
+                rcRadiusServerBadResponses        Counter32,
+                rcRadiusServerPendingRequests     Counter32,
+                rcRadiusServerClientRetries       Counter32,
+                rcRadiusServerRowStatus           RowStatus,
+                rcRadiusServerAcctEnable          TruthValue,
+                rcRadiusServerAcctUdpPort         INTEGER,
+                rcRadiusServerAcctOnRequests      Counter32,
+                rcRadiusServerAcctOffRequests     Counter32,
+                rcRadiusServerAcctStartRequests   Counter32,
+                rcRadiusServerAcctStopRequests    Counter32,
+                rcRadiusServerAcctInterimRequests Counter32,
+                rcRadiusServerAcctBadResponses    Counter32,
+                rcRadiusServerAcctPendingRequests Counter32,
+                rcRadiusServerAcctClientRetries   Counter32
+
+        }
+
+rcRadiusServerPriority OBJECT-TYPE
+        SYNTAX        INTEGER (1..10)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Server priority, used to control which server to choose
+                       first to send authentication."
+	DEFVAL 	      { 10 }
+        ::= { rcRadiusServerEntry 1 }
+
+rcRadiusServerAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Server IP address of the RADIUS authentication server
+                       referred to in this table entry."
+        ::= { rcRadiusServerEntry 2 }
+
+rcRadiusServerTimeOut OBJECT-TYPE
+        SYNTAX        INTEGER (1..10)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The time interval in seconds before the client 
+                       retransmit the packet."
+	DEFVAL 	      { 3 }
+        ::= { rcRadiusServerEntry 3 }
+
+rcRadiusServerEnable  OBJECT-TYPE
+        SYNTAX        TruthValue 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable this server."
+	DEFVAL 	      { true }
+        ::= { rcRadiusServerEntry 4 }
+
+rcRadiusServerMaxRetries OBJECT-TYPE
+        SYNTAX        INTEGER (1..6)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Maximum number of retransmissions."
+	DEFVAL 	      { 3 }
+        ::= { rcRadiusServerEntry 5 }
+
+rcRadiusServerUdpPort OBJECT-TYPE
+        SYNTAX        INTEGER (1..65536)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The UDP port the client is using to send requests
+                       to this server."
+	DEFVAL 	      { 1812 }
+        ::= { rcRadiusServerEntry 6 }
+
+rcRadiusServerSecretKey OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20)) 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The identifier of the RADIUS authentication client."
+        ::= { rcRadiusServerEntry 7 }
+
+rcRadiusServerAccessRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS access-response packets sent to 
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServerEntry 8 }
+
+rcRadiusServerAccessAccepts OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS access-accept packets (valid or 
+                         invalid) received from this server."
+        ::= { rcRadiusServerEntry 9 }
+
+rcRadiusServerAccessRejects OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS access-reject packets (valid or 
+                         invalid) received from this server."
+        ::= { rcRadiusServerEntry 10 }
+
+rcRadiusServerBadResponses OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS invalid access-response packets 
+                         received from this server."
+        ::= { rcRadiusServerEntry 11 }
+
+rcRadiusServerPendingRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS access-request packets destined 
+                         for this server that have not yet timed out or 
+                         received a response. This variable is incremented 
+                         when an access-request is sent and decremented due 
+                         to receipt of an access-accept, access-reject, a 
+                         timeout or retransmission."
+        ::= { rcRadiusServerEntry 12 }
+
+rcRadiusServerClientRetries OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of authentication retransmission to 
+                         this server."
+        ::= { rcRadiusServerEntry 13 }
+
+rcRadiusServerRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to create/delete entries."
+        ::= { rcRadiusServerEntry 14 }
+
+rcRadiusServerAcctEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable Radius Accounting on this server."
+        DEFVAL        { true }
+        ::= { rcRadiusServerEntry 15 }
+
+rcRadiusServerAcctUdpPort OBJECT-TYPE
+        SYNTAX        INTEGER (1..65536)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The UDP port the client used to send accounting
+                       requests to this server."
+        DEFVAL        { 1813 }
+        ::= { rcRadiusServerEntry 16 }
+
+rcRadiusServerAcctOnRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS accounting-on packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServerEntry 17 }
+
+rcRadiusServerAcctOffRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS accounting-off packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServerEntry 18 }
+
+rcRadiusServerAcctStartRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS accounting-start packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServerEntry 19 }
+
+
+rcRadiusServerAcctStopRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS accounting-stop packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServerEntry 20 }
+
+rcRadiusServerAcctInterimRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS accounting-interim packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServerEntry 21 }
+
+rcRadiusServerAcctBadResponses OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of Invalid responses received from this
+                         server."
+        ::= { rcRadiusServerEntry 22 }
+
+rcRadiusServerAcctPendingRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS accounting packets that are waiting
+                         be sent to this server. This variable is incremented
+                         whenever any accounting-request is sent to this server and
+                         decremented when an acknowledgement is received or timeout
+                         occurs."
+        ::= { rcRadiusServerEntry 23 }
+
+rcRadiusServerAcctClientRetries OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          deprecated
+        DESCRIPTION     "The number of RADIUS accounting packets retransmitted
+                         to this server."
+        ::= { rcRadiusServerEntry 24 }
+
+
+-- Radius Serv Table 
+
+rcRadiusServTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcRadiusServEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "The RADIUS table (0 to 10 entries).  This
+                      table lists the information of the RADIUS server."
+        ::= { rcRadius 3 }
+
+rcRadiusServEntry OBJECT-TYPE
+        SYNTAX        RcRadiusServEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A RADIUS server table entry."
+        INDEX         { rcRadiusServAddress, rcRadiusServUsedBy }
+        ::= { rcRadiusServTable 1 }
+
+RcRadiusServEntry ::=
+        SEQUENCE {
+                rcRadiusServPriority            INTEGER,
+                rcRadiusServAddress             IpAddress,
+                rcRadiusServTimeOut             INTEGER,
+                rcRadiusServEnable              TruthValue,
+                rcRadiusServMaxRetries          INTEGER,
+                rcRadiusServUdpPort             INTEGER,
+                rcRadiusServSecretKey           DisplayString,
+                rcRadiusServAccessRequests      Counter32,
+                rcRadiusServAccessAccepts       Counter32,
+                rcRadiusServAccessRejects       Counter32,
+                rcRadiusServBadResponses        Counter32,
+                rcRadiusServPendingRequests     Counter32,
+                rcRadiusServClientRetries       Counter32,
+                rcRadiusServRowStatus           RowStatus,
+                rcRadiusServAcctEnable          TruthValue,
+                rcRadiusServAcctUdpPort         INTEGER,
+                rcRadiusServAcctOnRequests      Counter32,
+                rcRadiusServAcctOffRequests     Counter32,
+                rcRadiusServAcctStartRequests   Counter32,
+                rcRadiusServAcctStopRequests    Counter32,
+                rcRadiusServAcctInterimRequests Counter32,
+                rcRadiusServAcctBadResponses    Counter32,
+                rcRadiusServAcctPendingRequests Counter32,
+                rcRadiusServAcctClientRetries   Counter32,
+                rcRadiusServUsedBy              INTEGER,
+                rcRadiusServNasIpAddress        IpAddress,
+                rcRadiusServRoundTripTime       DisplayString,
+                rcRadiusServAccessChallanges    Counter32,
+                rcRadiusServSourceIpAddr        IpAddress
+        }
+
+rcRadiusServPriority OBJECT-TYPE
+        SYNTAX        INTEGER (1..10)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Server priority, used to control which server to choose
+                       first to send authentication."
+	DEFVAL 	      { 10 }
+        ::= { rcRadiusServEntry 1 }
+
+rcRadiusServAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Server IP address of the RADIUS authentication server
+                       referred to in this table entry."
+        ::= { rcRadiusServEntry 2 }
+
+rcRadiusServTimeOut OBJECT-TYPE
+        SYNTAX        INTEGER (1..10)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The time interval in seconds before the client 
+                       retransmit the packet."
+	DEFVAL 	      { 3 }
+        ::= { rcRadiusServEntry 3 }
+
+rcRadiusServEnable  OBJECT-TYPE
+        SYNTAX        TruthValue 
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable this server."
+	DEFVAL 	      { true }
+        ::= { rcRadiusServEntry 4 }
+
+rcRadiusServMaxRetries OBJECT-TYPE
+        SYNTAX        INTEGER (0..6)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Maximum number of retransmissions."
+	DEFVAL 	      { 1 }
+        ::= { rcRadiusServEntry 5 }
+
+rcRadiusServUdpPort OBJECT-TYPE
+        SYNTAX        INTEGER (1..65536)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The UDP port the client is using to send requests
+                       to this server."
+	DEFVAL 	      { 1812 }
+        ::= { rcRadiusServEntry 6 }
+
+rcRadiusServSecretKey OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20)) 
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The identifier of the RADIUS authentication client."
+        ::= { rcRadiusServEntry 7 }
+
+rcRadiusServAccessRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-response packets sent to 
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServEntry 8 }
+
+rcRadiusServAccessAccepts OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-accept packets (valid or 
+                         invalid) received from this server."
+        ::= { rcRadiusServEntry 9 }
+
+rcRadiusServAccessRejects OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-reject packets (valid or 
+                         invalid) received from this server."
+        ::= { rcRadiusServEntry 10 }
+
+rcRadiusServBadResponses OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS invalid access-response packets 
+                         received from this server."
+        ::= { rcRadiusServEntry 11 }
+
+rcRadiusServPendingRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-request packets destined 
+                         for this server that have not yet timed out or 
+                         received a response. This variable is incremented 
+                         when an access-request is sent and decremented due 
+                         to receipt of an access-accept, access-reject, a 
+                         timeout or retransmission."
+        ::= { rcRadiusServEntry 12 }
+
+rcRadiusServClientRetries OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of authentication retransmission to 
+                         this server."
+        ::= { rcRadiusServEntry 13 }
+
+rcRadiusServRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to create/delete entries."
+        ::= { rcRadiusServEntry 14 }
+
+rcRadiusServAcctEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable Radius Accounting on this server."
+        DEFVAL        { true }
+        ::= { rcRadiusServEntry 15 }
+
+rcRadiusServAcctUdpPort OBJECT-TYPE
+        SYNTAX        INTEGER (1..65536)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The UDP port the client used to send accounting
+                       requests to this server."
+        DEFVAL        { 1813 }
+        ::= { rcRadiusServEntry 16 }
+
+rcRadiusServAcctOnRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-on packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServEntry 17 }
+
+rcRadiusServAcctOffRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-off packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServEntry 18 }
+
+rcRadiusServAcctStartRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-start packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServEntry 19 }
+
+
+rcRadiusServAcctStopRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-stop packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServEntry 20 }
+
+rcRadiusServAcctInterimRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting-interim packets sent to
+                         this server. This does not include retransmissions."
+        ::= { rcRadiusServEntry 21 }
+
+rcRadiusServAcctBadResponses OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of Invalid responses received from this
+                         server."
+        ::= { rcRadiusServEntry 22 }
+
+rcRadiusServAcctPendingRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting packets that are waiting
+                         be sent to this server. This variable is incremented
+                         whenever any accounting-request is sent to this server and
+                         decremented when an acknowledgement is received or timeout
+                         occurs."
+        ::= { rcRadiusServEntry 23 }
+
+rcRadiusServAcctClientRetries OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS accounting packets retransmitted
+                         to this server."
+        ::= { rcRadiusServEntry 24 }
+
+rcRadiusServUsedBy OBJECT-TYPE
+        SYNTAX        INTEGER { 
+                         cli(1),
+                         igap(2),
+                         snmp(3),
+                         eap(4)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "cli(1): for cli login, igap(2): for igap,snmp(3):
+                       for snmp login, eap(4) for EAP PAE Authenticator." 
+        ::= { rcRadiusServEntry 25 }
+
+rcRadiusServNasIpAddress OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "RADIUS Client NAS Identifier for this server."
+        ::= { rcRadiusServEntry 26 }
+
+rcRadiusServRoundTripTime OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE(0..20))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Time different between the instance when
+                         a RADIUS request is sent and the
+                         corresponding response is received."
+        ::= { rcRadiusServEntry 27 }
+
+rcRadiusServAccessChallanges OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of RADIUS access-challanges packets
+                         sent to this server. This does not include
+                         retransmission."
+        ::= { rcRadiusServEntry 28 }
+
+rcRadiusServSourceIpAddr OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "source IP address RADIUS packets."
+        ::= { rcRadiusServEntry 29 }
+
+
+
+rcRadiusGlobalSnmp   OBJECT IDENTIFIER       ::= { rcRadius 4 }
+
+rcRadiusGlobalSnmpEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable/disable snmp radius authentication."
+	       DEFVAL        { false }
+        ::= { rcRadiusGlobalSnmp 1 }
+
+rcRadiusGlobalSnmpAcctEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable/disable Radius Accounting for SNMP."
+	       DEFVAL        { false }
+        ::= { rcRadiusGlobalSnmp 2 }
+
+rcRadiusGlobalSnmpReAuthenticateTimer OBJECT-TYPE
+        SYNTAX        INTEGER (30..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Integer value representing Re-Authenticate
+                       Timer in seconds. Timer to be used to Re- 
+                       Authenticate a SNMP Session."
+        DEFVAL        { 180 }
+        ::= { rcRadiusGlobalSnmp 3 }
+
+rcRadiusGlobalSnmpAbortSessionTimer OBJECT-TYPE
+        SYNTAX        INTEGER (30..65535)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION   "Integer value representing the time in seconds
+                       after which the snmp session is considered
+                       expired and Radius Accounting Stop message
+                       is sent."
+        DEFVAL        { 180 }
+        ::= { rcRadiusGlobalSnmp 4 }
+
+rcRadiusGlobalSnmpUserName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..20))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "User name for Radius SNMP Accounting."
+        ::= { rcRadiusGlobalSnmp 5 }
+
+rcRadiusEapLastRejMac OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to store the Last Rejected MAC address on an
+                       EAP enabled port."
+        ::= { rcRadiusGlobalSnmp 6 }
+
+rcRadiusPaePortNumber OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to store the Port Number on which a MAC
+                       intrusion occurred."
+        ::= { rcRadiusGlobalSnmp 7 }
+
+rcRadiusEapLastAuthMac OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to store the Last Authenticated MAC address
+                       on an EAP enabled port."
+        ::= { rcRadiusGlobalSnmp 8 }
+
+
+-- EAP properietary group
+-- EAP Global Info
+
+
+rcEapGlobal    OBJECT IDENTIFIER ::= { rcEap 1 }
+
+rcEapGlobalRadAcctEnable OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Indicates whether EAP Sessions need to be
+                   Accounted with a RADIUS server. When this
+                   value is TRUE, device attempts to send
+                   RADIUS Accounting-Start and Accounting-Stop
+                   requests upon 802.1x user login and logoff
+                   respectively."
+     ::= { rcEapGlobal 1 }
+
+rcEapGlobalClearStats  OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "When the value of this variable is set to
+                   TRUE, all the EAPOL (8021x) related statistics
+                   will be reset."
+     ::= { rcEapGlobal 2 }
+
+rcEapGlobalGuestVlanEnable OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "When this variable is set to TRUE, EAPoL Guest Vlan 
+                   feature will be enabled globally"
+     DEFVAL       { false }
+     ::= { rcEapGlobal 3 }
+
+rcEapGlobalGuestVlanId OBJECT-TYPE
+     SYNTAX       INTEGER (1..4000)
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "A value representing the VLAN to be used as a Global Guest
+                   VLAN. When corresponding value is not specified at the 
+                   port level, supplicants are granted access to the network
+                   through this VLAN before they are authenticated."
+     ::= { rcEapGlobal 4 }
+
+rcEapGlobalRadAuthNonEapClients OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "When this variable is set to TRUE, Radius Mac
+                   Centralization feature will be enabled globally"
+     DEFVAL       { false }
+     ::= { rcEapGlobal 5 }
+
+     rcEapGlobalRadDiscardFilterAgeout OBJECT-TYPE
+     SYNTAX       Integer32 (5..3600)
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Age out period for pending non-eap-macs due to server timeout or unreachable"
+     DEFVAL       { 10 }
+     ::= { rcEapGlobal 6 }
+
+rcEapPortTable OBJECT-TYPE
+     SYNTAX        SEQUENCE OF RcEapPortEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION   "EAP properietery table for port level commands"
+     ::= { rcEap 2 }
+
+rcEapPortEntry OBJECT-TYPE
+     SYNTAX        RcEapPortEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION   "Entry containing the EAP properietry configuration
+                    information at the port level."
+     INDEX         { rcEapPortIndex }
+     ::= { rcEapPortTable 1 }
+
+RcEapPortEntry ::= SEQUENCE {
+     rcEapPortIndex               InterfaceIndex,
+     rcEapPortGuestVlanEnable     TruthValue,
+     rcEapPortGuestVlanId         INTEGER,
+     rcEapPortMultiHostEnable     TruthValue,
+     rcEapPortMultiHostMaxClients INTEGER,
+     rcEapPortAllowNonEapHost     TruthValue,
+     rcEapPortNonEapMaxClients    INTEGER,
+     rcEapPortRadAuthNonEapClients TruthValue,
+     rcEapPortShutDownOnIntrusion TruthValue
+}
+
+rcEapPortIndex OBJECT-TYPE
+     SYNTAX       InterfaceIndex
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "An index value that uniquely identifies a port.
+                   This value is similar to ifIndex in MIB2."
+     ::= { rcEapPortEntry 1 }
+
+rcEapPortGuestVlanEnable OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "When this variable is set to TRUE, EAPoL Guest Vlan 
+                   feature will be enabled on the port"
+     DEFVAL       { false }
+     ::= { rcEapPortEntry 2 }
+
+rcEapPortGuestVlanId OBJECT-TYPE
+     SYNTAX       INTEGER (0..4000)
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "A value representing the VLAN to be used as a Guest
+                   VLAN. Access to the host/s connected to this port
+                   is provided through this VLAN before any of the hosts
+                   are EAP (802.1X) authenticated."
+     ::= { rcEapPortEntry 3 }
+
+rcEapPortMultiHostEnable OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "When this variable is set to TRUE, the system is enabled to
+                   have multiple 802.1X supplicants authenticated from the same
+                   port"
+     DEFVAL	  { false }
+     ::= { rcEapPortEntry 4 }
+
+rcEapPortMultiHostMaxClients  OBJECT-TYPE
+     SYNTAX       INTEGER (1..8)
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Integer value representing the maximum number of supplicants
+                   that are allowed to get authenticated on the port. This is
+                   applicable rcEapPortMultiHostEnable is set to TRUE."
+     DEFVAL	  { 1 }
+     ::= { rcEapPortEntry 5 }
+
+rcEapPortAllowNonEapHost OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "When this variable is set to TRUE, the system is enabled to
+                   allow hosts that do not participate in 802.1X authentication
+                   to get network access."
+     DEFVAL       { false }
+     ::= { rcEapPortEntry 6 }
+
+rcEapPortNonEapMaxClients OBJECT-TYPE
+     SYNTAX       INTEGER (1..8)
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Integer value representing the maximum number of non-802.1X
+                   hosts that are allowed to connect to the port."
+     DEFVAL       { 1 }
+     ::= { rcEapPortEntry 7 }
+
+rcEapPortRadAuthNonEapClients OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "When this variable is set to TRUE, the system is enabled to
+                   allow Non-Eap hosts on the port to get network access through radius
+                   based Mac authorization."
+     DEFVAL       { false }
+     ::= { rcEapPortEntry 8 }
+
+rcEapPortShutDownOnIntrusion OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "When this variable is set to TRUE, the port is
+                   shutdown on encountering [max + 1st] non-eap client
+                   on the port"
+     DEFVAL       { false }
+     ::= { rcEapPortEntry 9 }
+
+rcEapPortAllowedMacTable OBJECT-TYPE
+     SYNTAX        SEQUENCE OF RcEapPortAllowedMacEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION   "EAP properietery table for allowed mac addresses of non
+                    EAP clients"
+     ::= { rcEap 3 }
+
+rcEapPortAllowedMacEntry OBJECT-TYPE
+     SYNTAX        RcEapPortAllowedMacEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION   "Entry containing MAC addresses for Non EAP hosts allowed
+                    on the port"
+     INDEX         { rcEapPortAllowedMacPort, rcEapPortAllowedMacAddr }
+     ::= { rcEapPortAllowedMacTable 1 }
+
+RcEapPortAllowedMacEntry ::= SEQUENCE {
+     rcEapPortAllowedMacPort      InterfaceIndex,
+     rcEapPortAllowedMacAddr      MacAddress,
+     rcEapPortAllowedMacRowStatus RowStatus
+}
+
+rcEapPortAllowedMacPort OBJECT-TYPE
+     SYNTAX       InterfaceIndex
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "An index value that uniquely identifies a port.
+                   This value is similar to ifIndex in MIB2."
+     ::= { rcEapPortAllowedMacEntry 1 }
+
+rcEapPortAllowedMacAddr OBJECT-TYPE
+     SYNTAX       MacAddress
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "MAC address of a non EAP host that is granted access
+                   on the port."
+     ::= { rcEapPortAllowedMacEntry 2 }
+
+rcEapPortAllowedMacRowStatus OBJECT-TYPE
+     SYNTAX       RowStatus
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Used to create/delete entries in rcEapPortAllowedMacTable."
+     ::= { rcEapPortAllowedMacEntry 3 }
+
+rcEapMultiHostStatusTable OBJECT-TYPE
+     SYNTAX 	  SEQUENCE OF RcEapMultiHostStatusEntry
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "This table is used to control the EAP multihost configuration
+                   for each port in the system."
+     ::= { rcEap 4 }
+
+rcEapMultiHostStatusEntry OBJECT-TYPE
+     SYNTAX 	  RcEapMultiHostStatusEntry
+     MAX-ACCESS   not-accessible
+     STATUS 	  current
+     DESCRIPTION  "The EAP multihost configuration for a port."
+     INDEX 	  { rcEapMultiHostStatusPortNumber, 
+                    rcEapMultiHostStatusClientMACAddr }
+     ::= { rcEapMultiHostStatusTable 1 }
+
+RcEapMultiHostStatusEntry ::= SEQUENCE {
+          rcEapMultiHostStatusPortNumber InterfaceIndex,
+          rcEapMultiHostStatusClientMACAddr MacAddress,
+          rcEapMultiHostStatusPaeState INTEGER,
+          rcEapMultiHostStatusBackendAuthState INTEGER
+     }
+
+rcEapMultiHostStatusPortNumber OBJECT-TYPE
+     SYNTAX       InterfaceIndex
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "The Port number associated with this client."
+     ::= { rcEapMultiHostStatusEntry 1 }
+
+rcEapMultiHostStatusClientMACAddr OBJECT-TYPE
+     SYNTAX       MacAddress
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "The MAC address of the client."
+     ::= { rcEapMultiHostStatusEntry 2 }
+
+rcEapMultiHostStatusPaeState OBJECT-TYPE
+     SYNTAX       INTEGER {
+                     initialize(1),
+                     disconnected(2),
+                     connecting(3),
+                     authenticating(4),
+                     authenticated(5),
+                     aborting(6),
+                     held(7),
+                     forceAuth(8),
+                     forceUnauth(9)
+                  }
+     MAX-ACCESS   read-only
+     STATUS       current
+     DESCRIPTION  "The current value of the Authenticator PAE state machine."
+     ::= { rcEapMultiHostStatusEntry 3 }
+
+rcEapMultiHostStatusBackendAuthState OBJECT-TYPE
+     SYNTAX       INTEGER {
+                     request(1),
+                     response(2), 
+                     success(3),
+                     fail(4),
+                     timeout(5),
+                     idle(6),
+                     initialize(7)
+                  }
+     MAX-ACCESS   read-only
+     STATUS       current
+     DESCRIPTION  "The current state of the Backend Authentication state 
+                   machine."
+     ::= { rcEapMultiHostStatusEntry 4 }
+
+rcEapMultiHostSessionStatsTable OBJECT-TYPE
+     SYNTAX       SEQUENCE OF RcEapMultiHostSessionStatsEntry
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "A table that contains the session statistics objects for the
+                   Authenticator PAE associated with each EAP client on each 
+                   Port.An entry appears in this table for each client MAC address 
+		   on each port that may authenticate access to itself." 
+     ::= { rcEap 5 }
+
+rcEapMultiHostSessionStatsEntry OBJECT-TYPE
+     SYNTAX       RcEapMultiHostSessionStatsEntry
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "The session statistics information for an Authenticator
+                   PAE. This shows the current values being collected for
+                   each session that is still in progress, or the final
+                   values for the last valid session for each client where
+                   there is no session currently active."
+     INDEX        { rcEapMultiHostSessionStatsPortNumber,
+                    rcEapMultiHostSessionStatsClientMACAddr }
+     ::= { rcEapMultiHostSessionStatsTable 1 }
+
+RcEapMultiHostSessionStatsEntry ::= SEQUENCE {
+          rcEapMultiHostSessionStatsPortNumber InterfaceIndex,
+          rcEapMultiHostSessionStatsClientMACAddr MacAddress,
+          rcEapMultiHostSessionId SnmpAdminString,
+          rcEapMultiHostSessionAuthenticMethod INTEGER,
+          rcEapMultiHostSessionTime TimeTicks,
+          rcEapMultiHostSessionTerminateCause INTEGER,
+          rcEapMultiHostSessionUserName SnmpAdminString
+     }
+
+rcEapMultiHostSessionStatsPortNumber OBJECT-TYPE
+     SYNTAX       InterfaceIndex
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "The Port number associated with this client."
+     ::= { rcEapMultiHostSessionStatsEntry 1 }
+
+rcEapMultiHostSessionStatsClientMACAddr OBJECT-TYPE
+     SYNTAX       MacAddress
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "The MAC address of this client."
+     ::= { rcEapMultiHostSessionStatsEntry 2 }
+
+rcEapMultiHostSessionId OBJECT-TYPE
+     SYNTAX       SnmpAdminString
+     MAX-ACCESS   read-only
+     STATUS       current
+     DESCRIPTION  "A unique identifier for the session, in the
+                   form of a printable ASCII string of at least
+                   three characters."
+     ::= { rcEapMultiHostSessionStatsEntry 3 }
+
+rcEapMultiHostSessionAuthenticMethod OBJECT-TYPE
+     SYNTAX       INTEGER {
+                     remoteAuthServer(1),
+                     localAuthServer(2)
+                  }
+     MAX-ACCESS   read-only
+     STATUS       current
+     DESCRIPTION  "The authentication method used to establish the session."
+     ::= { rcEapMultiHostSessionStatsEntry 4 }
+
+rcEapMultiHostSessionTime OBJECT-TYPE
+     SYNTAX       TimeTicks
+     MAX-ACCESS   read-only
+     STATUS       current
+     DESCRIPTION  "The duration of the session in seconds."
+     ::= { rcEapMultiHostSessionStatsEntry 5 }
+
+rcEapMultiHostSessionTerminateCause OBJECT-TYPE
+     SYNTAX       INTEGER {
+                     supplicantLogoff(1),
+                     portFailure(2),
+                     supplicantRestart(3),
+                     reauthFailed(4),
+                     authControlForceUnauth(5),
+                     portReInit(6),
+                     portAdminDisabled(7),
+                     notTerminatedYet(999)
+                  }
+     MAX-ACCESS   read-only
+     STATUS       current
+     DESCRIPTION  "The reason for the session termination."
+     ::= { rcEapMultiHostSessionStatsEntry 6 }
+
+rcEapMultiHostSessionUserName OBJECT-TYPE
+     SYNTAX       SnmpAdminString
+     MAX-ACCESS   read-only
+     STATUS       current
+     DESCRIPTION  "The User-Name representing the identity of the Supplicant 
+                   PAE."
+     ::= { rcEapMultiHostSessionStatsEntry 7 }
+
+rcEapPortRadiusMacTable OBJECT-TYPE
+     SYNTAX        SEQUENCE OF RcEapPortRadiusMacEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION   "EAP proprietary table for non-EAP hosts
+                    authenticated using radius server."
+     ::= { rcEap 6 }
+
+rcEapPortRadiusMacEntry OBJECT-TYPE
+     SYNTAX        RcEapPortRadiusMacEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION   "Entry containing MAC addresses for Non EAP hosts
+                    authenticated using radius server."
+     INDEX         { rcEapPortRadiusMacPort, rcEapPortRadiusMacAddr }
+     ::= { rcEapPortRadiusMacTable 1 }
+
+RcEapPortRadiusMacEntry ::= SEQUENCE {
+     rcEapPortRadiusMacPort      InterfaceIndex,
+     rcEapPortRadiusMacAddr      MacAddress,
+     rcEapPortRadiusMacStatus    INTEGER
+}
+rcEapPortRadiusMacPort OBJECT-TYPE
+     SYNTAX       InterfaceIndex
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "An index value that uniquely identifies a port."
+     ::= { rcEapPortRadiusMacEntry 1 }
+
+rcEapPortRadiusMacAddr OBJECT-TYPE
+     SYNTAX       MacAddress
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "MAC address of a non EAP host that is authenticated
+                   using radius server."
+     ::= { rcEapPortRadiusMacEntry 2 }
+
+rcEapPortRadiusMacStatus OBJECT-TYPE
+     SYNTAX       INTEGER {
+                                    authenticated(1),
+                                    rejected(2),
+                                    pending(3),
+                                    radius-request-dropped(4),
+                                    radius-server-not-reachable(5)
+                            }
+     MAX-ACCESS   read-only
+     STATUS       current
+     DESCRIPTION  "Authentication status of the non EAP host that is
+                   authenticated using radius server."
+     ::= {rcEapPortRadiusMacEntry 3 }
+
+END

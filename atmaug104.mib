@@ -1,0 +1,174 @@
+-- SECTION 1: Top Level Definitions
+
+
+BNET-ATM-ATOM-AUG-MIB DEFINITIONS ::= BEGIN
+
+
+-- Copyright 1996 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+-- Imports
+
+IMPORTS
+
+        OBJECT-TYPE
+                FROM RFC-1212
+	s5AtmTop
+  		FROM S5-ROOT-MIB
+        AtmAddr
+		FROM ATM-TC-MIB           
+    	ifIndex
+            	FROM RFC1213-MIB
+    	atmVclVpi, atmVclVci
+            	FROM ATM-MIB
+	atmSoftPVccLeafReference
+		FROM ATM-SOFT-PVC-MIB;
+
+
+
+-- added since not in s5 root mib...
+--s5AtmTop          OBJECT IDENTIFIER ::= { series5000 14 }
+
+bnetAtmAug     OBJECT IDENTIFIER ::= { s5AtmTop 3 }
+ 
+bnetAtmDeviceAtmAddr  OBJECT-TYPE
+    SYNTAX  AtmAddr
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+    "The ATM address which applies for this particular device.
+    Where multiple addresses apply, include only primary one."
+    ::= { bnetAtmAug 1 }
+
+bnetAtmLearnAddrs OBJECT-TYPE
+    SYNTAX  INTEGER {
+        other(1),
+        learnAddrs(2),
+        forgetAddrs(3)
+    }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+	"When set to learnAddrs, atmAddrVcl and atmVclAddrBind
+	tables will keep track of ATM Addresses."
+    DEFVAL { learnAddrs }
+    ::= { bnetAtmAug 2 }
+
+atmfAddressClientTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF AtmfAddressClientEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Provides additional detail about each ATM client."
+    ::= { bnetAtmAug 3 }
+ 
+atmfAddressClientEntry OBJECT-TYPE
+    SYNTAX AtmfAddressClientEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An entry with information about an ATM client."
+    INDEX { atmfAddressPort, atmfAddressAtmAddress }
+-- Augments atmfAddressTable FROM ATM-FORUM-ADDR-REG
+    ::= { atmfAddressClientTable 1 }
+ 
+AtmfAddressClientEntry ::= SEQUENCE {
+    atmfAddressPort INTEGER,
+    atmfAddressAtmAddress AtmAddr,
+    atmfAddressClientType INTEGER,
+    atmfAddressClientCallCount INTEGER
+    }
+
+atmfAddressPort OBJECT-TYPE
+    SYNTAX INTEGER
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+	" Uni Port "
+    ::= { atmfAddressClientEntry 1 }
+
+
+atmfAddressAtmAddress OBJECT-TYPE
+    SYNTAX AtmAddr 
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+	"ATM Address"
+    ::= { atmfAddressClientEntry 2 }
+
+
+atmfAddressClientType OBJECT-TYPE
+    SYNTAX INTEGER {
+        other(1),
+        cnTurbo(2),
+        cnCircuitSaver(3),
+        laneTurbo(4),
+        laneCircuitSaver(5),
+        external(6),
+	les(7),
+	bus(8),
+	les_bus(9),
+	lecs(10),
+	spvc(11)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates the type of client."
+    DEFVAL { external }
+    ::= { atmfAddressClientEntry 3 }
+ 
+atmfAddressClientCallCount OBJECT-TYPE
+    SYNTAX INTEGER
+--    Rsyntax INTEGER
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates number of calls currently up, which
+	involve this particular client address."
+    ::= { atmfAddressClientEntry 4 }
+ 
+-- This is the extension table for atmSoftPVccTable.
+
+bnetAtmSoftPVccExtnTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BnetAtmSoftPVccExtnEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The table used to maintain Soft Permanent Virtual
+        Channel Connection (Soft PVCCs) circuit ids.
+        The Soft PVCC table is applicable only to switches."
+    ::= { bnetAtmAug 4 }
+
+bnetAtmSoftPVccExtnEntry OBJECT-TYPE
+    SYNTAX BnetAtmSoftPVccExtnEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+	"Each entry in this table represents the circuit id of a  
+	Soft Permanent Virtual Channel Connection (Soft PVCC)."
+    INDEX { ifIndex, atmVclVpi, atmVclVci, atmSoftPVccLeafReference }
+    ::= { bnetAtmSoftPVccExtnTable 1 }
+
+BnetAtmSoftPVccExtnEntry ::= SEQUENCE {
+    bnetAtmSoftPVccCircuitId	INTEGER
+    }
+
+bnetAtmSoftPVccCircuitId  OBJECT-TYPE
+    SYNTAX INTEGER
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+	"This is the circuit id for a Soft PVCC."
+    ::= { bnetAtmSoftPVccExtnEntry 1 }
+
+END

@@ -1,0 +1,86 @@
+-- This files contains the TC required by ISIS MIB.
+-- Copied from DIFFSERV MIB, diffserv MIB had dependency 
+-- on the new version of the IF-MIB, so could not add it.
+
+-- *************************************************
+-- REMOVE THIS FILE IF ADDING DIFFSERV SUPPORT
+-- *************************************************
+
+DIFFSERV-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, mib-2, Unsigned32 FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION                 FROM SNMPv2-TC;
+
+diffServMib MODULE-IDENTITY
+    LAST-UPDATED "200202070000Z"
+    ORGANIZATION "IETF Differentiated Services WG"
+    CONTACT-INFO
+       "       Fred Baker
+               Cisco Systems
+               1121 Via Del Rey
+               Santa Barbara, CA 93117, USA
+               E-mail: fred@cisco.com
+
+               Kwok Ho Chan
+               Nortel Networks
+               600 Technology Park Drive
+               Billerica, MA 01821, USA
+               E-mail: khchan@nortelnetworks.com
+
+               Andrew Smith
+               Harbour Networks
+               Jiuling Building
+               21 North Xisanhuan Ave.
+               Beijing, 100089, PRC
+               E-mail: ah_smith@acm.org
+
+               Differentiated Services Working Group:
+               diffserv@ietf.org"
+    DESCRIPTION
+       "This MIB defines the objects necessary to manage a device that
+       uses the Differentiated Services Architecture described in RFC
+       2475. The Conceptual Model of a Differentiated Services Router
+       provides supporting information on how such a router is modeled."
+    REVISION "200202070000Z"
+    DESCRIPTION
+       "Initial version, published as RFC 3289."
+    ::= { mib-2 97 }
+
+IndexInteger ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "d"
+    STATUS   current
+    DESCRIPTION
+       "An integer which may be used as a table index."
+    SYNTAX   Unsigned32 (1..4294967295)
+
+IndexIntegerNextFree ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "d"
+    STATUS   current
+    DESCRIPTION
+       "An integer which may be used as a new Index in a table.
+
+       The special value of 0 indicates that no more new entries can be
+       created in the relevant table.
+
+       When a MIB is used for configuration, an object with this SYNTAX
+       always contains a legal value (if non-zero) for an index that is
+       not currently used in the relevant table. The Command Generator
+       (Network Management Application) reads this variable and uses the
+       (non-zero) value read when creating a new row with an SNMP SET.
+       When the SET is performed, the Command Responder (agent) must
+       determine whether the value is indeed still unused; Two Network
+       Management Applications may attempt to create a row
+       (configuration entry) simultaneously and use the same value. If
+       it is currently unused, the SET succeeds and the Command
+       Responder (agent) changes the value of this object, according to
+       an implementation-specific algorithm.  If the value is in use,
+       however, the SET fails.  The Network Management Application must
+       then re-read this variable to obtain a new usable value.
+
+       An OBJECT-TYPE definition using this SYNTAX MUST specify the
+       relevant table for which the object is providing this
+       functionality."
+    SYNTAX   Unsigned32 (0..4294967295)
+
+END

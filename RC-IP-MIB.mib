@@ -1,0 +1,1681 @@
+RC-IP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, IpAddress
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, MacAddress, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex, InterfaceIndexOrZero
+        FROM IF-MIB
+    rcIp, EnableValue, IdList
+        FROM RAPID-CITY;
+
+
+rcIpMib MODULE-IDENTITY
+       LAST-UPDATED     "200607140000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "Yu-Ten Lee
+                         Postal:        Nortel Networks, Inc.
+                                        4655 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-2560
+                         Fax:           408-495-6680
+                         E-mail:        ylee@baynetworks.com"
+
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200607140000Z" -- 14 July 2006
+       DESCRIPTION "Version 13: Added rcIpAdEntSecondaryIf"
+
+       REVISION "200606150000Z" -- 15 June 2006
+       DESCRIPTION "Version 12: Increased the range for rcIpConfDhcpIfIndex"
+
+       REVISION "200602090000Z" -- 09 February 2006
+       DESCRIPTION "Version 11: Added rcIpConfIsisEnable"
+
+       REVISION "200511220000Z" -- 22 Nov 2005
+       DESCRIPTION "Version 10: Added rcIpConfReversePathCheckEnable &
+                                rcIpConfReversePathCheckMode"
+
+       REVISION "200509260000Z" -- 26 Sep 2005
+       DESCRIPTION "Version 9: Updated rcIpConfGlobalEcmpMaxPath to 8"
+
+       REVISION "200505180000Z" -- 18 May 2005
+       DESCRIPTION "Version 8: Removed rcIpConfOspfIfMtuIgnore from rcIpConfTable
+                               and changes in rcIpConfOspfIfType"
+
+       REVISION "200502160000Z" -- 16 Feb 2005
+       DESCRIPTION "Version 7: Changed range for rcIpAdEntVlanId"
+
+       REVISION "200502040000Z" -- 04 Feb 2005
+       DESCRIPTION "Version 6 : Added rcIpConfOspfIfMtuIgnore in rcIpConfTable"
+
+       REVISION "200407210000Z" -- 21 July 2004
+       DESCRIPTION  "Version 5 : Fixed typo"
+
+       REVISION "200407190000Z" -- 19 July 2004
+       DESCRIPTION  "Version 4 : Added rcIpConfGlobalUdpCheckSumEnable"
+
+       ::= { rcIp 0 }
+
+-- IP Group
+
+rcIpConf OBJECT IDENTIFIER ::= { rcIp 1 }
+
+-- IP Configuration Table
+
+rcIpConfTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpConfEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to maintain IP routing information 
+                      for a particular interface."
+        ::= { rcIpConf 1 }
+ 
+rcIpConfEntry OBJECT-TYPE
+        SYNTAX        RcIpConfEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing IP routing information.  An entry
+                      is automatically created in this table when routing 
+		      is enabled for an interface -or- when an ip address 
+                      is configured on an interface."
+        INDEX         { rcIpConfIfIndex }
+        ::= { rcIpConfTable 1 }
+ 
+RcIpConfEntry ::= SEQUENCE {
+                rcIpConfIfIndex               InterfaceIndexOrZero,
+                rcIpConfAdvertDefRte          TruthValue,
+                rcIpConfAcceptDefRte          TruthValue,
+		rcIpConfRowStatus             RowStatus,
+                rcIpConfRipEnable             TruthValue,
+                rcIpConfOspfEnable            TruthValue,
+                rcIpConfIgmpEnable            TruthValue,
+                rcIpConfAddrAssigned          TruthValue,
+                rcIpConfDhcpEnable            TruthValue,
+                rcIpConfTriggeredUpdateEnable TruthValue,
+                rcIpConfAutoAggrerateEnable   TruthValue,
+                rcIpConfGenerateDefaultRoute  TruthValue,
+                rcIpConfAdvertiseWhenDown     TruthValue,
+                rcIpConfDirectBroadcastEnable TruthValue,
+                rcIpConfRipInPolicy           DisplayString,
+                rcIpConfRipOutPolicy          DisplayString,
+                rcIpConfOspfIfType            INTEGER,
+                rcIpConfRipCost               INTEGER,
+                rcIpConfRipHolddown           INTEGER,
+                rcIpConfRipTimeout            INTEGER,
+                rcIpConfRsmltEnable           TruthValue,
+                rcIpConfReversePathCheckEnable    TruthValue,
+                rcIpConfReversePathCheckMode      INTEGER,
+		rcIpConfIsisEnable		  TruthValue
+        }
+
+rcIpConfIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndexOrZero (0..4094)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "An unique value to identify a physical interface 
+ 		      or a logical interface (VLAN)."
+        ::= { rcIpConfEntry 1 }
+
+rcIpConfAdvertDefRte OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether this interface should
+		      advertize a RIP default route." 
+        ::= { rcIpConfEntry 2 }
+
+rcIpConfAcceptDefRte OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether this interface should
+		      accept a RIP default route."
+        ::= { rcIpConfEntry 3 }
+
+rcIpConfRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Row status for this entry."
+        ::= { rcIpConfEntry 4 }
+
+rcIpConfRipEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable RIP routing on the specified
+                      interface."
+        ::= { rcIpConfEntry 5 }
+ 
+rcIpConfOspfEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable OSPF routing on the specified
+                      interface."
+        ::= { rcIpConfEntry 6 }
+ 
+rcIpConfIgmpEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable IGMP on the specified
+                      interface."
+        ::= { rcIpConfEntry 7 }
+ 
+rcIpConfAddrAssigned OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Indicate whether IpAddress has been assigned 
+                      for this interface."
+        ::= { rcIpConfEntry 8 }
+
+rcIpConfDhcpEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable DHCP on the specified
+                      interface."
+        ::= { rcIpConfEntry 9 }
+
+rcIpConfTriggeredUpdateEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether the RIP triggered update
+		      feature should be enabled on this interface." 
+        ::= { rcIpConfEntry 10 }
+ 
+rcIpConfAutoAggrerateEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether the auto aggregation 
+		      feature should be enabled on this interface." 
+        ::= { rcIpConfEntry 11 }
+ 
+rcIpConfGenerateDefaultRoute OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether to generate a default
+		      RIP route	on this interface." 
+        ::= { rcIpConfEntry 12 }
+
+rcIpConfAdvertiseWhenDown OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The value is used indicated whether vlan state change
+                       should be notified to layer 3 or not, provided the vlan
+                       is configured as routable interface. Also used for
+                       single routable ports, in that case the criteria for
+                       state is PortOperStatus.
+                       Vlan is considered as UP if atleast one member of the
+                       port based vlan has link up, or atleast one port member
+                       of the policy based has an entry in the MGID or atleast
+                       one static member of the policy based vlan has link up.
+                       Otherwise, vlan is considered as DOWN.
+                       If the value is 'true' then the interface state change 
+                       will not be notified to layer 3. (i.e., it always stays 
+                       up). If the value is 'false' then the vlan state change 
+                       will be notified to layer 3 so that IP related status 
+                       reflects routable interface state."
+        DEFVAL        { false }
+        ::= { rcIpConfEntry 13 }
+ 
+rcIpConfDirectBroadcastEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether this interface should
+                      forward direct broadcast traffic"
+        DEFVAL        { true }
+        ::= { rcIpConfEntry 14 }
+
+rcIpConfRipInPolicy OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether this interface should
+            advertize a RIP default route."
+        ::= { rcIpConfEntry 15 }
+
+rcIpConfRipOutPolicy OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..64))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether this interface should
+            accept a RIP default route."
+        ::= { rcIpConfEntry 16 }
+
+rcIpConfOspfIfType OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    broadcast (1),
+                    nbma (2),
+                    pointToPoint (3),
+                    pointToMultipoint (5),
+                    passive (99)
+                  }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "OSPF Interface Type."
+        ::= { rcIpConfEntry 17 } 
+
+rcIpConfRipCost OBJECT-TYPE
+        SYNTAX        INTEGER (1..15)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the rip cost for this interface."
+        DEFVAL        { 1 }
+        ::= { rcIpConfEntry 18 }
+
+rcIpConfRipHolddown OBJECT-TYPE
+        SYNTAX        INTEGER (0..360)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the rip holddown timer for this
+                       interface"
+        ::= { rcIpConfEntry 19 }
+
+rcIpConfRipTimeout OBJECT-TYPE
+        SYNTAX        INTEGER (15..259200)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the rip timeout interval for this
+                       interface"
+        ::= { rcIpConfEntry 20 }
+
+rcIpConfRsmltEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to enable Route Smlt feature."
+        DEFVAL        { false }
+        ::= { rcIpConfEntry 21 }
+ 
+rcIpConfReversePathCheckEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether this interface should
+                      perform Reverse Path Check"
+        DEFVAL        { false }
+        ::= { rcIpConfEntry 22 }
+
+rcIpConfReversePathCheckMode OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    exist-only (1),
+                    strict (2)
+                  }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Reverse Path Checking mode."
+        DEFVAL        { exist-only }
+        ::= { rcIpConfEntry 23 }
+
+rcIpConfIsisEnable OBJECT-TYPE
+        SYNTAX        TruthValue 
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Enable/disable Isis on this IP interface "
+        ::= { rcIpConfEntry 24 }
+ 
+
+-- rcIpConfOspfTable ::= { rcIpConf 2 } defined in rcOspf.mib
+
+rcIpConfGlobal   OBJECT IDENTIFIER       ::= { rcIpConf 6 }
+
+rcIpConfGlobalRipHoldDownTime OBJECT-TYPE
+        SYNTAX        INTEGER (0..360)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to set the system-wide RIP hold down time
+                      in seconds."
+        DEFVAL        { 120 }
+        ::= { rcIpConfGlobal 1 }
+
+rcIpConfGlobalIcmpNetUnreach OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to set the icmp net unreach feature
+                       enable/disable."
+        DEFVAL        { false }
+        ::= { rcIpConfGlobal 2 }
+
+rcIpConfGlobalEcmpEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to set the ecmp enable/disable."
+        DEFVAL        { false }
+        ::= { rcIpConfGlobal 3 }
+
+rcIpConfGlobalEcmpMaxPath OBJECT-TYPE
+        SYNTAX        INTEGER(1..8)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to globally configure maximum ECMP paths number."
+        DEFVAL        { 1 }
+        ::= { rcIpConfGlobal 4 }
+
+rcIpConfGlobalAlternativeEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to globally configure alternative enable."
+        DEFVAL        { true }
+        ::= { rcIpConfGlobal 5 }
+
+rcIpConfGlobalRouteDiscoveryEnable OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Enable/disable ICMP Route Discovery  feature"
+     DEFVAL       { true }
+     ::= { rcIpConfGlobal 6 }
+
+rcIpConfGlobalRipTimeOutInterval OBJECT-TYPE
+     SYNTAX       INTEGER (15..259200)
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Rip TimeOut Interval in seconds"
+     DEFVAL       { 180 }
+     ::= { rcIpConfGlobal 8 }
+
+rcIpConfGlobalRipDefImportMetric OBJECT-TYPE
+     SYNTAX       INTEGER (0..15)
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Rip def import metric"
+     DEFVAL       { 8 }
+     ::= { rcIpConfGlobal 9 }
+
+rcIpConfGlobalEcmp1PathList OBJECT-TYPE
+     SYNTAX       DisplayString
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Routes to networks specified in this prefix-list
+                   can have upto 1 ECMP path, irrespective of
+                   ecmp-max-path configuration"
+     ::= { rcIpConfGlobal 10 }
+
+rcIpConfGlobalEcmp2PathList OBJECT-TYPE
+     SYNTAX       DisplayString
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Routes to networks specified in this prefix-list
+                   can have upto 2 ECMP path, irrespective of
+                   ecmp-max-path configuration."
+     ::= { rcIpConfGlobal 11 }
+
+rcIpConfGlobalEcmp3PathList OBJECT-TYPE
+     SYNTAX       DisplayString
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Routes to networks specified in this prefix-list
+                   can have upto 3 ECMP path, irrespective of
+                   ecmp-max-path configuration."
+     ::= { rcIpConfGlobal 12 }
+
+rcIpConfGlobalEcmp4PathList OBJECT-TYPE
+     SYNTAX       DisplayString
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Routes to networks specified in this prefix-list
+                   can have upto 4 ECMP path, irrespective of
+                   ecmp-max-path configuration."
+     ::= { rcIpConfGlobal 13 }
+
+rcIpConfGlobalEcmpPathListApply OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "This is to apply any changes in ECMP path list
+                   configuration or in the prefix-lists configured to
+                   be used as path list"
+     ::= { rcIpConfGlobal 14 }
+
+rcIpConfGlobalIcmpRedirectMsg OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  ""
+     ::= { rcIpConfGlobal 15 }
+
+rcIpConfGlobalMulticastMacFloodingStatus OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  ""
+     ::= { rcIpConfGlobal 16 }
+
+rcIpConfGlobalArpThreshold OBJECT-TYPE
+     SYNTAX       INTEGER (50..1000)
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Defines the maximum number of outstanding arp request
+                   a switch can generate."
+     DEFVAL       { 500 }
+     ::= { rcIpConfGlobal 17 }
+
+rcIpConfGlobalAllowMoreSpecificNonLocalRouteEnable OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Used to determine whether more specific non local routes will go into the routing table."
+    DEFVAL        { false }
+     ::= { rcIpConfGlobal 18 }
+
+rcIpConfGlobalUdpCheckSumEnable OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS   read-write
+     STATUS       current
+     DESCRIPTION  "Enable/disable UDP checksum calculation."
+     DEFVAL       { true }
+     ::= { rcIpConfGlobal 19 }
+
+-- IP Configuration IP Interface Table
+
+rcIpConfV2Table OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpConfV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to maintain IP routing information
+                      for a particular interface."
+        ::= { rcIpConf 8 }
+
+rcIpConfV2Entry OBJECT-TYPE
+        SYNTAX        RcIpConfV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing IP routing information.  An entry
+                      is automatically created in this table when routing
+                      is enabled for an interface -or- when an ip address
+                      is configured on an interface."
+        INDEX         { rcIpConfV2Index, rcIpConfV2Addr }
+        ::= { rcIpConfV2Table 1 }
+
+RcIpConfV2Entry ::= SEQUENCE {
+                rcIpConfV2Index               InterfaceIndexOrZero,
+                rcIpConfV2Addr                  IpAddress,
+                rcIpConfV2RowStatus             RowStatus,
+                rcIpConfV2AdvertDefRte          TruthValue,
+                rcIpConfV2AcceptDefRte          TruthValue,
+                rcIpConfV2RipEnable             TruthValue,
+                rcIpConfV2OspfEnable            TruthValue,
+                rcIpConfV2IgmpEnable            TruthValue,
+                rcIpConfV2AddrAssigned          TruthValue,
+                rcIpConfV2TriggeredUpdateEnable TruthValue,
+                rcIpConfV2RipAutoAggrerateEnable TruthValue,
+                rcIpConfV2RipGenerateDefaultRoute TruthValue,
+                rcIpConfV2AdvertiseWhenDown       TruthValue
+        }
+
+rcIpConfV2Index OBJECT-TYPE
+        SYNTAX        InterfaceIndexOrZero (0..4094)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "An unique value to identify a physical interface
+                      or a logical interface (VLAN)."
+        ::= { rcIpConfV2Entry 1 }
+
+rcIpConfV2Addr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Ip interface address."
+        ::= { rcIpConfV2Entry 2 }
+
+rcIpConfV2RowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Row status for this entry."
+        ::= { rcIpConfV2Entry 3 }
+
+rcIpConfV2AdvertDefRte OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate whether this interface should
+                      advertize a RIP default route."
+        ::= { rcIpConfV2Entry 4 }
+
+rcIpConfV2AcceptDefRte OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate whether this interface should
+                      accept a RIP default route."
+        ::= { rcIpConfV2Entry 5 }
+
+rcIpConfV2RipEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable RIP routing on the specified
+                      interface."
+        ::= { rcIpConfV2Entry 6 }
+
+rcIpConfV2OspfEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable OSPF routing on the specified
+                      interface."
+        ::= { rcIpConfV2Entry 7 }
+
+rcIpConfV2IgmpEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable IGMP on the specified
+                      interface."
+        ::= { rcIpConfV2Entry 8 }
+
+rcIpConfV2AddrAssigned OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Indicate whether IpAddress has been assigned
+                      for this interface."
+        ::= { rcIpConfV2Entry 9 }
+
+rcIpConfV2TriggeredUpdateEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate whether the RIP triggered update
+                      feature should be enabled on this interface."
+        ::= { rcIpConfV2Entry 10 }
+
+rcIpConfV2RipAutoAggrerateEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate whether the auto aggregation
+                      feature should be enabled on this interface."
+        ::= { rcIpConfV2Entry 11 }
+
+rcIpConfV2RipGenerateDefaultRoute OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate whether to generate a default
+                      RIP route on this interface."
+        ::= { rcIpConfV2Entry 12 }
+
+rcIpConfV2AdvertiseWhenDown OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The value is used indicated whether vlan state change
+                       should be notified to layer 3 or not, provided the vlan
+                       is configured as routable interface. Also used for
+                       single routable ports, in that case the criteria for
+                       state is PortOperStatus.
+                       Vlan is considered as UP if atleast one member of the
+                       port based vlan has link up, or atleast one port member
+                       of the policy based has an entry in the MGID or atleast
+                       one static member of the policy based vlan has link up.
+                       Otherwise, vlan is considered as DOWN.
+                       If the value is 'true' then the interface state change
+                       will not be notified to layer 3. (i.e., it always stays
+                       up). If the value is 'false' then the vlan state change
+                       will be notified to layer 3 so that IP related status
+                       reflects routable interface state."
+        DEFVAL        { false }
+        ::= { rcIpConfV2Entry 13 }
+
+
+-- IP Route Smlt Table
+
+rcIpConfRsmltTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpConfRsmltEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to maintain OSPF summary route
+                        metric parameter for a particular Area range.  "
+       ::= { rcIpConf 11 }
+
+rcIpConfRsmltEntry OBJECT-TYPE
+        SYNTAX        RcIpConfRsmltEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing OSPF summary route metric
+                        parameter for a particular Area range.
+                        An entry is automatically created in this
+                        table when an area range is configured through
+                        ospfAreaAggregateTable in rfc1850rcc.mib"
+        INDEX         { rcIpConfRsmltIfIndex }
+        ::= { rcIpConfRsmltTable 1 }
+
+RcIpConfRsmltEntry ::= SEQUENCE {
+        rcIpConfRsmltIfIndex
+            InterfaceIndex,
+        rcIpConfRsmltHoldDownTimer
+            INTEGER,
+        rcIpConfRsmltHoldUpTimer
+            INTEGER,
+        rcIpConfRsmltRowStatus
+            RowStatus
+        }
+
+rcIpConfRsmltIfIndex OBJECT-TYPE
+        SYNTAX       InterfaceIndex
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  "Interface Index, this is an index  of the table."
+        ::= { rcIpConfRsmltEntry 1 }
+
+rcIpConfRsmltHoldDownTimer OBJECT-TYPE
+        SYNTAX       INTEGER (0..3600)
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Timer value, the range of value is from 0 to 3600."
+        ::= { rcIpConfRsmltEntry 2 }
+
+rcIpConfRsmltHoldUpTimer OBJECT-TYPE
+        SYNTAX       INTEGER (0..3600 | 9999)
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "The range of value 0 to 3600 or 9999. 9999 means
+                      infinity."
+        ::= { rcIpConfRsmltEntry 3 }
+
+rcIpConfRsmltRowStatus OBJECT-TYPE
+        SYNTAX       RowStatus
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Row Status."
+        ::= { rcIpConfRsmltEntry 4 }
+
+
+rcIpRsmlt OBJECT IDENTIFIER       ::= { rcIp 26 }
+
+rcIpRsmltGlobal OBJECT IDENTIFIER ::= { rcIpRsmlt 1 }
+
+rcIpRsmltGlobalTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Route Smlt table size."
+        ::= { rcIpRsmltGlobal 1 }
+
+rcIpRsmltOperTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpRsmltOperEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Route Smlt Table"
+    ::= { rcIpRsmlt 2 }
+
+rcIpRsmltOperEntry OBJECT-TYPE
+        SYNTAX          RcIpRsmltOperEntry
+        MAX-ACCESS       not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip As Path Access List Table."
+        INDEX           { rcIpRsmltOperIfIndex }
+        ::= { rcIpRsmltOperTable 1 }
+
+RcIpRsmltOperEntry ::=
+        SEQUENCE {
+                rcIpRsmltOperIfIndex                 InterfaceIndex,
+                rcIpRsmltOperAdminStatus             TruthValue,
+                rcIpRsmltOperHoldDownTimer           INTEGER,
+                rcIpRsmltOperHoldDownTimeRemaining   INTEGER,
+                rcIpRsmltOperHoldUpTimer             INTEGER,
+                rcIpRsmltOperHoldUpTimeRemaining     INTEGER,
+                rcIpRsmltOperIpAddr                  IpAddress,
+                rcIpRsmltOperOperStatus              INTEGER,
+                rcIpRsmltOperSmltId                  IdList,
+                rcIpRsmltOperSltId                   IdList,
+                rcIpRsmltOperVlanId                  INTEGER,
+                rcIpRsmltOperMacAddr                 MacAddress,
+                rcIpRsmltOperRowStatus               RowStatus
+        }
+
+rcIpRsmltOperIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Route Smlt Oper IfIndex."
+        ::= { rcIpRsmltOperEntry 1 }
+
+rcIpRsmltOperAdminStatus OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "is a enable/disable flag."
+        DEFVAL        { false }
+        ::= { rcIpRsmltOperEntry 2 }
+
+rcIpRsmltOperHoldDownTimer OBJECT-TYPE
+        SYNTAX        INTEGER (0..3600)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Timer value, the range of value is from 0 to 3600."
+        DEFVAL        { 0 }
+        ::= { rcIpRsmltOperEntry 3 }
+
+rcIpRsmltOperHoldDownTimeRemaining OBJECT-TYPE
+        SYNTAX        INTEGER (0..3600)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The time value that indicate how much time
+                       remaining of HoldDownTimer."
+        DEFVAL        { 0 }
+        ::= { rcIpRsmltOperEntry  4 }
+
+rcIpRsmltOperHoldUpTimer OBJECT-TYPE
+        SYNTAX        INTEGER (0..3600 | 9999)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The range of value 0 to 3600 or 9999. 9999 means
+                       infinity."
+        DEFVAL        { 0 }
+        ::= { rcIpRsmltOperEntry  5 }
+
+rcIpRsmltOperHoldUpTimeRemaining OBJECT-TYPE
+        SYNTAX        INTEGER (0..3600 | 9999)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The time value that indicate how much time
+                       remaining of HoldUpTimer."
+        DEFVAL        { 0 }
+        ::= { rcIpRsmltOperEntry  6 }
+
+rcIpRsmltOperIpAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "IP Interface with RSMLT on."
+        DEFVAL   { '00000000'H }    -- 0.0.0.0
+        ::= { rcIpRsmltOperEntry  7 }
+
+rcIpRsmltOperOperStatus OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        up(1),
+                        down(2)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The operation status of Rsmlt, up or down."
+        DEFVAL        { down }
+        ::= { rcIpRsmltOperEntry  8 }
+
+rcIpRsmltOperSmltId OBJECT-TYPE
+        SYNTAX        IdList
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The id range for SMLT is 1-32."
+        ::= { rcIpRsmltOperEntry  9 }
+
+rcIpRsmltOperSltId OBJECT-TYPE
+        SYNTAX        IdList
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The id range for SLT is 1-512."
+        ::= { rcIpRsmltOperEntry  10 }
+
+rcIpRsmltOperVlanId OBJECT-TYPE
+        SYNTAX        INTEGER (1..4093)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Vlan id."
+        ::= { rcIpRsmltOperEntry  11 }
+
+rcIpRsmltOperMacAddr OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Mac Address."
+        ::= { rcIpRsmltOperEntry  12 }
+
+rcIpRsmltOperRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Row Status."
+        ::= { rcIpRsmltOperEntry  13 }
+
+
+-- Route Smlt Peer Table
+
+rcIpRsmltPeerTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpRsmltPeerEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Route Smlt Table"
+    ::= { rcIpRsmlt 3 }
+
+rcIpRsmltPeerEntry OBJECT-TYPE
+        SYNTAX          RcIpRsmltPeerEntry
+        MAX-ACCESS       not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip As Path Access List Table."
+        INDEX           { rcIpRsmltPeerIfIndex }
+        ::= { rcIpRsmltPeerTable 1 }
+
+RcIpRsmltPeerEntry ::=
+        SEQUENCE {
+                rcIpRsmltPeerIfIndex                 InterfaceIndex,
+                rcIpRsmltPeerAdminStatus             TruthValue,
+                rcIpRsmltPeerHoldDownTimer           INTEGER,
+                rcIpRsmltPeerHoldDownTimeRemaining   INTEGER,
+                rcIpRsmltPeerHoldUpTimer             INTEGER,
+                rcIpRsmltPeerHoldUpTimeRemaining     INTEGER,
+                rcIpRsmltPeerIpAddr                  IpAddress,
+                rcIpRsmltPeerOperStatus              INTEGER,
+                rcIpRsmltPeerSmltId                  IdList,
+                rcIpRsmltPeerSltId                   IdList,
+                rcIpRsmltPeerVlanId                  INTEGER,
+                rcIpRsmltPeerMacAddr                 MacAddress
+        }
+
+rcIpRsmltPeerIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Route Smlt Oper IfIndex."
+        ::= { rcIpRsmltPeerEntry 1 }
+
+rcIpRsmltPeerAdminStatus OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "is a enable/disable flag."
+        ::= { rcIpRsmltPeerEntry 2 }
+
+rcIpRsmltPeerHoldDownTimer OBJECT-TYPE
+        SYNTAX        INTEGER (0..3600)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Timer value, the range of value is from 0 to 3600."
+        DEFVAL        { 0 }
+        ::= { rcIpRsmltPeerEntry 3 }
+
+rcIpRsmltPeerHoldDownTimeRemaining OBJECT-TYPE
+        SYNTAX        INTEGER (0..3600)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The time value that indicate how much time
+                       remaining of HoldDownTimer."
+        DEFVAL        { 0 }
+        ::= { rcIpRsmltPeerEntry  4 }
+
+rcIpRsmltPeerHoldUpTimer OBJECT-TYPE
+        SYNTAX        INTEGER (0..3600 | 9999)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The range of value 0 to 3600 or 9999. 9999 means
+                       infinity."
+        DEFVAL        { 0 }
+        ::= { rcIpRsmltPeerEntry  5 }
+
+rcIpRsmltPeerHoldUpTimeRemaining OBJECT-TYPE
+        SYNTAX        INTEGER (0..3600 | 9999)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The time value that indicate how much time
+                       remaining of HoldUpTimer."
+        DEFVAL        { 0 }
+        ::= { rcIpRsmltPeerEntry  6 }
+
+rcIpRsmltPeerIpAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "IP Interface with RSMLT on."
+        DEFVAL   { '00000000'H }    -- 0.0.0.0
+        ::= { rcIpRsmltPeerEntry  7 }
+
+rcIpRsmltPeerOperStatus OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        up(1),
+                        down(2)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The operation status of Rsmlt, up or down."
+        DEFVAL        { down }
+        ::= { rcIpRsmltPeerEntry  8 }
+
+rcIpRsmltPeerSmltId OBJECT-TYPE
+        SYNTAX        IdList
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The id range for SMLT is 1-32."
+        ::= { rcIpRsmltPeerEntry  9 }
+
+rcIpRsmltPeerSltId OBJECT-TYPE
+        SYNTAX        IdList
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The id range for SLT is 1-512."
+        ::= { rcIpRsmltPeerEntry  10 }
+
+rcIpRsmltPeerVlanId OBJECT-TYPE
+        SYNTAX        INTEGER (1..4093)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Vlan id."
+        ::= { rcIpRsmltPeerEntry  11 }
+
+rcIpRsmltPeerMacAddr OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Mac Address."
+        ::= { rcIpRsmltPeerEntry  12 }
+
+
+-- IP Address Table
+
+rcIpAddrTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpAddrEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "The table of addressing information relevant to
+                      this entity's IP addresses.
+
+                      This table is identical to the ipAddrTable in
+                      MIB2 except the columns rcIpAdEntIfIndex and
+                      rcIpAdEntAddr are reversed.  Also, the table
+                      is indexed by both these variables."
+        ::= { rcIp 2 }
+
+rcIpAddrEntry OBJECT-TYPE
+        SYNTAX        RcIpAddrEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "The addressing information for one of this
+                      entity's IP addresses."
+        INDEX         { rcIpAdEntIfIndex, rcIpAdEntAddr }
+        ::= { rcIpAddrTable 1 }
+
+RcIpAddrEntry ::=
+        SEQUENCE {
+                rcIpAdEntIfIndex InterfaceIndex,
+                rcIpAdEntAddr IpAddress,
+                rcIpAdEntNetMask IpAddress,
+                rcIpAdEntBcastAddrFormat INTEGER,
+                rcIpAdEntReasmMaxSize INTEGER,
+                rcIpAdEntRowStatus RowStatus,
+                rcIpAdEntVlanId INTEGER,
+                rcIpAdEntBrouterPort TruthValue,
+                rcIpAdEntMacOffset INTEGER,
+                rcIpAdEntIfType INTEGER,
+                rcIpAdEntSecondaryIf TruthValue
+        }
+
+rcIpAdEntIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The index value which uniquely identifies the
+                      interface to which this entry is applicable.  The
+                      interface identified by a particular value of this
+                      index is the same interface as identified by the
+                      same value of ifIndex."
+        ::= { rcIpAddrEntry 1 }
+
+rcIpAdEntAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The IP address to which this entry's addressing
+                      information pertains."
+        ::= { rcIpAddrEntry 2 }
+
+rcIpAdEntNetMask OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The subnet mask associated with the IP address of
+                      this entry.  The value of the mask is an IP
+                      address with all the network bits set to 1 and all
+                      the hosts bits set to 0."
+        ::= { rcIpAddrEntry 3 }
+
+rcIpAdEntBcastAddrFormat OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         zeros(0),      -- use zeros
+                         ones(1)        -- use ones
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The IP broadcast address format used on this
+                      interface."
+        ::= { rcIpAddrEntry 4 }
+
+rcIpAdEntReasmMaxSize OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The size of the largest IP datagram which this
+                      entity can re-assemble from incoming IP fragmented
+                      datagrams received on this interface."
+        ::= { rcIpAddrEntry 5 }
+
+rcIpAdEntRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to create/delete entries"
+        ::= { rcIpAddrEntry 6 }
+
+rcIpAdEntVlanId OBJECT-TYPE
+        SYNTAX        INTEGER (0..4096)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "A value that uniquely identifies the Virtual LAN
+                      associated with this entry. This value corresponds
+                      to the lower 12 bits in the IEEE 802.1Q VLAN Tag."
+        ::= { rcIpAddrEntry 7 }
+
+rcIpAdEntBrouterPort OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether this entry correponds
+                      to a brouter port (as oppose to a routable VLAN).
+                      This value cannot be changed after the row is
+                      created."
+        ::= { rcIpAddrEntry 8 }
+
+rcIpAdEntMacOffset OBJECT-TYPE
+        SYNTAX        INTEGER (0..511)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to translate the ip address into mac address.
+                       The system has 512 mac addresses of which 0-507 are reserved
+                       for Boardwalk box. 508-511 is reserved for MG. One can either
+                       mention a mac offset while configuring an ip on the
+                       vlan or it can be alloted by the system within the above
+                       range."
+        ::= { rcIpAddrEntry 9 }
+
+rcIpAdEntIfType   OBJECT-TYPE
+     SYNTAX         INTEGER {
+                         circuitLessIP(1),
+                         brouterPort(2),
+                         vlan(3)
+                    }
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "The address entry IfType indicates the type of the
+                     interface. In the case of circuit-less-IP there is
+                     no association with any ports. In other words, it can
+                     be thought of as a virtual interface. The value
+                     'brouter port' indicates this interface is associated
+                     with a specific physical port. The value 'vlan'
+                     indicates a logical port that contains one or physical
+                     ports/MLT ports."
+        ::= { rcIpAddrEntry 10 }
+
+rcIpAdEntSecondaryIf   OBJECT-TYPE
+     SYNTAX         TruthValue
+     MAX-ACCESS     read-write
+     STATUS         current
+     DESCRIPTION    "Used to indicate whether this entry correponds
+                     to a secondary interface (as oppose to a primary interface).
+                     This value cannot be changed after the row is
+                     created."
+     ::= { rcIpAddrEntry 11 }
+
+-- FlowContorl Group
+
+rcIpFlowTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpFlowEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "IpFlow Table.  This table contain entries that
+                      correspond to RSVP records in the switching
+                      fabric Address Resolution table.
+
+                      A connection that has a matching entry in this
+                      table will be processed with a higher priority
+                      than connections that do not have an entry."
+        ::= { rcIp 3 }
+
+rcIpFlowEntry OBJECT-TYPE
+        SYNTAX        RcIpFlowEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Proprietary flow control variables."
+        INDEX         { rcIpFlowSrcIpAddress, rcIpFlowSrcIpPort,
+                        rcIpFlowDstIpAddress, rcIpFlowDstIpPort,
+                        rcIpFlowProtocol }
+        ::= { rcIpFlowTable 1 }
+
+RcIpFlowEntry ::=
+        SEQUENCE {
+                rcIpFlowSrcIpAddress IpAddress,
+                rcIpFlowSrcIpPort    INTEGER,
+                rcIpFlowDstIpAddress IpAddress,
+                rcIpFlowDstIpPort    INTEGER,
+                rcIpFlowProtocol     INTEGER,
+                rcIpFlowRowStatus    RowStatus
+        }
+
+rcIpFlowSrcIpAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The source IP address of an IP packet."
+        ::= { rcIpFlowEntry 1 }
+
+rcIpFlowSrcIpPort OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The source port of an IP packet.  A zero value
+                      in this field is used as a wildcard value."
+        DEFVAL        { 0 }
+        ::= { rcIpFlowEntry 2 }
+
+rcIpFlowDstIpAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The destination IP address of an IP packet."
+        ::= { rcIpFlowEntry 3 }
+
+rcIpFlowDstIpPort OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The destination port of an IP packet.  A zero
+                      value in this field is used as a wildcard value."
+        DEFVAL        { 0 }
+        ::= { rcIpFlowEntry 4 }
+
+rcIpFlowProtocol OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         ip(4),         -- ip
+                         tcp(6),        -- tcp
+                         udp(17)        -- udp
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The protocol type of an IP packet.  A zero value
+                      in this field is used as a wildcard value."
+        DEFVAL        { ip }
+        ::= { rcIpFlowEntry 5 }
+
+rcIpFlowRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Status of entry."
+        ::= { rcIpFlowEntry 6 }
+
+rcIpRouting OBJECT IDENTIFIER ::= { rcIp 4 } -- defined in rcRouteXXX.mib
+
+-- rcIpConfIgmpTable ::= { rcIp 5 } defined in rcIgmpXXX.mib
+-- rcIgmpGroupTable ::= { rcIp 6 } defined in rcIgmpXXX.mib
+
+-- rcIpRouteTable ::= { rcIp 7 } defined in rcRouteXXX.mib
+
+-- Ip Config Dhcp Table
+
+rcIpConfDhcpTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpConfDhcpEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "DHCP configuration table"
+    ::= { rcIp 8 }
+
+rcIpConfDhcpEntry OBJECT-TYPE
+        SYNTAX          RcIpConfDhcpEntry
+        MAX-ACCESS              not-accessible
+        STATUS          current
+        DESCRIPTION     "Used to configure DHCP on a particular port.  An
+                        entry is created automatically when the variable
+                        rcIpConfDhcpEnable is set to TRUE.
+
+                        Once created this entry will only be deleted if the
+                        rcIpConfDhcpRowStatus is set to 'destroy(6)'.  In
+                        which case, the rcIpConfDhcpEnable is automatically
+                        reset to the FALSE setting."
+        INDEX           { rcIpConfDhcpIfIndex }
+        ::= { rcIpConfDhcpTable 1 }
+
+RcIpConfDhcpEntry ::=
+        SEQUENCE {
+                rcIpConfDhcpIfIndex         InterfaceIndexOrZero,
+                rcIpConfDhcpMaxHop          INTEGER,
+                rcIpConfDhcpMinSec          INTEGER,
+                rcIpConfDhcpMode            INTEGER,
+                rcIpConfDhcpRowStatus       RowStatus,
+                rcIpConfDhcpNumRequests     Counter32,
+                rcIpConfDhcpNumReplies      Counter32,
+                rcIpConfDhcpAlwaysBroadcast TruthValue
+        }
+
+rcIpConfDhcpIfIndex OBJECT-TYPE
+        SYNTAX          InterfaceIndexOrZero (0..6143)
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "Interface number.  The number can represent either
+                        a physical or logical(VLAN) interface."
+        ::= { rcIpConfDhcpEntry 1 }
+
+rcIpConfDhcpMaxHop OBJECT-TYPE
+        SYNTAX          INTEGER (1..16)
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate the maximum number of hops a
+                        DHCP packet can take from the source device to
+                        the destination device (i.e., DHCP client to
+                        DHCP server)."
+        DEFVAL          { 4 }
+        ::= { rcIpConfDhcpEntry 2 }
+
+rcIpConfDhcpMinSec OBJECT-TYPE
+        SYNTAX          INTEGER (0..65535)
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate the minimum number of seconds
+                        to wait between receiving a DHCP packet and
+                        actually forwarding the DHCP packet to the
+                        destination device.  A value of zero(0) indicates
+                        forwarding should be done immediately without any
+                        delay."
+        DEFVAL          { 0 }
+        ::= { rcIpConfDhcpEntry 3 }
+
+rcIpConfDhcpMode OBJECT-TYPE
+        SYNTAX          INTEGER {
+                                none(0),
+                                bootp(2),
+                                dhcp(3),
+                                both(4)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate what type of DHCP packets this
+                        interface should support.  A value of none(1) will
+                        result in all incoming DHCP and BOOTP packets to
+                        be dropped."
+        DEFVAL          { both }
+        ::= { rcIpConfDhcpEntry 4 }
+
+rcIpConfDhcpRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "An entry is created automatically when the variable
+                        rcIpConfDhcpEnable is set to TRUE.
+
+                        Once created this entry will only be deleted if the
+                        rcIpConfDhcpRowStatus is set to 'destroy(6)'.  In
+                        which case, the rcIpConfDhcpEnable is automatically
+                        reset to the FALSE setting."
+        ::= { rcIpConfDhcpEntry 5 }
+
+rcIpConfDhcpNumRequests OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "The total number of DHCP requests seen on this interface."
+        ::= { rcIpConfDhcpEntry 6 }
+
+rcIpConfDhcpNumReplies OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "The total number of DHCP replies seen on this interface."
+        ::= { rcIpConfDhcpEntry 7 }
+
+rcIpConfDhcpAlwaysBroadcast OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate if DHCP Reply packets should be
+                        broadcast to the DHCP client on this interface."
+        DEFVAL          { false }
+        ::= { rcIpConfDhcpEntry 8 }
+
+
+-- Ip Dhcp Forward Table
+
+rcIpDhcpForwardTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpDhcpForwardEntry
+        MAX-ACCESS              not-accessible
+        STATUS          current
+        DESCRIPTION     "DHCP forwarding table."
+    ::= { rcIp 9 }
+
+rcIpDhcpForwardEntry OBJECT-TYPE
+        SYNTAX          RcIpDhcpForwardEntry
+        MAX-ACCESS              not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry used represents a DHCP forwarding directive."
+        INDEX           { rcIpDhcpForwardAgentAddr, rcIpDhcpForwardServerAddr }
+        ::= { rcIpDhcpForwardTable 1 }
+
+RcIpDhcpForwardEntry ::=
+        SEQUENCE {
+                rcIpDhcpForwardAgentAddr   IpAddress,
+                rcIpDhcpForwardServerAddr  IpAddress,
+                rcIpDhcpForwardEnable      TruthValue,
+                rcIpDhcpForwardMode        INTEGER,
+                rcIpDhcpForwardRowStatus   RowStatus
+        }
+
+rcIpDhcpForwardAgentAddr OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "The IP address configured on an interface
+                        (i.e., a locally configured IP address)."
+        ::= { rcIpDhcpForwardEntry 1 }
+
+rcIpDhcpForwardServerAddr OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "The IP address of the DHCP server.  If this
+                        IP address corresponds to a locally configured
+                        IP network, the DHCP packet is broadcasted out
+                        the interface the IP address is assigned to.
+                        This behavior is known as 'relay agent' mode.
+
+                        If this IP address is a remote address, the DHCP
+                        packet is sent via unicast to the remote device.
+                        This behavior is known as 'preferred server' mode."
+        ::= { rcIpDhcpForwardEntry 2 }
+
+rcIpDhcpForwardEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate whether is entry should be used."
+        DEFVAL          { true }
+        ::= { rcIpDhcpForwardEntry 3 }
+
+rcIpDhcpForwardMode OBJECT-TYPE
+        SYNTAX          INTEGER {
+                                none(0),
+                                bootp(2),
+                                dhcp(3),
+                                both(4)
+                        }
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate whether this entry pertains to
+                        BOOTP packets, DHCP packets, or both."
+        DEFVAL          { both }
+        ::= { rcIpDhcpForwardEntry 4 }
+
+rcIpDhcpForwardRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "Row status of this entry."
+        ::= { rcIpDhcpForwardEntry 5 }
+
+rcIpFilter OBJECT IDENTIFIER ::= { rcIp 10 } -- defined in rcFilterXXX.mib
+
+rcIpPolicy OBJECT IDENTIFIER ::= { rcIp 11 } -- defined in rcPolicyXXX.mib
+
+rcIpDvmrp OBJECT IDENTIFIER ::= { rcIp 12 } -- defined in rcDvmrpXXX.mib
+
+rcIpUdp OBJECT IDENTIFIER ::= { rcIp 13 } -- defined in rcUdpXXX.mib
+
+--IP ToS Rule
+rcIpTosRule   OBJECT IDENTIFIER       ::= { rcIp 14 }    --excluded
+
+rcIpTosRuleAndMask OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "And Mask. The Ip ToS byte in the Ip header
+                       is logically ANDed with this value, and then logically
+                       ORed with the one of the OrRules below."
+        ::= { rcIpTosRule 1 }
+
+rcIpTosRuleOrRule1 OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Quid/Gid Or rule #1. The Ip ToS byte in the Ip header
+                       is logically ORed with this value."
+        ::= { rcIpTosRule 2 }
+
+rcIpTosRuleOrRule2 OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Quid/Gid Or rule #2. The Ip ToS byte in the Ip header
+                       is logically ORed with this value."
+        ::= { rcIpTosRule 3 }
+
+rcIpTosRuleOrRule3 OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Quid/Gid Or rule #3. The Ip ToS byte in the Ip header
+                       is logically ORed with this value."
+        ::= { rcIpTosRule 4 }
+
+rcIpTosRuleTosPriorityEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          deprecated
+        DESCRIPTION     "Enable Tos priority."
+        ::= { rcIpTosRule 5 }
+
+rcIpTosRuleTosThreshold OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         level0(0),
+                         level1(1),
+                         level2(2),
+                         level3(3),
+                         level4(4),
+                         level5(5),
+                         level6(6),
+                         level7(7)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "tos threshold"
+        ::= { rcIpTosRule 6 }
+
+rcIpStaticRoute OBJECT IDENTIFIER ::= { rcIp 15 } -- defined in rcRouteXXX.mib
+
+rcIpPim OBJECT IDENTIFIER ::= { rcIp 16 } -- defined in rcPimXXX.mib
+
+-- rcIpMulticastArpTable ::= { rcIp 17 } defined in rcArpXXX.mib
+
+-- rcIpMulticastTable ::= { rcIp 18 } defined in rcMcastXXX.mib
+
+-- IP COPS Global
+
+rcIpCops OBJECT IDENTIFIER ::= { rcIp 19 }
+
+rcCopsGlobalEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Cops feature enable/disable"
+        ::= { rcIpCops 1 }
+
+-- defined in rcRipXXX.mib
+rcIpRipInterface OBJECT IDENTIFIER ::= { rcIp 20 }
+
+-- defined in rcMcastXXX.mib
+-- rcIpMulticastTimedPruneTable OBJECT IDENTIFIER ::= { rcIp 21 }
+
+-- ICMP Route discovery parameters
+
+rcIpConfIcmpRdiscTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpConfIcmpRdiscEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to maintain ICMP Route discovery information
+                      for a particular interface."
+    ::= { rcIp 22 }
+
+rcIpConfIcmpRdiscEntry OBJECT-TYPE
+        SYNTAX        RcIpConfIcmpRdiscEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing ICMP Rdisc information.  An entry is
+                      automatically created in this table when routing
+                      is enabled for an interface -or- when an ip address
+                      is configured on an interface."
+        INDEX      { rcIpConfIcmpRdiscIfIndex }
+        ::= { rcIpConfIcmpRdiscTable 1 }
+
+RcIpConfIcmpRdiscEntry ::= SEQUENCE {
+        rcIpConfIcmpRdiscIfIndex            INTEGER,
+        rcIpConfIcmpRdiscAdvAddress         IpAddress,
+        rcIpConfIcmpRdiscAdvFlag            TruthValue,
+        rcIpConfIcmpRdiscAdvLifetime        INTEGER,
+        rcIpConfIcmpRdiscMaxAdvInterval     INTEGER,
+        rcIpConfIcmpRdiscMinAdvInterval     INTEGER,
+       rcIpConfIcmpRdiscPreferenceLevel    INTEGER
+}
+
+rcIpConfIcmpRdiscIfIndex OBJECT-TYPE
+        SYNTAX          INTEGER (0..65535)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "An unique value to identify a physical
+                        interface or a logical interface (VLAN)."
+        ::= { rcIpConfIcmpRdiscEntry 1 }
+
+rcIpConfIcmpRdiscAdvAddress OBJECT-TYPE
+         SYNTAX     IpAddress
+         MAX-ACCESS read-write
+         STATUS     current
+         DESCRIPTION "Advertisement address to which the route discovery
+                      advertisements transmitted on this interface."
+         ::= { rcIpConfIcmpRdiscEntry 2 }
+
+rcIpConfIcmpRdiscAdvFlag OBJECT-TYPE
+         SYNTAX     TruthValue
+         MAX-ACCESS read-write
+         STATUS     current
+         DESCRIPTION "Flag to indicate whether or not the address is to
+                     be advertised on this interface."
+         ::= { rcIpConfIcmpRdiscEntry 3 }
+
+rcIpConfIcmpRdiscAdvLifetime OBJECT-TYPE
+         SYNTAX     INTEGER (4..9000)
+         MAX-ACCESS read-write
+         STATUS     current
+         DESCRIPTION "The value to be placed in the lifetime field of
+                     Router Advertisements sent from the interface."
+         ::= { rcIpConfIcmpRdiscEntry 4 }
+
+rcIpConfIcmpRdiscMaxAdvInterval OBJECT-TYPE
+         SYNTAX     INTEGER (4..1800)
+         MAX-ACCESS read-write
+         STATUS     current
+         DESCRIPTION "The maximum time allowed between sending
+                     Router Advertisements from this interface."
+         ::= { rcIpConfIcmpRdiscEntry 5 }
+
+rcIpConfIcmpRdiscMinAdvInterval OBJECT-TYPE
+         SYNTAX     INTEGER (3..1800)
+         MAX-ACCESS read-write
+         STATUS     current
+         DESCRIPTION "The minimum time allowed between sending
+                      Router Advertisements from this interface."
+         ::= { rcIpConfIcmpRdiscEntry 6 }
+
+
+rcIpConfIcmpRdiscPreferenceLevel OBJECT-TYPE
+         SYNTAX     INTEGER (-2147483648..2147483647)
+         MAX-ACCESS read-write
+         STATUS     current
+         DESCRIPTION "Preferability of the router address as a default
+                      Router "
+         ::= { rcIpConfIcmpRdiscEntry 7 }
+
+-- defined in rcMcastXXX.mib
+rcIpMulticastSoftwareForwarding OBJECT IDENTIFIER ::= { rcIp 23 }
+rcIpMrouteHw OBJECT IDENTIFIER ::= { rcIp 24 }
+
+-- IP Resource Usage Global
+
+rcIpResourceUsage OBJECT IDENTIFIER       ::= { rcIp 25 }
+
+rcIpResourceUsageGlobal OBJECT IDENTIFIER ::= { rcIpResourceUsage 1 }
+
+rcIpResourceUsageGlobalIngressRecInUse OBJECT-TYPE
+        SYNTAX        INTEGER (0..32767)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to get the Ingress Record Usage in the switch.
+                       (S-G usage)."
+        ::= { rcIpResourceUsageGlobal 1 }
+
+rcIpResourceUsageGlobalEgressRecInUse OBJECT-TYPE
+        SYNTAX        INTEGER (0..32767)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to get the Egress Record Usage in the switch
+                       (pepstream count)."
+        ::= { rcIpResourceUsageGlobal 2 }
+
+rcIpResourceUsageGlobalIngressThreshold OBJECT-TYPE
+        SYNTAX        INTEGER (0..32767)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to get the threshold count for Ingress records."
+        DEFVAL        { 0 }
+        ::= { rcIpResourceUsageGlobal 3 }
+
+rcIpResourceUsageGlobalEgressThreshold OBJECT-TYPE
+        SYNTAX        INTEGER (0..32767)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to get threshold count for egress records."
+        DEFVAL        { 0 }
+        ::= { rcIpResourceUsageGlobal  4 }
+
+rcIpResourceUsageGlobalSendTrapAndLog OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "A means of alerting the user. If this bool is set,
+                       a message will be send to console and also a
+                       duReport will be logged."
+        DEFVAL        { disable }
+        ::= { rcIpResourceUsageGlobal  5 }
+
+rcIpResourceUsageGlobalSendTrapOnly OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "A means of alerting the user. If this bool is set,
+                       a message will be send to console."
+        DEFVAL        { disable }
+        ::= { rcIpResourceUsageGlobal  6 }
+
+rcIpResourceUsageGlobalLogMsgOnly OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "A means of alerting the user.If this bool is set,
+                       a duReport will be logged."
+        DEFVAL        { disable }
+        ::= { rcIpResourceUsageGlobal  7 }
+
+rcIpGenPolicy OBJECT IDENTIFIER ::= { rcIp 100 } -- defined in rcPolicyXXX.mib
+
+rcIpBgp OBJECT IDENTIFIER ::= { rcIp 101 } -- defined in rcBgpXXX.mib
+
+rcIpMpls OBJECT IDENTIFIER ::= { rcIp 102 } -- defined in rcMplsXXX.mib
+
+END

@@ -1,0 +1,80 @@
+NOKIA-COMMON-NE-ROLE-MIB DEFINITIONS ::= BEGIN
+
+-- 4567890123456789012345678901234567890123456789012345678901234567890123456789
+-- This line is 80 characters wide, keep lines in this file shorter than that--
+-- ===============================================================
+--     Copyright (C) Nokia Networks Oy 2000
+-- ===============================================================
+--
+--
+--
+-- ===============================================================
+-- Author      : Timo Holopainen
+-- Version     : 0.10
+---
+-- Version 0.00: 11-JAN-2000. Initial.
+-- Version 0.10: 05-MAY-2000. Compiled and tested.
+--================================================================
+
+IMPORTS 
+    ntcCommonMibs FROM NOKIA-COMMON-MIB-OID-REGISTRATION-MIB -- delete this!
+--  netCommonNERole FROM NOKIA-COMMON-MIB-OID-REGISTRATION-MIB - add this!
+    OBJECT-TYPE FROM RFC-1212;
+
+--=============================================================
+-- Following variables are copied from nokia.mib
+--=============================================================
+
+netCommonNERole OBJECT IDENTIFIER ::= {ntcCommonMibs 6} -- for testing purposes only!!!
+-- real value should be in NOKIA-COMMON-MIB-OID-REGISTRATION-MIB (see above)
+
+coneRoleTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF ConeRoleEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+    "This table contains information of the roles of this network element"
+::= {netCommonNERole 1}
+
+coneRoleEntry OBJECT-TYPE
+    SYNTAX  ConeRoleEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+    "This contains information concerning each currently active role in the NE."
+    INDEX   {coneRoleIndex}
+::= {coneRoleTable 1}
+
+ConeRoleEntry ::= SEQUENCE {
+    coneRoleIndex INTEGER,
+    coneRowIdx    OBJECT IDENTIFIER,
+    coneInfo      OCTET STRING
+}
+
+coneRoleIndex OBJECT-TYPE
+    SYNTAX  INTEGER (1..'7fffffff'h)
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+    "Used as an index of the table. The value of this variable shall be 
+     incremented by 1 for each new entry of this table."
+::= {coneRoleEntry 1}
+
+coneRowIdx OBJECT-TYPE
+    SYNTAX  OBJECT IDENTIFIER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+    "This variable contains value regarding the registered oid of role in 
+     NOKIA-COMMON-...-MIB."
+::= {coneRoleEntry 2}
+
+coneInfo OBJECT-TYPE
+    SYNTAX  OCTET STRING
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+    "This variable contains textual description of the role."
+::= {coneRoleEntry 3}
+
+END

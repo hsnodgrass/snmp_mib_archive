@@ -1,0 +1,369 @@
+
+RC-RIP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, IpAddress
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcIpRipInterface
+        FROM RC-IP-MIB
+    rcRip, EnableValue
+        FROM RAPID-CITY;
+
+
+rcRipMib MODULE-IDENTITY
+       LAST-UPDATED     "200407200000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcRip 0 }
+
+-- IP Rip Interface Table
+
+rcIpRipInterfaceTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpRipInterfaceEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP Rip Interface table"
+        ::= { rcIpRipInterface 1 }
+
+rcIpRipInterfaceEntry OBJECT-TYPE
+        SYNTAX          RcIpRipInterfaceEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip Rip Interface Table."
+        INDEX           { rcIpRipInterfaceAddress }
+        ::= { rcIpRipInterfaceTable 1 }
+
+RcIpRipInterfaceEntry ::=
+        SEQUENCE {
+                rcIpRipInterfaceAddress                IpAddress,
+                rcIpRipInterfaceIfIndex                InterfaceIndex,
+                rcIpRipInterfaceRipEnable              EnableValue,
+                rcIpRipInterfaceAccDefRte              TruthValue,
+                rcIpRipInterfaceAdvDefRte              TruthValue,
+                rcIpRipInterfaceAutoAggregate          TruthValue,
+                rcIpRipInterfaceCost                   Integer32,
+                rcIpRipInterfaceListen                 TruthValue,
+                rcIpRipInterfacePoison                 TruthValue,
+                rcIpRipInterfaceSupply                 TruthValue,
+                rcIpRipInterfaceTriggeredUpdate        TruthValue,
+                rcIpRipInterfaceInPolicy               DisplayString,
+                rcIpRipInterfaceOutPolicy              DisplayString,
+                rcIpRipInterfaceProxyAnnounceFlag      TruthValue,
+                rcIpRipInterfaceHolddown               INTEGER,
+                rcIpRipInterfaceTimeout                INTEGER
+        }
+
+rcIpRipInterfaceAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Ip Address"
+        ::= { rcIpRipInterfaceEntry 1 }
+
+rcIpRipInterfaceIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Rip Interface If Index."
+        ::= { rcIpRipInterfaceEntry 2 }
+
+rcIpRipInterfaceRipEnable OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 3 }
+
+rcIpRipInterfaceAccDefRte OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 4 }
+
+rcIpRipInterfaceAdvDefRte OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 5 }
+
+rcIpRipInterfaceAutoAggregate OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 6 }
+
+rcIpRipInterfaceCost OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 7 }
+
+rcIpRipInterfaceListen OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 8 }
+
+rcIpRipInterfacePoison OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 9 }
+
+rcIpRipInterfaceSupply OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 10 }
+
+rcIpRipInterfaceTriggeredUpdate OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 11 }
+
+rcIpRipInterfaceInPolicy OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 12 }
+
+rcIpRipInterfaceOutPolicy OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 13 }
+
+rcIpRipInterfaceProxyAnnounceFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpRipInterfaceEntry 14 }
+
+rcIpRipInterfaceHolddown OBJECT-TYPE
+        SYNTAX        INTEGER (0..360)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the rip holddown timer for this
+                       interface"
+        ::= { rcIpRipInterfaceEntry 15 }
+
+rcIpRipInterfaceTimeout OBJECT-TYPE
+        SYNTAX        INTEGER (15..259200)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the rip timeout interval for
+                       this interface"
+        ::= { rcIpRipInterfaceEntry 16 }
+
+
+-- RIP Group
+
+rcRipExtOperation OBJECT-TYPE
+        SYNTAX        INTEGER	{
+                         disable(1),
+                         enable(2)
+	 	      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable the operation of RIP on all
+		      Interfaces."
+        ::= { rcRip 1 }
+
+rcRipExtUpdateTime OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The time between transmission of RIP updates
+		      on all interfaces."
+        ::= { rcRip 2 }
+
+rcRipExtTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcRipExtEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "RIP extension table.  This table augments the
+		      standard IfConfTable table in RFC1389."
+        ::= { rcRip 3 }
+
+rcRipExtEntry OBJECT-TYPE
+        SYNTAX        RcRipExtEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing Proprietary RIP information.  
+	  	      An entry is automatically created in this table 
+                      when an ip address is configured on an interface."
+        INDEX         { rcRipExtEntIfIndex }
+        ::= { rcRipExtTable 1 }
+
+RcRipExtEntry ::=
+        SEQUENCE {
+                rcRipExtEntIfIndex InterfaceIndex,
+                rcRipExtEntTalk INTEGER,
+                rcRipExtEntListen INTEGER,
+                rcRipExtEntPoison INTEGER
+        }
+
+rcRipExtEntIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The index value which uniquely identifies the
+                      interface to which this entry is applicable.
+                      The interface identified by a particular value
+                      of this index is the same interface as 
+                      identified by the same value of ifIndex."
+        ::= { rcRipExtEntry 1 }
+ 
+rcRipExtEntTalk OBJECT-TYPE
+        SYNTAX       INTEGER {
+                        disable(1),
+                        enable(2)
+		      }	
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable RIP transmission on the
+		      specified interface."
+	DEFVAL        { enable }
+        ::= { rcRipExtEntry 2 }
+ 
+rcRipExtEntListen OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         disable(1),
+                         enable(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable RIP reception on the specified
+		      interface."
+	DEFVAL        { enable }
+        ::= { rcRipExtEntry 3 }
+
+rcRipExtEntPoison OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         disable(1),
+                         enable(2)
+                      } 
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable operation of poison reverse
+		      on the specified interface.  If poison is
+		      disabled, split-horizon operation is enabled."
+	DEFVAL        { disable }
+        ::= { rcRipExtEntry 4 }
+
+-- rcRipExtV2Table
+
+rcRipExtV2Table OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcRipExtV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "RIP extension table.  This table augments the
+		      standard IfConfTable table in RFC1389."
+        ::= { rcRip 4 }
+
+rcRipExtV2Entry OBJECT-TYPE
+        SYNTAX        RcRipExtV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing Proprietary RIP information.  
+	  	      An entry is automatically created in this table 
+                      when an ip address is configured on an interface."
+        INDEX         { rcRipExtV2EntIfIndex, rcRipExtV2EntIpIfAddr }
+        ::= { rcRipExtV2Table 1 }
+
+RcRipExtV2Entry ::=
+        SEQUENCE {
+                rcRipExtV2EntIfIndex InterfaceIndex,
+                rcRipExtV2EntIpIfAddr IpAddress,
+                rcRipExtV2EntTalk INTEGER,
+                rcRipExtV2EntListen INTEGER,
+                rcRipExtV2EntPoison INTEGER
+        }
+
+rcRipExtV2EntIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "The index value which uniquely identifies the
+                      interface to which this entry is applicable.
+                      The interface identified by a particular value
+                      of this index is the same interface as 
+                      identified by the same value of ifIndex."
+        ::= { rcRipExtV2Entry 1 }
+ 
+rcRipExtV2EntIpIfAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Ip Address."
+        ::= { rcRipExtV2Entry 2 }
+ 
+rcRipExtV2EntTalk OBJECT-TYPE
+        SYNTAX       INTEGER {
+                        disable(1),
+                        enable(2)
+		      }	
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable RIP transmission on the
+		      specified interface."
+	DEFVAL        { enable }
+        ::= { rcRipExtV2Entry 3 }
+ 
+rcRipExtV2EntListen OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         disable(1),
+                         enable(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable RIP reception on the specified
+		      interface."
+	DEFVAL        { enable }
+        ::= { rcRipExtV2Entry 4 }
+
+rcRipExtV2EntPoison OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         disable(1),
+                         enable(2)
+                      } 
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable operation of poison reverse
+		      on the specified interface.  If poison is
+		      disabled, split-horizon operation is enabled."
+	DEFVAL        { disable }
+        ::= { rcRipExtV2Entry 5 }
+
+
+END

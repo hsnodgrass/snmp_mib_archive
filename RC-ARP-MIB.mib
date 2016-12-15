@@ -1,0 +1,276 @@
+
+RC-ARP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, IpAddress
+        FROM SNMPv2-SMI
+    MacAddress, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcIp, rcArp, PortSet, IdList
+        FROM RAPID-CITY;
+
+
+rcArpMib MODULE-IDENTITY
+       LAST-UPDATED     "200502250000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+       REVISION "200502250000Z" -- 25 Feb 2005
+       DESCRIPTION "Version 7: Added rcArpExtEntDoFlood." 
+       REVISION "200409300000Z" -- 30 Sept 2004
+       DESCRIPTION "Version 4: Fixed illegal length for the REVISION clause." 
+       REVISION "200409230000Z" -- 23 Sept 2004
+       DESCRIPTION "Version 3: Add the range for rcIpMulticastArpVlanId" 
+       REVISION "200409220000Z" -- 22 Sept 2004
+       DESCRIPTION "Version 3: Remove the range for rcIpMulticastArpVlanId"  
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcArp 0 }
+
+-- ARP Group
+
+rcArpExtLifeTime OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The lifetime in minutues of an ARP entry within the 
+                      system."
+        ::= { rcArp 1 }
+
+rcArpExtTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcArpExtEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "ARP extension table.  This table augments the
+		      standard ipNetToMediaTable defined in RFC1213."
+        ::= { rcArp 2 }
+
+rcArpExtEntry OBJECT-TYPE
+        SYNTAX        RcArpExtEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing Proprietary ARP information.  
+                      An entry is automatically created in this table 
+                      when an ip address is configured on an interface." 
+        INDEX         { rcArpExtEntIfIndex }
+        ::= { rcArpExtTable 1 }
+
+RcArpExtEntry ::=
+        SEQUENCE {
+                rcArpExtEntIfIndex InterfaceIndex,
+                rcArpExtEntDoProxy INTEGER,
+                rcArpExtEntDoResp INTEGER,
+                rcArpExtEntDoFlood INTEGER
+        }
+
+rcArpExtEntIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The index value which uniquely identifies the
+                      interface to which this entry is applicable.
+                      The interface identified by a particular value
+                      of this index is the same interface as 
+                      identified by the same value of ifIndex."
+        ::= { rcArpExtEntry 1 }
+ 
+rcArpExtEntDoProxy OBJECT-TYPE
+        SYNTAX        INTEGER {
+		         disable(1),
+			 enable(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable ARP proxy responses on the
+		      specified interface."
+	DEFVAL        { disable }
+        ::= { rcArpExtEntry 2 }
+ 
+rcArpExtEntDoResp OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 disable(1),
+			 enable(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable the sending of ARP responses
+		      on the specified interface."
+	DEFVAL        { enable }
+        ::= { rcArpExtEntry 3 }
+
+rcArpExtEntDoFlood OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         disable(1),
+                         enable(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable or disable flooding of ARP responses for
+                      NLBS Virtual Mac on the specified interface."
+        DEFVAL        { disable }
+        ::= { rcArpExtEntry 4 }
+
+
+-- rcArpExtV2Table
+
+rcArpExtV2Table OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcArpExtV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "ARP extension table.  This table augments the
+		      standard ipNetToMediaTable defined in RFC1213."
+        ::= { rcArp 3 }
+
+rcArpExtV2Entry OBJECT-TYPE
+        SYNTAX        RcArpExtV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing Proprietary ARP information.  
+                      An entry is automatically created in this table 
+                      when an ip address is configured on an interface." 
+        INDEX         { rcArpExtV2EntIfIndex, rcArpExtV2EntIpIfAddr }
+        ::= { rcArpExtV2Table 1 }
+
+RcArpExtV2Entry ::=
+        SEQUENCE {
+                rcArpExtV2EntIfIndex InterfaceIndex,
+                rcArpExtV2EntIpIfAddr IpAddress,
+                rcArpExtV2EntDoProxy INTEGER,
+                rcArpExtV2EntDoResp INTEGER
+        }
+
+rcArpExtV2EntIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "The index value which uniquely identifies the
+                      interface to which this entry is applicable.
+                      The interface identified by a particular value
+                      of this index is the same interface as 
+                      identified by the same value of ifIndex."
+        ::= { rcArpExtV2Entry 1 }
+ 
+rcArpExtV2EntIpIfAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Ip Address"
+        ::= { rcArpExtV2Entry 2 }
+ 
+rcArpExtV2EntDoProxy OBJECT-TYPE
+        SYNTAX        INTEGER {
+		         disable(1),
+			 enable(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable ARP proxy responses on the
+		      specified interface."
+	DEFVAL        { disable }
+        ::= { rcArpExtV2Entry 3 }
+ 
+rcArpExtV2EntDoResp OBJECT-TYPE
+        SYNTAX        INTEGER {
+			 disable(1),
+			 enable(2)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Enable or disable the sending of ARP responses
+		      on the specified interface."
+	DEFVAL        { enable }
+        ::= { rcArpExtV2Entry 4 }
+
+--IP Multicast Arp table
+
+rcIpMulticastArpTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpMulticastArpEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "IP Multicast Arp table"
+        ::= { rcIp 17 }
+
+rcIpMulticastArpEntry OBJECT-TYPE
+        SYNTAX          RcIpMulticastArpEntry
+        MAX-ACCESS              not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of Ip Multicast Arp Table."
+        INDEX           { rcIpMulticastArpVlanId,
+                          rcIpMulticastArpMacAddress,
+                          rcIpMulticastArpIpAddress }
+        ::= { rcIpMulticastArpTable 1 }
+
+RcIpMulticastArpEntry ::=
+        SEQUENCE {
+                rcIpMulticastArpVlanId     Integer32,
+                rcIpMulticastArpMacAddress MacAddress,
+                rcIpMulticastArpIpAddress  IpAddress,
+                rcIpMulticastArpPorts      PortSet,
+                rcIpMulticastArpNumMltIds  Integer32,
+                rcIpMulticastArpMltIds     IdList,
+                rcIpMulticastArpRowStatus  RowStatus
+        }
+
+rcIpMulticastArpVlanId OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "vlan id"
+        ::= { rcIpMulticastArpEntry 1 }
+
+rcIpMulticastArpMacAddress OBJECT-TYPE
+        SYNTAX         MacAddress
+        MAX-ACCESS     read-only
+        STATUS         current
+        DESCRIPTION    "multicast mac address"
+        ::= { rcIpMulticastArpEntry 2 }
+
+rcIpMulticastArpIpAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "multicast ip address"
+        ::= { rcIpMulticastArpEntry 3 }
+
+rcIpMulticastArpPorts OBJECT-TYPE
+        SYNTAX        PortSet
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "ports within a particular vlan"
+        ::= { rcIpMulticastArpEntry 4 }
+
+rcIpMulticastArpNumMltIds OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "number of mlt ids"
+        ::= { rcIpMulticastArpEntry 5 }
+
+rcIpMulticastArpMltIds OBJECT-TYPE
+        SYNTAX        IdList
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "mlt id"
+        ::= { rcIpMulticastArpEntry 6 }
+
+rcIpMulticastArpRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "row status"
+        ::= { rcIpMulticastArpEntry 7 }
+
+
+END

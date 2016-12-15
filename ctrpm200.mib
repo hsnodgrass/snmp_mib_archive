@@ -1,0 +1,114 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-PORT-RING-MASTER-MONITOR-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion Token Ring Port Ring Master Monitor MIB Release 2.0.0
+-- Revision 03/20/96
+
+-- Copyright 1995-96 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	TimeTicks, IpAddress
+		FROM RFC1155-SMI
+	MacAddress, sysMonitor
+		FROM CENTILLION-ROOT-MIB;
+
+
+-- SECTION 2: TR Port Ring Master Monitoring Information
+
+portRmLastChg	OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime the last time an entry in the
+		 Port Ring master Table was added, deleted, or modified.
+		 If the Port Ring master Table has not changed since cold/warm
+		 start of the agent, then the value is zero."
+	::= { sysMonitor 2 }
+
+portRmTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF PortRmEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Port Ring Master Monitor Table."
+	::= { sysMonitor 3 }
+
+portRmEntry OBJECT-TYPE
+	SYNTAX	PortRmEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the Port NMM Table.  Entries in the table can
+		 not be created or deleted via SNMP."
+	INDEX	{ portRmSlotNum, portRmPortNum }
+	::= { portRmTable 1 }
+
+PortRmEntry ::= SEQUENCE {
+	portRmSlotNum
+		INTEGER,
+	portRmPortNum
+		INTEGER,
+	portRmIpAddr
+		IpAddress,
+	portRmMacAddr
+		MacAddress
+	}
+
+portRmSlotNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The slot on which the topology message was received.
+		NOTE: Non-modular devices that do not have multiplt slots
+		should set this value to 1."
+	::= { portRmEntry 1 }
+
+portRmPortNum OBJECT-TYPE
+	SYNTAX  INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The port on which the RM_HELLO topology message was 
+		 received."
+	::= { portRmEntry 2 }
+
+portRmIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The IP address of the sender of the RM_HELLO topology
+		 message."
+	::= { portRmEntry 3 }
+
+portRmMacAddr OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The MAC address of the sender of the RM_HELLO topology
+		 message."
+	::= { portRmEntry 4 }
+
+
+END

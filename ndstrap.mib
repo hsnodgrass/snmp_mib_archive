@@ -1,0 +1,3931 @@
+Novell-Directory-Services-Trap-MIB DEFINITIONS ::= BEGIN
+
+
+IMPORTS
+	enterprises, Counter
+		FROM RFC1155-SMI
+
+	InternationalDisplayString
+		FROM HOST-RESOURCES-MIB
+
+	TRAP-TYPE
+		FROM RFC-1215
+
+	OBJECT-TYPE
+		FROM RFC-1212;
+
+
+novell  		OBJECT IDENTIFIER ::= { enterprises 23 }
+
+mibDoc			OBJECT IDENTIFIER ::= { novell 2 }
+
+ndsTrap-MIB		OBJECT IDENTIFIER ::= { mibDoc 34 }
+ndsTrapInfo		OBJECT IDENTIFIER ::= { ndsTrap-MIB 1 }
+
+-- NDSUnicodeString ::=	OCTET STRING (SIZE(0..512))
+
+-- "To facilitate internationalization, this textual convention 
+-- represents information taken from the Unicode UCS-2 character
+-- set, encoded as an octet string using the UTF-8 character encoding
+-- scheme described in RFC 2044.  For strings in 7-bit US-ASCII,
+-- there is no impact since the UTF-8 representation is identical
+-- to the US-ASCII encoding.  Some UTF-8 conversion routines can be
+-- found in ftp://ftp.unicode.org/Public/PROGRAMS/CVTUTF/."
+
+-- UTF8String is identified as a U8 in the SUMMARY string
+UTF8String ::= OCTET STRING (SIZE(0..768))
+-- ndsTrapInfo Group
+-- These are OBJECT-TYPE definitions used by this SNMP trap MIB 
+-- and are not accessible.
+
+ndsTrapTime	       	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The total number of seconds since midnight 
+				(12 am) of 1 January 1970 GMT (UT)."
+			::= { ndsTrapInfo 1 }
+
+ndsEventType	       	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The event type that was reported by the NDS 
+				Event system."
+			::= { ndsTrapInfo 2 }
+
+ndsResult	       	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The result code of a particular NDS operation.
+				The constant that is associated with this 
+				integer is defined in nwdserr.h."
+			::= { ndsTrapInfo 3 }
+
+ndsPerpetratorName	OBJECT-TYPE
+			SYNTAX		UTF8String
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The distinguished name of the object 
+				that requested the NDS event."
+			::= { ndsTrapInfo 4 }
+
+ndsEntryID	       	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"A particular NDS entry on this server."
+			::= { ndsTrapInfo 5 }
+
+ndsEntryName		OBJECT-TYPE
+			SYNTAX		UTF8String
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The distinguished name of the object 
+				that is associated with the NDS event."
+			::= {ndsTrapInfo 6}
+
+ndsEntryName2		OBJECT-TYPE
+			SYNTAX		UTF8String
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The distinguished name of the object 
+				that is associated with the NDS event."
+			::= { ndsTrapInfo 7 }
+
+ndsEntryCount		OBJECT-TYPE
+			SYNTAX		Counter
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The total number of entries that are 
+				associated with the NDS event."
+			::= { ndsTrapInfo 8 }
+
+ndsClassName		OBJECT-TYPE
+			SYNTAX		UTF8String
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The class name of the object that is 
+				associated with the NDS event."
+			::= { ndsTrapInfo 9 }
+
+ndsFlags		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The NDS flags (used in trap 1 to trap 17)
+				that identify the object type of the object 
+				that is associated with the NDS event 
+				(more than one flag can apply):
+					0x0000 Most object types
+					0x0001 Partition root
+					0x0002 External reference
+ 					0x0004 Alias"
+			::= { ndsTrapInfo 10 }
+
+ndsAttributeName	OBJECT-TYPE
+			SYNTAX		UTF8String
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The name of the attribute for the object 
+				that is associated with this NDS event."
+			::= { ndsTrapInfo 11 }
+
+ndsSyntaxName		OBJECT-TYPE
+			SYNTAX		UTF8String
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The name of the syntax for the attribute 
+				that is associated with the NDS event."
+			::= { ndsTrapInfo 12 }
+
+ndsDataSize		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+                        DESCRIPTION   	
+				"The size (in bytes) of the data that is 
+				returned by the NDS event."
+			::= { ndsTrapInfo 13 }
+
+ndsDataValue		OBJECT-TYPE
+			SYNTAX		OCTET STRING
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+		               "The data that is returned by the NDS event."
+			::= { ndsTrapInfo 14 }
+
+ndsBinderyObjectID 	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"A particular bindery object."
+			::= { ndsTrapInfo 15 }
+
+ndsBinderyObjectParentID	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The parent of a particular bindery object."
+			::= { ndsTrapInfo 16 }
+
+ndsBinderyObjectType 	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The object type of a particular bindery 
+				object."
+			::= { ndsTrapInfo 17 }
+					
+ndsBinderyObjectFlags	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The bindery object flags:
+					x0 Static 
+					x1 Dynamic 
+					0x Item 
+					1x Set "
+			::= { ndsTrapInfo 18 }
+
+ndsBinderyObjectSecurity 	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The access control rights associated 
+				with the bindery object: 
+					0 = Anyone 
+					1 = Logged 
+					2 = Object 
+					3 = Supervisor 
+					4 = NetWare Operating System " 
+			::= { ndsTrapInfo 19 }
+
+ndsBinderyObjectName	OBJECT-TYPE
+			SYNTAX		OCTET STRING (SIZE(0..48))
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The name of the bindery object that is 
+				associated with the NDS event."
+			::= { ndsTrapInfo 20 }
+
+ndsTransportAddressType	OBJECT-TYPE
+			SYNTAX		INTEGER (0..5)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The NDS transport address type 
+				(defined in nwdsdefs.h):
+					0 = IPX
+					1 = IP
+					2 = SDLC
+					3 = TOKENRING_ETHERNET
+					4 = OSI
+					5 = APPLETALK"
+			::= { ndsTrapInfo 21 }
+
+
+ndsTransportAddress	OBJECT-TYPE
+			SYNTAX		OCTET STRING
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The transport address that is used by NDS."
+			::= { ndsTrapInfo 22 }
+
+ndsState		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The state information of the object 
+				that is associated with the NDS event."
+			::= { ndsTrapInfo 23 }
+
+ndsState2		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The state information of the object 
+				that is associated with the NDS event."
+			::= { ndsTrapInfo 24 }
+
+ndsReplicaType		OBJECT-TYPE
+			SYNTAX		INTEGER (0..3)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The type of a particular replica:
+					0 = Master replica
+					1 = Secondary replica
+					2 = Read-only replica
+					3 = Subordinate reference replica"
+			::= { ndsTrapInfo 25 }
+
+ndsReplicaType2		OBJECT-TYPE
+			SYNTAX		INTEGER (0..3)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The type of a particular replica:
+					0 = Master replica
+					1 = Secondary replica
+					2 = Read-only replica
+					3 = Subordinate reference replica"
+			::= { ndsTrapInfo 26 }
+
+ndsValueCount		OBJECT-TYPE
+			SYNTAX		Counter
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+
+				"The total number of values that are 
+				associated with the NDS event."
+			::= { ndsTrapInfo 27 }
+
+ndsVerbNumber		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The verb number that is associated 
+				 with the NDS request."
+			::= { ndsTrapInfo 28 }
+
+ndsRequestSize		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"Size of NDS request"
+			::= { ndsTrapInfo 29 }
+
+ndsReplySize		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"Size of NDS reply"
+			::= { ndsTrapInfo 30 }
+
+ndsPartitionID		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"A particular partition on this NDS server."
+			::= { ndsTrapInfo 31 }
+
+ndsPartitionControlFunc	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The partition control function that is 
+				associated with this event:
+
+				0 = The partition has returned to an idle 
+					state.
+				1 = The partition is splitting.
+				2 = The partition is joining with a parent 
+					partition.
+				3 = The partition is joining with a child 
+					partition.
+				4 = The partition is the source partition 
+					in a MoveSubTree operation.
+				5 = The partition is the destination partition 
+					in a MoveSubTree operation.
+				6 = The partition is locked.
+				7 = The partition's timestamps are being 
+					repaired.
+				8 = The partition is changing the type of one 
+					or more of its replicas."
+			::= { ndsTrapInfo 32 }
+
+ndsPartitionControlType	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"An integer which indicates the type of the 
+				partition control attribute that is associated
+				with this event. All partition control 
+				functions (with the exception of MoveSubTree) 
+				require a single attribute to maintain their 
+				state information and use zero (0) as the 
+				PartitionControlType. MoveSubTree function 
+				requires three attributes, each of which has a 
+				different partition control type (types 0 , 1,
+				and 2)."
+			::= { ndsTrapInfo 33 }
+
+ndsReferralType		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The type of the partition referral."
+			::= { ndsTrapInfo 34 }
+
+ndsRequestedRights	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The requested rights:
+					2 = Read 
+					4 = Write "
+			::= { ndsTrapInfo 35 }
+
+
+ndsStreamFileName	OBJECT-TYPE
+			SYNTAX		UTF8String
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The filename for the stream file."
+			::= { ndsTrapInfo 36 }
+
+ndsPropertyName		OBJECT-TYPE
+			SYNTAX		UTF8String
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The name of a particular property."
+			::= { ndsTrapInfo 37 }
+
+ndsSearchScope		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The scope of this search."
+			::= { ndsTrapInfo 38 }
+
+ndsSearchNodes		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The nodes that are to be searched."
+			::= { ndsTrapInfo 39 }
+					
+ndsSearchInfoType	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The type of information sought: 
+					0 = Attribute name 
+					1 = Attribute value 
+					2 = Effective privileges 
+					3 = Value information 
+					4 = Abbreviated value 
+					8 = Expanded class"
+			::= { ndsTrapInfo 40 }
+
+ndsProcessID		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The process ID."
+			::= { ndsTrapInfo 41 }
+
+ndsConnID		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"A particular network connection."
+			::= { ndsTrapInfo 42 }
+
+ndsTaskID		OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The task ID."
+			::= { ndsTrapInfo 43 }
+
+ndsReplicaNumber	OBJECT-TYPE
+			SYNTAX		INTEGER (0..4294967295)
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"An instance of a particular NDS replica."
+			::= { ndsTrapInfo 44 }
+
+ndsServerName		OBJECT-TYPE
+			SYNTAX		UTF8String
+			ACCESS		not-accessible
+			STATUS		mandatory
+			DESCRIPTION
+				"The name of this NDS server."
+			::= { ndsTrapInfo 45 }
+
+-- trap 1 through trap 18 are for NDS Events generated by orignal 
+-- NetWare 4.10 release of NDS
+
+ndsCreateEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsClassName,
+					ndsFlags
+                                }
+			DESCRIPTION
+                        	"Create a new NDS object"
+			--#TYPE "NDS: Create a new NDS object"
+			--#SUMMARY "%U8 created a new object %U8." 
+			--#ARGUMENTS {3, 4}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 1
+			--#STATE OPERATIONAL
+			::= 1
+
+
+ndsDeleteEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsClassName,
+					ndsFlags
+                                }
+ 			DESCRIPTION
+                                "Delete an NDS object"
+			--#TYPE "NDS: Delete an NDS object"
+			--#SUMMARY "%U8 created a new object %U8." 
+			--#ARGUMENTS {3, 4}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 2
+			--#STATE OPERATIONAL
+			::= 2
+
+ndsRenameEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsEntryName2,
+					ndsClassName,
+					ndsFlags
+                                }
+			DESCRIPTION
+                                "Rename an NDS object"
+			-- ndsEntryName = original entry name
+			-- ndsEntryName2 = new entry name
+			--#TYPE "NDS: Rename an NDS object"
+			--#SUMMARY "%U8 renamed %U8 to %U8." 
+			--#ARGUMENTS {3, 4, 5}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 3
+			--#STATE OPERATIONAL
+			::= 3
+
+ndsMoveSourceEntry	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsClassName,
+					ndsFlags
+                             	}
+			DESCRIPTION
+                                "The second event of two events reported
+				for a move operation.  This event specifies
+				the deletion of a directory object from its
+				original location in the directory tree."
+			--#TYPE "NDS: Move an NDS object"
+			--#SUMMARY "%U8 moved %U8."
+			--#ARGUMENTS {3, 4}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 4
+			--#STATE OPERATIONAL
+			::= 4
+
+ndsAddValue		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsAttributeName,
+					ndsSyntaxName,
+					ndsClassName,
+					ndsDataSize,
+					ndsDataValue
+                             	}
+			DESCRIPTION
+                                "Add a value to an object attribute"
+			--#TYPE "NDS: Add a value to an object attribute"
+			--#SUMMARY "%U8 added a value to %U8."
+			--#ARGUMENTS {3, 4}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 5
+			--#STATE OPERATIONAL
+			::= 5
+
+ndsDeleteValue		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsAttributeName,
+					ndsSyntaxName,
+					ndsClassName,
+					ndsDataSize,
+					ndsDataValue
+                             	}
+			DESCRIPTION
+				"Delete a value from an object attribute"
+			--#TYPE "NDS: Delete a value from an object attribute"
+			--#SUMMARY "Delete value from attribute %U8"
+			--#ARGUMENTS {5}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 6
+			--#STATE OPERATIONAL
+			::= 6
+
+ndsCloseStream		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsAttributeName,
+					ndsSyntaxName,
+					ndsClassName,
+					ndsDataSize,
+					ndsDataValue
+                             	}
+			DESCRIPTION
+				"Close of a stream attribute"
+			--#TYPE "NDS: Close a stream attribute"
+			--#SUMMARY "Close stream attribute %U8"
+			--#ARGUMENTS {5}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 7
+			--#STATE OPERATIONAL
+			::= 7
+
+ndsDeleteAttribute		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsAttributeName,
+					ndsSyntaxName,
+					ndsClassName,
+					ndsDataSize,
+					ndsDataValue
+                             	}
+			DESCRIPTION
+				"Delete an attribute"
+			--#TYPE "NDS: Delete an attribute"
+			--#SUMMARY "Delete attribute %U8"
+			--#ARGUMENTS {5}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 8
+			--#STATE OPERATIONAL
+			::= 8
+
+ndsSetBinderyContext	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType,
+					ndsResult
+                             	}
+			DESCRIPTION
+				"Setting of the Bindery context on the server"
+			--#TYPE "NDS: Set the bindery context on the server"
+			--#SUMMARY "Setting bindery context"
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 9
+			--#STATE OPERATIONAL
+			::= 9
+
+ndsCreateBinderyObject 	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsBinderyObjectID,
+					ndsBinderyObjectParentID,
+					ndsBinderyObjectType,
+					ndsBinderyObjectFlags,
+					ndsBinderyObjectSecurity,
+					ndsBinderyObjectName
+                             	}
+			DESCRIPTION
+				"Create a bindery object"
+			--#TYPE "NDS: Create a bindery object"
+			--#SUMMARY "Create bindery object %U8"
+			--#ARGUMENTS {8}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 10
+			--#STATE OPERATIONAL
+			::= 10
+
+ndsDeleteBinderyObject 	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsBinderyObjectID,
+					ndsBinderyObjectParentID,
+					ndsBinderyObjectType,
+					ndsBinderyObjectFlags,
+					ndsBinderyObjectSecurity,
+					ndsBinderyObjectName
+                             	}
+			DESCRIPTION
+				"Delete a bindery object"
+			--#TYPE "NDS: Delete a bindery object"
+			--#SUMMARY "Delete bindery object %U8"
+			--#ARGUMENTS {8}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 11
+			--#STATE OPERATIONAL
+			::= 11
+
+ndsCheckSecurityEquiv	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsEntryName,
+					ndsEntryName2
+                             	}
+			DESCRIPTION
+				"Check an entry's security equivalence"
+			-- ndsEntryName = the entry in question 
+			-- ndsEntryName2 = the entry is security equivalent
+			--             to the entry in question (ndsEntryName)
+			--#TYPE "NDS: Check an entry's security equivalence"
+			--#SUMMARY "Check %U8 security equivalence"
+			--#ARGUMENTS {3}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 12
+			--#STATE OPERATIONAL
+			::= 12
+
+ndsUpdateSecurityEquiv	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType,
+					ndsResult
+                             	}
+			DESCRIPTION
+				"Update an entry's security equivalence"
+			--#TYPE "NDS: Update an entry's security equivalence"
+			--#SUMMARY "Update security equivalence"
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 13
+			--#STATE OPERATIONAL
+			::= 13
+
+ndsMoveDestEntry	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsClassName,
+					ndsFlags
+                             	}
+			DESCRIPTION
+                                "The first event of two events reported
+				for a move operation.  This event specifies
+				the placement of a directory object into its
+				new location in the directory tree."
+			--#TYPE "NDS: Move an NDS object"
+			--#SUMMARY "Move NDS object %U8"
+			--#ARGUMENTS {4}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 14
+			--#STATE OPERATIONAL
+			::= 14
+
+ndsDeleteUnusedExtref	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsEntryName,
+					ndsClassName,
+					ndsFlags
+                             	}
+			DESCRIPTION
+                                "Delete an unused external reference"
+			--#TYPE "NDS: Delete an unused external reference"
+			--#SUMMARY "Delete unused external reference %U8"
+			--#ARGUMENTS {4}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 15
+			--#STATE OPERATIONAL
+			::= 15
+
+ndsRemoteServerDown	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsTransportAddressType,
+					ndsTransportAddress
+	                       	}
+			DESCRIPTION
+                                "Remote NDS server down"
+			--#TYPE "NDS: Remote NDS server down"
+			--#SUMMARY "Remote NDS server down"
+			--#SEVERITY MAJOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 16
+			--#STATE DEGRADED
+			::= 16
+
+ndsNCPRetryExpended	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsTransportAddressType,
+					ndsTransportAddress
+	                       	}
+			DESCRIPTION
+                                "nds client NCP retries exceeding threshhold"
+			--#TYPE "NDS: Client NCP retries exceeding threshhold"
+			--#SUMMARY "Client NCP retries exceeding threshhold"
+			--#SEVERITY MAJOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 17
+			--#STATE DEGRADED
+			::= 17
+
+ndsRemoteConnCleared	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsTransportAddressType,
+					ndsTransportAddress
+	                       	}
+			DESCRIPTION
+                                "Remote connection to NDS server cleared"
+			--#TYPE "NDS: Remote connection to NDS server cleared"
+			--#SUMMARY "Remote connection to NDS server cleared"
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 18
+			--#STATE OPERATIONAL
+			::= 18
+
+-- Events for ARCHES NDS
+
+ndsAgentOpenLocal	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsState
+	                       	}
+			DESCRIPTION
+                                "DS agent open local"
+			-- ndsState = 1 (start) or 0 (end)
+			--#TYPE "NDS: Agent open local database"
+			--#SUMMARY "%U8 agent open local database"
+			--#ARGUMENTS {3}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 19
+			--#STATE OPERATIONAL
+			::= 19
+
+ndsAgentCloseLocal		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsState
+	                       	}
+			DESCRIPTION
+                                "DS agent close local"
+			-- ndsState = 1 (start) or 0 (end)
+			--#TYPE "NDS: Agent close local database"
+			--#SUMMARY "%U8 agent close local data base"
+			--#ARGUMENTS {3}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 20
+			--#STATE OPERATIONAL
+			::= 20
+
+ndsErrViaBindery	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsState
+	                       	}
+			DESCRIPTION
+                                "DS Error via Bindery"
+			-- ndsState = error code
+			--#TYPE "NDS: Error via bindery"
+			--#SUMMARY "NDS error via bindery %d"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 21
+			--#STATE OPERATIONAL
+ 			::= 21
+
+ndsDSABadVerb		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber
+	                       	}
+			DESCRIPTION
+                                "Bad verb number given to DSA Request
+				NCP 104,2"
+			-- ndsVerbNumber = bad verb number
+			--#TYPE "NDS: Request with bad verb"
+			--#SUMMARY "NDS request has bad verb %d"
+			--#ARGUMENTS {6}
+			--#SEVERITY MAJOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 22
+			--#STATE OPERATIONAL
+ 			::= 22
+
+ndsDSARequestStart	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber
+	                       	}
+			DESCRIPTION
+                                "DSA request start"
+			-- ndsVerbNumber = verb number
+			-- By default, disabled in ndstrap.cfg for performance.
+			--#TYPE "NDS: Request start"
+			--#SUMMARY "NDS request %d starts"
+			--#ARGUMENTS {6}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 23
+			--#STATE OPERATIONAL
+ 			::= 23
+
+ndsDSARequestEnd	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsRequestSize,
+					ndsReplySize
+	                       	}
+			DESCRIPTION
+                                "DSA request end"
+			-- ndsVerbNumber = verb number
+			-- ndsEntryName = entry name; empty if not available
+			-- ndsRequestSize = reqest size
+			-- ndsReplySize = reply size
+			-- By default, disabled in ndstrap.cfg for performance.
+			--#TYPE "NDS: Request end"
+			--#SUMMARY "NDS request %d ends"
+			--#ARGUMENTS {6}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 24
+			--#STATE OPERATIONAL
+ 			::= 24
+
+ndsMoveSubtree		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+	                       	}
+			DESCRIPTION
+                                "Move Subtree"
+			-- ndsEntryName = source subtree name
+			-- ndsEntryName2 = dest subtree name
+			--#TYPE "NDS: Move subtree"
+			--#SUMMARY "Move subtree %U8 to %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 25
+			--#STATE DEGRADED
+ 			::= 25
+
+ndsNoReplicaPointer	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "No replica pointer"
+			-- ndsEntryName = Partition Name
+			--#TYPE "NDS: No replica pointer"
+			--#SUMMARY "%U8 has no replica pointer"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 26
+			--#STATE OPERATIONAL
+ 			::= 26
+
+ndsSyncInEnd		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsServerName,
+					ndsEntryName,
+					ndsEntryCount
+	                       	}
+			DESCRIPTION
+                                "Sync in end"
+			-- ndsServerName = Server sending changes
+			-- ndsEntryName = Partition Root Entry Name
+			-- ndsEntryCount = number of entries sent 
+			--			(if no error)
+			--#TYPE "NDS: Sync in end"
+			--#SUMMARY "%U8 sync in end"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 27
+			--#STATE OPERATIONAL
+ 			::= 27
+
+ndsBacklinkSecurEquiv	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Back link security equivalence updated"
+			-- ndsEntryName = Name of object updated
+			--#TYPE "NDS: Back link security equivalence updated"
+			--#SUMMARY "Back link %U8 security equivalence updated"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 28
+			--#STATE OPERATIONAL
+ 			::= 28
+
+ndsBacklinkOperPrivChg	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsServerName
+	                       	}
+			DESCRIPTION
+                                "Back link operator privilegs changed"
+			-- ndsEntryName = Name of changed object
+			-- ndsServerName = Server name privileges changed on
+			--#TYPE "NDS: Back link operator privilegs changed"
+			--#SUMMARY "Back link operator %U8 privilegs changed"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 29
+			--#STATE OPERATIONAL
+ 			::= 29
+
+ndsDeleteSubtree	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryCount
+	                       	}
+			DESCRIPTION
+                                "Delete a subtree"
+			-- ndsEntryName = subtree root name
+			-- ndsEntryCount = number of objects deleted
+			--#TYPE "NDS: Delete a subtree"
+			--#SUMMARY "Delete subtree %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 30
+			--#STATE OPERATIONAL
+ 			::= 30
+
+ndsSetNewMaster		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Set a new master partition"
+			-- ndsEntryName = partition name
+			--#TYPE "NDS: Set a new master partition"
+			--#SUMMARY "Set a new master partition %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 31
+			--#STATE OPERATIONAL
+ 			::= 31
+
+
+ndsPartStateChangeReq	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsPartitionControlFunc,
+					ndsPartitionControlType,
+					ndsState
+	                       	}
+			DESCRIPTION
+                                "Partition state change request"
+			-- ndsEntryName = partition name
+			-- ndsPartitionControlFunction = 
+			--		partition control function number
+			-- ndsPartitionControlType = 
+			--		partition control type
+			-- ndsState = current operation's state
+			--#TYPE "NDS: Partition state change"
+			--#SUMMARY "Partition %U8 state change request"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 32
+			--#STATE OPERATIONAL
+ 			::= 32
+
+ndsReferral		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryID,
+					ndsEntryName,
+					ndsReferralType
+	                       	}
+			DESCRIPTION
+                                "Referral request"
+			-- ndsEntryID = ID of the entry
+			-- ndsEntryName = Partition Name
+			-- ndsReferralType = referral type
+			--#TYPE "NDS: Referral request"
+			--#SUMMARY "Referral request %U8"
+			--#ARGUMENTS {8}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 33
+			--#STATE OPERATIONAL
+ 			::= 33
+
+ndsUpdateClassDef	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsClassName
+	                       	}
+			DESCRIPTION
+                                "Update schema class"
+			-- ndsClassName = name of schema class updated
+			--#TYPE "NDS: Update schema class"
+			--#SUMMARY "Update schema class %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 34
+			--#STATE OPERATIONAL
+ 			::= 34
+
+ndsUpdateAttributeDef	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsAttributeName
+	                       	}
+			DESCRIPTION
+                                "Update schema attribute"
+			-- ndsAttributeName = name of schema attribute updated
+			--#TYPE "NDS: Update schema attribute"
+			--#SUMMARY "Update schema attribute %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 35
+			--#STATE OPERATIONAL
+ 			::= 35
+
+ndsLostEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Lost Entry"
+			-- ndsEntryName = Name of lost entry
+			--#TYPE "NDS: Lost entry"
+			--#SUMMARY "Lost entry %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 36
+			--#STATE OPERATIONAL
+ 			::= 36
+
+ndsPurgeEntryFail	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryID,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Purge Entry Fail"
+			-- ndsEntryID = ID of failed entry
+			-- ndsEntryName = Name of failed entry
+			--#TYPE "NDS: Purge entry failed"
+			--#SUMMARY "%U8 purge entry failed"
+			--#ARGUMENTS {8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 37
+			--#STATE OPERATIONAL
+ 			::= 37
+
+ndsPurgeStart		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsReplicaType
+	                       	}
+			DESCRIPTION
+                                "Purge start"
+			-- ndsEntryName = Purged partition name
+			-- ndsReplicaType = replica type
+			--#TYPE "NDS: Purge start"
+			--#SUMMARY "%U8 purge start"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 38
+			--#STATE OPERATIONAL
+ 			::= 38
+
+ndsPurgeEnd		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryCount,
+					ndsValueCount
+	                       	}
+			DESCRIPTION
+                                "Purge end"
+			-- ndsEntryName = Purged partition name
+			-- ndsEntryCount = Number of entries purged
+			-- ndsValueCount = Number of values purged
+			--#TYPE "NDS: Purge end"
+			--#SUMMARY "%U8 purge end"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 39
+			--#STATE OPERATIONAL
+ 			::= 39
+
+ndsFlatCleanerEnd	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryCount,
+					ndsValueCount
+	                       	}
+			DESCRIPTION
+                                "Flat cleaner end"
+			-- ndsEntryCount = Number of entries purged
+			-- ndsValueCount = Number of values purged
+			--#TYPE "NDS: Flat cleaner end"
+			--#SUMMARY "%U8 flat cleaner end"
+			--#ARGUMENTS {3}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 40
+			--#STATE OPERATIONAL
+ 			::= 40
+
+ndsOneReplica		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Only one replica"
+			-- ndsEntryName = Partition name
+			--#TYPE "NDS: Only one replica"
+			--#SUMMARY "%U8 has only one replica"
+			--#ARGUMENTS {7}
+			--#SEVERITY MAJOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 41
+			--#STATE OPERATIONAL
+ 			::= 41
+
+ndsLimberDone		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsState,
+					ndsState2
+	                       	}
+			DESCRIPTION
+                                "Limber process done"
+			-- ndsState = if all initialized (boolean)
+			-- ndsState2 = if found new RDN (boolean)
+			--#TYPE "NDS: Limber process done"
+			--#SUMMARY "%U8 limber process done"
+			--#ARGUMENTS {3}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 42
+			--#STATE OPERATIONAL
+  			::= 42
+
+ndsPartitionSplitDone	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+	                       	}
+			DESCRIPTION
+                                "Partition split done"
+			-- ndsEntryName = Parent partition root name
+			-- ndsEntryName2 = Child partition root name
+			--#TYPE "NDS: Partition split done"
+			--#SUMMARY "Partition %U8 and %U8 split done"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 43
+			--#STATE OPERATIONAL
+  			::= 43
+
+ndsSyncServerOutStart	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsServerName,
+					ndsEntryName,
+					ndsReplicaNumber,
+					ndsState
+	                       	}
+			DESCRIPTION
+                                "Sync server out start"
+			-- ndsServerName = Server name
+			-- ndsEntryName = Name of root
+			-- ndsReplicaNumber = replica number
+			-- ndsState = replica state&type&ndsFlags
+			--#TYPE "NDS: Sync server out start"
+			--#SUMMARY "Sync server %U8 out start"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 44
+			--#STATE OPERATIONAL
+  			::= 44
+
+ndsSyncServerOutEnd	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsServerName,
+					ndsEntryName,
+					ndsEntryCount,
+					ndsValueCount
+	                       	}
+			DESCRIPTION
+                                "Sync server out end"
+			-- ndsServerName = Server name
+			-- ndsEntryName = Name of root partition
+			-- ndsEntryCount = Objects sent
+			-- ndsValueCount = Values sent
+			--#TYPE "NDS: Sync server out end"
+			--#SUMMARY "Sync server %U8 out end"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 45
+			--#STATE OPERATIONAL
+  			::= 45
+
+ndsSyncPartitionStart	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsReplicaType,
+					ndsState
+	                       	}
+			DESCRIPTION
+                                "Sync partition start"
+			-- ndsEntryName = Partition name
+			-- ndsReplicaType = replica type
+			-- ndsState = partition state
+			--#TYPE "NDS: Sync partition start"
+			--#SUMMARY "Sync partition %U8 start"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 46
+			--#STATE OPERATIONAL
+  			::= 46
+
+ndsSyncPartitionEnd	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsState
+	                       	}
+			DESCRIPTION
+                                "Sync partition end"
+			-- ndsEntryName = Partition name
+			-- ndsState = if all processed (boolean)
+			--#TYPE "NDS: Sync partition end"
+			--#SUMMARY "Sync partition %U8 end"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 47
+			--#STATE OPERATIONAL
+  			::= 47
+
+ndsMoveTreeStart	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2,
+					ndsServerName
+	                       	}
+			DESCRIPTION
+                                "Move subtree start"
+			-- ndsEntryName = Name of subtree being moved
+			-- ndsEntryName2 = Name of destination parent
+			-- ndsServerName = Name of server starting from
+			--#TYPE "NDS: Move subtree start"
+			--#SUMMARY "Move subtree %U8 to %U8 start"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 48
+			--#STATE DEGRADED
+  			::= 48
+
+ndsMoveTreeEnd		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsServerName
+	                       	}
+			DESCRIPTION
+                                "Move subtree end"
+			-- ndsEntryName = Name of subtree being moved
+			-- ndsServerName = Name of server starting from
+			--#TYPE "NDS: Move subtree end"
+			--#SUMMARY "Move subtree %U8 from %U8 end"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 49
+			--#STATE OPERATIONAL
+  			::= 49
+
+ndsRecertifyPublicKey	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Re-certify public key"
+			-- ndsEntryName = Whose key being certified.
+			--#TYPE "NDS: Recertify public key"
+			--#SUMMARY "Recertify public key %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 50
+			--#STATE OPERATIONAL
+  			::= 50
+
+ndsGenerateCAKey	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Generate CA key"
+			-- ndsEntryName = Whose CA key being generated.
+			--#TYPE "NDS: Generate CA key"
+			--#SUMMARY "Generate CA key %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 51
+			--#STATE OPERATIONAL
+  			::= 51
+
+ndsJoinPartitionDone	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+	                       	}
+			DESCRIPTION
+                                "Join partition done"
+			-- ndsEntryName = Parent partition name
+			-- ndsEntryName2 = Child partition name
+			--#TYPE "NDS: Join partition done"
+			--#SUMMARY "Join partition %U8 and %U8 done"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 52
+			--#STATE OPERATIONAL
+  			::= 52
+
+ndsPartitionLocked	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Partition locked"
+			-- ndsEntryName = Partition name
+			--#TYPE "NDS: Partition locked"
+			--#SUMMARY "Partition %U8 locked"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 53
+			--#STATE DEGRADED
+  			::= 53
+
+ndsPartitionUnlocked	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Partition unlocked"
+			-- ndsEntryName = Partition name
+			--#TYPE "NDS: Partition unlocked"
+			--#SUMMARY "Partition %U8 unlocked"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 54
+			--#STATE OPERATIONAL
+  			::= 54
+
+ndsSchemaSync		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsState
+	                       	}
+			DESCRIPTION
+                                "NDS schema sync"
+			-- ndsState = if all processed (boolean)
+			--#TYPE "NDS: Schema sync"
+			--#SUMMARY "Schema sync %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 55
+			--#STATE OPERATIONAL
+  			::= 55
+
+ndsNameCollision	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+	                       	}
+			DESCRIPTION
+                                "NDS name collision"
+			-- ndsEntryName = Original entry name
+			-- ndsEntryName2 = Dulicate entry name
+			--#TYPE "NDS: name collision"
+			--#SUMMARY "Name collision %U8 and %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MAJOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 56
+			--#STATE DEGRADED
+  			::= 56
+
+ndsNLMLoaded		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "NDS NLM loaded"
+			-- ndsEntryName = name of the NLM being loaded
+			--#TYPE "NDS: NDS NLM loaded"
+			--#SUMMARY "NDS NLM %U8 loaded"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 57
+			--#STATE OPERATIONAL
+  			::= 57
+
+ndsSkulkerEvent		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "NDS Skulker event"
+			--#TYPE "NDS: Skulker event"
+			--#SUMMARY "%U8 skulker event"
+			--#ARGUMENTS {3}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 59
+			--#STATE OPERATIONAL
+  			::= 59
+
+ndsLumberDone		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID,
+					ndsVerbNumber
+	                       	}
+			DESCRIPTION
+                                "nds lumber process done"
+			--#TYPE "NDS: Lumber process done"
+			--#SUMMARY "%U8 lumber process done"
+			--#ARGUMENTS {3}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 60
+			--#STATE OPERATIONAL
+  			::= 60
+
+ndsBacklinkProcDone	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID,
+					ndsVerbNumber
+	                       	}
+			DESCRIPTION
+                                "Back link process done"
+			--#TYPE "NDS: Back link process done"
+			--#SUMMARY "%U8 back link process done"
+			--#ARGUMENTS {3}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 61
+			--#STATE OPERATIONAL
+  			::= 61
+
+
+ndsServerRename		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsServerName
+	                       	}
+			DESCRIPTION
+                                "Server rename"
+			--#TYPE "NDS: Server rename"
+			--#SUMMARY "Server %U8 rename"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 62
+			--#STATE OPERATIONAL
+  			::= 62
+
+ndsSyntheticTime	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsPartitionID,
+					ndsState
+	                       	}
+			DESCRIPTION
+                                "Synthetic time request"
+			-- ndsEntryName = root entry name of the partition
+			-- ndsState = count of timestamps requested
+			--#TYPE "NDS: Synthetic time request"
+			--#SUMMARY "Synthetic time request for %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 63
+			--#STATE OPERATIONAL
+  			::= 63
+
+ndsServerAddressChange	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID,
+					ndsVerbNumber
+	                       	}
+			DESCRIPTION
+                                "nds Server address change"
+			--#TYPE "NDS: Server address changed"
+			--#SUMMARY "Server %U8 address change"
+			--#ARGUMENTS {3}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 64
+			--#STATE OPERATIONAL
+  			::= 64
+
+ndsDSARead		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Entry being read"
+			-- ndsEntryName = the name of the entry being read
+			-- By default, disabled in ndstrap.cfg for performance.
+			--#TYPE "NDS: Entry being read"
+			--#SUMMARY "Read %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 65
+			--#STATE OPERATIONAL
+  			::= 65
+
+
+-- Auditing events
+
+ndsLogin		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsState,
+					ndsState2
+	                       	}
+			DESCRIPTION
+                                "Login"
+			-- ndsState = if used null password
+			-- ndsState2 = Bindery (0) or nds (-1)
+			--#TYPE "NDS: Login"
+			--#SUMMARY "%U8 login"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 66
+			--#STATE OPERATIONAL
+  			::= 66
+
+ndsChangePassword	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Changing Password"
+			--#TYPE "NDS: Password changed"
+			--#SUMMARY "%U8 change %U8 password"
+			--#ARGUMENTS {3, 7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 67
+			--#STATE OPERATIONAL
+  			::= 67
+
+ndsLogout		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Logout"
+			--#TYPE "NDS: Logout"
+			--#SUMMARY "%U8 logout"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 68
+			--#STATE OPERATIONAL
+  			::= 68
+
+ndsAddReplica		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsServerName
+	                       	}
+			DESCRIPTION
+                                "New replica added"
+			--#TYPE "NDS: New replica added"
+			--#SUMMARY "Add replica %U8 on %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 69
+			--#STATE OPERATIONAL
+			-- ndsEntryName = partition root entry name
+  			::= 69
+
+ndsRemoveReplica	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsServerName
+	                       	}
+			DESCRIPTION
+                                "Replica removed"
+			-- ndsEntryName = partition root entry name
+			--#TYPE "NDS: Replica removed"
+			--#SUMMARY "Remove replica %U8 on %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 70
+			--#STATE OPERATIONAL
+  			::= 70
+
+ndsSplitPartition	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+	                       	}
+			DESCRIPTION
+                                "Split partition"
+			-- ndsEntryName = partition root entry name
+			--#TYPE "NDS: Split partition"
+			--#SUMMARY "Split partition %U8 and %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 71
+			--#STATE DEGRADED
+  			::= 71
+
+ndsJoinPartition	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+	                       	}
+			DESCRIPTION
+                                "Join partitions"
+			-- ndsEntryName = partition root entry name
+			--#TYPE "NDS: Join partitions"
+			--#SUMMARY "Join partitions %U8 and %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 72
+			--#STATE DEGRADED
+  			::= 72
+
+ndsChangeReplicaType	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsServerName,
+					ndsReplicaType,
+					ndsReplicaType2
+                       	}
+			DESCRIPTION
+                                "Change a partition's replica type"
+			-- ndsEntryName = partition root entry name
+			-- ndsReplicaType = original replica type
+			-- ndsReplicaType2 = new replica type
+			--#TYPE "NDS: Change a partition's replica type"
+			--#SUMMARY "Change partition %U8 replica type"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 73
+			--#STATE OPERATIONAL
+  			::= 73
+
+ndsAddEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Add entry"
+			-- ndsEntryName = entry name
+			--#TYPE "NDS: Add a new entry"
+			--#SUMMARY "Add entry %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 74
+			--#STATE OPERATIONAL
+  			::= 74
+
+ndsAbortPartitionOp	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Abort partition operation"
+			-- ndsEntryName = entry name
+			--#TYPE "NDS: Abort partition operation"
+			--#SUMMARY "Abort partition operation %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 75
+			--#STATE OPERATIONAL
+  			::= 75
+
+ndsRecvReplicaUpdates	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Receive replica updates"
+			-- ndsEntryName = replica root entry name
+			--#TYPE "NDS: Receive replica updates"
+			--#SUMMARY "Receive replica %U8 updates"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 76
+			--#STATE OPERATIONAL
+  			::= 76
+
+ndsRepairTimeStamps	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Repair timestamps"
+			-- ndsEntryName = replica root entry name
+			--#TYPE "NDS: Repair timestamps"
+			--#SUMMARY "Repair %U8 timestamps"
+			--#ARGUMENTS {7}
+			--#SEVERITY MAJOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 77
+			--#STATE DEGRADED
+  			::= 77
+
+ndsSendReplicaUpdates	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Send replica updates"
+			--#TYPE "NDS: Send replica updates"
+			--#SUMMARY "Send replica %U8 updates"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 78
+			--#STATE OPERATIONAL
+  			::= 78
+
+ndsVerifyPass		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Verify password"
+			--#TYPE "NDS: Verify password"
+			--#SUMMARY "Verify %U8 password" 
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 79
+			--#STATE OPERATIONAL
+  			::= 79
+
+ndsBackupEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Backup entry"
+			--#TYPE "NDS: Backup entry"
+			--#SUMMARY "Backup %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 80
+			--#STATE OPERATIONAL
+  			::= 80
+
+ndsRestoreEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+	                       	}
+			DESCRIPTION
+                                "Restore entry"
+			-- ndsEntryName = parent entry name
+			-- ndsEntryName2 = restored entry's RDN
+			--#TYPE "NDS: Restore entry"
+			--#SUMMARY "Restore %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 81
+			--#STATE OPERATIONAL
+  			::= 81
+
+ndsDefineAttributeDef	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsAttributeName
+	                       	}
+			DESCRIPTION
+                                "Define attribute definition"
+			--#TYPE "NDS: Define attribute"
+			--#SUMMARY "Define attribute %U8" 
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 82
+			--#STATE OPERATIONAL
+  			::= 82
+
+ndsRemoveAttributeDef	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsAttributeName,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Remove attribute definition"
+			-- ndsEntryName = schema root entry name
+			--#TYPE "NDS: Remove attribute definition"
+			--#SUMMARY "Remove attribute %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 83
+			--#STATE OPERATIONAL
+  			::= 83
+
+ndsRemoveClassDef	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsClassName,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Remove class definition"
+			-- ndsEntryName = schema root entry name
+			--#TYPE "NDS: Remove class definition"
+			--#SUMMARY "Remove class %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 84
+			--#STATE OPERATIONAL
+  			::= 84
+
+ndsDefineClassDef	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID,
+					ndsVerbNumber,
+					ndsClassName
+	                       	}
+			DESCRIPTION
+                                "Define class definition"
+			--#TYPE "NDS: Define class"
+			--#SUMMARY "Define class %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 85
+			--#STATE OPERATIONAL
+  			::= 85
+
+ndsModifyClassDef	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType,
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsClassName,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Modify class definition"
+			-- ndsEntryName = Schema root name
+			--#TYPE "NDS: Modify class definition"
+			--#SUMMARY "Modify class %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 86
+			--#STATE OPERATIONAL
+  			::= 86
+
+ndsResetDSCounters	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsServerName
+	                       	}
+			DESCRIPTION
+                                "Reset DS counters"
+			--#TYPE "NDS: Reset DS counters"
+			--#SUMMARY "Reset NDS counters on %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 87
+			--#STATE OPERATIONAL
+  			::= 87
+
+ndsRemoveEntryDir	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Remove directory associated with the entry"
+			--#TYPE "NDS: Remove directory with the entry"
+			--#SUMMARY "Remove directory associated with %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 88
+			--#STATE OPERATIONAL
+  			::= 88
+
+ndsCompAttributeValue	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsAttributeName
+	                       	}
+			DESCRIPTION
+                                "Compare attribute value"
+			--#TYPE "NDS: Compare attribute value" 
+			--#SUMMARY "Compare %U8 attribute value"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 89
+			--#STATE OPERATIONAL
+  			::= 89
+			
+ndsOpenStream		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsAttributeName,
+					ndsRequestedRights,
+					ndsStreamFileName
+	                       	}
+			DESCRIPTION
+                                "Open stream file"
+			--#TYPE "NDS: Open stream file"
+			--#SUMMARY "Open stream file %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 90
+			--#STATE OPERATIONAL
+  			::= 90
+
+ndsListSubordinates	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "List entry's subordinates"
+			--#TYPE "NDS: List entry's subordinates"
+			--#SUMMARY "List %U8 subordinates"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 91
+			--#STATE OPERATIONAL
+  			::= 91
+
+ndsListContainerClasses	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "List container classes"
+			--#TYPE "NDS: List container classes"
+			--#SUMMARY "List container class %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 92
+			--#STATE OPERATIONAL
+  			::= 92
+
+ndsInspectEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Inspect entry"
+			--#TYPE "NDS: Inspect entry"
+			--#SUMMARY "Inspect entry %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 93
+			--#STATE OPERATIONAL
+  			::= 93
+
+ndsResendEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Resend entry"
+			--#TYPE "NDS: Resend entry"
+			--#SUMMARY "Resend entry %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 94
+			--#STATE OPERATIONAL
+  			::= 94
+
+ndsMutateEntry		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsClassName
+	                       	}
+			DESCRIPTION
+                                "Mutate entry"
+			-- ndsClassName = New class name
+			--#TYPE "NDS: Mutate entry"
+			--#SUMMARY "Mutate entry %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 95
+			--#STATE OPERATIONAL
+  			::= 95
+
+ndsMergeEntries		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+	                       	}
+			DESCRIPTION
+                                "Merge Entry2 (ndsEntryName2) into Entry 
+				(ndsEntryName2)"
+			--#TYPE "NDS: Merge entries"
+			--#SUMMARY "Merge entries %U8 and %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 96
+			--#STATE OPERATIONAL
+  			::= 96
+
+ndsMergeTree		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+	                       	}
+			DESCRIPTION
+                                "Merge a tree ndsEntryName2) into another tree
+				(ndsEntryName2)"
+			--#TYPE "NDS: Merge trees"
+			--#SUMMARY "Merge trees %U8 and %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MAJOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 97
+			--#STATE DEGRADED
+  			::= 97
+
+ndsCreateSubref		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                       	}
+			DESCRIPTION
+                                "Create new subordinate reference"
+			-- ndsEntryName = subordinate reference root name
+			--#TYPE "NDS: Create new subordinate reference"
+			--#SUMMARY "Create new subordinate reference of %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 98
+			--#STATE OPERATIONAL
+  			::= 98
+
+ndsListPartitions	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+                 		}
+			DESCRIPTION
+                                "List partitions"
+			-- ndsEntryName = partition root entry name
+			--#TYPE "NDS: List partitions"
+			--#SUMMARY "List partition %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 99
+			--#STATE OPERATIONAL
+  			::= 99
+
+ndsReadAttribute	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsAttributeName
+                 		}
+			DESCRIPTION
+                                "Read attribute"
+			-- By default, disabled in ndstrap.cfg for performance.
+			--#TYPE "NDS: Read attribute"
+			--#SUMMARY "Read attribute %U8"
+			--#ARGUMENTS {8}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 100
+			--#STATE OPERATIONAL
+  			::= 100
+
+ndsReadReferences	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+                	 	}
+			DESCRIPTION
+                                "Read an entry's references"
+			--#TYPE "NDS: Read an entry's references"
+			--#SUMMARY "Read %U8 references"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 101
+			--#STATE OPERATIONAL
+  			::= 101
+	      
+ndsUpdateReplica	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsEntryName2
+        	         	}
+			DESCRIPTION
+                                "Update an entry in a replica"
+			-- ndsEntryName = entry being updated
+			-- ndsEntryName2 = partition root entry name
+			--#TYPE "NDS: Update an entry in a replica"
+			--#SUMMARY "Update %U8 in %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 102
+			--#STATE OPERATIONAL
+  			::= 102
+
+ndsStartUpdateReplica	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+	                 	}
+			DESCRIPTION
+                                "Start update replica"
+			-- ndsEntryName = partition root entry name
+			--#TYPE "NDS: Start update replica"
+			--#SUMMARY "Start to update replica %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 103
+			--#STATE OPERATIONAL
+  			::= 103
+
+ndsEndUpdateReplica	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+                 		}
+			DESCRIPTION
+                                "End update replica"
+			-- ndsEntryName = partition root entry name
+			--#TYPE "NDS: End update replica"
+			--#SUMMARY "End updating replica %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 104
+			--#STATE OPERATIONAL
+  			::= 104
+
+ndsSyncPartition	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+                 		}
+			DESCRIPTION
+                                "Sync partition"
+			-- ndsEntryName = partition root entry name
+			--#TYPE "NDS: Sync partition"
+			--#SUMMARY "Sync partition %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 105
+			--#STATE OPERATIONAL
+  			::= 105
+
+ndsSyncSchema		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+                 		}
+			DESCRIPTION
+                                "Sync schema"
+			-- ndsEntryName = tree root name
+			--#TYPE "NDS: Sync schema"
+			--#SUMMARY "Sync schema %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 106
+			--#STATE OPERATIONAL
+  			::= 106
+
+ndsCreateBacklink	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsServerName,
+					ndsEntryName
+                 		}
+			DESCRIPTION
+                                "Create backlink of an external ref entry"
+			-- ndsServerName = server name request comes from
+			-- ndsEntryName = entry with backlink created
+			--#TYPE "NDS: Create back link of an entry"
+			--#SUMMARY "Create back link of %U8"
+			--#ARGUMENTS {8}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 107
+			--#STATE OPERATIONAL
+  			::= 107
+
+ndsCheckConsoleOperator	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsServerName,
+					ndsEntryName,
+					ndsState
+                 		}
+			DESCRIPTION
+                                "Check an entry whether it's an operator"
+			-- ServerName = server name request comes from
+			-- ndsEntryName = entry checked
+			-- ndsState = isOperator
+			--#TYPE "NDS: Check an entry whether it's an operator"
+			--#SUMMARY "Check %U8 whether it's an operator"
+			--#ARGUMENTS {8}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 108
+			--#STATE OPERATIONAL
+  			::= 108
+
+ndsChangeTreeName	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName
+                 		}
+			DESCRIPTION
+                                "Change DS tree name"
+			-- ndsEntryName = new tree name
+			--#TYPE "NDS: Change tree name"
+			--#SUMMARY "Change DS tree name %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 109
+			--#STATE OPERATIONAL
+  			::= 109
+
+ndsStartJoinPartition	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsEntryName2
+                 		}
+			DESCRIPTION
+                                "Start to join two partitions"
+			-- ndsEntryName = Parent partition root name
+			-- ndsEntryName2 = Child partition root name
+			--#TYPE "NDS: Start to join two partitions"
+			--#SUMMARY "Start to join two partitions %U8 and %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 110
+			--#STATE DEGRADED
+  			::= 110
+
+ndsAbortJoinPartition	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsEntryName2
+                 		}
+			DESCRIPTION
+                                "abort joining two partitions"
+			-- ndsEntryName = Parent partition root name
+			-- ndsEntryName = Child partition root name
+			--#TYPE "NDS: Abort joining two partitions"
+			--#SUMMARY "Abort joining two partitions %U8 and %U8"
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 111
+			--#STATE OPERATIONAL
+  			::= 111
+
+ndsUpdateSchema		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsServerName
+                 		}
+			DESCRIPTION
+                                "update schema"
+			-- ndsEntryName = tree root name
+			--#TYPE "NDS: Update schema"
+			--#SUMMARY "Update schema %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 112
+			--#STATE OPERATIONAL
+  			::= 112
+
+ndsStartUpdateSchema	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsServerName
+                 		}
+			DESCRIPTION
+                                "start to update schema"
+			-- ndsEntryName = tree root name
+			--#TYPE "NDS: Start to update schema"
+			--#SUMMARY "Start to update schema %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 113
+			--#STATE OPERATIONAL
+  			::= 113
+
+ndsEndUpdateSchema	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsServerName
+                 		}
+			DESCRIPTION
+                                "end updating schema"
+			-- ndsEntryName = tree root name
+			--#TYPE "NDS: End updating schema"
+			--#SUMMARY "End updating schema %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 114
+			--#STATE OPERATIONAL
+  			::= 114
+
+ndsMoveTree		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName
+                 		}
+			DESCRIPTION
+                                "Move tree"
+			-- ndsEntryName = entry parent's name
+			--#TYPE "NDS: Move tree"
+			--#SUMMARY "Move tree %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 115
+			--#STATE DEGRADED
+  			::= 115
+
+ndsReloadDS		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName
+				}
+			DESCRIPTION
+                                "Reload DS"
+			-- ndsEntryName = Tree root name
+			--#TYPE "NDS: Reload DS"
+			--#SUMMARY "%U8 reload DS"
+			--#ARGUMENTS {3}
+			--#SEVERITY MAJOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 116
+			--#STATE OPERATIONAL
+  			::= 116
+
+ndsAddProperty		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsBinderyObjectSecurity,
+					ndsFlags
+                 		}
+			DESCRIPTION
+                                "Add a property"
+			--#TYPE "NDS: Add a property"
+			--#SUMMARY "Add property %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 117
+			--#STATE OPERATIONAL
+  			::= 117
+
+ndsDeleteProperty	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName
+                 		}
+			DESCRIPTION
+                                "Delete a property"
+			--#TYPE "NDS: Delete a property"
+			--#SUMMARY "Delete property %U8."
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 118
+			--#STATE OPERATIONAL
+  			::= 118
+
+ndsAddMember		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsEntryName2,
+					ndsPropertyName
+                 		}
+			DESCRIPTION
+                                "Add a member"
+			-- ndsEntryName = entry name
+			-- ndsEntryName2 = member's name
+			-- ndsPropertyName = property name
+			--#TYPE "NDS: Add a member"
+			--#SUMMARY "Add member %U8."
+			--#ARGUMENTS {8}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 119
+			--#STATE OPERATIONAL
+  			::= 119
+
+ndsDeleteMember		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsEntryName2,
+					ndsPropertyName
+                 		}
+			DESCRIPTION
+                                "Delete member"
+			-- ndsEntryName = entry name
+			-- ndsEntryName2 = member's name
+			-- ndsPropertyName = property name
+			--#TYPE "NDS: Delete a member"
+			--#SUMMARY  "Delete member %U8."
+			--#ARGUMENTS {8}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 120
+			--#STATE OPERATIONAL
+  			::= 120
+
+ndsChangePropSecurity	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsBinderyObjectSecurity,
+					ndsPropertyName
+                 		}
+			DESCRIPTION
+                                "Change property's security"
+			-- ndsBinderyObjectSecurity = new security
+			--#TYPE "NDS: Change property's security"
+			--#SUMMARY "Change property %U8 security"
+			--#ARGUMENTS {9}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 121
+			--#STATE OPERATIONAL
+  			::= 121
+
+ndsChangeObjSecurity	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsBinderyObjectSecurity
+                 		}
+			DESCRIPTION
+                                "Change object's security"
+			--#TYPE "NDS: Change an object's security"
+			--#SUMMARY "Change object %U8 security"
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 122
+			--#STATE OPERATIONAL
+  			::= 122
+
+ndsReadObjectInfo	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName
+                 		}
+			DESCRIPTION
+                                "Read object information"
+			-- By default, disabled in ndstrap.cfg for performance.
+			--#TYPE "NDS: Read object information"
+			--#SUMMARY "Read object %U8 information"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 123
+			--#STATE OPERATIONAL
+  			::= 123
+
+ndsConnectToAddress	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsTransportAddressType,
+					ndsTransportAddress
+                 		}
+			DESCRIPTION
+                                "nds connect to address"
+			--#TYPE "NDS: Connect to address"
+			--#SUMMARY "NDS connet to address %U8"
+			--#ARGUMENTS {4}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 124
+			--#STATE OPERATIONAL
+  			::= 124
+
+ndsSearch		TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsEntryID,
+					ndsSearchScope,
+					ndsSearchNodes,
+					ndsSearchInfoType
+                 		}
+			DESCRIPTION
+                                "Search nds"
+			--#TYPE "NDS: Search NDS"
+			--#SUMMARY "%U8 search for %U8."
+			--#ARGUMENTS {3, 7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 125
+			--#STATE OPERATIONAL
+  			::= 125
+
+ndsPartitionStateChange	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsEntryName2,
+					ndsPartitionControlFunc,
+					ndsPartitionControlType,
+					ndsState
+                 		}
+			DESCRIPTION
+                                "Partition's state changed"
+			-- ndsEntryName = partition root entry
+			-- ndsEntryName2 = partner partition root entry
+			-- ndsPartitionControlFunc = partition control function
+			-- ndsPartitionControlType = partition control type
+			-- ndsState = state
+			--#TYPE "NDS: Partition's state changed"
+			--#SUMMARY "%U8 partition state changed to %U8."
+			--#ARGUMENTS {7, 11}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 126
+			--#STATE OPERATIONAL
+  			::= 126
+
+ndsRemoveBacklink	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsServerName
+                 		}
+			DESCRIPTION
+                                "Remove backlink of an entry on a server"
+			-- ndsEntryName = affected object
+			-- ndsServerName = server name of removed backlink
+			--#TYPE "NDS: Remove backlink of an entry"
+			--#SUMMARY "Remove backlink of %U8"
+			--#ARGUMENTS {7}
+			--#SEVERITY INFORMATIONAL
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 127
+			--#STATE OPERATIONAL
+  			::= 127
+
+ndsLowLevelJoinPart	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,	
+					ndsEntryName,
+					ndsEntryName2
+                 		}
+			DESCRIPTION
+                                "Low level join partition"
+			-- ndsEntryName = parent partition root
+			-- ndsEntryName2 = child partition root
+			--#TYPE "NDS: Low level join partition"
+			--#SUMMARY "Low level join partition %U8 and %U8."
+			--#ARGUMENTS {7, 8}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 128
+			--#STATE OPERATIONAL
+  			::= 128
+
+ndsCreateNamebase	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID
+                 		}
+			DESCRIPTION
+                                "Create namebase"
+			--#TYPE "NDS: Create NDS namebase"
+			--#SUMMARY "%U8 created NDS namebase"
+			--#ARGUMENTS {3}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 129
+			--#STATE OPERATIONAL
+  			::= 129
+
+ndsChangeSecurityEquals	TRAP-TYPE   
+			ENTERPRISE  ndsTrap-MIB
+			VARIABLES  
+				{
+					ndsTrapTime,
+					ndsEventType, 
+					ndsResult,
+					ndsPerpetratorName,
+					ndsProcessID,
+					ndsConnID, 
+					ndsVerbNumber,
+					ndsEntryName,
+					ndsBinderyObjectSecurity,
+					ndsState
+                 		}
+			DESCRIPTION
+                                "Change entry's security equivalence"
+			-- ndsState = delete(0) add(1)
+			--#TYPE "NDS: Entry's security equivalence changed"
+			--#SUMMARY "%U8 security equivalence changed."
+			--#ARGUMENTS {7}
+			--#SEVERITY MINOR
+			--#TIMEINDEX 0
+			--#HELP "ndstrap.hlp"
+			--#HELPTAG 130
+			--#STATE OPERATIONAL
+  			::= 130
+
+END

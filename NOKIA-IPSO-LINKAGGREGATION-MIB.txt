@@ -1,0 +1,88 @@
+--*******************************************************
+--Nokia IPSO Link Aggregation MIB
+--May 10 2004, Laura Xu
+--
+--*******************************************************
+
+NOKIA-IPSO-LINKAGGREGATION-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+  ipsoProducts FROM NOKIA-IPSO-REGISTRATION-MIB
+  MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+  InterfaceIndex
+    FROM IF-MIB;
+
+ipsoLinkAggregationMIB MODULE-IDENTITY
+  LAST-UPDATED "0105140000Z"
+  ORGANIZATION "Nokia"
+  CONTACT-INFO
+        "EMail: tac.support@nokia.com
+         Postal: 313 Fairchild Drive
+                 Mountain View,
+                 California, 94043"
+
+  DESCRIPTION
+  "The MIB Module for the management of Link Aggregation on IPSO systems."
+   
+   REVISION "0105140000Z"
+   DESCRIPTION "Initial Version of the MIB -- Laura Xu"
+   ::= { ipsoProducts 6 }
+
+ipsoLinkAggregationTrapsPrefix OBJECT IDENTIFIER
+  ::= { ipsoLinkAggregationMIB 0 }
+
+ipsoLinkAggregationMemberActive NOTIFICATION-TYPE
+  OBJECTS {ipsoLAGroupIfIndex, ipsoLAGroupID, ipsoLAPortIfIndex}
+  STATUS  	current
+  DESCRIPTION
+	"A MemberActive trap signifies that the SNMP entity, acting in an
+	 agent role, has detected that a member port for one of the
+	 link aggregation groups has moved from inactive state to active
+	 state. This indicates that the system may choose this port when
+	 sending data out of the link aggregation group."
+  ::= { ipsoLinkAggregationTrapsPrefix 1 }
+
+ipsoLinkAggregationMemberInactive NOTIFICATION-TYPE
+  OBJECTS {ipsoLAGroupIfIndex, ipsoLAGroupID, ipsoLAPortIfIndex, ipsoLAPortInactiveReason}
+  STATUS  	current
+  DESCRIPTION
+	"A MemberInactive trap signifies that the SNMP entity, acting in an
+	 agent role, has detected that a member port for one of the
+	 link aggregation groups has moved from active state to inactive
+	 state. This indicates that the system will no longer choose this
+	 port when sending data out of the link aggregation group."
+  ::= { ipsoLinkAggregationTrapsPrefix 2 }
+
+ipsoLinkAggregationNotificationGroup OBJECT IDENTIFIER
+  ::= { ipsoLinkAggregationMIB 1 }
+
+ipsoLAGroupIfIndex OBJECT-TYPE
+  SYNTAX	InterfaceIndex
+  MAX-ACCESS	accessible-for-notify
+  STATUS	current
+  DESCRIPTION
+	"The interface index of the link aggregation group in the
+	 MIB-II interfaces table."
+  ::= { ipsoLinkAggregationNotificationGroup 1 }
+
+ipsoLAPortIfIndex OBJECT-TYPE
+  SYNTAX	InterfaceIndex
+  MAX-ACCESS	accessible-for-notify
+  STATUS	current
+  DESCRIPTION
+	"The interface index of the member port in the MIB-II interfaces table."
+  ::= { ipsoLinkAggregationNotificationGroup 2 }
+
+ipsoLAPortInactiveReason OBJECT-TYPE
+  SYNTAX	INTEGER {
+			linkStateDown (1),
+			wrongSpeed (2),
+			unknown (3)
+		}
+  MAX-ACCESS	accessible-for-notify
+  STATUS	current
+  DESCRIPTION
+	"The reason why this member port became inactive."
+  ::= { ipsoLinkAggregationNotificationGroup 3 }
+
+END

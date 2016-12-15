@@ -1,0 +1,91 @@
+-- SECTION 1: Top Level Definitions
+ 
+ATM-TRAP-MIB DEFINITIONS ::= BEGIN
+
+-- Centillion Atm Trap MIB Release 1.0.1
+-- Revision 01/12/2000
+-- rcr     04/03/01 CR147311  - add SscopUp trap
+ 
+-- Copyright 1998 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+ 
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+ 
+ 
+-- Imports
+  
+IMPORTS
+      TRAP-TYPE   FROM RFC-1215
+      atmTraps    FROM S5-ROOT-MIB
+      atmPortCardIndex,atmPortPortIndex,atmPortSscopStatus
+	          FROM CENTILLION-ATMCFG-MIB;
+      
+  
+  
+-- SECTION 2: ATM traps definitions
+  
+  
+s5CtrSscopDown  TRAP-TYPE
+     ENTERPRISE  atmTraps
+     VARIABLES   {atmPortCardIndex,
+                  atmPortPortIndex,
+                  atmPortSscopStatus }
+--   STATUS      mandatory
+     DESCRIPTION
+         " This trap is sent when the SSCOP goes down
+           i.e., when the peer protocol has failed to
+           respond to the max number of status polls
+           by its peer.
+             atmPortCardIndex.........the ATM card id.
+             atmPortPortIndex.........the ATM port id.
+             atmPortSscopStatus ..........the status of the
+           SSCOP protocol."
+     ::= 1
+
+s5CtrAdmaLockup  TRAP-TYPE
+     ENTERPRISE  atmTraps
+     VARIABLES   {atmPortCardIndex,
+                  atmPortPortIndex}
+--   STATUS      mandatory
+     DESCRIPTION
+         " This trap is sent when a ADMA lockup condition
+           is detected on the MCP.  The MCP must be reset
+           to clear this condition.
+             atmPortCardIndex.........the ATM card id.
+             atmPortPortIndex.........the ATM port id."
+     ::= 2
+
+s5CtrAcmaLockup  TRAP-TYPE
+     ENTERPRISE  atmTraps
+     VARIABLES   {atmPortCardIndex}
+--   STATUS      mandatory
+     DESCRIPTION
+         " This trap is sent when a ACMA queue stuck
+           condition is detected on the MCP.  The 
+           MCP must be reset to clear this condition.
+             atmPortCardIndex.........the ATM card id."
+     ::= 3
+
+s5CtrSscopUp  TRAP-TYPE
+     ENTERPRISE  atmTraps
+     VARIABLES   {atmPortCardIndex,
+                  atmPortPortIndex,
+                  atmPortSscopStatus }
+--   STATUS      mandatory
+     DESCRIPTION
+         " This trap is sent when the SSCOP uomes up.
+             atmPortCardIndex.........the ATM card id.
+             atmPortPortIndex.........the ATM port id.
+             atmPortSscopStatus ..........the status of the
+           SSCOP protocol."
+     ::= 4
+
+END
+

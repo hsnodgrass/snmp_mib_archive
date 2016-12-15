@@ -1,0 +1,706 @@
+
+-- SECTION 1: Top Level Definitions
+ 
+CENTILLION-LECS-MPOA-MIB DEFINITIONS ::= BEGIN
+ 
+--  
+-- Revision 1/23/98 
+ 
+-- Copyright 1998 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+ 
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+ 
+-- Imports
+
+IMPORTS
+        OBJECT-TYPE
+                FROM RFC-1212
+	TruthValue, RowStatus
+		FROM SNMPv2-TC-v1
+        Integer32
+                FROM SNMPv2-SMI-v1
+        atmLane
+		FROM CENTILLION-ROOT-MIB
+        AtmConfigAddr, InternetworkAddrType, MpcIndex, MpsIndex
+		FROM MPOA-MIB
+        lecsConfIndex
+                FROM LAN-EMULATION-ELAN-MIB;
+
+
+
+cnLecsMpoaGroup	        OBJECT IDENTIFIER ::= { atmLane 6 }
+
+-- SECTION 2:  Lecs Mpoa Mpc Table
+
+-- This table contains information pertaining to Lecs for Mpoa Mpc
+ 
+cnLecsMpoaMpcTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF CnLecsMpoaMpcEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "The Bay Networks proprietary LECS MPC Table.
+           This table contains configuration information
+           for all LECS Mpoa Mpcs this agent manages."
+    ::= { cnLecsMpoaGroup  1 }
+
+
+cnLecsMpoaMpcEntry OBJECT-TYPE
+    SYNTAX  CnLecsMpoaMpcEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "Each entry contains LECS MPC information
+           for all LECS this agent manages."
+    INDEX   { lecsConfIndex,
+	      cnLecsMpoaMpcIndex }
+    ::= { cnLecsMpoaMpcTable 1 }
+
+
+CnLecsMpoaMpcEntry ::=
+    SEQUENCE {
+        cnLecsMpoaMpcIndex                MpcIndex,
+        cnLecsMpoaMpcRowStatus            RowStatus,
+        cnLecsMpoaMpcCtrlAtmAddr          AtmConfigAddr,
+	cnLecsMpoaMpcSCSetupFrameCount    Integer32,
+	cnLecsMpoaMpcSCSetupFrameTime     Integer32,
+	cnLecsMpoaMpcInitialRetryTime     Integer32,
+	cnLecsMpoaMpcRetryTimeMaximum     Integer32,
+	cnLecsMpoaMpcHoldDownTime         Integer32,
+        cnLecsMpoaMpcDefaultTLV           TruthValue
+    }
+
+cnLecsMpoaMpcIndex OBJECT-TYPE
+    SYNTAX   MpcIndex
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+         "A value which uniquely identifies this conceptual
+         row in the cnLecsMpoaMpcTable."  
+    ::= { cnLecsMpoaMpcEntry 1 }
+
+cnLecsMpoaMpcRowStatus OBJECT-TYPE
+    SYNTAX   RowStatus
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+         "This object allows creation and deletion of Lecs 
+         MPOA Clients.
+
+         Within each conceptual cnLecsMpoaMpcTable row, writable
+         objects may be modified, regardless of the value of
+         cnLecsMpoaMpcRowStatus."
+    ::= { cnLecsMpoaMpcEntry 2 }
+
+cnLecsMpoaMpcCtrlAtmAddr OBJECT-TYPE
+    SYNTAX   AtmConfigAddr
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+         "The MPC's Control ATM Address.  There exists one Control ATM
+	 Address per MPC, therefore, the value of this entry is unique
+	 within the table.  The control ATM Address is the address which
+	 is used by the MPC in its requests to the MPS.  The value of
+	 this object should not change, once created."
+     ::= { cnLecsMpoaMpcEntry 3}
+
+cnLecsMpoaMpcSCSetupFrameCount OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+         "This represents the Short-cut setup frame count
+         parameter.
+ 
+         This value is frames measured over mpcSCFrameTime
+         seconds.
+         Flow detection is protocol independent. i.e. all network layers
+         lecsMpcProtocolEntries for this MPC share the flow rate
+         specification.
+         A value of 1 causes all flows to initiate resolution/shortcut.
+         process."
+    DEFVAL { 10 }
+    ::= { cnLecsMpoaMpcEntry 4 }
+ 
+cnLecsMpoaMpcSCSetupFrameTime OBJECT-TYPE
+    SYNTAX Integer32 (1..60)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+         "Short-cut setup frame time, in seconds."
+    DEFVAL { 1 }
+    ::= { cnLecsMpoaMpcEntry 5 }
+ 
+ 
+cnLecsMpoaMpcInitialRetryTime OBJECT-TYPE
+    SYNTAX Integer32 (1..300)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+         "This is the initial value for the retry time out period used
+	 for timing out MPOA Resolution Requests in seconds.  Retry time
+	 consists of this initial time-out and a retry muliplier.  If a
+	 response is not received, then another request is sent with a
+	 timeout of retry time * retry time maximum seconds, or until
+	 cnLecsMpoaMpcRetryTimeMaximum."
+    DEFVAL { 5 }
+    ::= { cnLecsMpoaMpcEntry 6 }
+ 
+cnLecsMpoaMpcRetryTimeMaximum OBJECT-TYPE
+    SYNTAX Integer32 (10..300)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+         "Cumulative max value for Retry Time.
+         Retries are attempted at intervals determined by the
+         algorithm descrived in the definition of
+         cnLecsMpoaMpcInitalRetryTime."
+    REFERENCE
+         "Multiprotocol Over ATM. AF-MPOA-0087.000.
+         Section 4.3 MPOA Retry Mechanism"
+    DEFVAL { 40 }
+    ::= { cnLecsMpoaMpcEntry 7 }
+
+cnLecsMpoaMpcHoldDownTime OBJECT-TYPE
+    SYNTAX Integer32 (30..1200)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+         "Hold Down Time
+         Minimum time to wait before reinitiating
+         a failed resolution attempt.  Default is
+         cnLecsMpoaMpcRetryTimeMaximum * 4."
+    REFERENCE
+         "Multiprotocol Over ATM. AF-MPOA-0087.000.
+         Section 4.1.2.1 MPC Parameters"
+    DEFVAL { 160 }
+    ::= { cnLecsMpoaMpcEntry 8 }
+
+cnLecsMpoaMpcDefaultTLV OBJECT-TYPE
+    SYNTAX TruthValue
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates whether this CnLecsMpoaMpcEntry
+         contains the default TLV settings. Only one
+         entry in the table can have the default
+         setttings."
+    DEFVAL { false }
+        ::= {cnLecsMpoaMpcEntry 9 }
+ 
+
+
+-- SECTION 3:  Lecs Mpoa Mps Table
+
+-- This table contains information pertaining to Lecs for Mpoa Mps
+ 
+cnLecsMpoaMpsTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF CnLecsMpoaMpsEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "The Bay Networks proprietary LECS MPS Table.
+           This table contains configuration information
+           for all LECS Mpoa Mpss this agent manages."
+    ::= { cnLecsMpoaGroup 2 }
+
+
+cnLecsMpoaMpsEntry OBJECT-TYPE
+    SYNTAX  CnLecsMpoaMpsEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "Each entry contains LECS MPS information
+           for all LECS this agent manages."
+    INDEX   { lecsConfIndex,
+	      cnLecsMpoaMpsIndex }
+    ::= { cnLecsMpoaMpsTable 1 }
+
+
+CnLecsMpoaMpsEntry ::=
+    SEQUENCE {
+        cnLecsMpoaMpsIndex                MpsIndex,
+        cnLecsMpoaMpsRowStatus            RowStatus,
+	cnLecsMpoaMpsCtrlAtmAddr          AtmConfigAddr,
+        cnLecsMpoaMpsKeepAliveTime        Integer32,
+	cnLecsMpoaMpsKeepAliveLifeTime    Integer32,
+	cnLecsMpoaMpsInitialRetryTime     Integer32,
+	cnLecsMpoaMpsRetryTimeMaximum     Integer32,
+	cnLecsMpoaMpsGiveupTime           Integer32,
+	cnLecsMpoaMpsDefaultHoldingTime   Integer32,
+        cnLecsMpoaMpsDefaultTLV           TruthValue
+    }
+
+cnLecsMpoaMpsIndex OBJECT-TYPE
+    SYNTAX   MpsIndex
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+         "A value which uniquely identifies this conceptual
+         row in the cnLecsMpoaMpsTable."  
+    ::= { cnLecsMpoaMpsEntry 1 }
+
+cnLecsMpoaMpsRowStatus OBJECT-TYPE
+    SYNTAX   RowStatus
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+         "This object allows creation and deletion of Lecs 
+         MPOA Clients.
+
+         Within each conceptual cnLecsMpoaMpsTable row, writable
+         objects may be modified, regardless of the value of
+         cnLecsMpoaMpsRowStatus."
+    ::= { cnLecsMpoaMpsEntry 2 }
+
+cnLecsMpoaMpsCtrlAtmAddr OBJECT-TYPE
+    SYNTAX   AtmConfigAddr
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+         "The MPS's Control ATM Address.  There exists one
+         Control ATM Address per MPS, therefore, the value
+         of this entry is unique within the table."
+     ::= { cnLecsMpoaMpsEntry 3 }
+
+cnLecsMpoaMpsKeepAliveTime OBJECT-TYPE
+    SYNTAX  Integer32 (1..300)
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+         "Keep-alive time is max interval between
+         the MPS sending MPOA Keep-Alives in seconds."
+    DEFVAL { 10 }
+    ::= { cnLecsMpoaMpsEntry 4 }
+ 
+cnLecsMpoaMpsKeepAliveLifeTime OBJECT-TYPE
+    SYNTAX  Integer32 (3..1000)
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+         "Keep-Alive Lifetime
+         The length of time an MPC may consider a Keep-Alive
+         valid in seconds.  This value must be at least
+         three times the cnLecsMpoaMpsKeepAliveTime."
+    DEFVAL { 35 }
+    ::= { cnLecsMpoaMpsEntry 5 }
+
+cnLecsMpoaMpsInitialRetryTime OBJECT-TYPE
+    SYNTAX  Integer32 (1..300)
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+         "Initial value in seconds for the
+         MPOA retry mechanism."
+    DEFVAL { 5 }
+    ::= { cnLecsMpoaMpsEntry 6 }
+ 
+cnLecsMpoaMpsRetryTimeMaximum OBJECT-TYPE
+    SYNTAX  Integer32 (10..300)
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+         "Cumulative max value in seconds
+         for Retry Time."
+    REFERENCE
+         "Multiprotocol Over ATM.  AF-MPOA-0087.000.
+         Section 4.3 MPOA Retry Mechanism"
+    DEFVAL { 40 }
+    ::= { cnLecsMpoaMpsEntry 7 }
+
+cnLecsMpoaMpsGiveupTime OBJECT-TYPE
+    SYNTAX  Integer32 (5..300)
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+         "Give Up Time.
+         Minimum time in seconds to wait before giving up on a
+         pending resolution request."
+    DEFVAL { 40 }
+    ::= { cnLecsMpoaMpsEntry 8 }
+ 
+cnLecsMpoaMpsDefaultHoldingTime OBJECT-TYPE
+    SYNTAX  Integer32 (1..120)
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+         "Default Holding Time in minutes.
+         The default Holding Time used in NHRP
+         Resolution Replies.  An egress MPS may use
+         local information to determine a more
+         appropriate Holding Time."
+    DEFVAL { 20 }
+    ::= { cnLecsMpoaMpsEntry 9 }
+
+
+cnLecsMpoaMpsDefaultTLV OBJECT-TYPE
+    SYNTAX TruthValue
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates whether this CnLecsMpoaMpsEntry
+         contains the default TLV settings.  Only one
+         entry in the table can have the default
+         settings."
+    DEFVAL { false }
+        ::= {cnLecsMpoaMpsEntry 10 }
+ 
+
+-- SECTION 4:  Lecs Mpoa Mpc Protocol Table 
+
+-- This table contains information pertaining to protocal 
+-- for Lecs Mpoa Mpc
+ 
+cnLecsMpoaMpcProtocolTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF CnLecsMpoaMpcProtocolEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "The Bay Networks proprietary Protocol LECS MPS Table.
+           This table contains the protocal configuration information
+           for all LECS this agent manages."
+    ::= { cnLecsMpoaGroup 3 }
+
+
+cnLecsMpoaMpcProtocolEntry OBJECT-TYPE
+    SYNTAX  CnLecsMpoaMpcProtocolEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "Each entry contains Protocol LECS MPC information
+           for all LECS this agent manages."
+    INDEX   { lecsConfIndex,
+	      cnLecsMpoaMpcProtocolIndex,
+              cnLecsMpoaMpcFlowDetectProtocol }
+    ::= { cnLecsMpoaMpcProtocolTable 1 }
+
+
+CnLecsMpoaMpcProtocolEntry ::=
+    SEQUENCE {
+        cnLecsMpoaMpcProtocolIndex       MpcIndex,
+        cnLecsMpoaMpcFlowDetectProtocol  InternetworkAddrType,        
+        cnLecsMpoaMpcProtocolRowStatus   RowStatus,
+	cnLecsMpoaMpcProtocolEnable      TruthValue
+    }
+
+cnLecsMpoaMpcProtocolIndex OBJECT-TYPE
+    SYNTAX   MpcIndex
+    ACCESS   read-only
+    STATUS   mandatory
+    DESCRIPTION
+         "A value which uniquely identifies this conceptual
+         row in the cnLecsMpoaMpcProtocolTable."  
+    ::= { cnLecsMpoaMpcProtocolEntry 1 }
+
+cnLecsMpoaMpcFlowDetectProtocol OBJECT-TYPE
+    SYNTAX InternetworkAddrType
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+         "The protocol on which flow detection is performed.
+         This value is an index into the Protocol Table."
+     ::= { cnLecsMpoaMpcProtocolEntry 2 }
+
+cnLecsMpoaMpcProtocolRowStatus OBJECT-TYPE
+    SYNTAX   RowStatus
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+         "This object allows creation and deletion of Lecs 
+         MPOA Protocol."
+     ::= { cnLecsMpoaMpcProtocolEntry 3 }
+
+
+cnLecsMpoaMpcProtocolEnable OBJECT-TYPE
+    SYNTAX   TruthValue 
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+	 "This object enables or disables mpoa for a particular protocol
+	 for this entry in the table."
+    ::= { cnLecsMpoaMpcProtocolEntry 4 }
+
+
+-- SECTION 5:  Lecs Mpoa Mps Protocol Table 
+
+-- This table contains information pertaining to protocal 
+-- for Lecs Mpoa Mps
+ 
+cnLecsMpoaMpsProtocolTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF CnLecsMpoaMpsProtocolEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "The Bay Networks proprietary Protocol LECS MPS Table.
+           This table contains the protocal configuration information
+           for all LECS this agent manages."
+    ::= { cnLecsMpoaGroup 4 }
+
+
+cnLecsMpoaMpsProtocolEntry OBJECT-TYPE
+    SYNTAX  CnLecsMpoaMpsProtocolEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "Each entry contains Protocol LECS MPs information
+           for all LECS this agent manages."
+    INDEX   { lecsConfIndex,
+	      cnLecsMpoaMpsProtocolIndex,
+              cnLecsMpoaMpsInternetworkLayerProtocol }
+    ::= { cnLecsMpoaMpsProtocolTable 1 }
+
+
+CnLecsMpoaMpsProtocolEntry ::=
+    SEQUENCE {
+        cnLecsMpoaMpsProtocolIndex               MpsIndex,
+        cnLecsMpoaMpsInternetworkLayerProtocol  InternetworkAddrType,        
+        cnLecsMpoaMpsProtocolRowStatus   RowStatus,
+	cnLecsMpoaMpsProtocolEnable      TruthValue
+    }
+
+
+cnLecsMpoaMpsProtocolIndex OBJECT-TYPE
+    SYNTAX   MpsIndex
+    ACCESS   read-only
+    STATUS   mandatory
+    DESCRIPTION
+         "A value which uniquely identifies this conceptual
+         row in the cnLecsMpoaMpsProtocolTable."  
+    ::= { cnLecsMpoaMpsProtocolEntry 1 }
+
+cnLecsMpoaMpsInternetworkLayerProtocol OBJECT-TYPE
+    SYNTAX InternetworkAddrType
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+         "The protocol on which flow detection is performed.
+         This value is an index into the Protocol Table."
+     ::= { cnLecsMpoaMpsProtocolEntry 2 }
+
+cnLecsMpoaMpsProtocolRowStatus OBJECT-TYPE
+    SYNTAX  RowStatus
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+         "This object allows creation and deletion of Lecs 
+         MPOA Protocol."
+     ::= { cnLecsMpoaMpsProtocolEntry 3 }
+
+
+cnLecsMpoaMpsProtocolEnable OBJECT-TYPE
+    SYNTAX   TruthValue 
+    ACCESS   read-write
+    STATUS   mandatory
+    DESCRIPTION
+	 "This object enables or disables mpoa for a particular protocol 
+	 for this entry in the table."
+    ::= { cnLecsMpoaMpsProtocolEntry 4 }
+
+END
+
+-- SECTION 6: Top Level Definitions
+ 
+CENTILLION-LANE-V2-EXT-MIB DEFINITIONS ::= BEGIN
+ 
+-- Centillion LANEv2 Extention MIB Release 1.0.0
+-- Revision 6/24/98 
+ 
+-- Copyright 1998 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+ 
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+ 
+-- Imports
+
+IMPORTS
+        OBJECT-TYPE
+                FROM RFC-1212
+	TruthValue
+		FROM SNMPv2-TC-v1
+        atmLane
+		FROM CENTILLION-ROOT-MIB
+	AtmLaneAddress
+		FROM LAN-EMULATION-CLIENT-MIB
+	lesConfIndex
+		FROM LAN-EMULATION-LES-MIB
+	lecsConfIndex, elanConfIndex
+		FROM LAN-EMULATION-ELAN-MIB;
+
+
+cnLesV2ExtnGroup	OBJECT IDENTIFIER ::= { atmLane 7 }
+cnLecsV2ExtnGroup	OBJECT IDENTIFIER ::= { atmLane 8 }
+cnElanV2ExtnGroup	OBJECT IDENTIFIER ::= { atmLane 9 }
+
+CnLesLecDataFrameSize ::= INTEGER {
+        max1516(2),
+        max4544(3),
+        max9234(4),
+        max18190(5),
+
+        -- LANE 2.0
+	max1580(6)
+        }
+
+
+-- SECTION 7: LES LANEv2 Extension Group
+
+cnLesV2ExtnTable  OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnLesV2ExtnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"LES LANEv2 extension table"
+	::= { cnLesV2ExtnGroup 1 }
+
+cnLesV2ExtnEntry OBJECT-TYPE
+	SYNTAX	CnLesV2ExtnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An extension to the lesConfEntry which contains
+		 objects associated to a LES."
+	INDEX	{ lesConfIndex }
+	::= { cnLesV2ExtnTable 1 }
+
+CnLesV2ExtnEntry ::= SEQUENCE {
+	cnLesV2ExtnV2Capable 
+		TruthValue,
+	cnLesV2ExtnElanID
+		INTEGER,
+	cnLesV2ExtnMaxFrameSize
+		CnLesLecDataFrameSize
+	}
+
+
+cnLesV2ExtnV2Capable OBJECT-TYPE
+	SYNTAX TruthValue
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+        	"LES V2 Capable.
+		 Indicates whether this LES is setup to behave as 
+		 a LANE V2 LES.  A setting which will be used for 
+		 the LEC the next time it joins."
+        DEFVAL { false }
+	::= {cnLesV2ExtnEntry 1}
+
+cnLesV2ExtnElanID OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+        	"The ELAN-ID associated with this LES."
+        DEFVAL { 0 }
+	::= {cnLesV2ExtnEntry 2}
+
+cnLesV2ExtnMaxFrameSize OBJECT-TYPE
+	SYNTAX CnLesLecDataFrameSize
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+        	"The maximum AAL-5 SDU size of a data
+         	 frame that the LE service can guarantee
+         	 not to drop because it is too large."
+	::= {cnLesV2ExtnEntry 3}
+
+
+-- SECTION 8: LECS LANEv2 Extension Group
+
+cnLecsV2ExtnTable  OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnLecsV2ExtnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"LECS LANEv2 extension table"
+	::= { cnLecsV2ExtnGroup 1 }
+
+cnLecsV2ExtnEntry OBJECT-TYPE
+	SYNTAX	CnLecsV2ExtnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An extension to the lecsConfEntry which contains
+		 objects associated to a LECS."
+	INDEX	{ lecsConfIndex }
+	::= { cnLecsV2ExtnTable 1 }
+
+CnLecsV2ExtnEntry ::= SEQUENCE {
+	cnLecsV2ExtnWellKnownAtmAddress
+		AtmLaneAddress
+	}
+
+cnLecsV2ExtnWellKnownAtmAddress OBJECT-TYPE
+	SYNTAX AtmLaneAddress
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+        	"LECS LANEv2 well-known ATM Address.
+		 For LANEv2: C500790000000000000000000000A03E00000100"
+	::= {cnLecsV2ExtnEntry 1}
+
+
+-- SECTION 9: ELAN V2 Extension Group
+
+cnElanV2ExtnTable  OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnElanV2ExtnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ELAN LANEv2 extension table"
+	::= { cnElanV2ExtnGroup 1 }
+
+cnElanV2ExtnEntry OBJECT-TYPE
+	SYNTAX	CnElanV2ExtnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An extension to the elanConfEntry which contains
+		 objects associated to an ELAN."
+	INDEX	{ elanConfIndex }
+	::= { cnElanV2ExtnTable 1 }
+
+CnElanV2ExtnEntry ::= SEQUENCE {
+	cnElanV2ExtnV2Capable 
+		TruthValue,
+	cnElanV2ExtnElanID 
+		INTEGER 
+	}
+
+cnElanV2ExtnV2Capable OBJECT-TYPE
+	SYNTAX TruthValue
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+        	"ELAN V2 Capable.
+		 Indicates whether this ELAN is setup to behave as 
+		 a LANE V2 ELAN.  A setting which will be used for 
+		 the LEC the next time it joins."
+        DEFVAL { false }
+	::= {cnElanV2ExtnEntry 1}
+
+cnElanV2ExtnElanID OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+        	"The ELAN-ID associated with this ELAN."
+        DEFVAL { 0 }
+	::= {cnElanV2ExtnEntry 2}
+
+
+END

@@ -1,0 +1,6506 @@
+-- File: xylo-wan.mib
+--	Bay Networks Annex Private Enterprise MIB
+--
+--  Copyright 1991, 1993, 1994, 1995, 1996, 1997 Bay Networks, Inc.  
+--  ALL RIGHTS RESERVED.
+--
+--  ALL RIGHTS RESERVED. Licensed Material - Property of Bay Networks, Inc.
+--  This software is made available solely pursuant to the terms of a
+--  software license agreement which governs its use.
+--  Unauthorized duplication, distribution or sale are strictly prohibited.
+--
+--  This information is subject to change without notice, and should
+--  not be construed as a commitment by Bay Networks, Inc.  Bay Networks, Inc.,
+--  assumes no responsibility for any errors that may appear in this
+--  document.
+--
+--  $Id: 
+--
+
+  XYLO-WAN-MIB DEFINITIONS ::= BEGIN
+
+  IMPORTS
+		IpAddress, Counter
+			FROM RFC1155-SMI
+		DisplayString
+			FROM RFC1213-MIB
+		OBJECT-TYPE
+			FROM RFC-1212
+		anxt1, anxpri, anxtunnelport, ss7,nfas 
+			FROM XYLO-MIB-SMI;
+
+--  xylogics		OBJECT IDENTIFIER ::= { enterprises 15 } 
+--  anxt1 		OBJECT IDENTIFIER ::= { annex 11 }
+--  anxpri		OBJECT IDENTIFIER ::= { annex 12 }
+--  anxtunnelport	OBJECT IDENTIFIER ::= { annex 14 }
+--  ss7		  	OBJECT IDENTIFIER ::= { annex 109 }
+--  nfas                OBJECT IDENTIFIER ::= { annex 111 }
+
+-- PRI related groups.
+
+  connections	OBJECT IDENTIFIER ::= { anxpri 1 }
+  globals	OBJECT IDENTIFIER ::= { anxpri 2 }
+
+-- xylogics private mib group for CSMIM-T1 support
+--the T1-engine/E1/PRI group
+-- Note the following objects are applicable to T1/E1 or PRI except
+-- where noted otherwise. 
+
+  anxt1Total   OBJECT-TYPE
+          SYNTAX INTEGER
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+               "The total number of T1/PRI lines on this Annex."
+          ::= { anxt1 1 }
+
+  anxt1ConfigT1Table    OBJECT-TYPE
+          SYNTAX SEQUENCE OF Anxt1ConfigT1Entry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "Table of T1 configuration parameters that
+               are not included in the DS1 MIB."
+          ::= { anxt1 2 }
+
+  anxt1ConfigT1Entry OBJECT-TYPE
+          SYNTAX Anxt1ConfigT1Entry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "The internal T1 engine parameters."
+          INDEX  { anxt1LineIndex }
+          ::= { anxt1ConfigT1Table 1 }
+
+  Anxt1ConfigT1Entry ::= SEQUENCE {
+     	anxt1LineIndex         INTEGER,
+       	anxt1AlarmSyslog       INTEGER,
+       	anxt1DiiLineCode       INTEGER,
+       	anxt1DiiFraming        INTEGER,
+       	anxt1DiiDistance       INTEGER,
+       	anxt1Ds1LineBuildout   INTEGER,
+       	anxt1Ds1OnesDensity    INTEGER,
+       	anxt1EngineBypass      INTEGER,
+       	anxt1UnitId            DisplayString,
+       	anxt1UnitSerialNumber  DisplayString,
+       	anxt1UpTime            INTEGER,
+       	anxt1Info              DisplayString,
+       	anxt1TotChan           INTEGER,
+	anxt1ResetPRI	       INTEGER,
+	anxt1SwitchType	       INTEGER,
+	anxt1BlockInCalls      INTEGER,
+	anxt1BlockOutCalls     INTEGER,
+	anxt1LineLength	       INTEGER,
+	anxt1AnalogEncoding    INTEGER,
+	anxt1PRIModuleType     INTEGER,	
+	anxt1CasDnisDigits     INTEGER,
+	anxt1CasAniDigits      INTEGER,
+	anxt1CasDigitWidth     INTEGER,
+	anxt1CasInterDigit     INTEGER,
+	anxt1CasDigitPower1    INTEGER,
+	anxt1CasDigitPower2    INTEGER,
+	anxt1CasBusySignalBits INTEGER,
+	anxt1CasPhoneNumber    DisplayString,
+	anxt1Dsx1LineType      INTEGER,
+	anxt1Ds1EsfFdl	       INTEGER,
+	anxt1TniCircuitId      DisplayString,
+	anxt1TniClock	       INTEGER,
+        anxt1CallbackEnable    INTEGER,
+        anxt1CasAniEnable      INTEGER,
+	anxt1Nfasinterfaceid   INTEGER,
+	anxt1Backupinterfaceid INTEGER
+       	}
+
+  anxt1LineIndex OBJECT-TYPE
+          SYNTAX INTEGER (1..2147483647)
+          ACCESS read-only	
+          STATUS mandatory		  
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213)."
+          ::= { anxt1ConfigT1Entry  1 }
+
+
+  anxt1AlarmSyslog OBJECT-TYPE
+          SYNTAX INTEGER {
+                 enable(1),
+                 disable(2)
+  	         }
+          ACCESS read-write
+          STATUS deprecated
+          DESCRIPTION
+               "If this object is set to yes(1), all
+               alarm events, red, yellow and blue, are
+               syslogged. In other words, the detection
+               of any one of the alarm events will
+               generate a syslog provided syslogs are
+               enabled. The default is yes(1).
+	       Note: 
+	       1. The syslog is generated at warning level. That
+		means that anxSysLogMask should be atleast at Warning
+		level.
+	       2. This object is supported for T1 modules only.
+
+	       Corresponding na/admin parameter would be alarmsyslog."
+
+          ::= { anxt1ConfigT1Entry 2 }
+
+  anxt1DiiLineCode OBJECT-TYPE
+          SYNTAX INTEGER {
+                 b8zs(1),
+                 ami(2)
+  	        }
+          ACCESS read-write
+          STATUS deprecated
+          DESCRIPTION
+               "This object selects the line code format
+               used on the T1 Drop and Insert Interface.
+	       tni_line_coding is the na/admin corresponding 
+	       parameter. This object is supported for T1 modules only.
+		Note: For modules configured for PRI, 
+		      b8zs is the only valid option. 
+                      ami is valid only for channelized E1"
+          ::= { anxt1ConfigT1Entry 3 }
+
+  anxt1DiiFraming OBJECT-TYPE
+          SYNTAX INTEGER {
+                 esf(1),
+                 d4(2)
+               }
+          ACCESS read-write
+          STATUS deprecated
+          DESCRIPTION
+               "This object controls the super frame format
+                used on the T1 Drop and Insert Interface.
+		tdi_framing is the na/admin corresp. parameter.
+                This object is supported for T1 modules only.
+		Note: For modules configured for PRI, 
+		esf(1) is the only valid option."
+          ::= { anxt1ConfigT1Entry 4 }
+
+  anxt1DiiDistance OBJECT-TYPE
+          SYNTAX INTEGER (0..655)
+          ACCESS read-write
+          STATUS deprecated
+          DESCRIPTION
+               "The distance measured in feet of the cable
+                run to the equipment attached to the Drop
+                and Insert Interface. The default is 0.
+		tdi_distance is the corresp. na/admin parameter.
+		This object is supported for T1 modules only."
+          ::= { anxt1ConfigT1Entry 5 }
+
+  anxt1Ds1LineBuildout OBJECT-TYPE
+          SYNTAX INTEGER {
+                 zero-db(1),
+                 sevendotfive-db(2),
+                 fifteen-db(3),
+                 twentytwodotfive-db(4)
+                 }
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+               "At instalation time, the telephone company
+               will supply a measured cable loss measurement
+               between the last line generator and the
+               customer location. This value, named line
+               buildout, is measured in db and may range
+               from 0 and 22.5 dbs.
+		tni_line_buildout is the corresp. na/admin parameter.
+		This object is supported for T1 modules only."
+          ::= { anxt1ConfigT1Entry 6 }
+
+  anxt1Ds1OnesDensity OBJECT-TYPE
+          SYNTAX INTEGER {
+                 enable(1),
+                 disable(2)
+                 }
+          ACCESS read-write
+          STATUS deprecated
+          DESCRIPTION
+               "This object allows the user to defeat
+               the ones density monitor.
+               The default is off but it should be
+               set to on when using the AMI line coding.
+		tni_ones_density would be corresp. na/admin parameter.
+		This object is supported for T1 modules only."
+          ::= { anxt1ConfigT1Entry 7 }
+
+  anxt1EngineBypass OBJECT-TYPE
+          SYNTAX INTEGER {
+                 enable(1),
+                 disable(2)
+                 }
+          ACCESS read-write
+          STATUS deprecated
+          DESCRIPTION
+               "when this object is set to yes the T1 engine
+               is taken out of the network. The Network
+               Interface is then physically coupled to
+               the Drop and Insert Interface, and the T1
+               engine has no effect on the T1 circuit.
+		bypass is the corresp. na/admin paramter.
+		This object is supported for T1 modules only."
+          ::= { anxt1ConfigT1Entry 8 }
+
+  anxt1UnitId OBJECT-TYPE
+          SYNTAX DisplayString
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "This is a string indicating the firmware 
+		version for the T1/PRI engine."
+          ::= { anxt1ConfigT1Entry 9 }
+
+  anxt1UnitSerialNumber OBJECT-TYPE
+          SYNTAX DisplayString 
+          ACCESS read-only
+          STATUS deprecated
+          DESCRIPTION
+               "This is the 4 digit T1 engine serial number.
+		This object is supported for T1 modules only."
+          ::= { anxt1ConfigT1Entry 10 }
+
+  anxt1UpTime  OBJECT-TYPE
+          SYNTAX INTEGER
+          ACCESS read-only
+          STATUS deprecated
+          DESCRIPTION
+               "Indicates the up time in minutes for the T1 engine.
+		Doing a hard reset will reset this value.
+		Note: This value may not be same as sysupTime if a
+		hard reset has been done at any time after the annex
+		is brought up.
+		This object is supported for T1 modules only."
+          ::= { anxt1ConfigT1Entry 11 }
+
+  anxt1Info    OBJECT-TYPE
+          SYNTAX DisplayString 
+          ACCESS read-write
+          STATUS deprecated
+          DESCRIPTION
+               "This objct specifies installation information
+               from the telephone company regarding the T1 line.
+		Corresponding na/admin parameter is t1_info.
+		This object is supported for T1 modules only."
+          ::= { anxt1ConfigT1Entry 12 }
+
+  anxt1TotChan OBJECT-TYPE
+          SYNTAX INTEGER
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+               "The number of internal DS0 channels on this WAN interface."
+          ::= { anxt1ConfigT1Entry 13 }
+
+  anxt1ResetPRI  OBJECT-TYPE
+	  SYNTAX INTEGER {
+		enable(1),
+		disable(2)
+		}
+	  ACCESS read-write
+	  STATUS mandatory
+	  DESCRIPTION
+		"Setting this object to enable will reset the PRI
+		line. Setting the object to disable(2) will
+		disable the PRI line and make it unavailable."
+	  ::= { anxt1ConfigT1Entry 14 }
+
+  anxt1SwitchType  OBJECT-TYPE
+	  SYNTAX INTEGER {
+		default(1),
+		other(2),
+		sng(3),
+		ni2(4),
+		dms(5),
+		at9(6),
+		ets(7),
+		au1(8),
+		notused1(9),
+		ntt(10),
+		ets-ncrc4(11),
+		ust1(12),
+		hkt1(13),
+		twt1r1(14),
+		bbe1r2(15),
+		at4(16),
+		bre1r2(17),
+		kre1r2-1(18),
+		swe1p7(19),
+		ine1r2(20),
+		cne1r2(21),
+		nze1r2(22),
+	        ust1fd(23),
+		ess-v10(24),
+		nosig(25),
+		br2e1r2(26),
+		kre1r2-2(27),
+		ide1r2(28),
+		phe1r2(29),
+		the1r2(30),
+		mye1r2(31),
+		are1r2(32),
+		mxe1r2(33),
+		ane1r2(34),
+		tre1r2(35),
+		ile1r2(36),
+		moe1r2(37),
+		ine1r2-1(38),
+		ine1r2-2(39),
+		ine1r2-3(40),
+		ine1r2-4(41),
+		twt1(42),
+		ust1fc(43),
+		ust1fdi(44),
+                ni2_nfas_primary(45),
+                ni2_nfas_backup(46),
+                dms_nfas_primary(47),
+                dms_nfas_backup(48)
+		}
+	  ACCESS read-write
+	  STATUS mandatory
+	  DESCRIPTION
+		"Select the switch type compatibile with the
+		PRI service provider. 
+		default(1) Will select the default switch chosen by the wan
+			   manager based on the moduletype. If you set the
+			   switchtype to default(1), reboot the box, and do an
+			   snmpget on the switchtype, you can determine which 
+			   switchtype was chosen by the wan manager.
+
+		other(2) - For a GET, this value reflects the switch
+			   type set through Cli/Admin which does not
+			   match with other switches listed here.
+			   For a SET the SNMP agent will ignore it
+			   and will not change the current switch type 
+			   set through Cli/Admin. 
+        
+switch_type   	  	description                	     protocol
+___________________________________________________________________
+sng(3),			Singapore E1 ISDN			PRI
+ni2(4),			NI-2 (National ISDN 2) T1 ISDN 		PRI
+dms(5),			DMS-100 (Northern Telecom) T1 ISDN      PRI
+at9(6),			5ESS (AT&T 5ESS) T1 ISDN		PRI
+ets(7),			ETSI E1 ISDN				PRI
+au1(8),			Australia/AUSTEL E1 PRI			PRI
+ntt(10),		Japan NTT              			PRI
+ets-ncrc4(11),		ETSI E1 ISDN w/o CRC4   	  	PRI
+ust1(12),		US/North American Channelized T1        CAS
+hkt1(13),		Hong Kong Channelized T1         	CAS
+twt1r1(14),		Taiwan T1/R1                 		CAS
+bbe1r2(15),		BlueBook/CCITT E1/R2         		CAS
+at4(16),		4ESS (AT&T 4ESS) T1 ISDN		PRI
+bre1r2(17),		Brazil E1/R2                          	CAS
+kre1r2-1(18),		Korea E1/R2                          	CAS
+swe1p7(19)		Sweden E1 P7				CAS
+ine1r2(20),             Indonesia E1/R2				CAS
+cne1r2(21),		China E1/R2				CAS
+nze1r2(22),             New Zealand E1/R2 			CAS
+ust1fd(23),		Unites States				CAS
+ess-v10(24),		
+nosig(25),	 	SS7, No signaling required              SS7
+br2e1r2(26),		Brazil E1/R2, 1 second wink		CAS
+kre1r2-2(27),		Korea E1/R2				CAS
+ide1r2(28),		Indonesia				CAS
+phe1r2(29),		Philippines				CAS
+the1r2(30),		Thailand				CAS
+mye1r2(31),		Malaysia				CAS
+are1r2(32),		Argentina				CAS
+mxe1r2(33),		Mexico					CAS
+ane1r2(34),		St.Martin-Antilles			CAS
+tre1r2(35),		Turkey					CAS
+ile1r2(36),		Israel					CAS
+moe1r2(37),		Macau					CAS
+ine1r2-1(38),		India sig1				CAS
+ine1r2-2(39),		India sig2				CAS
+ine1r2-3(40),		India sig3				CAS
+ine1r2-4(41),		India sig4				CAS
+twt1(42),		Taiwan (wink)				CAS
+ust1fc(43),		Unites States				CAS
+ust1fdi(44),		Unites States				CAS
+ni2_nfas_primary(45),   NI-2 (National ISDN 2) T1 ISDN          PRI
+ni2_nfas_backup(46),    NI-2 (National ISDN 2) T1 ISDN          PRI
+dms_nfas_primary(47),   DMS-100 (Northern Telecom) T1 ISDN      PRI
+dms_nfas_backup(48)     DMS-100 (Northern Telecom) T1 ISDN      PRI
+
+	This parameter is available on all platforms using
+	PRI module and platforms using the  WAN module 
+	configured for CAS or PRI. You must reset the box
+	for the new switch_type to take effect"
+
+	  ::= { anxt1ConfigT1Entry 15 }
+
+  anxt1BlockInCalls  OBJECT-TYPE
+	  SYNTAX INTEGER {
+		enable(1),
+		disable(2)
+		}
+	  ACCESS read-write
+	  STATUS mandatory
+	  DESCRIPTION
+		"When this object is set to enable, then the box
+		will stop accepting calls on this line. This will 
+		prevent new users from logging in and should be used
+		to bring the box down gracefully. The default
+		is disable.
+		This object is supported for modules configured 
+		for PRI."
+	  ::= { anxt1ConfigT1Entry 16 }
+
+  anxt1BlockOutCalls  OBJECT-TYPE
+	  SYNTAX INTEGER {
+		enable(1),
+		disable(2)
+		}
+	  ACCESS read-write
+	  STATUS mandatory
+	  DESCRIPTION
+		"When this object is set to enable, then the box
+		will not place any outgoing calls. This should be used
+		to bring the box down gracefully. The default
+		is disable.
+		This object is supported for modules configured 
+		for PRI."
+	  ::= { anxt1ConfigT1Entry 17 }
+
+  anxt1LineLength       OBJECT-TYPE
+                SYNTAX INTEGER {
+                        r0-25(1),
+                        r26-65(2),
+                        r66-100(3),
+                        r101-135(4),
+                        r136-165(5),
+                        r166-185(6),
+                        r186-210(7)
+                }
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "This parameter allows the user to configure
+		the dsx1 line driver with the distance 
+		between the annex and the external CSU. This paramater
+		should be left to default with annex's with internal CSU.
+		The parameter defines the line length in meters.
+
+                This  MIB object corresponds to the na/admin
+                parameter dsx1_line_length.
+
+ 		This parameter is available on the ra6300, and on  platforms
+		using the  WAN module configured for CAS or PRI."
+
+                ::= { anxt1ConfigT1Entry 18 }
+
+  anxt1AnalogEncoding  OBJECT-TYPE
+                SYNTAX INTEGER {
+			auto(1),
+			mu-law(2),
+			a-law(3)
+                }
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "This parameter defines the type of encoding
+		to be used for analog (modem) calls. If this parameter
+		is not set then RA6300 will determine itself depending
+		on the PRI line that it terminates. For PRI line in
+		USA, this is set to mu-law and in Europe this will be
+		set to a-law.  
+                This  MIB object corresponds to the na/admin
+                parameter analog_encoding.
+		Default value is auto(1).
+
+ 		This parameter is available on the ra6300, and on  platforms
+		using the  WAN module configured for CAS or PRI."
+ 
+                ::= { anxt1ConfigT1Entry 19 }
+
+
+  anxt1PRIModuleType  OBJECT-TYPE
+                SYNTAX INTEGER {
+			e1(1),
+			t1(2),
+			t1-intcsu(3),
+			e1-aust(4),
+			unused(5),
+			unused1(6),
+			unused2(7),
+			cas-t1-csu(8),
+			cas-e1(9),
+			sng-e1(10),
+			pri-e1-israel(11),
+			type-unknown(12)
+			
+		}		
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"This object returns the module type on .
+
+		e1(1) means PRI module is for Europe,
+		t1(2) means PRI module is for USA with External CSU,
+		t1-intcsu(3) t1/PRI for USA with internal CSU.
+		e1-aust(4) e1/PRI for Australia.
+		cas-t1-csu(8) t1/CAS with internal csu.
+		cas-e1(9) e1/CAS.
+
+	This parameter is available on all platforms using
+	PRI module and platforms using the  WAN module 
+	configured for CAS or PRI. "
+		::= { anxt1ConfigT1Entry 20 }
+
+  anxt1CasDnisDigits  OBJECT-TYPE
+          SYNTAX INTEGER (0..255)
+          ACCESS read-write		 
+          STATUS mandatory		  
+          DESCRIPTION
+		"This parameter allows the user to configure the number of
+		DNIS digits that the channelized T1/E1 interface is provisioned
+		to provide. The default value is 0. 
+		Typical values are between 4 - 10.	
+
+                This  MIB object corresponds to the na/admin
+                parameter dnis.
+
+ 		This parameter is available on  platforms
+		using the WAN module configured for CAS."
+
+          ::= { anxt1ConfigT1Entry  21 }
+
+  anxt1CasAniDigits  OBJECT-TYPE
+          SYNTAX INTEGER (0..255)
+          ACCESS read-write
+          STATUS deprecated		  
+          DESCRIPTION
+		"This parameter allows the user to configure the number of
+		ANI digits that the channelized T1/E1 interface is provisioned
+		to provide. The default value is 0. 
+		Typical values are between 4 - 10.	
+
+                This  MIB object corresponds to the na/admin
+                parameter ani.
+
+ 		This parameter is available on  platforms
+		using the WAN module configured for CAS."
+
+          ::= { anxt1ConfigT1Entry  22 }
+    
+  
+  anxt1CasDigitWidth  OBJECT-TYPE
+          SYNTAX INTEGER (0..255)
+          ACCESS read-write		
+          STATUS mandatory		  
+          DESCRIPTION
+		"This parameter allows the width of each digit generated by
+		 the WAN module to be adjusted. The default value is 0. 
+		 
+                This  MIB object corresponds to the na/admin
+                parameter digit_width.
+
+ 		This parameter is available on  platforms
+		using the WAN module configured for CAS."
+	
+          ::= { anxt1ConfigT1Entry  23 }
+
+	
+  anxt1CasInterDigit  OBJECT-TYPE
+          SYNTAX INTEGER (0..255)
+          ACCESS read-write		 
+          STATUS mandatory		  
+          DESCRIPTION
+		"This parameter allows the distance between each digit 
+		generated by the WAN module to be adjusted. The default 
+		value is 0. 
+		 
+                This  MIB object corresponds to the na/admin
+                parameter inter_digit.
+
+ 		This parameter is available on  platforms
+		using the WAN module configured for CAS."
+
+          ::= { anxt1ConfigT1Entry  24 }
+   
+  anxt1CasDigitPower1  OBJECT-TYPE
+          SYNTAX INTEGER (0..255)
+          ACCESS read-write		
+          STATUS mandatory		  
+          DESCRIPTION
+		"This parameter allows the power level of the FIRST tone
+		of each digit generated by the WAN module to be adjusted. 
+		The default value is 0. 
+		 
+                This  MIB object corresponds to the na/admin
+                parameter digit_power_1.
+
+ 		This parameter is available on  platforms
+		using the WAN module configured for CAS."
+
+          ::= { anxt1ConfigT1Entry  25 }
+ 
+  anxt1CasDigitPower2  OBJECT-TYPE
+          SYNTAX INTEGER (0..255)
+          ACCESS read-write
+          STATUS mandatory		  
+          DESCRIPTION
+		"This parameter allows the power level of the SECOND tone
+		of each digit generated by the WAN module to be adjusted. 
+		The default value is 0. 
+		 
+                This  MIB object corresponds to the na/admin
+                parameter digit_power_2.
+
+ 		This parameter is available on  platforms
+		using the WAN module configured for CAS."
+
+          ::= { anxt1ConfigT1Entry  26 }
+  
+
+  anxt1CasBusySignalBits  OBJECT-TYPE
+          SYNTAX INTEGER {
+                 bits00(1),
+                 bits01(2),
+                 bits10(3),
+                 bits11(4)
+  	         }
+          ACCESS read-write
+          STATUS mandatory		  
+          DESCRIPTION
+		"An enumerated integer that defines the type of
+                 busy signal.
+			
+		This MIB object corresponds to the na/admin 
+		parameter busy_signal_bits.
+		
+		This parameter is available on platforms using the
+		WAN module configured for CAS."
+          ::= { anxt1ConfigT1Entry  27 }
+  
+
+  anxt1CasPhoneNumber  OBJECT-TYPE
+          SYNTAX DisplayString 
+          ACCESS read-write
+          STATUS mandatory		  
+          DESCRIPTION
+		"The local phone number of the WAN interface.
+		
+		This MIB object corresponds to the na/admin parameter
+		local_phone_number.
+		
+		This parameter is available on platforms using the
+		WAN module configured for CAS."
+          ::= { anxt1ConfigT1Entry  28 }
+
+  anxt1Dsx1LineType  OBJECT-TYPE
+                SYNTAX INTEGER {
+                         other(1),
+                         eSF(2),
+                         d4(3),
+                         dDF(4),
+                         mFF-CRC4(5),
+			 mFF-CRC4-G706(6)
+                     }
+             ACCESS  read-write
+             STATUS  mandatory
+             DESCRIPTION
+                "This variable indicates the  variety  of  DS1
+                Line  implementing  this circuit.  The type of
+                circuit affects the number of bits  per  second
+                that  the circuit can reasonably carry, as well
+                as the interpretation of the  usage  and  error
+                statistics.  The values, in sequence, describe:
+
+	TITLE:       		rfc1406 TITLE:          SPECIFICATION:              
+
+	ESF(2) 	      		dsx1ESF                Extended SuperFrame DS1
+      
+	D4(3)         		dsx1D4                 AT&T D4 format DS1           
+
+	DDF(4)        		dsx1E1/                CCITT Recommendation G.704
+	 	      		dsxE1-MF               (Table 4a)         
+ 
+	MFF-CRC4(5)   		dsx1E1-CRC/            CCITT Recommendation G.704
+	              		dsx1E1-CRC-MF          (Table 4b)
+ 
+	MFF-CRC4-G706(6)        N/A          	       5399 WAN Module Func. Spec."
+		
+		::= { anxt1ConfigT1Entry 29 }
+
+
+  anxt1Ds1EsfFdl OBJECT-TYPE
+          SYNTAX INTEGER {
+                 att(1),
+                 ansi(2)
+  	        }
+          ACCESS read-write
+          STATUS deprecated
+          DESCRIPTION
+		"The NA parameter is tni_esf_fdl (channelized T1 category):
+	        This specifies one of two standards when running ESF framing
+        	on the T1 Network Interface: Valid options are ansi, att "
+          ::= { anxt1ConfigT1Entry 30 }
+
+  anxt1TniCircuitId  OBJECT-TYPE
+          SYNTAX DisplayString 
+          ACCESS read-write
+          STATUS deprecated		  
+          DESCRIPTION
+         	"The NA parameter is tni_circuit_id (channelized T1 category):
+	        This is a ascii string with circuit id provided by the 
+                telephone company. Up to 127 bytes.
+		This object is supported for T1 engines only."
+          ::= { anxt1ConfigT1Entry  31 }
+
+  anxt1TniClock OBJECT-TYPE
+          SYNTAX INTEGER {
+                 loop(1),
+                 local(2),
+		 external(3)
+  	        }
+          ACCESS read-write
+          STATUS deprecated
+          DESCRIPTION
+		"The NA parameter is tni_clock (channelized T1 category):
+	        This specifies the T1 engine clock source: loop, local, 
+		external.
+		This object is supported for T1 engines only."
+          ::= { anxt1ConfigT1Entry 32 }
+
+  anxt1CallbackEnable OBJECT-TYPE
+          SYNTAX INTEGER {
+                 enable(1),
+                 disable(2)
+  	        }
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+		"When this object is set to enable, the WAN interface may be
+                 selected to handle a callback pending port availability.
+                 When set to disable, the associated WAN interface cannot be
+                 selected as a callback resource.  The default is disable.
+
+                 This MIB object corresponds to the NA/admin WAN
+                 parameter 'callback_enable'."
+          ::= { anxt1ConfigT1Entry 33 }
+
+
+  anxt1CasAniEnable  OBJECT-TYPE
+          SYNTAX INTEGER {
+                 enable(1),
+                 disable(2)
+                }
+          ACCESS read-write
+          STATUS mandatory		  
+          DESCRIPTION
+		"This parameter allows the user to configure whether or not to
+                allow CAS ANI digits, (per provisioning). The default is disable.
+
+                This  MIB object corresponds to the na/admin WAN
+                parameter 'ani'.
+
+ 		This parameter is available on  platforms
+		using the WAN module configured for CAS."
+
+          ::= { anxt1ConfigT1Entry  34 }
+    
+  anxt1Nfasinterfaceid OBJECT-TYPE
+          SYNTAX INTEGER (0..19) 
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+		"This is a configurable parameter for NFAS.
+                 This MIB object corresponds to the NA/admin WAN
+                 parameter 'nfas_interface_id'."
+
+          ::= { anxt1ConfigT1Entry 35 }
+
+  anxt1Backupinterfaceid OBJECT-TYPE
+          SYNTAX INTEGER (1..19) 
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+		"This is a configurable parameter for NFAS.
+                 This MIB object corresponds to the NA/admin WAN
+                 parameter 'backup_interface_id'."
+
+          ::= { anxt1ConfigT1Entry 36 }
+
+
+-- The DS0's group
+
+  anxt1ChanTable      OBJECT-TYPE
+          SYNTAX SEQUENCE OF Anxt1ChanEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "Table of DS0 channel entries."
+          ::= { anxt1 3 }
+
+  anxt1ChanEntry    OBJECT-TYPE
+          SYNTAX Anxt1ChanEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "The internal T1 engine parameters."
+          INDEX  { anxt1ChanIndex, anxt1ChanNumber }
+          ::= { anxt1ChanTable 1 }
+
+  Anxt1ChanEntry    ::= SEQUENCE {
+          anxt1ChanIndex        INTEGER,
+          anxt1ChanNumber       INTEGER,
+          anxt1ChanMap          OCTET STRING,
+          anxt1ChanSigProto     INTEGER,
+          anxt1ChanRing         INTEGER,
+	  anxt1ChanIpAddr	IpAddress,
+	  anxt1ChanIpxNetwork	DisplayString,
+	  anxt1ChanIpxNode	DisplayString,
+	  anxt1ChanStatus	INTEGER,
+	  anxt1ChanState	INTEGER,
+	  anxt1ChanSeize	Counter,
+	  anxt1ChanRingCount	Counter,
+	  anxt1ChanAssign	Counter,
+	  anxt1ChanConnect	Counter,
+	  anxt1ChanChat		Counter,
+	  anxt1ChanDcd		Counter,
+	  anxt1ChanModemCall	Counter,
+	  anxt1ChanConsecFail	Counter
+          }
+
+  anxt1ChanIndex OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) 
+          ACCESS read-only		  
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               WAN interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+	       
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module."
+
+          ::= { anxt1ChanEntry 1 }
+ 
+  anxt1ChanNumber OBJECT-TYPE
+          SYNTAX INTEGER (1..24)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+               "A unique number from 1 to anxt1TotChan that 
+               identifies each internal DS0 channel on a WAN interface."
+          ::= { anxt1ChanEntry 2 }
+
+  anxt1ChanMap OBJECT-TYPE
+          SYNTAX OCTET STRING
+          ACCESS read-write 
+          STATUS deprecated
+          DESCRIPTION
+               "This object specifies the mapping between the DS0
+               in the DS1 interface, the DS0 in the DI interface,
+               and the modems. The DS0 is identified by anxt1ChanIfIndex
+               and anxt1ChanNumber. This object has two 8-bit fields.
+               The high byte specifies the mapping:
+                       unused(1),
+                       ds1_modem(2),  (ds1 to modem)
+                       di_modem(3),   (di to modem)
+                       voice(4),      (ds1 to di with voice signaling)
+                       data(5)        (ds1 to di with data signaling)
+               The low byte is used only when the high byte specifies
+               ds1_modem or di_modem and should be ignored in all other
+               cases. The low byte specifies the modem number (same as
+               port number) being mapped to the DS0.
+
+	       Note: when the type is set to either voice, data or unused
+		agent expects zeros in the modem octet eg:'0400'
+		Corresp. na/admin parameter is the map.
+		This object is only valid for T1 products."
+          ::= { anxt1ChanEntry 3 }
+
+  anxt1ChanSigProto OBJECT-TYPE
+          SYNTAX INTEGER {
+		loop-loop(22),
+		loop-none(21),
+		none-loop(12),
+		ground-ground(33),
+		ground-none(31),
+		none-ground(13),
+		wink-wink(44),
+		wink-none(41),
+		none-wink(14),
+		immed-none(51),
+		none-immed(15),
+		none-none(11)
+
+		}
+           ACCESS read-write 
+           STATUS mandatory
+           DESCRIPTION
+               "This object is meaningful only when anxt1ChanMap is set
+               to ds1_modem or di_modem and should be ignored in all
+               other cases. The supported protocols are:
+                      none(1),
+                      loop_start(2),
+                      ground_start(3),
+                      wink_start(4),
+                      immediate_start(5)
+               Note: following combinations are considered valid:
+		Value		InSig octet	OutSig octet
+		-----		-----------	------------
+		22		loop_start	loop_start
+		21		loop_start	none
+		12		none		loop_start
+		33		ground		ground
+		31		ground		none
+		13		none		ground
+		44		wink		wink
+		41		wink		none
+		14		none		wink
+		51		immediate	none
+		15		none		immediate
+		11		none		none
+	     sigproto is the na/admin corresponding parameter.
+	     This object is not valid for RA6300 only."
+           ::= { anxt1ChanEntry 4 }
+
+  anxt1ChanRing OBJECT-TYPE
+	   SYNTAX INTEGER {
+               	enable(1),
+               	diable(2)
+                }	
+           ACCESS read-write 
+           STATUS mandatory
+           DESCRIPTION
+                "This object is meaningful only when anxt1ChanMap is set
+                to ds1-modem or di-modem and should be ignored in all
+                other cases. This object specifies if the Annex should
+                provide the audible ring to the central office on incoming
+                calls. The default is NO.
+		Corresp. na/admin parameter is the ring.
+
+ 		This parameter is available on the ra6300, and on  platforms
+		using the  WAN module configured for PRI."
+
+           ::= { anxt1ChanEntry 5 }
+
+ anxt1ChanIpAddr OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"This object returns the IP address
+		associated with the B Channel. When needed, this
+		IP address will be used for calls over the B channel.
+
+ 		This parameter is available on the ra6300, and on  platforms
+		using the  WAN module (configured for CAS or PRI)."
+
+		::= { anxt1ChanEntry 6 }
+
+ anxt1ChanIpxNetwork	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE(1..8))
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+		  "The IPX network number for an IPX PPP connection
+		using this port. When the IPX PPP connection is
+		established the network number will be negotiated.
+		If one end of the connection is set to zero then 
+		the value from the other end of the connection will
+		be used.
+		The value of this object is an 8 digit hexadecimal
+		number string representing the IPX network segment
+		assigned to this port. The value must be unique 
+		across the network domain.
+		This MIB object corresponds to the NA/admin
+		asynchronous/ta port parameter 'ppp_ipx_network'."
+		::= { anxt1ChanEntry 7 }
+
+  anxt1ChanIpxNode	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE(11..17))
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+		  "The IPX node number for an IPX PPP connection
+		using this port. 
+		The value of this object is a 12 digit
+		hexadecimal number string representing the IPX
+		node number assigned to this port.
+		Note the string is expected in the form:
+		12-3a-4-7-89-23.Each part of the address 
+		must be a hex value separated by a hyphen.
+		This MIB object corresponds to the NA/admin
+		asynchronous/ta port parameter 'ppp_ipx_node'."
+		::= { anxt1ChanEntry 8 }
+
+  anxt1ChanStatus OBJECT-TYPE
+		SYNTAX INTEGER {
+			used(1),
+			unused(2)
+			}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This object returns the status of the
+		B channel. This is a read-only object that
+		indicates whether the channel is in use or not."
+		::= { anxt1ChanEntry 9 }
+
+  anxt1ChanState  OBJECT-TYPE
+		SYNTAX INTEGER {
+			available(1),
+			busied-out(2),
+			auto-busied-out(3)
+			}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"This object reflects the state of the
+		B channel. Available means it is open
+		for use, busied-out means it was manually
+		taken out of the pool for use, and 
+		auto-busied-out means the box removed
+		this channel for use because there are
+		more channels than modems available.
+		This object can be set and changes the state of
+		the channel. auto-busied-out cannot be set by a user."
+		::= { anxt1ChanEntry 10 }
+
+  anxt1ChanSeize OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"SEIZE message from a WAN module to a WAN 
+			manager process on the main processor, 
+			indicating that the central office switch 
+			has sent a channelized T1/E1 seize event."
+		::= { anxt1ChanEntry 11 }
+
+  anxt1ChanRingCount OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"RING message from a WAN module to a WAN 
+			manager process on the main processor, 
+			indicating that a call has arrived. Successful 
+			completion of assigning a modem and starting a 
+			session."
+		::= { anxt1ChanEntry 12 }
+
+  anxt1ChanAssign OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"No modems were available for assignment.
+			This is caused by not having enough modems
+			or modems being removed from the pool "
+		::= { anxt1ChanEntry 13 }
+
+  anxt1ChanConnect OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"CONNECT message from the WAN module to the 
+			WAN manager process, meaning the 5399 has 
+			accepted the call and the WAN module and the 
+			telephone company switch have agreed that the 
+			call is up."
+		::= { anxt1ChanEntry 14 }
+
+  anxt1ChanChat OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"There was a modem error and the call was
+			terminated. Possibly caused by the modem."
+		::= { anxt1ChanEntry 15 }
+
+  anxt1ChanDcd OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Modem did not establish a connection with 
+			it's peer. Lots of possible causes:
+				many possible causes:
+				modem error
+				bad data from bad channel
+				end-to-end line quality low
+				caller hung up
+				calling device wasn't a modem "
+		::= { anxt1ChanEntry 16 }
+
+  anxt1ChanModemCall OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The number of times an incoming modem 
+			call failed before getting all the way 
+			to DCD."
+		::= { anxt1ChanEntry 17 }
+
+  anxt1ChanConsecFail OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The number of times an incoming non-modem
+			 call failed before successfully assigning
+			 a device."
+		::= { anxt1ChanEntry 18 }
+
+
+
+-- The extended current statistics group
+	-- This table is available only on WAN module platforms.
+
+  anxt1CurrentTable      OBJECT-TYPE
+          SYNTAX SEQUENCE OF Anxt1CurrentEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "Table of extended T1 current statistics.
+		This table is valid for WAN module platforms only."
+          ::= { anxt1 4 }
+
+  anxt1CurrentEntry    OBJECT-TYPE
+          SYNTAX Anxt1CurrentEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "The internal T1 engine extended current statistics."
+          INDEX  { anxt1CurrentIndex }
+          ::= { anxt1CurrentTable 1 }
+
+  Anxt1CurrentEntry    ::= SEQUENCE {
+          anxt1CurrentIndex     INTEGER,
+	  anxt1CurrentOofs	Counter,
+          anxt1CurrentBpvs      Counter,
+          anxt1CurrentCrcs     	Counter,
+          anxt1CurrentCs        Counter,
+          anxt1CurrentRnacs     Counter,
+	  anxt1CurrentEsfs	Counter,
+	  anxt1CurrentLofcs	Counter
+          }
+
+  anxt1CurrentIndex OBJECT-TYPE
+          SYNTAX INTEGER	
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { anxt1CurrentEntry 1 }
+
+  anxt1CurrentOofs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "An Out Of Frame (OOF) event begins when any two
+		of four consecutive frame synchronizing bits are 
+		received from the network interface are incorrect.
+		An OOF state ends when reframe occurs."
+          ::= { anxt1CurrentEntry 2 }
+
+  anxt1CurrentBpvs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A BiPolar Violations error event for an AMI-coded
+		signal is the occurence of a pulse of the same polarity
+		as the previous pulse. A BPV error event for a B8ZS or 
+		HDB3 coded signal is the occurence of a pulse of the
+		same polarity as the previous pulse without being a
+		part of the zero substitution code."
+          ::= { anxt1CurrentEntry 3 }
+
+  anxt1CurrentCrcs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A CRC error occurs when the CRC field calculated
+		by the customer installation, based on the incoming
+		DS1 signal does not agree with the CRC field contained
+		in the DS1 signal received from the network."
+          ::= { anxt1CurrentEntry 4 }
+
+  anxt1CurrentCs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A Controlled Slips is the occcurence of a replication
+		or deletion of a DS1 frame by the receiving terminal."
+          ::= { anxt1CurrentEntry 5 }
+
+  anxt1CurrentRnacs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"Receive Network Alarm seconds is the count of seconds 
+		with at least one alarm event occurring in a second."
+          ::= { anxt1CurrentEntry 6 }
+
+  anxt1CurrentEsfs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"The count of extended superframe errors in the current
+		interval."
+          ::= { anxt1CurrentEntry 7 }
+
+  anxt1CurrentLofcs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"The count of loss of framing errors in the current 
+		interval."
+          ::= { anxt1CurrentEntry 8 }
+
+
+-- The extended total statistics group
+-- This table is available on WAN module platforms only.
+
+  anxt1IntervalTable      OBJECT-TYPE
+          SYNTAX SEQUENCE OF Anxt1IntervalEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "Table of extended T1 interval statistics.
+		This table is valid for WAN module platforms only."
+          ::= { anxt1 5 }
+
+  anxt1IntervalEntry    OBJECT-TYPE
+          SYNTAX Anxt1IntervalEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "The internal T1 engine extended interval statistics."
+          INDEX  { anxt1IntervalIndex, anxt1IntervalNumber }
+          ::= { anxt1IntervalTable 1 }
+
+  Anxt1IntervalEntry    ::= SEQUENCE {
+          anxt1IntervalIndex    INTEGER,
+          anxt1IntervalNumber   INTEGER,
+	  anxt1IntervalOofs     Counter,
+          anxt1IntervalBpvs     Counter,
+          anxt1IntervalCrcs     Counter,
+          anxt1IntervalCs       Counter,
+          anxt1IntervalRnacs    Counter,
+	  anxt1IntervalEsfs	Counter,
+	  anxt1IntervalLofcs	Counter
+          }
+
+  anxt1IntervalIndex OBJECT-TYPE
+          SYNTAX INTEGER
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { anxt1IntervalEntry 1 }
+
+  anxt1IntervalNumber OBJECT-TYPE
+          SYNTAX INTEGER
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A number between 1 and 96, where 1 is the most 
+		recently completed 15 minute interval and 96 is
+		the least recently completed 15 minutes interval
+		(assuming that all 96 intervals are valid)."
+          ::= { anxt1IntervalEntry 2 }
+
+  anxt1IntervalOofs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "An Out Of Frame (OOF) event begins when any two
+		of four consecutive frame synchronizing bits are 
+		received from the network interface are incorrect.
+		An OOF state ends when reframe occurs."
+          ::= { anxt1IntervalEntry 3 }
+
+  anxt1IntervalBpvs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A BiPolar Violations error event for an AMI-coded
+		signal is the occurence of a pulse of the same polarity
+		as the previous pulse. A BPV error event for a B8ZS or 
+		HDB3 coded signal is the occurence of a pulse of the
+		same polarity as the previous pulse without being a
+		part of the zero substitution code."
+          ::= { anxt1IntervalEntry 4 }
+
+  anxt1IntervalCrcs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A CRC error occurs when the CRC field calculated
+		by the customer installation, based on the incoming
+		DS1 signal does not agree with the CRC field contained
+		in the DS1 signal received from the network."
+          ::= { anxt1IntervalEntry 5 }
+
+  anxt1IntervalCs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A Controlled Slips is the occcurence of a replication
+		or deletion of a DS1 frame by the receiving terminal."
+          ::= { anxt1IntervalEntry 6 }
+
+  anxt1IntervalRnacs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"Receive Network Alarm seconds is the count of seconds 
+		with at least one alarm event occurring in a second."
+          ::= { anxt1IntervalEntry 7 }
+
+  anxt1IntervalEsfs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"The count of extended superframe errors in this interval."
+          ::= { anxt1IntervalEntry 8 }
+
+  anxt1IntervalLofcs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"The count of loss of framing errors in this interval."
+          ::= { anxt1IntervalEntry 9 }
+
+-- The extended total statistics group
+-- Table is available on WAN module platforms only.
+
+  anxt1TotalTable      OBJECT-TYPE
+          SYNTAX SEQUENCE OF Anxt1TotalEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "Table of extended T1 total statistics.
+		This table is valid for WAN module platforms only."
+          ::= { anxt1 6 }
+
+  anxt1TotalEntry    OBJECT-TYPE
+          SYNTAX Anxt1TotalEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "The internal T1 engine extended total statistics."
+          INDEX  { anxt1TotalIndex }
+          ::= { anxt1TotalTable 1 }
+
+  Anxt1TotalEntry    ::= SEQUENCE {
+          anxt1TotalIndex      INTEGER,
+	  anxt1TotalOofs       Counter,
+          anxt1TotalBpvs       Counter,
+          anxt1TotalCrcs       Counter,
+          anxt1TotalCs         Counter,
+          anxt1TotalRnacs      Counter,
+          anxt1TotalEsfs       Counter,
+          anxt1TotalLofcs      Counter
+          }
+
+  anxt1TotalIndex OBJECT-TYPE
+          SYNTAX INTEGER
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { anxt1TotalEntry 1 }
+
+  anxt1TotalOofs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "An Out Of Frame (OOF) event begins when any two
+		of four consecutive frame synchronizing bits are 
+		received from the network interface are incorrect.
+		An OOF state ends when reframe occurs."
+          ::= { anxt1TotalEntry 2 }
+
+  anxt1TotalBpvs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A BiPolar Violations error event for an AMI-coded
+		signal is the occurence of a pulse of the same polarity
+		as the previous pulse. A BPV error event for a B8ZS or 
+		HDB3 coded signal is the occurence of a pulse of the
+		same polarity as the previous pulse without being a
+		part of the zero substitution code."
+          ::= { anxt1TotalEntry 3 }
+
+  anxt1TotalCrcs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A CRC error occurs when the CRC field calculated
+		by the customer installation, based on the incoming
+		DS1 signal does not agree with the CRC field contained
+		in the DS1 signal received from the network."
+          ::= { anxt1TotalEntry 4 }
+
+  anxt1TotalCs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"A Controlled Slips is the occcurence of a replication
+		or deletion of a DS1 frame by the receiving terminal."
+          ::= { anxt1TotalEntry 5 }
+
+  anxt1TotalRnacs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"Receive Network Alarm seconds is the count of seconds 
+		with at least one alarm event occurring in a second."
+          ::= { anxt1TotalEntry 6 }
+
+  anxt1TotalEsfs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"The total count of extended superframe errors."
+          ::= { anxt1TotalEntry 7 }
+
+  anxt1TotalLofcs OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+		"The total count of loss of framing errors."
+          ::= { anxt1TotalEntry 8 }
+
+
+-- anxt1WanModuleTable
+
+  anxt1WanModuleTable    OBJECT-TYPE
+          SYNTAX SEQUENCE OF Anxt1WanModuleEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "This table is is used to cross reference a WAN
+		module to its ifindex."
+          ::= { anxt1 7 }
+
+  anxt1WanModuleEntry OBJECT-TYPE
+          SYNTAX Anxt1WanModuleEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "WAN module table entry."
+          INDEX  { anxt1WanIndex }
+          ::= { anxt1WanModuleTable 1 }
+
+  Anxt1WanModuleEntry ::= SEQUENCE {
+     	anxt1WanIndex         INTEGER,
+       	anxt1WanIfIndex       INTEGER
+       	}
+
+  anxt1WanIndex OBJECT-TYPE
+          SYNTAX INTEGER (1..10)
+          ACCESS read-only	
+          STATUS mandatory		  
+          DESCRIPTION
+               "This is the index of the physical WAN module in
+		any BAY remote access product that uses WAN modules.
+		The range is 1 - anxt1Total (number of WAN modules in box)"
+          ::= { anxt1WanModuleEntry  1 }
+
+  anxt1WanIfIndex OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema 
+          STATUS mandatory		  
+          DESCRIPTION
+               "This object can be used in place of Ifindex to find
+		the interface number of a WAN module."
+          ::= { anxt1WanModuleEntry  2 }
+
+anxt1TotalChannels OBJECT-TYPE
+          SYNTAX INTEGER (1..65535)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+               "The total number of channels (Ds0's) on the this box 
+                (or blade)."
+          ::= { anxt1 8}
+
+anxt1BusiedOutChannels OBJECT-TYPE
+          SYNTAX INTEGER (1..65535)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+               "The number of channels that are busied out.
+	        anxt1TotalChannels - anxt1BusiedOutChannels = 
+		Number of available channels"
+          ::= { anxt1 9}
+
+  wanStatTable      OBJECT-TYPE
+          SYNTAX SEQUENCE OF WanStatEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "Table of Wan Module statistics.
+		This table is valid for WAN module platforms only."
+          ::= { anxt1 10 }
+
+  wanStatEntry    OBJECT-TYPE
+          SYNTAX WanStatEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "The internal T1 engine extended current statistics."
+          INDEX  { wanStatIndex }
+          ::= { wanStatTable 1 }
+
+  WanStatEntry    ::= SEQUENCE {
+        wanStatIndex             	INTEGER,
+	wanStatInterfaceErrs	    	Counter,
+	wanStatAcceptedInCalls		Counter,
+	wanStatRejectedInCalls		Counter,
+	wanStatAcceptedOutCalls		Counter,
+	wanStatRejectedOutCalls		Counter,
+	wanStatNormalCallDisconnects	Counter,
+	wanStatAbNormalCallDisconnects	Counter,
+	wanStatBchansCurrAllocated	INTEGER,
+	wanStatNumTimesWanFull		Counter
+          }
+
+  wanStatIndex OBJECT-TYPE
+          SYNTAX INTEGER	
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "The ifIndex value in the interfaces
+	       table.
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { wanStatEntry 1 }
+
+    wanStatInterfaceErrs  OBJECT-TYPE    
+     	  SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+	  "This counter is incremented when ever an 
+	   error occurs between the wan module and the 
+	   PRI manager."
+          ::= { wanStatEntry 2 }
+
+     wanStatAcceptedInCalls  OBJECT-TYPE    
+     	  SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+	  "Number of incoming calls accepted by the call handler.
+	  (call handler is generic term for all types of signaling
+	   methods)"
+          ::= { wanStatEntry 3 }
+
+     wanStatRejectedInCalls OBJECT-TYPE    
+     	  SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+	  "Number of incoming calls rejected by the call handler.
+	  (call handler is generic term for all types of signaling
+	   methods)"
+          ::= { wanStatEntry 4 }
+
+     wanStatAcceptedOutCalls OBJECT-TYPE    
+     	  SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+	  "Number of outgoing calls accepted by the call handler.
+	  (call handler is generic term for all types of signaling
+	   methods)"
+          ::= { wanStatEntry 5 }
+
+     wanStatRejectedOutCalls OBJECT-TYPE    
+     	  SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+	  "Number of outgoing calls rejected by the call handler.
+	  (call handler is generic term for all types of signaling
+	   methods)"
+          ::= { wanStatEntry 6 }
+
+     wanStatNormalCallDisconnects OBJECT-TYPE    
+     	  SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+	  "Number of normal disconnects.
+
+	  Normal Disconnects cause codes:
+	   - NORMAL_CALL_CLEARING_CCOD"
+          ::= { wanStatEntry 7 }
+
+     wanStatAbNormalCallDisconnects OBJECT-TYPE    
+     	  SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+	  "Number of abnormal disconnects.
+
+	  Abnormal Disconnects cause codes:
+	   - INVALID_NUMBER_FORMAT_CCODE         
+	   - NO_CKT_CHAN_AVAIL_CCODE             
+	   - REQ_CHAN_NOT_AVAIL_CCODE"
+          ::= { wanStatEntry 8 }
+
+     wanStatBchansCurrAllocated OBJECT-TYPE    
+     	  SYNTAX INTEGER
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+	  "Number of B channels currently allocated."
+          ::= { wanStatEntry 9 }
+
+    wanStatNumTimesWanFull  OBJECT-TYPE    
+     	  SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+	  "Number of times this wan has had all B channels
+	   allocated since the wan_manager process was started
+	   on the wan module. The wan_manager process is 
+	   started at boot time or by using the cli 
+	   -control- command to stop it and restart 
+	   it on a given wan module."
+          ::= { wanStatEntry 10 }
+
+
+-- PRI related groups.
+-- Call connection table.
+-- Active connection/call parameter group. 
+-- Only the active connection/call on a B channel will be returned.
+-- All the tables in this group are indexed by line.channel number. 
+
+
+  callGenericTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallGenericEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of entries of generic parameters for
+			active calls."
+		::= { connections 1 }
+
+  callGenericEntry	OBJECT-TYPE
+		SYNTAX CallGenericEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"The call's generic parameters."
+		INDEX  { callGenericLineIdx, callGenericIdx }
+		::= { callGenericTable 1 }
+
+  CallGenericEntry	::= SEQUENCE {
+	callGenericLineIdx		INTEGER,
+	callGenericIdx			INTEGER,
+	callGenericMode			INTEGER,
+	callGenericLocation		DisplayString,
+	callGenericTermVar		DisplayString,
+	callGenericPrompt		DisplayString,
+	callGenericAllowBcast  		INTEGER,
+	callGenericImask7Bits		INTEGER,
+	callGenericCliImask7		INTEGER,
+	callGenericBanner		INTEGER,
+	callGenericTcpKeepAlive		INTEGER,
+	callGenericDedicatedArgs 	DisplayString,
+	callGenericModemVar		DisplayString,
+	callGenericDefSessMode		INTEGER,
+	callGenericResolveProtocol 	INTEGER,
+	callGenericMaxSession		INTEGER,
+	callGenericSpeed		DisplayString,
+	callGenericAutoBaud		INTEGER,
+        callGenericJobs                 DisplayString,
+	callGenericLineType 		INTEGER
+	}
+
+  callGenericLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callGenericEntry 1 }
+ 
+  callGenericIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callGenericEntry  2 }
+
+  callGenericMode	OBJECT-TYPE
+		SYNTAX INTEGER {
+			cli(1),
+			slave(2),
+			adaptive(3),
+			unused(4),
+			slip(5),
+			ppp(7),
+			arap(8),
+			invalid(9),
+			auto-detect(10),
+			auto-adapt(11),
+			ipx(13),
+			call(14),
+			connect(15),
+			rlogin(16),
+			telnet(17),
+			tn3270(18)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Mode assigned to the port. Valid only
+			if the port type is async, or ta. The default
+			is cli.
+ 
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, synchronous port parameter 
+			'mode'.
+
+			Note: Values 6 and 12 are not used."
+		::= { callGenericEntry 3 }
+
+  callGenericLocation	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"A descriptive string for this port. This
+			string is displayed by the CLI who command.
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous port parameter 
+			location."
+		::= { callGenericEntry 4 }
+
+  callGenericTermVar	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"A string defining the type of terminal 
+			attached to the serial/ta port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'term_var'.
+			Note: This object is not valid if the port type 
+			is synchronous."
+		::= { callGenericEntry 5 }
+
+  callGenericPrompt	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..32))
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+		"This parameter defines a port-specific prompt
+		string.  The prompt string consists of displayable
+		characters and embedded formatting codes.  Each
+		formatting code is stored in a single character 
+		in nonvolatile memory.  The maximum number of 
+		characters stored for the prompt string 
+		is 16.  Since the formatting codes consist of
+		a '%' prepended to a single character, the maximum
+		length string that may be entered for this object
+		is 32 characters.  Strings less than 32
+		characters in length will be rejected as bad values
+		if they cannot be stored into 16 characters in 
+		nonvolatile memory after the formatting codes are
+		compressed into single characters.
+			
+		The valid formatting codes are:
+
+		          %a  the string 'annex'     
+			  %c  the string ': '
+			  %d  the date and time      
+			  %i  the Annex's IP address
+			  %j  a newline character    
+			  %l  port location, or 'port n'
+			  %n  the Annex's name       
+			  %p  the port number
+			  %r  the string 'port'      
+			  %s  a space
+			  %t  the time hh:mm:ss      
+			  %u  the user name for port
+			  %%  the string '%'
+
+			
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'prompt'.
+			Note: This object is not valid for 
+			synchronous ports."
+		::= { callGenericEntry 6 }
+
+
+  callGenericAllowBcast  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether the serial/ta port can 
+			receive administrative broadcast messages.
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'allow_broadcast'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+		::= { callGenericEntry 8 }
+
+  callGenericImask7Bits  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, instructs the Annex to ignore
+			the eighth bit of all received characters
+			on the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'imask_7bits'.
+
+		Note: This object is not valid for Synchronous ports."
+
+		::= { callGenericEntry 10 }
+
+  callGenericCliImask7	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines whether input at the CLI is masked to
+			7 bits.  The default is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'cli_imask7' The 
+			default value for this object is enabled.
+
+		Note: This object is not valid for Synchronous ports."
+
+		::= { callGenericEntry 11 }
+
+
+  callGenericBanner	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2),
+			beforesec(3),
+			aftersec(4),
+                        motd-before-sec(5),
+                        motd-after-sec(6)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Specifies whether the Annex banner and message-
+			of-the-day are displayed on the channel.  The
+			default is enabled.
+		This has four possible actions:
+
+		default, Y, yes, unset:       banner before security, 
+					      motd after
+		none, N:                      no banner or motd
+		beforesec:                    banner and motd before 
+					      security
+		aftersec:                     banner and motd after 
+					      security
+                motd-before-sec:              motd before security; no
+                                              banner
+                motd-after-sec:               motd after security; no
+                                              banner
+			This MIB object corresponds to the NA/admin 
+			NA/Admin Global Port parameter 'banner'.
+		Note: This object is not valid for Synchronous ports."
+		::= { callGenericEntry 12 }
+
+  callGenericTcpKeepAlive OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The default keep-alive value for connections
+			to this serial port.  If this is zero, use the
+			value specified by anxTcpKeepAlive.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'tcp_keepalive'.
+
+		Note: This object is not valid for Synchronous ports."
+		::= { callGenericEntry 13 }
+
+  callGenericDedicatedArgs	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..100))
+		ACCESS read-only
+                STATUS mandatory
+		DESCRIPTION
+			"Command line arguments passed to process
+			started by a dedicated port with mode set
+			to 'telnet', 'tn3270', 'rlogin', 'connect' 
+			(if LAT is in use) or 'call'. This object is 
+			not valid for TA ports.
+
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'dedicated_arguments'.
+
+		Note: This object is not valid for Synchronous ports."
+		::= { callGenericEntry 14 }
+
+  callGenericModemVar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-only
+		STATUS mandatory
+                DESCRIPTION
+			"A string defining the type of modem attached
+			to the serial port. This object is not valid 
+			for TA ports. This is always set to
+			'microcom'.
+
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'type_of_modem'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+		::= { callGenericEntry 15 }
+
+
+  callGenericDefSessMode       OBJECT-TYPE
+		SYNTAX INTEGER {
+			interactive(1),
+			passthru(2),
+			passall(3),
+			transparent(4)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The default session mode when the DECServer 
+			command interface is configured. The default 
+			is interactive.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'default_session_mode'.
+
+		Note: This object is not valid for Synchronous ports."
+		::= { callGenericEntry 16 }
+
+  callGenericResolveProtocol   OBJECT-TYPE
+                SYNTAX INTEGER {
+                        connect(15),
+                        telnet(17),
+                        any(19)
+                }
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                        "Default host protocol to use when starting a
+                        dedicated port and the protocol is not 
+			explicitly specified in the command. Is set 
+			to one of 'telnet', connect, or any. Any 
+			means to try LAT (connect) first and if that 
+			fails, try telnet.
+
+                        This MIB object corresponds to the NA/admin
+                        asynchronous/ta port parameter 
+			'resolve_protocol.
+
+		Note: This object is not valid for Synchronous ports."
+
+		::= { callGenericEntry 17 }
+
+  callGenericMaxSession   OBJECT-TYPE
+                SYNTAX INTEGER 
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                    "The maximum number of concurrent sessions allowed
+                    on the port.  A value of -1 indicates no maximum.
+                    Setting the maximum to less than the current 
+		    number of sessions has unspecified results. This MIB
+		    object corresponds to the NA/Admin parameter 
+		    'max_session_count'."  
+		::= { callGenericEntry 18 }
+
+  callGenericSpeed   OBJECT-TYPE
+                SYNTAX DisplayString  (SIZE (1..20))
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                    "The maximum speed of the port for this call."
+		::= { callGenericEntry 19 }
+
+  callGenericAutoBaud   OBJECT-TYPE
+                SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+			} 
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                    "This is always set to disabled."
+		::= { callGenericEntry 20 }
+
+  callGenericJobs       OBJECT-TYPE
+                SYNTAX DisplayString   (SIZE (0..1024))
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                        "Job list for this cli session."
+                ::= { callGenericEntry 21 }
+
+  callGenericLineType       OBJECT-TYPE
+                SYNTAX INTEGER {
+			cli(1),
+			slave(2),
+			unused3(3),
+			unused4(4),
+			vcli(5),
+			dedicated(6),
+			slip(7),
+			lpd(8),
+			ppp(9),
+			mp(10),
+			arap(11),
+			ftp(12),
+			unused13(13),
+			unused14(14),
+			dynamicdial(15)
+			} 
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                        "This is what the port is running at the moment.
+			callgenericmode will tell you what the port is 
+			configured to run through the spb or e2rom."
+                ::= { callGenericEntry 22 }
+ 
+-- ports flow control and signal parameters.
+
+  callSignalTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallSignalEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of entries for port flow control and 
+			signal parameters."
+		::= { connections 2 }
+
+  callSignalEntry	OBJECT-TYPE
+		SYNTAX CallSignalEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"The table of entries of flow control and 
+			signal parameters for active calls."
+		INDEX  { callSignalLineIdx, callSignalIdx }
+		::= { callSignalTable 1 }
+
+  CallSignalEntry	::= SEQUENCE {
+	callSignalLineIdx		INTEGER,
+	callSignalIdx			INTEGER,
+	callSignalInputStartChar	DisplayString,
+	callSignalInputStopChar		DisplayString,
+	callSignalOutputStartChar	DisplayString,
+	callSignalOutputStopChar	DisplayString,
+	callSignalIxanyFlowCtrl		INTEGER,
+	callSignalForwardKey		DisplayString,
+	callSignalBackwardKey		DisplayString,
+	callSignalCharInFlow		INTEGER,
+	callSignalCharOutFlow		INTEGER,
+	callSignalrs232AsyncBits	INTEGER,
+	callSignalrs232AsyncStopBits	INTEGER,
+	callSignalrs232AsyncParity	INTEGER
+	}
+
+  callSignalLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callSignalEntry 1 }
+ 
+  callSignalIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callSignalEntry  2 }
+
+-- { callSignalEntry 3 } is reserved
+
+  callSignalInputStartChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The control character sequence that restarts
+			input if the charPortInFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+			 of the form '^x', where '^x' is translated as
+			 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'input_start_char'.
+
+			Note: This object is not valid for 
+			Synchronous ports."
+		::= { callSignalEntry 4 }
+
+  callSignalInputStopChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The control character sequence that stops
+			input if the charPortInFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+			of the form '^x', where '^x' is translated as
+			'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter
+			'input_stop_char'.
+
+			Note: This object is not valid for 
+			Synchronous ports."
+		::= { callSignalEntry 5 }
+
+  callSignalOutputStartChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The control character sequence that restarts
+			output if the charPortOutFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+			of the form '^x', where '^x' is translated as 
+			'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'output_start_char'.
+
+			Note: This object is not valid for 
+			Synchronous ports."
+		::= { callSignalEntry 6 }
+
+  callSignalOutputStopChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The control character sequence that stops
+			output if the charPortOutFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+			of the form '^x', where '^x' is translated as
+			'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'output_stop_char'.
+
+			Note: This object is not valid for 
+			Synchronous ports."
+		::= { callSignalEntry 7 }
+
+  callSignalIxanyFlowCtrl  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter specifies whether any input
+			character will be treated as a start (xon)
+			character when output has been suspended by
+			a stop (xoff) character.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'ixany_flow_control'.
+
+			Note: This object is not valid for Synchronous ports."
+		::= { callSignalEntry 8 }
+
+-- { callSignalEntry 9 } is reserved
+
+  callSignalForwardKey        OBJECT-TYPE
+                SYNTAX DisplayString (SIZE(0..16))
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                        "Defines a control character sequence as an
+                        attention character to switch the user to
+                        the next session.  The Annex-II only allows
+                        a single control character (eg. ^A), while
+                        the Annex3 and MicroAnnex allow a string
+                        of control characters to be defined
+                        (eg. ^A^B^Z).
+
+                        This MIB object corresponds to the NA/admin
+                        asynchronous/ta port parameter 'forward_key'.
+
+			Note: This object is not valid for Synchronous ports."
+                ::= { callSignalEntry 10 }
+
+  callSignalBackwardKey       OBJECT-TYPE
+                SYNTAX DisplayString (SIZE(0..16))
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                        "Defines a control character sequence as an
+                        attention character to switch the user to
+                        the previous session.  The Annex-II only allows
+                        a single control character (eg. ^A), while
+                        the Annex3 and MicroAnnex allow a string
+                        of control characters to be defined
+                        (eg. ^A^B^Z).
+
+                        This MIB object corresponds to the NA/admin
+                        asynchronous/ta port parameter 'Backward_key'.
+
+			Note: This object is not valid for Synchronous ports."
+
+                ::= { callSignalEntry 11 }
+
+
+  -- { callSignalEntry 12 } is reserved
+			   
+  -- { callSignalEntry 13 } is reserved
+
+  -- { callSignalEntry 14 } is reserved
+
+  -- { callSignalEntry 15 } is reserved
+
+  -- { callSignalEntry 16 } is reserved
+
+
+  callSignalCharInFlow OBJECT-TYPE
+                SYNTAX INTEGER { 
+			none(1),
+			eia(2),
+			xonXoff(3), 
+                        bell(4), 
+			both(5) 
+			}
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                    "The port's type of input flow control.  'none'
+                    indicates no flow control at this level or below.
+                    'xonXoff' indicates software flow control by
+                    recognizing XON and XOFF characters.  'eia'(hardware)
+                    indicates flow control delegated to the lower level,
+                    for example a parallel port."
+                ::= { callSignalEntry 17 }
+
+  callSignalCharOutFlow OBJECT-TYPE
+                SYNTAX INTEGER { 
+			none(1),
+			eia(2),
+			xonXoff(3), 
+                        bell(4), 
+			both(5) 
+			}
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                    " The port's type of output flow control. 'none'
+		    indicates no flow control at this level or below.
+                    'xonXoff' indicates software flow control by
+                    recognizing XON and XOFF characters.  'eia'(hardware)
+                    indicates flow control delegated to the lower level,
+                    for example a parallel port."
+                ::= { callSignalEntry 18 }
+
+  callSignalrs232AsyncBits OBJECT-TYPE
+           SYNTAX INTEGER (5..8)
+           ACCESS read-write
+           STATUS deprecated
+           DESCRIPTION
+               "The port's number of bits in a character. This object 
+		corresponds to the admin parameter data_bits."
+           ::= { callSignalEntry 19 }
+
+  callSignalrs232AsyncStopBits OBJECT-TYPE
+           SYNTAX INTEGER { 
+			one(1), 
+                        one-and-half(2), 
+			two(3),
+			dynamic(4) 
+			}
+           ACCESS read-write
+           STATUS deprecated
+           DESCRIPTION
+               "The port's number of stop bits. This object corresponds 
+		to the admin parameter stop_bits."
+           ::= { callSignalEntry 20 }
+
+  callSignalrs232AsyncParity OBJECT-TYPE
+           SYNTAX INTEGER { 
+			none(1), 
+			odd(2), 
+			even(3),
+                        mark(4), 
+			space(5) 
+		}
+           ACCESS read-write
+           STATUS deprecated
+           DESCRIPTION
+               "The port's sense of a character parity bit."
+           ::= { callSignalEntry 21 }
+
+--  port login parameters.
+		
+  callLoginTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallLoginEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of entries of login parameters for 
+			active calls.
+
+			Note: This table is not valid for Synchronous ports."
+
+		::= { connections 3 }
+
+  callLoginEntry	OBJECT-TYPE
+		SYNTAX CallLoginEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Call's login user parameters."
+		INDEX  { callLoginLineIdx, callLoginIdx }
+		::= { callLoginTable 1 }
+
+  CallLoginEntry	::= SEQUENCE {
+	callLoginLineIdx		INTEGER,
+	callLoginIdx			INTEGER,
+	callLoginVciLoginPortPasswd	INTEGER,
+	callLoginVciLoginTimeout	INTEGER
+	}
+
+  callLoginLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema 
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callLoginEntry 1 }
+ 
+  callLoginIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callLoginEntry  2 }
+
+  callLoginVciLoginPortPasswd        OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Indicates if the port is configured as a 
+			DECServer interface port. The default is 
+			disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'login_port_password'."
+		::= { callLoginEntry 3 }
+
+  callLoginVciLoginTimeout   OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Enables a login timer if the port is 
+			configured as a DECServer interface port. The
+			default is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'login_timeout'."
+		::= { callLoginEntry 4 }
+
+
+-- port timer and counter parameters
+
+  callTimerTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallTimerEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of entries of port timer and counter 
+		parameters for active calls.
+		Note: This table is not valid for Synchronous ports."
+		::= { connections 4 }
+
+  callTimerEntry	OBJECT-TYPE
+		SYNTAX CallTimerEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Call's timer and counter parameters."
+		INDEX  { callTimerLineIdx, callTimerIdx }
+		::= { callTimerTable 1 }
+
+  CallTimerEntry	::= SEQUENCE {
+	callTimerLineIdx		INTEGER,
+	callTimerIdx			INTEGER,
+	callTimerForwardTimer		INTEGER,
+	callTimerForwardCount		INTEGER,
+	callTimerCliInactivity		INTEGER,
+	callTimerCliInactivityTimer 	INTEGER,
+	callTimerInputIsActivity	INTEGER,
+	callTimerOutputIsActivity	INTEGER,
+	callTimerResetIdleTimer		INTEGER,
+	callTimerLongBreak		INTEGER,
+	callTimerShortBreak		INTEGER
+	}
+
+  callTimerLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callTimerEntry 1 }
+ 
+  callTimerIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callTimerEntry  2 }
+
+  callTimerForwardTimer  OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the inter-character
+			timer that sets the amount of time, in tens of
+			milliseconds, that will elapse before
+			forwarding the received data.  The value of
+			5 turns means the timer is off.  
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'forwarding_timer'."
+		::= { callTimerEntry 3 }
+
+  callTimerForwardCount OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Specifies the number of received characters
+			buffered for the port by the Annex before
+			forwarding the characters to the host or 
+			network.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'forwarding_count'."
+		::= { callTimerEntry 4 }
+
+ callTimerCliInactivity  OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The amount of time, in minutes, that the 
+			Annex waits before hanging up the serial/ta 
+			port after it becomes idle. A value of 0 
+			indicates the timer is off. A value of 255 
+			means immediate, which causes the Annex to 
+			hang up the port immediately after exiting 
+			from the last job.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'cli_inactivity'."
+		::= { callTimerEntry 5 }
+
+  callTimerCliInactivityTimer  OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The amount of time, in minutes, which a port
+			can remain inactive before the Annex 
+			terminates all sessions and resets the port. A
+		 	value of 0 implies timer is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'inactivity_timer'."
+		::= { callTimerEntry 6 }
+
+ callTimerInputIsActivity	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether received input characters
+			are considered as activity for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'input_is_activity'."
+		::= { callTimerEntry 7 }
+
+  callTimerOutputIsActivity  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether transmitted output 
+			characters are considered as activity for the
+			port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'output_is_activity'."
+		::= { callTimerEntry 8 }
+
+ 
+  callTimerResetIdleTimer  OBJECT-TYPE
+		SYNTAX INTEGER {
+			input(1),
+			output(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines whether input or output resets the
+			idle timer for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'reset_idle_time_on'."
+		::= { callTimerEntry 9 }
+
+  callTimerLongBreak	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			returns the user to the CLI prompt after 
+			receiving a break greater than two seconds.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'long_break'."
+		::= { callTimerEntry 10 }
+
+  callTimerShortBreak  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			returns the user to the CLI prompt after 
+			receiving a break shorter than two seconds.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'short_break'."
+		::= { callTimerEntry 11 }
+
+ 
+-- security parameters
+
+  callSecurityTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallSecurityEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of entries of port security parameters
+			for active calls."
+		::= { connections 5 }
+
+  callSecurityEntry	OBJECT-TYPE
+		SYNTAX CallSecurityEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Call's security parameters."
+		INDEX  { callSecurityLineIdx, callSecurityIdx }
+		::= { callSecurityTable 1 }
+
+  CallSecurityEntry	::= SEQUENCE {
+	callSecurityLineIdx	INTEGER,
+	callSecurityIdx		INTEGER,
+	callSecurityUserName	DisplayString,
+	callSecurityCli		INTEGER,
+	callSecurityConnect	INTEGER,
+	callSecurityPortServer	INTEGER,
+	callSecurityPortPasswd 	DisplayString,
+	callSecurityIpsoClass	INTEGER,
+	callSecurityIpx		INTEGER,
+	callSecurityCurrentUser DisplayString
+	}
+
+  callSecurityLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callSecurityEntry 1 }
+ 
+  callSecurityIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callSecurityEntry  2 }
+
+  callSecurityUserName	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..128))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"A string defining the default user name for 
+			the user of this serial/ta port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'user_name'."
+		::= { callSecurityEntry 3}
+
+  callSecurityCli  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether security is
+			enabled for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'cli_security'."
+		::= { callSecurityEntry 4 }
+
+  callSecurityConnect  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the 
+			host-based security policy is enabled for 
+			access from the port to the network.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'connect_security'."
+		::= { callSecurityEntry 5}
+
+  callSecurityPortServer  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the 
+			host-based security policy is enabled for 
+			access to the port from the port server.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'port_server_security'."
+		::= { callSecurityEntry 6}
+
+  callSecurityPortPasswd  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines a password for the
+			port for local password protection.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'port_password'."
+		::= { callSecurityEntry 7}
+
+   callSecurityIpsoClass OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			secret(2),
+			topsecret(3),
+			confidential(4),
+			unclassified(5)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the IP security classification for
+			packets sent and received on this port.  The
+			default value is none.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'ipso_class'."
+		::= { callSecurityEntry 8 }
+
+  callSecurityIpx OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether IPX security is enabled on
+			this port.  The default is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'ipx_security'."
+		::= { callSecurityEntry 9 }
+
+  callSecurityCurrentUser OBJECT-TYPE
+		SYNTAX DisplayString
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Returns the username for an active call on a 
+			 b channel. This MIB object is only valid if
+			 security is enabled."
+		::= { callSecurityEntry 10 }
+
+-- Line editing parameters.
+
+callLineEditTable	OBJECT-TYPE
+                SYNTAX SEQUENCE OF CallLineEditEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of entries of line editing parameters
+			for active calls.
+
+			Note: This table is not valid for 
+			synchronous ports."
+		::= { connections 6 }
+
+  callLineEditEntry	OBJECT-TYPE
+		SYNTAX CallLineEditEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Call's line editing parameters."
+		INDEX  { callLineEditLineIdx, callLineEditIdx }
+		::= { callLineEditTable 1 }
+
+  CallLineEditEntry	::= SEQUENCE {
+	callLineEditLineIdx		INTEGER,
+	callLineEditIdx			INTEGER,
+	callLineEditAttnChar		DisplayString,
+	callLineEditEcho		INTEGER,
+	callLineEditTelnetEscape	DisplayString,
+	callLineEditTelnetCRLF		INTEGER,
+	callLineEditMapToLower		INTEGER,
+	callLineEditMapToUpper		INTEGER,
+	callLineEditCharErase		INTEGER,
+	callLineEditEraseChar		DisplayString,
+	callLineEditLineErase		INTEGER,
+	callLineEditEraseLine		DisplayString,
+	callLineEditEraseWord		DisplayString,
+	callLineEditHardwareTabs	INTEGER,
+	callLineEditRedisplayLine	DisplayString,
+	callLineEditToggleOutput	DisplayString,
+	callLineEditNewLineTerm		INTEGER
+	}
+
+  callLineEditLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callLineEditEntry 1 }
+ 
+  callLineEditIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callLineEditEntry 2 }
+
+
+  callLineEditAttnChar	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines a control character sequence as an
+			attention character to return the user to
+			the CLI prompt.  The Annex-II only allows
+			a single control character (eg. ^A), while
+			the Annex3 and MicroAnnex allow a string
+			of control characters to be defined
+			(eg. ^A^B^Z).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'attn_string'."
+		::= { callLineEditEntry 3 }
+
+  callLineEditEcho OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			echoes all characters as they are received 
+			from the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'echo'."
+		::= { callLineEditEntry 4 }
+
+  callLineEditTelnetEscape OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the control character that returns 
+			the user to the 'telnet:' prompt when running
+ 			the CLI telnet command.  
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+ 			of the form '^x', where '^x' is translated as 
+			'Control-x'.
+			
+			The value 'U' means this feature is disabled
+			on this port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'telnet_escape'."
+		::= { callLineEditEntry 5 }
+
+  callLineEditTelnetCRLF OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines what characters are transmitted 
+			out the port to the network when the 
+			End-of-Line character is sensed.  'enabled' 
+			means transmit Line-Feed and Carriage-Return.  
+			'disabled' means transmit Carriage-Return 
+			and NULL.  The default is enabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'telnet_crlf'."
+		::= { callLineEditEntry 6 }
+
+
+  callLineEditMapToLower OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex translates all upper
+			case characters to lower case as they are 
+			received from the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'map_to_lower'."
+		::= { callLineEditEntry 7 }
+
+  callLineEditMapToUpper OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex translates all lower
+			case characters to upper case as they are
+			transmitted to the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter '
+			map_to_upper'."
+		::= { callLineEditEntry 8 }
+
+ callLineEditCharErase  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			echoes the character erase and word erase 
+			characters for a video terminal (enabled) 
+			or for a hard-copy terminal (disabled).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'char_erase'."
+		::= { callLineEditEntry 9 }
+
+  callLineEditEraseChar OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the character erase control character
+			sequence.
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+			of the form '^x', where '^x' is translated as
+		 	'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'erase_char'."
+		::= { callLineEditEntry 10 }
+ 
+  callLineEditLineErase OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			echoes the line erase character for a video 
+			terminal (enabled) or for a hard-copy terminal
+ 			(disabled).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'line_erase'."
+		::= { callLineEditEntry 11 }
+
+  callLineEditEraseLine OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the line erase control character
+			sequence.
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+ 			of the form '^x', where '^x' is translated as
+			'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'erase_line'."
+		::= { callLineEditEntry 12 }
+
+  callLineEditEraseWord OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the word erase control character
+			sequence.
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+		 	of the form '^x', where '^x' is translated as
+	 		'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'erase_word'."
+		::= { callLineEditEntry 13 }
+
+  callLineEditHardwareTabs  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, this parameter allows the Annex
+			to expand ASCII tab characters.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'hardware_tabs'."
+		::= { callLineEditEntry 14 }
+
+
+  callLineEditRedisplayLine OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the reprint line control character
+			sequence.
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+	 		of the form '^x', where '^x' is translated as
+ 			'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'redisplay_line'."
+		::= { callLineEditEntry 15 }
+
+  callLineEditToggleOutput OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the flush control character used to
+			flush the output buffer.
+			
+			This value of this object can be either a 
+			single displayable character or two characters
+ 			of the form '^x', where '^x' is translated as
+ 			'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'toggle_output'."
+		::= { callLineEditEntry 16 }
+
+  callLineEditNewLineTerm OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether a carriage
+			return is echoed as just a carriage return
+			(enabled), or whether the carriage return is
+			echoed as a carriage return and line feed.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'newline_terminal'."
+		::= { callLineEditEntry 17 }
+
+
+-- Networking Protocol parameters.
+
+  callNetTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallNetEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of entries of networking protocol 
+			parameters for active calls."
+		::= { connections 7 }
+
+  callNetEntry	OBJECT-TYPE
+		SYNTAX CallNetEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Call's networking protocol parameters."
+		INDEX  { callNetLineIdx, callNetIdx }
+		::= { callNetTable 1 }
+
+  CallNetEntry	::= SEQUENCE {
+	callNetLineIdx		INTEGER,
+	callNetIdx		INTEGER,
+	callNetLocalAddr	IpAddress,
+	callNetRemoteAddr	IpAddress,
+	callNetMetric		INTEGER,
+	callNetSlipSecure	INTEGER,
+	callNetInactivity	INTEGER,
+	callNetDoCompression	INTEGER,
+	callNetAllowCompression	INTEGER,
+	callNetInactivityUnits	INTEGER
+	}
+
+  callNetLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callNetEntry 1 }
+ 
+  callNetIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callNetEntry  2 }
+
+  callNetLocalAddr	OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address for the Annex's side
+			of the point-to-point (SLIP or PPP) link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous port parameter
+			 'local_address'."
+		::= { callNetEntry 3 }
+
+  callNetRemoteAddr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address for the host at the
+			remote end of the point-to-point (SLIP or PPP)
+ 			link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous port parameter
+			'remote_address'."
+		::= { callNetEntry 4 }
+
+	-- ::= { callNetEntry 5 } removed object	
+
+  callNetMetric OBJECT-TYPE
+		SYNTAX INTEGER (0..64)
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the hop count to 
+			the remote end of the SLIP or PPP interface.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta. synchronous port parameter
+			'metric'."
+		::= { callNetEntry 6 }
+
+  callNetSlipSecure	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"If anxEnableSecurity is disabled, this 
+			parameter selects slip session logging.  If 
+			anxEnableSecurity is enabled, this parameter 
+			permits slip access only from secure ports.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 
+			'slip_ppp_security'.
+
+			Note: This object is not valid for 
+			Synchronous ports."
+		::= { callNetEntry 7 }
+
+  callNetInactivity     OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-only
+                STATUS mandatory
+		DESCRIPTION
+			"The number of units allowed for serial 
+			protocol inactivity on the port. The type of 
+			unit, minutes or seconds, is defined by the 
+			object anxpNetInactivityUnits. If the type of
+ 			units is 'seconds', the actual granularity is
+ 			only 5 seconds. When the interval expires,
+                        the port is automatically reset. A value of 0
+			means the timer is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous port parameter 
+			'net_inactivity'."
+		::= { callNetEntry 8 }
+
+  callNetDoCompression  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex will attempt to 
+			negotiate TCP/IP header compression on this 
+			serial link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 
+			'do_compression'."
+		::= { callNetEntry 9 }
+
+  callNetAllowCompression  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex will allow TCP/IP
+			header compression on this serial link only
+			if the other end of the serial link initiates
+			the compression.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter
+			'allow_compression'."
+		::= { callNetEntry 10 }
+
+  callNetInactivityUnits OBJECT-TYPE
+		SYNTAX INTEGER {
+			minutes(1),
+			seconds(2)
+		}
+		ACCESS read-only
+                STATUS mandatory
+		DESCRIPTION
+			"The type of units that are used for the 
+			port's net inactivity timer.  See also the 
+			anxpNetInactivity object.  The default value
+			is 'minutes'.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, synchronous port parameter 
+			'net_inactivity_units'."
+		::= { callNetEntry 11 }
+
+
+-- Slip parameters.
+
+callSlipTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallSlipEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of entries of Slip parameters for
+			active calls.
+
+			Note: This object is not valid for 
+			Synchronous ports."
+		::= { connections 8 }
+
+  callSlipEntry	OBJECT-TYPE
+		SYNTAX CallSlipEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Call's Slip parameters."
+		INDEX  { callSlipIdx }
+		::= { callSlipTable 1 }
+
+  CallSlipEntry	::= SEQUENCE {
+	callSlipLineIdx		INTEGER,
+	callSlipIdx		INTEGER,
+	callSlipSubnetMask	IpAddress,
+	callSlipMtuSize		INTEGER,
+	callSlipNoIcmp		INTEGER,
+	callSlipTos		INTEGER
+	}
+
+  callSlipLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only  		  -- 2147483647 for mib2schema
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callSlipEntry 1 }
+ 
+  callSlipIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callSlipEntry  2 }
+
+ callSlipSubnetMask  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The subnet mask for this SLIP interface.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'subnet_mask'."
+		::= { callSlipEntry 3 }
+
+ callSlipMtuSize OBJECT-TYPE
+		SYNTAX INTEGER {
+			large(1),
+			small(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Force the compressed SLIP interface to use
+			a Maximum Transmission Unit (MTU) of either 
+			1024 bytes (large) or 256 bytes (small).  The
+			default is large.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'slip_mtu_size'."
+		::= { callSlipEntry 4 }
+
+  callSlipNoIcmp  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex will discard any
+			ICMP packets directed to this SLIP link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'slip_no_icmp'."
+		::= { callSlipEntry 5 }
+
+  callSlipTos	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex sends interactive
+			traffic over this SLIP link before any other
+			traffic.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'slip_tos'."
+		::= { callSlipEntry 6 }
+
+
+-- PPP parameters
+
+  callPPPTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallPPPEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of entries of PPP parameters for
+			active calls."
+		::= { connections 9 }
+
+  callPPPEntry	OBJECT-TYPE
+		SYNTAX CallPPPEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Call's PPP parameters."
+		INDEX  { callPPPLineIdx, callPPPIdx }
+		::= { callPPPTable 1 }
+
+  CallPPPEntry	::= SEQUENCE {
+	callPPPLineIdx		INTEGER,
+	callPPPIdx		INTEGER,
+	callPPPMru		INTEGER,
+	callPPPAcm		DisplayString,
+	callPPPSecurityProto	INTEGER,
+	callPPPRemoteUser	DisplayString,
+	callPPPRemotePasswd	DisplayString,
+	callPPPNcp		INTEGER,
+	callPPPIpxNetwork	DisplayString,
+	callPPPIpxNode		DisplayString,
+	callPPPTraceLevel	INTEGER
+	}
+
+  callPPPLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callPPPEntry 1 }
+ 
+  callPPPIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS mandatory
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callPPPEntry  2 }
+
+  callPPPMru    OBJECT-TYPE
+		SYNTAX INTEGER (64..1500)
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the maximum receive
+			unit in bytes. The default value is 1500.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, and synchronous port
+			parameter 'ppp_mru'."
+		::= { callPPPEntry 3 }
+
+  callPPPAcm    OBJECT-TYPE
+		SYNTAX DisplayString  (SIZE (8..10))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter specifies which of the first
+			32 bytes (0x00, ... 0x1F) can be sent as
+			clear text and which need to be escaped.  A
+			bit on in the mask indicates the character
+			must be escaped.  The mask should be specified
+			as an 8 hex character string (0x1F000000 and
+			1F000000 are both acceptable).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'ppp_acm'."
+		::= { callPPPEntry 4 }
+
+  callPPPSecurityProto OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			pap(2),
+			chap(3),
+			chap-pap(4)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"Defines which security protocol will be used
+			to authenticate the remote user.  This
+			parameter must be set and the Annex 
+			enable_security (anxEnableSecurity) must be 
+			enabled before authentication is performed.  
+			The default is none
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 
+			'ppp_security_protocol'."
+		::= { callPPPEntry 5 }
+
+  callPPPRemoteUser	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The username used by the Annex to identify 
+			itself if the remote PPP peer asks for 
+			authentication.  
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 
+			'ppp_username_remote'."
+		::= { callPPPEntry 6 }
+
+  callPPPRemotePasswd	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The password used by the Annex to identify 
+			itself if the remote PPP peer asks for 
+			authentication.  Reading this parameter
+			will return either <set> if the password is
+			defined or <unset> if the password is not
+			defined.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 
+			'ppp_password_remote'."
+		::= { callPPPEntry 7 }
+
+  callPPPNcp    OBJECT-TYPE
+                SYNTAX INTEGER (1..2147483647)
+		ACCESS read-only
+		STATUS mandatory
+                DESCRIPTION
+			"A bitmask for PPP NCP Options:
+			 0x0002 NCP_IPCP
+			 0x0004 NCP_ATCP
+			 0x0008 NCP_IPXCP
+			 0x0010 NCP_MP
+			 0x0020 NCP_CCP
+			 0x0040 NCP_CBCP
+
+                         Note: if the ncp_option parameter
+                         is set to the value of 'all', the SNMP
+                         agent will return the fully expanded bitmask
+                         value instead of the 0x0001 value of 'all'.
+			 "
+		::= { callPPPEntry 8 }
+
+  callPPPIpxNetwork	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE(1..8))
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+			"The IPX network number for an IPX PPP 
+			connection using this port. When the IPX PPP 
+			connection is established the network number 
+			will be negotiated. If one end of the 
+			connection is set to zero then the value from
+ 			the other end of the connection will be used.
+			The value of this object is an 8 digit 
+			hexadecimal number string representing the 
+			IPX network segment assigned to this port. 
+			The value must be unique across the network 
+			domain.
+			This MIB object corresponds to the NA/admin
+			asynchronous/ta port parameter 
+			'ppp_ipx_network'."
+		::= { callPPPEntry 9 }
+
+  callPPPIpxNode	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE(11..17))
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+			"The IPX node number for an IPX PPP connection
+			using this port. 
+			The value of this object is a 12 digit
+			hexadecimal number string representing the IPX
+			node number assigned to this port.
+			Note the string is expected in the form:
+			12-3a-4-7-89-23.Each part of the address 
+			must be a hex value separated by a hyphen.
+			This MIB object corresponds to the NA/admin
+			asynchronous/ta port parameter 
+			'ppp_ipx_node'."
+		::= { callPPPEntry 10 }
+
+callPPPTraceLevel OBJECT-TYPE
+   	SYNTAX INTEGER {
+		control(1),
+		data(2),
+		control-and-data(3),
+		unused(4),
+		control-in-hex(5),
+		data-in-hex(6),
+		control-and-data-in-hex(7),
+		none(8)
+	}
+   	ACCESS  read-write
+   	STATUS mandatory
+   	DESCRIPTION
+   		" Controls whether PPP trace messages are sent to the
+		syslog facility or not.  The default value is none(0).
+		This MIB object corresponds to the na/admin port parameter 
+		ppp_trace_level."
+   	::= { callPPPEntry 11  }
+
+-- ARAP parameters
+
+  callARAPTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallARAPEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Table of entries of Apple Talk parameters for
+			active calls.
+			Note: This object is not valid for 
+			Synchronous ports."
+		::= { connections 10 }
+
+  callARAPEntry	OBJECT-TYPE
+		SYNTAX CallARAPEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Call's ARAP parameters."
+		INDEX  {callARAPLineIdx,  callARAPIdx }
+		::= { callARAPTable 1 }
+
+  CallARAPEntry	::= SEQUENCE {
+	callARAPLineIdx		INTEGER,
+	callARAPIdx		INTEGER,
+	callARAPGuest		INTEGER,
+	callARAPNodeId		DisplayString,
+	callARAPSecurity	INTEGER,
+	callARAPV42BIS		INTEGER
+	}
+
+  callARAPLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS deprecated
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callARAPEntry 1 }
+ 
+  callARAPIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS deprecated
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callARAPEntry  2 }
+
+  callARAPGuest   OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+                }
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+                        "If enabled, allows ARAP guest login service.
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'at_guest'."
+		::= { callARAPEntry 3 }
+					 
+  callARAPNodeId  OBJECT-TYPE
+                SYNTAX DisplayString (SIZE (3..11))
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+                        "The default AppleTalk node ID hint that is
+			used by the Annex on this port.  The address 
+			consists of two parts separated by a dot. The 
+			address may be in either hex or decimal 
+			format. The first part is the network address
+ 			and ranges from 0 to 65534 (0x0000 to 0xFFFE).
+	 	 	The second part is the node address and ranges
+ 			from 0 to 254 (0x00 to 0xFE).  
+
+			Example:
+			  0x00BF.0xFD  191.253  0x00BF.253  191.0xFD
+			are all the same address.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'at_nodeid'."
+		::= { callARAPEntry 4 }
+								 
+  callARAPSecurity        OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+                }
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+                        "Controls whether ACP service is enabled for
+			this port when establishing an AppleTalk
+			connection.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'at_security'."
+		::= { callARAPEntry 5 }
+ 
+  callARAPV42BIS        OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+                        disabled(2)
+		}
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Controls whether V.42bis compression is done
+			during an ARAP session.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'arap_v42bis'."
+		::= { callARAPEntry 6 }
+
+
+-- TN3270 parameters
+
+  callTN3270Table	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallTN3270Entry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Table of entries of TN3270 parameters for
+			active calls.
+
+			Note:This object is not valid for 
+			Synchronous ports."
+		::= { connections 11 }
+
+  callTN3270Entry	OBJECT-TYPE
+		SYNTAX CallTN3270Entry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Call's TN3270 parameters."
+		INDEX  { callTN3270LineIdx, callTN3270Idx }
+		::= { callTN3270Table 1 }
+
+  CallTN3270Entry	::= SEQUENCE {
+	callTN3270LineIdx	INTEGER,
+	callTN3270Idx		INTEGER,
+	callTN3270PrinterHost	IpAddress,
+	callTN3270PrinterName	DisplayString
+	}
+
+  callTN3270LineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS deprecated
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callTN3270Entry 1 }
+ 
+  callTN3270Idx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS deprecated
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callTN3270Entry  2 }
+
+  callTN3270PrinterHost OBJECT-TYPE
+		SYNTAX IpAddress 
+		ACCESS read-only
+		STATUS deprecated
+                DESCRIPTION
+			"The IP address of the machine running a 
+			Berkeley-style lpd server.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'tn3270_printer_name'."
+		::= { callTN3270Entry 3 }
+ 
+  callTN3270PrinterName OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-only
+                STATUS deprecated
+		DESCRIPTION
+			"A valid printer name contained in the 
+			/etc/printcap file on the remote host.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'tn3270_printer_name'."
+		::= { callTN3270Entry 4 }
+
+-- Port LAT parameters
+
+  callLATTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallLATEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Table of entries of LAT parameters for 
+			active calls.
+
+			Note:This object is not valid for 
+			synchronous ports."
+		::= { connections 12 }
+
+  callLATEntry	OBJECT-TYPE
+		SYNTAX CallLATEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Call's LAT parameters."
+		INDEX  { callLATLineIdx, callLATIdx }
+		::= { callLATTable 1 }
+
+  CallLATEntry	::= SEQUENCE {
+	callLATLineIdx		INTEGER,
+	callLATIdx		INTEGER,
+	callLATAuthMap		OCTET STRING,
+	callLATbEnable		INTEGER,
+	callLATMultiSession	INTEGER
+	}
+
+  callLATLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS deprecated
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callLATEntry 1 }
+ 
+  callLATIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS deprecated
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callLATEntry  2 }
+
+  callLATAuthMap        OBJECT-TYPE
+		SYNTAX OCTET STRING (SIZE (1..32))
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"The syntax of this object is an octet string
+			32 bytes long, with the first byte 
+			representing groups 0 through 7 and the last 
+			byte representing groups 248 through 255.
+ 
+			For example, 0x40 0x25 ... means the groups 
+			1,10,13,15 are valid for this port.
+			A returned value with all bits set to zero is
+ 			the same as setting 'group_value' to 'none'.
+			The object always returns a string 32 bytes 
+			long.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous/ta port parameter
+			'group_value'."
+		::= { callLATEntry 3 }
+
+  callLATbEnable	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"Controls interpretation of LAT Data-B packets
+			received from host.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'latb_enable'."
+		::= { callLATEntry 4 }
+
+  callLATMultiSession     OBJECT-TYPE
+		SYNTAX  INTEGER {
+        	        enable(1),
+                	disable(2)
+		        }
+	        ACCESS read-only
+	        STATUS deprecated
+        	DESCRIPTION
+                	"This parameter allows multisession operation 
+			to be managed on a per port basis. If 
+			multisessions for the server has not been 
+			enabled, any attempt to use this command will
+ 			cause the error message 
+			'ETSMIN-786-Multisession feature Disabled' 
+			to be displayed. 
+
+	                This MIB object corresponds to the NA/admin 
+			port parameter 'multisessions'.
+
+	                Note: 
+			 * SNMP will not check for the Annex 
+			   MultiSession parameter.
+	                 * Setting this MIB object is equivalent to 
+			   defining the port parameter 'multisession' 
+			   through NA/admin."
+	   	::= { callLATEntry 5 }
+
+
+-- Call SETUP information parameters
+
+  callSetupTable	OBJECT-TYPE
+		SYNTAX SEQUENCE OF CallSetupEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Table of entries of call setup information 
+			 active calls."
+		::= { connections 13 }
+
+  callSetupEntry	OBJECT-TYPE
+		SYNTAX CallSetupEntry
+		ACCESS not-accessible
+		STATUS deprecated
+		DESCRIPTION
+			"Call's Setup information parameters."
+		INDEX  { callSetupLineIdx, callSetupIdx }
+		::= { callSetupTable 1 }
+
+  CallSetupEntry ::= SEQUENCE {
+	callSetupLineIdx	INTEGER,
+	callSetupIdx		INTEGER,
+	callSetupPortType	INTEGER,
+	callSetupCallType	INTEGER,
+	callSetupCallingTime	INTEGER,
+	callSetupCallingNbr	DisplayString,
+	callSetupCalledNbr	DisplayString,
+	callSetupCalledSubAddr 	DisplayString,
+	callSetupBearer		INTEGER,
+	callSetupPortNumber	INTEGER
+	}
+
+  callSetupLineIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..'7fffffff'h) -- Change '7fffffff'h to
+          ACCESS read-only		  -- 2147483647 for mib2schema
+          STATUS deprecated
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               DS1 interface to which this entry is applicable.
+               The interface identified by a particular value
+               of this index is the same interface as identified
+               by the same value of ifIndex from the Interfaces
+               table of MIB-II (RFC 1213).
+
+	       Look at anxt1WanModuleTable for an alternative way 
+	       of getting the interface number for a physical WAN
+	       module"
+          ::= { callSetupEntry 1 }
+ 
+  callSetupIdx OBJECT-TYPE
+          SYNTAX INTEGER (1..30)
+          ACCESS read-only 
+          STATUS deprecated
+          DESCRIPTION
+		"A call's B channel number ranging from 1-30."
+          ::= { callSetupEntry  2 }
+
+  callSetupPortType	OBJECT-TYPE
+		SYNTAX INTEGER {
+			async(1),
+			sync(2),
+			ta(3),
+			detecting(4)
+			}
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"A enumerated integer indicating the port 
+			type. Detecting(4) means the annex is in the
+			process of detecting the port type."
+		::= { callSetupEntry 3 }
+
+ callSetupCallType OBJECT-TYPE
+		SYNTAX INTEGER {
+			incoming(1),
+			outgoing(2)
+			}
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"This object returns the whether the call is
+		incoming or outgoing."
+		::= { callSetupEntry 4 }
+
+ callSetupCallingTime OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"This object returns the time the call has been
+		 in progress. Measured in seconds"
+		::= { callSetupEntry 5 }
+
+ callSetupCallingNbr OBJECT-TYPE
+		SYNTAX DisplayString
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"This object returns the calling number."
+		::= { callSetupEntry 6 }
+
+ callSetupCalledNbr OBJECT-TYPE
+		SYNTAX DisplayString
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"This object returns the number called."
+		::= { callSetupEntry 7 }
+
+ callSetupCalledSubAddr OBJECT-TYPE
+		SYNTAX DisplayString
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"This object returns called party subaddress."
+		::= { callSetupEntry 8 }
+
+ callSetupBearer OBJECT-TYPE
+		SYNTAX INTEGER {
+			data(1),
+			voice(2)
+			}
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"This object defines the bearer capability
+		of the incoing call. Possible values are
+		voice and data."
+		::= { callSetupEntry 9 }
+
+ callSetupPortNumber OBJECT-TYPE
+		SYNTAX INTEGER 
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"This object returns the port number the call
+		is assigned to. This object in conjunction with the 
+		object, port type, should be used to cross-reference
+		the information displayed by the CLI command 'who'." 
+		::= { callSetupEntry 10 }
+
+
+
+-- PRI Global parameters. 
+
+  gpGenericMode	OBJECT-TYPE
+		SYNTAX INTEGER {
+			cli(1),
+			slave(2),
+			adaptive(3),
+			unused(4),
+			slip(5),
+			ppp(7),
+			auto-detect(10),
+			auto-adapt(11),
+			rlogin(16),
+			telnet(17)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the mode for access 
+			to the serial line or TA port.  
+			The default is cli. 
+			
+			This MIB object corresponds to the NA/admin
+			asynchronous,ta, synchronous port parameter 
+			'mode'.
+
+			Note: Values 6, 8, 9, 12, 13, 14, 15, and 18
+			cannot be set."
+		::= { globals 1 }
+
+  gpGenericLocation	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"A descriptive string for a this port.  This
+			string is displayed by the CLI who command.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous port parameter
+			'location'."
+		::= { globals 2 }
+
+  gpGenericTermVar	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"A string defining the type of terminal 
+			attached to the serial/ta port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'term_var'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+		::= { globals 3 }
+
+  gpGenericPrompt	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..32))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+		"This parameter defines a port-specific prompt
+		string.  The prompt string consists of displayable
+		characters and embedded formatting codes.  Each
+		formatting code is stored in a single character 
+		in nonvolatile memory.  The maximum number of 
+		characters stored for the prompt string 
+		is 16.  Since the formatting codes consist of
+		a '%' prepended to a single character, the maximum
+		length string that may be entered for this object
+		is 32 characters.  Strings less than 32
+		characters in length will be rejected as bad values
+		if they cannot be stored into 16 characters in 
+		nonvolatile memory after the formatting codes are
+		compressed into single characters.
+			
+		The valid formatting codes are:
+
+		          %a  the string 'annex'     
+			  %c  the string ': '
+			  %d  the date and time      
+			  %i  the Annex's IP address
+			  %j  a newline character    
+			  %l  port location, or 'port n'
+			  %n  the Annex's name       
+			  %p  the port number
+			  %r  the string 'port'      
+			  %s  a space
+			  %t  the time hh:mm:ss      
+			  %u  the user name for port
+			  %%  the string '%'
+
+			
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'prompt'.
+
+			Note: This object is not valid for
+			synchronous ports."
+		::= { globals 4 }
+
+
+  gpGenericCliInterface OBJECT-TYPE
+		SYNTAX INTEGER {
+			uci(1),
+			vci(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Specifies either a Unix or VMS command line 
+			interface. The default is uci.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'cli_interface'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+		::= { globals 5 }
+
+  gpGenericAllowBcast  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether the serial/ta port can 
+			receive administrative broadcast messages.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 
+			'allow_broadcast'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+		::= { globals 6 }
+
+  gpGenericBcastDirection  OBJECT-TYPE
+		SYNTAX INTEGER {
+			port(1),
+			network(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the direction that an administrative
+			broadcast message is sent.  This parameter is
+			valid only when the port is defined as a slave
+			port by the anxpMode parameter.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'broadcast_direction'.
+
+		Note: This object is not valid for Synchronous ports."
+
+		::= { globals 7 }
+
+  gpGenericImask7Bits  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, instructs the Annex to ignore
+			the eighth bit of all received characters
+			on the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'imask_7bits'.
+
+		Note: This object is not valid for Synchronous ports."
+
+		::= { globals 8 }
+
+  gpGenericCliImask7	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Defines whether input at the CLI is masked to
+			7 bits.  The default is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'cli_imask7'. The
+			default value for this object is enabled.
+
+		Note: This object is not valid for Synchronous ports."
+
+		::= { globals 9 }
+
+
+  gpGenericBanner	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2),
+			beforesec(3),
+			aftersec(4),
+                        motd-before-sec(5),
+                        motd-after-sec(6)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Specifies whether the Annex banner and message-
+			of-the-day are displayed on the port.  The
+			default is enabled.
+		This has four possible actions:
+
+		default, Y, yes, unset:       banner before security, 
+					      motd after
+		none, N:                      no banner or motd
+		beforesec:                    banner and motd before 
+					      security
+		aftersec:                     banner and motd after 
+					      security
+                motd-before-sec:              motd before security; no
+                                              banner
+                motd-after-sec:               motd after security; no
+                                              banner
+			This MIB object corresponds to the NA/admin 
+			asynchronous port parameter 'banner'.
+		Note: This object is not valid for Synchronous ports."
+
+		::= { globals 10 }
+
+  gpGenericTcpKeepAlive OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The default keep-alive value for connections
+			to this serial port.  If this is zero, use the
+			value specified by anxTcpKeepAlive.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'tcp_keepalive'.
+
+		Note: This object is not valid for Synchronous ports."
+
+		::= { globals 11 }
+
+  gpGenericDedicatedArgs	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..100))
+		ACCESS read-write
+                STATUS mandatory
+		DESCRIPTION
+			"Command line arguments to be passed to process
+			started by a dedicated port with mode set to
+			'telnet', 'tn3270', 'rlogin', 'connect' (if LAT
+			is in use) or 'call'.
+			This object is not valid for TA ports.
+
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'dedicated_arguments'.
+
+		Note: This object is not valid for Synchronous ports."
+		::= { globals 12 }
+
+  gpGenericModemVar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+		STATUS mandatory
+                DESCRIPTION
+			"A string defining the type of modem attached
+			to the serial port.
+			This object is not valid for TA ports.
+
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'type_of_modem'.
+
+		Note: This object is not valid for Synchronous ports."
+		::= { globals 13 }
+
+
+  gpGenericDefSessMode       OBJECT-TYPE
+		SYNTAX INTEGER {
+			interactive(1),
+			passthru(2),
+			passall(3),
+			transparent(4)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The default session mode when the DECServer command
+			interface is configured.  The default is interactive.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'default_session_mode'.
+
+	Note: This object is not valid for Synchronous ports."
+
+		::= { globals 14 }
+
+  gpGenericResolveProtocol   OBJECT-TYPE
+                SYNTAX INTEGER {
+                        connect(15),
+                        telnet(17),
+                        any(19)
+                }
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "Default host protocol to use when starting a
+                        dedicated port and the protocol is not explicitly
+                        specified in the command.  Is set to one of
+                        'telnet', connect, or any.  Any means to try LAT
+                        (connect) first and if that fails, try telnet.
+
+                        This MIB object corresponds to the NA/admin
+                        asynchronous/ta port parameter 'resolve_protocol.
+
+		Note: This object is not valid for Synchronous ports."
+
+		::= { globals 15 }
+
+
+-- ports flow control and signal parameters.
+
+-- { globals 16 } is reserved
+
+  gpSignalInputStartChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The control character sequence that restarts
+			input if the charPortInFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'input_start_char'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+		::= { globals 17 }
+
+  gpSignalInputStopChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The control character sequence that stops
+			input if the charPortInFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'input_stop_char'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+		::= { globals 18 }
+
+  gpSignalOutputStartChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The control character sequence that restarts
+			output if the charPortOutFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'output_start_char'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+
+		::= { globals 19 }
+
+  gpSignalOutputStopChar  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The control character sequence that stops
+			output if the charPortOutFlowType parameter 
+			(in the char MIB) is set to xonXoff.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'output_stop_char'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+		::= { globals 20 }
+
+  gpSignalIxanyFlowCtrl  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter specifies whether any input
+			character will be treated as a start (xon)
+			character when output has been suspended by
+			a stop (xoff) character.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'ixany_flow_control'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+
+		::= { globals 21 }
+
+-- { globals 22 } is reserved
+
+  gpSignalForwardKey        OBJECT-TYPE
+                SYNTAX DisplayString (SIZE(0..16))
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "Defines a control character sequence as an
+                        attention character to switch the user to
+                        the next session.  The Annex-II only allows
+                        a single control character (eg. ^A), while
+                        the Annex3 and MicroAnnex allow a string
+                        of control characters to be defined
+                        (eg. ^A^B^Z).
+
+                        This MIB object corresponds to the NA/admin
+                        asynchronous/ta port parameter 'forward_key'.
+
+			Note: This object is not valid for 
+			synchronous ports."
+                ::= { globals 23 }
+
+  gpSignalBackwardKey       OBJECT-TYPE
+                SYNTAX DisplayString (SIZE(0..16))
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "Defines a control character sequence as an
+                        attention character to switch the user to
+                        the previous session.  The Annex-II only allows
+                        a single control character (eg. ^A), while
+                        the Annex3 and MicroAnnex allow a string
+                        of control characters to be defined
+                        (eg. ^A^B^Z).
+
+                        This MIB object corresponds to the NA/admin
+                        asynchronous/ta port parameter 'Backward_key'.
+
+		Note: This object is not valid for Synchronous ports."
+                ::= { globals 24 }
+
+ -- { globals 25 } is reserved
+			   
+ -- { globals 26 } is reserved
+
+ -- { globals 27 } is reserved
+
+ -- { globals 28 } is reserved
+
+ -- { globals 29 } is reserved
+
+--  port login parameters.		
+
+  gpLoginVciLoginPortPasswd	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Enables the port password if the port is
+			configured as a DECServer interface port.
+			The default is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'login_port_password'."
+
+		::= { globals 30 }
+
+  gpLoginVciLoginTimeout   OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Enables a login timer if the port is configured
+			as a DECServer interface port.  The default
+			is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'login_timeout'."
+
+		::= { globals 31 }
+
+
+-- port timer and counter parameters
+
+  gpTimerForwardTimer  OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the inter-character
+			timer that sets the amount of time, in tens of
+			milliseconds, that will elapse before
+			forwarding the received data.  The value of
+			5 turns off the timer.  Setting this object
+			to 0 causes the default value of 5 to be used.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'forwarding_timer'."
+		::= { globals 32 }
+
+  gpTimerForwardCount OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Specifies the number of received characters
+			buffered for the port by the Annex before
+			forwarding the characters to the host or 
+			network.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'forwarding_count'."
+		::= { globals 33 }
+
+ gpTimerCliInactivity  OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The amount of time, in minutes, that the Annex
+			waits before hanging up the serial/ta port after
+			it becomes idle.  A value of 0 turns off the
+			timer.  A value of 255 means immediate, which
+			causes the Annex to hang up the port immediately
+			after exiting from the last job.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'cli_inactivity'."
+
+		::= { globals 34 }
+
+  gpTimerInactivityTimer  OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The amount of time, in minutes, which a port
+			can remain inactive before the Annex terminates
+			all sessions and resets the port.  A value of
+			0 disables the timer.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'inactivity_timer'."
+		::= { globals 35 }
+
+ gpTimerInputIsActivity	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether received input characters
+			are considered as activity for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'input_is_activity'."
+		::= { globals 36 }
+
+  gpTimerOutputIsActivity  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether transmitted output characters
+			are considered as activity for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'output_is_activity'."
+		::= { globals 37 }
+
+ 
+  gpTimerResetIdleTimer  OBJECT-TYPE
+		SYNTAX INTEGER {
+			input(1),
+			output(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines whether input or output resets the
+			idle timer for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'reset_idle_time_on'."
+
+		::= { globals 38 }
+
+  gpTimerLongBreak	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			returns the user to the CLI prompt after 
+			receiving a break greater than two seconds.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'long_break'."
+
+		::= { globals 39 }
+
+  gpTimerShortBreak  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			returns the user to the CLI prompt after 
+			receiving a break shorter than two seconds.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'short_break'."
+		::= { globals 40 }
+
+ 
+-- security parameters
+
+  gpSecurityUserName	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"A string defining the default user name for 
+			the user of this serial/ta port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'user_name'."
+		::= { globals 41 }
+
+  gpSecurityCli  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether security is
+			enabled for the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'cli_security'."
+		::= { globals 42 }
+
+  gpSecurityConnect  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the host-based
+			security policy is enabled for access from the 
+			port to the network.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'connect_security'."
+		::= { globals 43 }
+
+  gpSecurityPortServer  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the host-based
+			security policy is enabled for access to the 
+			port from the port server.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'port_server_security'."
+		::= { globals 44 }
+
+  gpSecurityPortPasswd  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines a password for the
+			port for local password protection.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'port_password'."
+		::= { globals 45 }
+
+   gpSecurityIpsoClass OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			secret(2),
+			topsecret(3),
+			confidential(4),
+			unclassified(5)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the IP security classification for
+			packets sent and received on this port.  The
+			default value is none.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'ipso_class'."
+		::= { globals 46 }
+
+  gpSecurityIpx OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether IPX security is enabled on
+			this port.  The default is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'ipx_security'."
+		::= { globals 47 }
+	
+
+-- Line editing parameters.
+
+  gpLineEditAttnChar	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines a control character sequence as an
+			attention character to return the user to
+			the CLI prompt.  The Annex-II only allows
+x			a single control character (eg. ^A), while
+			the Annex3 and MicroAnnex allow a string
+			of control characters to be defined
+			(eg. ^A^B^Z).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'attn_string'."
+		::= { globals 48 }
+
+
+  gpLineEditEcho OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			echoes all characters as they are received 
+			from the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'echo'."
+		::= { globals 49 }
+
+  gpLineEditTelnetEscape OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the control character that returns the
+			user to the 'telnet:' prompt when running the
+			CLI telnet command.  
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			The value 'U' disables this feature on the
+			specified port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'telnet_escape'."
+		::= { globals 50 }
+
+  gpLineEditTelnetCRLF OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Defines what characters are transmitted 
+			out the port to the network when the 
+			End-of-Line character is sensed.  'enabled' 
+			means transmit Line-Feed and Carriage-Return.  
+			'disabled' means transmit Carriage-Return 
+			and NULL.  The default is enabled.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'telnet_crlf'."
+		::= { globals 51 }
+
+
+  gpLineEditMapToLower OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex translates all upper
+			case characters to lower case as they are 
+			received from the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'map_to_lower'."
+		::= { globals 52 }
+
+  gpLineEditMapToUpper OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex translates all lower
+			case characters to upper case as they are
+			transmitted to the port.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'map_to_upper'."
+		::= { globals 53 }
+
+ gpLineEditCharErase  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			echoes the character erase and word erase 
+			characters for a video terminal (enabled) 
+			or for a hard-copy terminal (disabled).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'char_erase'."
+		::= { globals 54 }
+
+  gpLineEditEraseChar OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the character erase control character
+			sequence.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'erase_char'."
+		::= { globals 55 }
+ 
+  gpLineEditLineErase OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			echoes the line erase character for a video 
+			terminal (enabled) or for a hard-copy terminal 
+			(disabled).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'line_erase'."
+		::= { globals 56 }
+
+  gpLineEditEraseLine OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the line erase control character
+			sequence.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'erase_line'."
+		::= { globals 57 }
+
+  gpLineEditEraseWord OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the word erase control character
+			sequence.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'erase_word'."
+		::= { globals 58 }
+
+  gpLineEditHardwareTabs  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, this parameter allows the Annex
+			to expand ASCII tab characters.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'hardware_tabs'."
+		::= { globals 59 }
+
+
+  gpLineEditRedisplayLine OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the reprint line control character
+			sequence.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'redisplay_line'."
+		::= { globals 60 }
+
+  gpLineEditToggleOutput OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (1..2))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the flush control character used to
+			flush the output buffer.
+			
+			This value of this object can be either a single
+			displayable character or two characters of the
+			form '^x', where '^x' is translated as 'Control-x'.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'toggle_output'."
+		::= { globals 61 }
+
+  gpLineEditNewLineTerm OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether a carriage
+			return is echoed as just a carriage return
+			(enabled), or whether the carriage return is
+			echoed as a carriage return and line feed.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'newline_terminal'."
+		::= { globals 62 }
+
+
+-- Networking Protocol parameters.
+
+  gpNetLocalAddr	OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address for the Annex's side
+			of the point-to-point (SLIP or PPP) link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous port parameter
+			 'local_address'."
+	
+		::= { globals 63 }
+
+  gpNetRemoteAddr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The Internet address for the host at the
+			remote end of the point-to-point (SLIP or PPP) 
+			link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous port parameter
+			 'remote_address'."
+
+		::= { globals 64 }
+
+
+  gpNetPppDialupAddr	OBJECT-TYPE
+	SYNTAX INTEGER {
+                        local(1),
+                        authserver(2),
+                        dhcp(3)
+                }
+                ACCESS read-write 
+                STATUS mandatory
+                DESCRIPTION
+			"
+                        local(1) - The annex will get the 
+			PPP dialup addresses from the port
+			parameters local_address and remote_address.
+        
+                        acp(2) - The Annex requests the
+                        PPP dialup addresses from the host-based
+                        ACP.
+                        
+                        dhcp(3) - The Annex requests the
+                        PPP dialup addresses from the host-based
+                        DHCP.
+                         
+                        This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous global port 
+			parameter 'address_origin'."
+		::= { globals 65 }
+
+
+  gpNetMetric OBJECT-TYPE
+		SYNTAX INTEGER (0..64)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the hop count to 
+			the remote end of the SLIP or PPP interface.
+			Setting this object to 0 defaults to a
+			value of 1.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta. synchronous port parameter
+			 'metric'."
+
+		::= { globals 66 }
+
+  gpNetSlipSecure	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"If anxEnableSecurity is not set, this 
+			parameter selects slip session logging.  If 
+			anxEnableSecurity is set, this parameter 
+			permits slip access only from secure ports.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta and sync port parameter 'slip_ppp_security'."
+		::= { globals 67 }
+
+  gpNetInactivity     OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write
+                STATUS mandatory
+		DESCRIPTION
+			"The number of units allowed for serial protocol
+			inactivity on the port.  The type of unit, minutes
+			or seconds, is defined by the object 
+                        anxpNetInactivityUnits.  If the type of units is
+                        'seconds', the actual granularity is only 5
+                        seconds.  When the interval expires,
+                        the port is automatically reset.  A value of 0
+			disables the timer.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous port parameter 
+			'net_inactivity'."
+		::= { globals 68 }
+
+  gpNetDoCompression  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex will attempt to negotiate
+			TCP/IP header compression on this serial link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 
+			'do_compression'."
+		::= { globals 69 }
+
+  gpNetAllowCompression  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex will allow TCP/IP
+			header compression on this serial link only
+			if the other end of the serial link initiates
+			the compression.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous, ta, synchronous port parameter
+			 'allow_compression'."
+		::= { globals 70 }
+
+  gpNetInactivityUnits OBJECT-TYPE
+		SYNTAX INTEGER {
+			minutes(1),
+			seconds(2)
+		}
+		ACCESS read-write
+                STATUS mandatory
+		DESCRIPTION
+			"The type of units that are used for the 
+			port's net inactivity timer.  See also the 
+			anxpNetInactivity object.  The default value
+			is 'minutes'.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, synchronous port parameter 
+			'net_inactivity_units'."
+		::= { globals 71 }
+
+-- Slip parameters.
+
+ gpSlipSubnetMask  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The subnet mask for this SLIP interface.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'subnet_mask'."
+		::= { globals 72 }
+
+ gpSlipMtuSize OBJECT-TYPE
+		SYNTAX INTEGER {
+			large(1),
+			small(2)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Force the compressed SLIP interface to use
+			a Maximum Transmission Unit (MTU) of either 
+			1024 bytes (large) or 256 bytes (small).  The
+			default is large.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'slip_mtu_size'."
+
+		::= { globals 73 }
+
+  gpSlipNoIcmp  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex will discard any
+			ICMP packets directed to this SLIP link.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'slip_no_icmp'."
+		::= { globals 74 }
+
+  gpSlipTos	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, the Annex sends interactive
+			traffic over this SLIP link before any other
+			traffic.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'slip_tos'."
+
+		::= { globals 75 }
+
+-- PPP parameters
+
+  gpPPPMru    OBJECT-TYPE
+		SYNTAX INTEGER (64..1500)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the maximum receive
+			unit in bytes. The default value is 1500.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, and synchronous port
+			parameter 'ppp_mru'."
+		::= { globals 76 }
+
+  gpPPPAcm    OBJECT-TYPE
+		SYNTAX DisplayString  (SIZE (8..10))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter specifies which of the first
+			32 bytes (0x00, ... 0x1F) can be sent as
+			clear text and which need to be escaped.  A
+			bit on in the mask indicates the character
+			must be escaped.  The mask should be specified
+			as an 8 hex character string (0x1F000000 and
+			1F000000 are both acceptable).
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'ppp_acm'."
+		::= { globals 77 }
+
+  gpPPPSecurityProto OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			pap(2),
+			chap(3),
+			chap-pap(4)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Defines which security protocol will be used
+			to authenticate the remote user.  This
+			parameter must be set and the Annex 
+			enable_security (anxEnableSecurity) must be 
+			enabled before authentication is performed.  
+			The default is none
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'ppp_security_protocol'."
+		::= { globals 78 }
+
+  gpPPPRemoteUser	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The username used by the Annex to identify 
+			itself if the remote PPP peer asks for 
+			authentication.  
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'ppp_username_remote'."
+		::= { globals 79 }
+
+  gpPPPRemotePasswd	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The password used by the Annex to identify 
+			itself if the remote PPP peer asks for 
+			authentication.  Reading this parameter
+			will return either <set> if the password is
+			defined or <unset> if the password is not
+			defined.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta/sync port parameter 'ppp_password_remote'."
+		::= { globals 80 }
+
+
+  gpPPPNcp    OBJECT-TYPE
+                SYNTAX INTEGER (1..2147483647)
+		ACCESS read-write
+		STATUS mandatory
+                DESCRIPTION
+			"A bitmask to set the PPP NCP Options:
+			 0x0001 NCP_ALL
+			 0x0002 NCP_IPCP
+			 0x0004 NCP_ATCP
+			 0x0008 NCP_IPXCP
+			 0x0010 NCP_MP
+			 0x0020 NCP_CCP
+			 0x0040 NCP_CBCP
+			 "
+		::= { globals 81 }
+
+  gpPPPIpxNetwork	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE(1..8))
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+			"The IPX network number for an IPX PPP connection
+			using this port. When the IPX PPP connection is
+			established the network number will be negotiated.
+			If one end of the connection is set to zero then 
+			the value from the other end of the connection will
+			be used.
+			The value of this object is an 8 digit hexadecimal
+			number string representing the IPX network segment
+			assigned to this port. The value must be unique 
+			across the network domain.
+			This MIB object corresponds to the NA/admin
+			asynchronous/ta/sync port parameter 'ppp_ipx_network'."
+		::= { globals 82 }
+
+  gpPPPIpxNode	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE(11..17))
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+			"The IPX node number for an IPX PPP connection
+			using this port. 
+			The value of this object is a 12 digit
+			hexadecimal number string representing the IPX
+			node number assigned to this port.
+			Note the string is expected in the form:
+			12-3a-4-7-89-23.Each part of the address 
+			must be a hex value separated by a hyphen.
+			This MIB object corresponds to the NA/admin
+			asynchronous/ta/sync port parameter 'ppp_ipx_node'."
+		::= { globals 83 }
+
+-- ARAP parameters
+
+  gpARAPGuest   OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+                }
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+                        "If enabled, allows ARAP guest login service.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'at_guest'."
+		::= { globals 84 }
+					 
+  gpARAPNodeid  OBJECT-TYPE
+                SYNTAX DisplayString (SIZE (3..11))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+                        "The default AppleTalk node ID hint that is
+			used by the Annex on this port.  The address 
+			consists of two parts separated by a dot.  The 
+			address may be in either hex or decimal format.  
+			The first part is the network address and ranges from 
+			0 to 65534 (0x0000 to 0xFFFE).  The second part 
+			is the node address and ranges from 0 to 254 (0x00 
+			to 0xFE).  
+
+			Example:
+			
+			  0x00BF.0xFD  191.253  0x00BF.253  191.0xFD
+			  
+			are all the same address.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'at_nodeid'."
+		::= { globals 85 }
+								 
+  gpARAPSecurity        OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+                }
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+                        "Controls whether ACP service is enabled for
+			this port when establishing an AppleTalk
+			connection.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'at_security'."
+		::= { globals 86 }
+ 
+  gpARAPV42BIS        OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+                        disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Controls whether V.42bis compression is done
+			during an ARAP session.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'arap_v42bis'."
+		::= { globals 87 }
+
+
+-- TN3270 parameters
+
+  gpTN3270PrinterHost OBJECT-TYPE
+		SYNTAX IpAddress 
+		ACCESS read-write
+		STATUS deprecated
+                DESCRIPTION
+			"The IP address of the machine running a 
+			Berkeley-style lpd server.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'tn3270_printer_name'."
+		::= { globals 88 }
+ 
+  gpTN3270PrinterName OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+                STATUS deprecated
+		DESCRIPTION
+			"A valid printer name contained in the 
+			/etc/printcap file on the remote host.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'tn3270_printer_name'."
+		::= { globals 89 }
+
+-- Port LAT parameters
+
+  gpLATAuthMap        OBJECT-TYPE
+		SYNTAX OCTET STRING (SIZE (1..32))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"This port parameter is functionally identical to
+	  		anxpLatAuthGroupVal and corresponds to the 
+			NA/admin Annex parameter 'group_value'.
+
+			The syntax of this object is an octet string
+			32 bytes long, with the first byte 
+			representing groups 0 through 7 and the last 
+			byte representing groups 248 through 255.
+ 
+			For example, 0x40 0x25 ... means the groups 
+			1,10,13,15 are valid for this port.
+			A returned value with all bits set to zero is the
+			same as setting 'group_value' to 'none'.
+			The object always returns a string 32 bytes long.
+
+			Note: You may use either this object or 
+			anxpLatAuthVal object to read or set the 
+			'group_value' parameter.anxpLatAuthMap is 
+			preferred."
+		::= { globals 90 }
+
+  gpLATbEnable	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"Controls interpretation of LAT Data-B packets
+			received from host.
+			
+			This MIB object corresponds to the NA/admin 
+			asynchronous/ta port parameter 'latb_enable'."
+
+		::= { globals 91 }
+
+  gpLATMultiSession     OBJECT-TYPE
+		SYNTAX  INTEGER {
+        	        enable(1),
+                	disable(2)
+		        }
+	        ACCESS read-write
+	        STATUS deprecated
+        	DESCRIPTION
+                	"This parameter allows multisession operation to 
+			be managed on a per port basis. If multisessions 
+			for the server has not been enabled, any attempt 
+			to use this command will cause the error message
+			'ETSMIN-786-Multisession feature Disabled' to be 
+			displayed. 
+
+	                This MIB object corresponds to the NA/admin port 
+			parameter 'multisessions'.
+
+	                Note: * SNMP will not check for the Annex 
+				MultiSession parameter.
+	                      * Setting this MIB object is equivalent to 
+				defining the port parameter 'multisession' 
+				through NA/admin."
+
+	   	::= { globals 92 }
+
+
+-- parameters from character MIB RFC1316
+
+  gpcharPortInFlowType OBJECT-TYPE
+                SYNTAX INTEGER { 
+			none(1), 
+			xonXoff(2), 
+			hardware(3)
+			}
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                    "The port's type of input flow control.  'none'
+                    indicates no flow control at this level or below.
+                    'xonXoff' indicates software flow control by
+                    recognizing XON and XOFF characters.  'hardware'
+                    indicates flow control delegated to the lower level,
+                    for example a parallel port.
+
+                    'ctsRts' and 'dsrDtr' are specific to RS-232-like
+                    ports.  Although not architecturally pure, they are
+                    included here for simplicity's sake.
+		    Default is eia or hardware(3)."
+                ::= { globals 94 }
+
+  gpcharPortOutFlowType OBJECT-TYPE
+                SYNTAX INTEGER { 
+			none(1), 
+			xonXoff(2), 
+			hardware(3)
+			}
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                    "The port's type of output flow control.  'none'
+                    indicates no flow control at this level or below.
+                    'xonXoff' indicates software flow control by
+                    recognizing XON and XOFF characters.  'hardware'
+                    indicates flow control delegated to the lower level,
+                    for example a parallel port.
+
+                    'ctsRts' and 'dsrDtr' are specific to RS-232-like
+                    ports.  Although not architecturally pure, they are
+                    included here for simplicy's sake.
+		    Default is eia or hardware(3)."
+                ::= { globals 95 }
+
+  gpcharPortSessionMaximum OBJECT-TYPE
+                SYNTAX INTEGER (1..16)
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                    "The maximum number of concurrent sessions allowed
+                    on the port.  A value of -1 indicates no maximum.
+                    Setting the maximum to less than the current 
+		    number of sessions has unspecified results.
+		    Default is 3. This MIB object corresponds to NA/Admin
+		    parameter 'max_session_count'."
+                ::= { globals 96 }
+
+-- MIB objects from rs232 MIB RFC1317
+
+  gprs232AsyncPortBits OBJECT-TYPE
+           SYNTAX INTEGER (5..8)
+           ACCESS read-write
+           STATUS deprecated
+           DESCRIPTION
+               "The port's number of bits in a character. This object
+ 		corresponds to the admin parameter data_bits"
+           ::= { globals 97 }
+
+  gprs232AsyncPortStopBits OBJECT-TYPE
+           SYNTAX INTEGER { 
+			one(1), 
+			two(2),
+                        one-and-half(3)
+			}
+           ACCESS read-write
+           STATUS deprecated
+           DESCRIPTION
+               "The port's number of stop bits. This object corresponds
+   		to the admin parameter stop_bits"
+           ::= { globals 98 }
+
+  gprs232AsyncPortParity OBJECT-TYPE
+           SYNTAX INTEGER { 
+			none(1), 
+			odd(2), 
+			even(3)
+			}
+           ACCESS read-write
+           STATUS deprecated
+           DESCRIPTION
+               "The port's sense of a character parity bit."
+           ::= { globals 99 }
+
+  gpV120Mru    OBJECT-TYPE
+		SYNTAX INTEGER (30..260)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the maximum receive
+			unit in bytes. The default value is 256.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, and synchronous port
+			parameter 'v120_mru'."
+		::= { globals 101 }
+
+gpMpMrru    OBJECT-TYPE
+		SYNTAX INTEGER (64..1600)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter sets the upper limit of
+			the MRRU LCP negotiation. All LCP 
+			negotiations will start with this value;
+			negotiation downward only is allowed.
+			The default value is 1500.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, and synchronous port
+			parameter `mp_mrru'."
+		::= { globals 102 }
+
+gpMpEndPointClass    OBJECT-TYPE
+                SYNTAX INTEGER {
+                        nullclass(1),
+			local(2),
+                        unitipaddr(3),
+                        unitmacaddr(4),
+                        psnDirNbr(6)
+                        }
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "This parameter sets the preference for the
+                        Endpoint Discriminator. PPP Magic Number
+                        Block(5) isexcluded; it doesn't guarantee
+                        unique link identities and could lead to
+                        illegal bundle memebership.
+                        The default is unitmacaddr(4).
+ 
+                        This MIB object corresponds to the NA/admin
+                        asynchronous, ta, and synchronous port
+                        parameter `mp_endpoint_option'."
+                ::= { globals 103}
+
+gpMpEndPointValue    OBJECT-TYPE
+                SYNTAX DisplayString
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "This parameter sets the value of the
+                        Endpoint Discriminator for options that
+                        require user-configured information.
+                        This parameter is only valid when
+                        gpMPEndPointClass is set to Public Switched
+                        Network Directory Number E.164 (6).
+
+		This MIB object corresponds to the NA/admin
+		asynchronous, ta, and synchronous port
+		parameter `mp_endpoint_address'."
+	 ::= { globals 104}
+
+gpProxyArpEnable    OBJECT-TYPE
+                SYNTAX INTEGER {
+                        enabled(1),
+			disabled(2)
+                        }
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "Specifies whether the Annex will proxy
+			ARP all remote IP connections.  A value
+			of enabled(1) will allow the Annex to proxy
+			all remote IP connections.  A value of
+			disabled(2) allows the Annex to proxy only
+			remote IP connections having the same 
+			subnet address as the Annex.
+
+			This MIB object corresponds to the 
+			NA/admin global port parameter 
+			'proxy_arp_enabled'."
+	 ::= { globals 105}
+
+gpPPPTraceLevel OBJECT-TYPE
+   	SYNTAX INTEGER {
+		control(1),
+		data(2),
+		control-and-data(3),
+		unused(4),
+		control-in-hex(5),
+		data-in-hex(6),
+		control-and-data-in-hex(7),
+		none(8)
+	}
+   	ACCESS  read-write
+   	STATUS mandatory
+   	DESCRIPTION
+   		"Controls whether PPP trace messages are sent to the
+		syslog facility or not.  The default value is none(0).
+		This MIB object corresponds to the na/admin port parameter 
+		ppp_trace_level."
+   	::= { globals 106  }
+
+-- anxtunnelport for UDAS
+
+	anxTunnelTable	OBJECT-TYPE
+			SYNTAX SEQUENCE OF AnxTunnelEntry
+			ACCESS not-accessible
+			STATUS mandatory
+			DESCRIPTION
+				"Table of tunnel entries."
+			::= { anxtunnelport 1 }
+
+	anxTunnelEntry	OBJECT-TYPE
+			SYNTAX AnxTunnelEntry
+			ACCESS not-accessible
+			STATUS mandatory
+			DESCRIPTION
+				"A UDAS Tunnel entry."
+			INDEX { anxTunnelLineIndex, anxTunnelUnitIndex }
+			::= { anxTunnelTable 1 }
+
+	AnxTunnelEntry 		::= SEQUENCE {
+		anxTunnelLineIndex			INTEGER,
+		anxTunnelUnitIndex			INTEGER,
+		anxTunnelWanProtocol			INTEGER,
+		anxTunnelWanAddress			OCTET STRING,
+		anxTunnelState				INTEGER,
+		anxTunnelMnIPAddress			IpAddress,
+		anxTunnelMnIPXAddress			DisplayString,
+		anxTunnelHaAddress			IpAddress
+	}
+
+	anxTunnelLineIndex		OBJECT-TYPE
+		SYNTAX INTEGER  (1..'7fffffff'h) -- Change `7fffffff'h to
+		ACCESS read-only 	         -- 2147483647 for mib2schema
+		STATUS mandatory
+		DESCRIPTION
+		 "The index value which uniquely identifies the
+		 DS1 interface to which this entry is applicable.
+	 	 The interface identified by a particular value
+       	 	 of this index is the same interface as identified
+       		 by the same value of ifIndex from the Interfaces
+       	 	 table of MIB-II (RFC 1213). This is unused for 
+		 the ra2000, ra4000 platforms but needs to be 
+		 filled in with a 1.
+
+	         Look at anxt1WanModuleTable for an alternative way 
+	         of getting the interface number for a physical WAN
+	         module"
+			::= { anxTunnelEntry 1 }
+
+	anxTunnelUnitIndex		OBJECT-TYPE
+			SYNTAX INTEGER   (1..3000)
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+		"On a PRI interface, this is a call's B channel number ranging
+		 from 1 to anxt1TotChan. On a port interface, this
+		 is the port number ranging from 1 to ports.totalports."
+			::= { anxTunnelEntry 2 }
+
+
+	anxTunnelWanProtocol	OBJECT-TYPE
+			SYNTAX INTEGER {
+				serial-line(1),
+				ppp(2),
+				framerelay(3)
+			}
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"This field describes the protocol used 
+				 on the WAN interface from the Gateway 
+				 (or Home Agent) to the customer premise 
+				 equipment (CPE)."
+			::= { anxTunnelEntry 3 }
+
+	anxTunnelWanAddress	OBJECT-TYPE
+			SYNTAX OCTET STRING  (SIZE (0..32))
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This field describes the WAN Address from the
+			Gateway (or Home Agent) to the customer
+			premise equipment (CPE)."
+			::= { anxTunnelEntry 4 }
+
+	anxTunnelState		OBJECT-TYPE
+			SYNTAX INTEGER {
+				reserved(1),
+				pending(2),
+				registered(3)
+			}
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"This fields describes the Tunnel's 
+				 current state.
+			reserved - visitor added,
+			  authentication in progress
+			pending - authentication complete, 
+		          registration requisition has been sent 
+			  to gateway, tunnel not registered yet
+			registered - tunnel is up"
+
+			::= { anxTunnelEntry 5 }
+
+	anxTunnelMnIPAddress	OBJECT-TYPE
+			SYNTAX IpAddress
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The IP Address of the Remote Node."
+			::= { anxTunnelEntry 6 }
+
+	anxTunnelMnIPXAddress		OBJECT-TYPE
+			SYNTAX DisplayString  (SIZE(1..8))
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The IPX Address of the Remote Node."
+			::= { anxTunnelEntry 7 }
+
+	anxTunnelHaAddress		OBJECT-TYPE
+			SYNTAX IpAddress
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The IP Address assigned to the Home Agent."
+			::= { anxTunnelEntry 8 }
+
+-- ss7 MIB objects
+
+ss7Pref1SigGateway OBJECT-TYPE
+          SYNTAX IpAddress
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+                "The IP address of the primary SS7 gateway.
+                 The default value is 0.0.0.0.
+                 This MIB object corresponds to the NA/admin
+                 parameter 'pref1_sig_gateway'."
+                ::= { ss7 1 }
+
+ss7Pref2SigGateway OBJECT-TYPE
+          SYNTAX IpAddress
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+               "The IP address of the primary secondary SS7 gateway.
+                This may be zero if a redundant SS7 gateway is not 
+		available.
+                The default value is 0.0.0.0.
+                This MIB object corresponds to the NA/admin
+        	parameter 'pref2_sig_gateway'."
+                ::= { ss7 2 }
+
+ss7Pref1SigPort OBJECT-TYPE
+          SYNTAX INTEGER (1..65534)
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+                "The TCP port number used on the primary SS7 gateway.
+                The default is 1000.
+                This MIB object corresponds to the NA/admin parameter
+                'pref1_sig_port'."
+          ::= { ss7 3 }
+
+ss7Pref2SigPort OBJECT-TYPE
+          SYNTAX INTEGER (1..65534)
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+                "The TCP port number used on the secondary SS7 gateway.
+                The default is 1000.  This entry is zero if no redundant 
+		SS7 gateway is available.
+                This MIB object corresponds to the NA/admin parameter
+                'pref2_sig_port'."
+          ::= { ss7 4 }
+
+ss7SigKeepalive OBJECT-TYPE
+            SYNTAX INTEGER (0..255)
+            ACCESS  read-write
+            STATUS mandatory
+            DESCRIPTION
+            "The maximum time to wait for a packet to be received from
+             SS7 server. This value is in seconds. The default value is 
+	     15 seconds.
+             This MIB object corresponds to the NA/admin parameter 
+	     'sig_keepalive'."
+            ::= { ss7 5 }
+
+
+ss7CurrentGateway OBJECT-TYPE
+        SYNTAX IpAddress 
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+ 	" The address of the current SS7 server. This can
+	change dynamically depending on the state of the
+	server."
+        ::= { ss7 6 }
+
+ss7ConnectionTime OBJECT-TYPE
+        SYNTAX DisplayString
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                " Time at which this connection was established 
+                 to the current SS7 Gateway."
+        ::= { ss7 7 }
+
+ss7Registration OBJECT-TYPE
+        SYNTAX INTEGER {
+                notregistered(1),
+		incoming(2),
+		both(3),
+		rasregreject(4)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Describes whether the RAS can accept and/or receive
+                calls.  This is set by the ss7 gateway."
+        ::= { ss7 8 }
+
+ss7ChanTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF Ss7ChanEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		" Table of ss7 Channel information."
+	::= { ss7 9 }
+
+ss7ChanEntry OBJECT-TYPE
+	SYNTAX Ss7ChanEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+	        "The ss7 channel information."
+	INDEX  { ss7WanIndex, ss7ChanNumber }
+	::= { ss7ChanTable 1 }
+
+  Ss7ChanEntry ::= SEQUENCE {
+	ss7WanIndex             INTEGER,
+	ss7ChanNumber           INTEGER,
+	ss7ChanStatus		INTEGER,
+	ss7ChanState		INTEGER
+	}
+
+ss7WanIndex OBJECT-TYPE
+	SYNTAX INTEGER 
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "The index value which uniquely identifies the
+	        Wan Module."
+          ::= { ss7ChanEntry  1 }
+ss7ChanNumber OBJECT-TYPE
+	SYNTAX INTEGER 
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "The index value which uniquely identifies the
+	       Channel Numnber."
+          ::= { ss7ChanEntry  2 }
+
+ss7ChanStatus OBJECT-TYPE
+	SYNTAX INTEGER {
+	        idle(1),
+	        busy(2),
+	        blocked(3),
+		blocking(4),
+	        unblocking(5),
+	        loopback(6),
+	        restarting(7),
+	        continuityTest(8)
+	} 
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "The status of the ds0 channel.
+	                idle(1) - the DS0 is available for calls
+	                busy(2) - call is in progress
+	                blocked(3) - the RAS of the gateway requested block
+	                unblocking(4) -
+	                loopback(5) - loopback requested by the gateway
+	                restarting(6) - DS0 restart requested by the gateway
+	                continuityTest(7) - the RAS or the gateway requested continuity test
+	        "
+          ::= { ss7ChanEntry  3 }
+
+ ss7ChanState OBJECT-TYPE
+	SYNTAX INTEGER {
+	       idle(1),
+	       connected(2),
+	        waitReleaseComplete(3),
+	        waitATConnect(4),
+	        waitRelease(5),
+		waitConnect(6)
+	} 
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "The state of the ds0 channel.
+	               idle(1) - no call in progress
+	               connected(2) - call fully established.
+	               waitReleaseComplete(3) - waiting for Release Complete 
+					        from gateway.
+	               waitATConnect(4) - waiting for connect from WAN 
+					  manager.
+	               waitRelease(5) - waiting for Release from gateway.
+			waitConnect(6) - waiting for connect from gateway."
+          ::= { ss7ChanEntry  4 }
+
+-- nfas MIB objects
+
+nfasPref1SigGateway OBJECT-TYPE
+          SYNTAX IpAddress
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+                "The IP address of the primary nfas gateway.
+                 The default value is 0.0.0.0.
+                 This MIB object corresponds to the NA/admin
+                 parameter 'pref1_sig_gateway'."
+                ::= { nfas 1 }
+ 
+nfasPref2SigGateway OBJECT-TYPE
+          SYNTAX IpAddress
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+               "The IP address of the backup nfas gateway.
+                The default value is 0.0.0.0.
+                This MIB object corresponds to the NA/admin
+                parameter 'pref2_sig_gateway'."
+                ::= { nfas 2 }
+ 
+nfasPref1SigPort OBJECT-TYPE
+          SYNTAX INTEGER (1..65534)
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+                "The TCP port number used on the primary nfas gateway.
+                This MIB object corresponds to the NA/admin parameter
+                'pref1_sig_port'."
+          ::= { nfas 3 }
+ 
+nfasPref2SigPort OBJECT-TYPE
+          SYNTAX INTEGER (1..65534)
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+                "The TCP port number used on the nfas backup gateway.
+                This MIB object corresponds to the NA/admin parameter
+                'pref2_sig_port'."
+          ::= { nfas 4 }
+ 
+nfasGroupName OBJECT-TYPE
+          SYNTAX DisplayString
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+               "This is a trap to indicate the nfas group name." 
+          ::= { nfas 5 }
+
+nfasDchannelstate  OBJECT-TYPE
+          SYNTAX INTEGER 
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "This will indicate whether this interface is
+		 Active or Inactive : 1-Active, 2-Inactive."
+          ::= { nfas 6 }
+
+
+nfasConnectionTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF NfasConnectionEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"Table of nfas connection information."
+        ::= { nfas 7 }
+
+nfasConnectionEntry OBJECT-TYPE
+	SYNTAX  NfasConnectionEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"The nfas connection information."
+	INDEX { nfasInterfaceNo }
+	::= { nfasConnectionTable 1 }
+
+NfasConnectionEntry ::= SEQUENCE {
+	nfasInterfaceStatus	DisplayString,
+	nfasIpAddress		IpAddress,
+	nfasDchannelStatus	DisplayString,   	
+	nfasConnectStatus	DisplayString,
+	nfasInterfaceNo		INTEGER
+	}
+
+nfasInterfaceStatus OBJECT-TYPE
+	SYNTAX DisplayString
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The type of interface - Primary,Backup or Bearer." 
+          ::= { nfasConnectionEntry  1 }
+
+nfasIpAddress OBJECT-TYPE
+        SYNTAX IpAddress 
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The IP Address of the Interface." 
+          ::= { nfasConnectionEntry  2 }
+
+nfasDchannelStatus OBJECT-TYPE
+        SYNTAX DisplayString  
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The D Channel Status - Active or Inactive."
+          ::= { nfasConnectionEntry 3 }
+
+nfasConnectStatus OBJECT-TYPE
+        SYNTAX DisplayString  
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The nfas connect status - Connected or Disconnected."
+          ::= { nfasConnectionEntry 4 }
+
+nfasInterfaceNo OBJECT-TYPE
+        SYNTAX INTEGER 
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The nfas interface number which could be beween 0-19.
+		The Interface No for the primary is always 0."
+          ::= { nfasConnectionEntry 5 }
+
+nfasConnectionStatus OBJECT-TYPE
+          SYNTAX DisplayString
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "This is a trap to indicate the nfas connection status
+                between Primary,Backup and Bearer ."
+          ::= { nfas 8 }
+
+nfasBackupStatus OBJECT-TYPE
+          SYNTAX DisplayString
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "This is a trap to indicate the nfas switch-over status."
+          ::= { nfas 9 }
+
+END
+
+
+
+

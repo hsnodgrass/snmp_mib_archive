@@ -1,0 +1,348 @@
+NOKIA-HWM-MIB DEFINITIONS ::= BEGIN
+--
+-- Copyright (C) 1998  Nokia Telecommunications Oy
+--
+IMPORTS
+    ntcCommonModules, ntcHWMibs, ntcHWReqs
+        FROM NOKIA-COMMON-MIB-OID-REGISTRATION-MIB
+    entPhysicalIndex -- entPhysicalVendorType, entPhysicalDescr
+        FROM ENTITY-MIB
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32 -- NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    MODULE-COMPLIANCE, OBJECT-GROUP -- NOTIFICATION-GROUP
+        FROM SNMPv2-CONF
+    DisplayString, TimeStamp, AutonomousType -- DateAndTime, 
+  	FROM SNMPv2-TC;
+
+ntcHWModule MODULE-IDENTITY
+    LAST-UPDATED "9901080000Z"
+    ORGANIZATION "Nokia"
+    CONTACT-INFO
+        "Anna-Kaisa Lindfors
+         Nokia Telecommunications Oy
+         Hiomotie 5, FIN-00380 Helsinki
+         +358-9-51121
+         anna-kaisa.lindfors@nokia.com"
+    DESCRIPTION
+        "The MIB module that is used to control the
+         Hardware Management information."
+    REVISION        "9808240000Z"
+    DESCRIPTION
+        "Rev 0.1    August 24, 1998 Initial version - ready for review"
+    REVISION        "9809030000Z"
+    DESCRIPTION
+        "Rev 0.2    September 3, 1998 Initial review by Tero Soukko
+                    whose comments have been incorporated."
+    REVISION        "9809240000Z"
+    DESCRIPTION
+        "Rev 0.3    September 24, 1998 ready for initial review."
+    REVISION        "9810040000Z"
+    DESCRIPTION
+        "Rev 0.4    Updated anchors to use values registered by
+         Mika Kiikkila."
+    REVISION        "9901080000Z"
+    DESCRIPTION
+        "Rev 1.0    Syntax of ntcHWLastChangedTime changed from
+         DateAndTime to TimeStamp. Traps commented out because
+         they are part of Nokia Common Alarm MIB."
+    REVISION        "9908050000Z"
+    DESCRIPTION
+        "Rev 1.01   Those IMPORTS which are not used are removed.
+         Groups ntcHWSlots and ntcHWEventGroup which are not defined in
+         this module are removed. The name NokiaHwmSlotEntry is 
+         changed to NtcHWSlotEntry on account of convenience. All
+         notification definions before out-commented removed. Some esthetic 
+         modifications made." 
+    REVISION        "9910250000Z"
+    DESCRIPTION
+        "Comment 'The NMS is not allowed to set the value of ntcHWAdminstate 
+         to missing.' added to the ntcHWAdminstate's description."
+    ::= { ntcCommonModules 1 }
+
+
+ntcHWObjs        OBJECT IDENTIFIER ::= { ntcHWMibs 1 }
+ntcHWEvents      OBJECT IDENTIFIER ::= { ntcHWMibs 2 0 }
+ntcHWGroups      OBJECT IDENTIFIER ::= { ntcHWReqs 1 }
+ntcHWCompliances OBJECT IDENTIFIER ::= { ntcHWReqs 2 }
+
+--
+-- HWM Units group
+--
+--  
+-- the Hardware Management Unit Table
+--
+ntcHWUnitTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF NtcHWUnitEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table which contains an entry for each pluggable circuit board
+         (in this MIB a 'unit' is the same as a pluggable circuit board.)
+         Entries of this table are automatically created by the hardware
+         management software."
+    ::= { ntcHWObjs 1 }
+
+ntcHWUnitEntry OBJECT-TYPE
+    SYNTAX    NtcHWUnitEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A conceptual row in the ntcHWUnitTable.  Rows are created
+         automatically by the Hardware Management software."
+    INDEX  { entPhysicalIndex }
+    ::= { ntcHWUnitTable 1 }
+
+NtcHWUnitEntry ::= SEQUENCE {
+    ntcHWAdminState               INTEGER,
+    ntcHWOperState                INTEGER,
+    ntcHWAvailabilityStatus       INTEGER,
+    ntcHWRestart                  INTEGER,
+    ntcHWLedState                 INTEGER,
+    ntcHWSerialNumber             DisplayString,
+    ntcHWProductionDate           DisplayString,
+    ntcHWUnitEntryChanged         TimeStamp
+}
+
+ntcHWAdminState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    inService(1),
+                    outOfService(2),
+                    inTest(3),
+                    missing(4)
+                    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Represents the desired state of the unit.  inService
+         indicates that the unit is intended to be operating
+         normally.  outOfService indicates that the unit should
+         be taken out of normal operating mode and no data traffic
+         should appear in this unit.  inTest indicates that the
+         unit should be placed into a selftest mode.  missing
+         indicates that the unit is expected to be present but
+         has been detected as not being physically present.
+
+         The NMS is not allowed to set the value of ntcHWAdminstate
+         to missing."
+    ::= { ntcHWUnitEntry 1 }
+
+ntcHWOperState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    down(1),
+                    up(2)
+                    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates the current state of the unit.  down
+         indicates that the unit is in a non-functional
+         state.  up indicates that the unit is functioning
+         normally."
+    ::= { ntcHWUnitEntry 2 }
+
+ntcHWAvailabilityStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    inCharge(1),
+                    applicationStarting(2),
+                    applicationShutdown(3),
+                    platformStarting(4),
+                    resetting(5),
+                    separated(6),
+                    unconfigured(7),
+                    testing(8),
+                    standby(9),
+                    dormant(10),
+                    unavailable(11)
+                    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Provides more specific information on the state of the unit
+         in this conceptual row.  The status column has eleven
+         defined values:
+            inCharge = the unit is fully operational and ready to
+                perform its desired tasks;
+            applicationStarting = the application software is starting up;
+            applicationShutdown = the application software is
+                shutting down;
+            platformStarting = Basic platform software is starting up;
+            resetting = the disk files are closed and hardware reset
+                is forced;
+            separated = Only basic OS software is running.
+                The unit can start application software on request;
+            unconfigured = The administrative state of the unit is
+                'missing', disk files are closed and only basic OS
+                software is running.  The unit refuses to start
+                application software;
+            testing = Selftests can be performed, only basic OS
+                are running;
+            standby = The unit is redundant and is fully operational but not
+                in charge of operations.  It is ready to move to 'inCharge'
+                state when necessary;
+            dormant = All connections are physically inactive to
+                enable removal of the unit without electric disturbance in
+                the backplane.  Only watchdog software is running for a
+                short duration of time;
+            unavailable = The unit is not physically present or
+                cannot be contacted."
+    ::= { ntcHWUnitEntry 3 }
+
+ntcHWRestart OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    reset(1),
+                    hotRestart(2),
+                    detach(3)
+                    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Provides the ability to reset or perform a hot
+         restart the unit represented by this conceptual row.
+            reset = the Unit is shutdown in an orderly manner and restarted
+                again via hardware reset;
+            hotRestart = only the software in a unit is restarted, a hardware
+                reset is not initiated;
+            detach = all electrical connections of the unit are forced to
+                an inactive state to enable removal of the unit without
+                electrical disturbance in the backplane."
+    ::= { ntcHWUnitEntry 4 }
+
+ntcHWLedState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    red(1),
+                    yellow(2),
+                    black(3),
+                    green(4)
+                    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates the current LED color of the unit represented
+         by this conceptual row."
+    ::= { ntcHWUnitEntry 5 }
+
+ntcHWSerialNumber OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The units serial number in displayable format."
+    ::= { ntcHWUnitEntry 6 }
+
+ntcHWProductionDate OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The units production date in displayable format."
+    ::= { ntcHWUnitEntry 7 }
+
+ntcHWUnitEntryChanged OBJECT-TYPE
+    SYNTAX      TimeStamp
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the value of sysUpTime at the instant
+         that this conceptual row entry has changed."
+    ::= { ntcHWUnitEntry 8 }
+
+ntcHWSlotTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF NtcHWSlotEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table whose entries represent the expected circuit board
+         type.  The entries are created automatically by the hardware
+         management software."
+    ::= { ntcHWObjs 2 }
+
+ntcHWSlotEntry OBJECT-TYPE
+    SYNTAX      NtcHWSlotEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The logical row describing the expected circiut board type of a
+         slot."
+    INDEX { entPhysicalIndex }
+    ::= { ntcHWSlotTable 1 }
+
+NtcHWSlotEntry ::= SEQUENCE {
+    ntcHWDesiredUnitType  AutonomousType
+    }
+
+ntcHWDesiredUnitType OBJECT-TYPE
+    SYNTAX      AutonomousType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The unit type which is expected to be inserted or present in the
+         current slot.
+         An indication of the vendor-specific hardware type of the
+         HWM entity. Note that this is different from the
+         definition of MIB-II's sysObjectID.
+         An agent should set this object to a enterprise-specific
+         registration identifier value indicating the specific
+         equipment type in detail.
+         If no vendor-specific registration identifier exists for
+         this entity, or the value is unknown by this agent,
+         then the value { 0 0 } is returned."
+    ::= { ntcHWSlotEntry 2 }
+
+ntcHWLastChangedTime OBJECT-TYPE
+    SYNTAX      TimeStamp
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of sysUpTime at the time any of these events occur:
+            * any instance in the following object changes value:
+                - hwmUnitEntryChanged
+        This object shall be set to value 0 in startup."
+    ::= { ntcHWObjs 3 }
+
+ntcHWLoadInventoryContainer OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Writing any value to this object will cause the hardware
+         management software to reread its configuration file
+         from disk."
+    ::= { ntcHWObjs 4 }
+
+ntcHWUnits   OBJECT-GROUP
+    OBJECTS {
+        ntcHWAdminState,
+        ntcHWOperState,
+        ntcHWAvailabilityStatus,
+        ntcHWRestart,
+        ntcHWLedState,
+        ntcHWSerialNumber,
+        ntcHWProductionDate,
+        ntcHWUnitEntryChanged
+        }
+    STATUS  current
+    DESCRIPTION
+        "A collection of objects representing the status of a unit."
+    ::= { ntcHWGroups 1 }
+
+--
+-- compliance statements
+--
+
+ntcHWCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+        "The compliance statement Hardware Management."
+
+    MODULE ENTITY-MIB
+        MANDATORY-GROUPS {
+            entityPhysicalGroup
+            }
+
+    MODULE  -- this module
+        MANDATORY-GROUPS {
+            ntcHWUnits
+            }
+    ::= { ntcHWCompliances 1 }
+
+END

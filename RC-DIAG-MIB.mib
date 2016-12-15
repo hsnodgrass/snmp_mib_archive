@@ -1,0 +1,1483 @@
+
+RC-DIAG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, IpAddress
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, MacAddress, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcDiag, rcMirror, EnableValue
+        FROM RAPID-CITY;
+
+
+rcDiagMib MODULE-IDENTITY
+       LAST-UPDATED     "200510120000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200510120000Z" -- 12 Oct. 2005
+       DESCRIPTION "Version 7: Add pairForce(7) to rcDiagVctPair*Status."
+
+       REVISION "200502010000Z" -- 01 Feb. 2005
+       DESCRIPTION "Version 6: Fixes to the new objects in rcDiagVctTable."
+
+       REVISION "200501140000Z" -- 14 Jan. 2005
+       DESCRIPTION "Version 5: Added new objects in rcDiagVctTable to
+                               support use of broadcom chips for cable
+                               testing."  
+
+       REVISION "200412220000Z" -- 22 Dec. 2004
+       DESCRIPTION "Version 4: Modified rcDiagMirrorByPortMode For PR"  
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcDiag 0 }
+
+-- Mirror Group
+
+rcMirrorSaveConfig OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Control whether Mirror configuration information 
+                       	should be saved to NVRAM so mirror settings can 
+                       	be automatically reinstalled after a system
+                       	reboot. 
+
+                       	Setting rcMirrorSaveConfig to true does not 
+                       	immediately save the configuration information.
+                       	The save happens when the rcSysAction variable 
+                       	is set to 'saveToNVRAM(4)'."
+        ::= { rcMirror 1 }
+
+rcMirrorByPort OBJECT IDENTIFIER ::= { rcMirror 2 }
+
+rcMirrorByPortEnable OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	deprecated
+        DESCRIPTION   	"Used to indicate whether the mirror by port
+                       	feature is active.  The system can only support 
+                       	mirroring on two ports.  When this feature is 
+                       	active, all packets received on the port(s) 
+                       	specified by rcMirrorSrcPortOne and/or 
+                       	rcMirrorSrcPortTwo are copied to rcMirrorDstPort.  
+                       	The mirroring operation is non-intrusive." 
+	DEFVAL 		{ false }
+        ::= { rcMirrorByPort 1 }
+
+rcMirrorByPortMirrorPort OBJECT-TYPE 
+        SYNTAX        	InterfaceIndex 
+        MAX-ACCESS        	read-write
+        STATUS       	   deprecated 
+        DESCRIPTION   	"The ifIndex of the port to forward mirrored frames to." 
+        ::= { rcMirrorByPort 2 }
+
+rcMirrorByPortEnableMirroredPortOne OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	deprecated
+        DESCRIPTION   	"Used to indicate whether the port specified in
+                       	rcMirrorByPortMirroredPortOne should be mirrored." 
+	DEFVAL 		{ false }
+        ::= { rcMirrorByPort 3 }
+
+rcMirrorByPortMirroredPortOne OBJECT-TYPE
+        SYNTAX        	InterfaceIndex
+        MAX-ACCESS        	read-write
+        STATUS        	deprecated
+        DESCRIPTION   	"The ifIndex of the port to be mirrored.  That
+		       	is, traffic received on this port will be sent
+		       	to the mirror port." 
+        ::= { rcMirrorByPort 4 }
+
+rcMirrorByPortEnableMirroredPortTwo OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	deprecated
+        DESCRIPTION   	"Used to indicate whether the port specified in
+                       	rcMirrorByPortMirroredPortTwo should be mirrored." 
+	DEFVAL 		{ false }
+        ::= { rcMirrorByPort 5 }
+
+rcMirrorByPortMirroredPortTwo OBJECT-TYPE
+        SYNTAX        	InterfaceIndex
+        MAX-ACCESS        	read-write
+        STATUS        	deprecated
+        DESCRIPTION   	"The ifIndex of the port to be mirrored.  That
+		       	is, traffic received on this port will be sent
+		       	to the mirror port." 
+        ::= { rcMirrorByPort 6 }
+
+-- Diag Mirror by port Table
+
+rcDiagMirrorByPortTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF RcDiagMirrorByPortEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"This table is used to configure the Mirror By
+			Port feature.  This feature allows the device
+			to forward a copy of each packet seen on a
+			particular port to a different port."
+        ::= { rcDiag 1 }
+
+rcDiagMirrorByPortEntry OBJECT-TYPE
+        SYNTAX        	RcDiagMirrorByPortEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"Entry containing mirror by port information."
+        INDEX         	{ rcDiagMirrorByPortId }
+        ::= { rcDiagMirrorByPortTable 1 }
+
+RcDiagMirrorByPortEntry ::= SEQUENCE {
+                rcDiagMirrorByPortId            INTEGER,
+                rcDiagMirrorByPortMirroredPort  InterfaceIndex,
+                rcDiagMirrorByPortMirroringPort InterfaceIndex,
+                rcDiagMirrorByPortMode          INTEGER,
+                rcDiagMirrorByPortEnable        TruthValue,
+                rcDiagMirrorByPortRowStatus     RowStatus,
+                rcDiagMirrorByPortOctapidId     Integer32,	--excluded
+                rcDiagMirrorByPortPid           Integer32,
+                rcDiagMirrorRemoteMirrorVlanId  INTEGER
+        }
+
+rcDiagMirrorByPortId OBJECT-TYPE
+        SYNTAX        	INTEGER(1..383) 
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Entry id."
+        ::= { rcDiagMirrorByPortEntry 1 }
+
+rcDiagMirrorByPortMirroredPort OBJECT-TYPE
+        SYNTAX        	InterfaceIndex
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the 'mirrored' port.  The port
+			where packets are copied from."
+        ::= { rcDiagMirrorByPortEntry 2 }
+
+rcDiagMirrorByPortMirroringPort OBJECT-TYPE
+        SYNTAX        	InterfaceIndex
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the 'mirroring' port.  The port
+			where packets are copied to."
+        ::= { rcDiagMirrorByPortEntry 3 }
+
+rcDiagMirrorByPortMode OBJECT-TYPE
+        SYNTAX        	INTEGER {
+                         	tx(1),
+                         	rx(2),
+                         	both(3),
+                         	rxFilter(4),
+				txFilter(5),
+				bothFilter(6)
+                      	}
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION  	"Used to configure the 'mode' of the mirror operation.
+			'tx' means packets being transmitted on the 'mirrored'
+			port will be copied.  'rx' means packets received on
+			the 'mirrored' port will be copied.  'both' means
+			all traffic on the 'mirrored' port will be copied.
+			'rxFilter' means packets received on the 'mirrored'
+			port is copied only if it macthes filter criteria.
+			'txFilter' means packets being transmitted on the 
+			'mirrorred' port is copied only if it matches filter
+			criteria.  'bothFilter' means both ingress and egress
+			traffic will be copied if it matches either ingress or
+			egress filter on the 'mirrored' port."
+	DEFVAL	      	{ rx }
+        ::= { rcDiagMirrorByPortEntry 4 }
+
+rcDiagMirrorByPortEnable OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to enable/disable this entry."
+	DEFVAL	      	{ true }
+        ::= { rcDiagMirrorByPortEntry 5 }
+
+rcDiagMirrorByPortRowStatus OBJECT-TYPE
+        SYNTAX        	RowStatus
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Row status of this entry."
+        ::= { rcDiagMirrorByPortEntry 6 }
+
+rcDiagMirrorByPortOctapidId OBJECT-TYPE
+        SYNTAX        	Integer32
+        MAX-ACCESS        	read-only
+        STATUS        	deprecated
+        DESCRIPTION   	"Octapid Id for a port."
+        ::= { rcDiagMirrorByPortEntry 7 }
+
+rcDiagMirrorByPortPid OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Pid for a port."
+        ::= { rcDiagMirrorByPortEntry 8 }
+
+rcDiagMirrorRemoteMirrorVlanId OBJECT-TYPE
+        SYNTAX        INTEGER (0..4094)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "vlan-id to which mirrored packets needs to
+                         be send for remote mirroring. If set, this
+                         vlan id is used in mirror tag of the remote
+                         mirrored packet"
+        ::= { rcDiagMirrorByPortEntry 9 }
+
+-- Diag Port Conv Steering Table
+
+rcDiagPortConvSteeringTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcDiagPortConvSteeringEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Diag Port Conv Steering Table"
+        ::= { rcDiag 2 }
+
+rcDiagPortConvSteeringEntry OBJECT-TYPE
+        SYNTAX        RcDiagPortConvSteeringEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Diag Port Conv Steering."
+        INDEX         { rcDiagPortConvSteeringId }
+        ::= { rcDiagPortConvSteeringTable 1 }
+
+RcDiagPortConvSteeringEntry ::= SEQUENCE {
+                rcDiagPortConvSteeringId           Integer32,
+                rcDiagPortConvSteeringPortOne      Integer32,
+                rcDiagPortConvSteeringPortTwo      Integer32,
+                rcDiagPortConvSteeringMode         INTEGER,
+                rcDiagPortConvSteeringForwardPort  Integer32,
+                rcDiagPortConvSteeringEnable       TruthValue,
+                rcDiagPortConvSteeringRowStatus    RowStatus
+        }
+
+rcDiagPortConvSteeringId OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Entry id."
+        ::= { rcDiagPortConvSteeringEntry 1 }
+
+rcDiagPortConvSteeringPortOne OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IfIndex for port one"
+        ::= { rcDiagPortConvSteeringEntry 2 }
+
+rcDiagPortConvSteeringPortTwo OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IfIndex for port two"
+        ::= { rcDiagPortConvSteeringEntry 3 }
+
+rcDiagPortConvSteeringMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         oneToTwo(1),
+                         twoToOne(2),
+                         both(3)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to specify the traffic flow that should be
+		      captured between ports one and two."
+        ::= { rcDiagPortConvSteeringEntry 4 }
+
+rcDiagPortConvSteeringForwardPort OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IfIndex of the port where captured traffic should
+		      be forwarded to."
+        ::= { rcDiagPortConvSteeringEntry 5 }
+
+rcDiagPortConvSteeringEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable this entry."
+	DEFVAL	      { true }
+        ::= { rcDiagPortConvSteeringEntry 6 }
+
+rcDiagPortConvSteeringRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to create/delete entries in the rcDiagMirrorByPortTable."
+        ::= { rcDiagPortConvSteeringEntry 7 }
+
+
+-- Diag Mac Conv Steering Table
+
+rcDiagMacConvSteeringTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcDiagMacConvSteeringEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Diag Mac Conv Steering Table"
+        ::= { rcDiag 3 }
+
+rcDiagMacConvSteeringEntry OBJECT-TYPE
+        SYNTAX        RcDiagMacConvSteeringEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Diag Mac Conv Steering."
+        INDEX         { rcDiagMacConvSteeringId }
+        ::= { rcDiagMacConvSteeringTable 1 }
+
+RcDiagMacConvSteeringEntry ::= SEQUENCE {
+                rcDiagMacConvSteeringId          Integer32,
+                rcDiagMacConvSteeringSrcMac      MacAddress,
+                rcDiagMacConvSteeringDstMac      MacAddress,
+                rcDiagMacConvSteeringInPort      Integer32,
+                rcDiagMacConvSteeringForwardPort Integer32,
+                rcDiagMacConvSteeringEnable      TruthValue,
+                rcDiagMacConvSteeringRowStatus   RowStatus
+        }
+
+rcDiagMacConvSteeringId OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Entry id."
+        ::= { rcDiagMacConvSteeringEntry 1 }
+
+rcDiagMacConvSteeringSrcMac OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Source MAC address"
+        ::= { rcDiagMacConvSteeringEntry 2 }
+
+rcDiagMacConvSteeringDstMac OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Destination MAC address"
+        ::= { rcDiagMacConvSteeringEntry 3 }
+
+rcDiagMacConvSteeringInPort OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IfIndex of ingress port."
+        ::= { rcDiagMacConvSteeringEntry 4 }
+
+rcDiagMacConvSteeringForwardPort OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "IfIndex of the port where captured traffic should
+		      be forwarded to."
+        ::= { rcDiagMacConvSteeringEntry 5 }
+
+rcDiagMacConvSteeringEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable this entry."
+	DEFVAL	      { true }
+        ::= { rcDiagMacConvSteeringEntry 6 }
+
+rcDiagMacConvSteeringRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to create/delete entries in the rcDiagMirrorByPortTable."
+        ::= { rcDiagMacConvSteeringEntry 7 }
+
+-- Diag Vct Table
+
+rcDiagVctTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcDiagVctEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Diag Vct Table"
+        ::= { rcDiag 4 }
+
+rcDiagVctEntry OBJECT-TYPE
+        SYNTAX        RcDiagVctEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing cable infomation and test result."
+        INDEX         { rcDiagVctIfIndex }
+        ::= { rcDiagVctTable 1 }
+
+RcDiagVctEntry ::= SEQUENCE {
+                rcDiagVctIfIndex                 InterfaceIndex,
+                rcDiagVctNormalCableLength       INTEGER,
+                rcDiagVctPhyType                 INTEGER,
+                rcDiagVctCableStatus             INTEGER,
+                rcDiagVctPair1Status             INTEGER,
+                rcDiagVctPair1ErrLength          INTEGER,
+                rcDiagVctPair2Status             INTEGER,
+                rcDiagVctPair2ErrLength          INTEGER,
+                rcDiagVctPair3Status             INTEGER,
+                rcDiagVctPair3ErrLength          INTEGER,
+                rcDiagVctPair4Status             INTEGER,
+                rcDiagVctPair4ErrLength          INTEGER,
+                rcDiagVctStartTest               TruthValue,
+                rcDiagVctTestDone                TruthValue,
+                rcDiagVctCableCategory           INTEGER,
+                rcDiagVctCableLength             Integer32,
+                rcDiagVctPair1Polarity           INTEGER,
+                rcDiagVctPair1Swap               INTEGER,
+                rcDiagVctPair1Skew               Integer32,
+                rcDiagVctPair2Polarity           INTEGER,
+                rcDiagVctPair2Swap               INTEGER,
+                rcDiagVctPair2Skew               Integer32,
+                rcDiagVctPair3Polarity           INTEGER,
+                rcDiagVctPair3Swap               INTEGER,
+                rcDiagVctPair3Skew               Integer32,
+                rcDiagVctPair4Polarity           INTEGER,
+                rcDiagVctPair4Swap               INTEGER,
+                rcDiagVctPair4Skew               Integer32
+        }
+
+rcDiagVctIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Port IfIndex."
+        ::= { rcDiagVctEntry 1 }
+
+rcDiagVctNormalCableLength OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        cableLT50M(1),
+                        cable50M80M(2),
+                        cable80M110M(3),
+                        cable110M140M(4),
+                        cableGT140M(5),
+                        cableUnknown(6)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Cable length, this indicates a range in which the
+                       actual length falls."
+        ::= { rcDiagVctEntry 2 }
+
+rcDiagVctPhyType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        phy100M(1),
+                        phy1000M(2),
+                        phy10000M(3),
+                        phy100000M(4),
+                        phyUnknown(5),
+                        bcm5464(6),
+                        bcm5464s(7)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Phy type, 100MHz throught 1 GHz, or broadcom phy."
+        ::= { rcDiagVctEntry 3 }
+
+rcDiagVctCableStatus OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        cableFail(1),
+                        cableNormal(2),
+                        cableOpen(3),
+                        cableShorted(4),
+                        cableNotApplicable(5),
+                        cableUntested(6)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Status of the cable as a whole.  The status of a
+                       cable is in a sense, a summation of the status of its
+                       pairs.  If all the pairs are normal, then the cable is
+                       normal.  If the cable consists of zero or more normal
+                       pairs and one or more open pairs, then the cable is
+                       considered open.  If it consists of shorted pairs and
+                       normal pairs, then the cable is considered shorted.
+                       Any combination of open and shorted pairs is
+                       considered simply FAILED."
+        ::= { rcDiagVctEntry 4 }
+
+rcDiagVctPair1Status OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        pairFail(1),
+                        pairNormal(2),
+                        pairOpen(3),
+                        pairShorted(4),
+                        pairNotApplicable(5),
+                        pairNotTested(6),
+                        pairForce(7)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The status of a single pair in the cable"
+        ::= { rcDiagVctEntry 5 }
+
+rcDiagVctPair1ErrLength OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Error Pair Length, in meters, measured by Time
+                       Domain Reflectometry."
+        ::= { rcDiagVctEntry 6 }
+
+rcDiagVctPair2Status OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        pairFail(1),
+                        pairNormal(2),
+                        pairOpen(3),
+                        pairShorted(4),
+                        pairNotApplicable(5),
+                        pairNotTested(6),
+                        pairForce(7)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The status of a single pair in the cable"
+        ::= { rcDiagVctEntry 7 }
+
+rcDiagVctPair2ErrLength OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Error Pair Length, in meters, measured by Time
+                       Domain Reflectometry."
+        ::= { rcDiagVctEntry 8 }
+
+rcDiagVctPair3Status OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        pairFail(1),
+                        pairNormal(2),
+                        pairOpen(3),
+                        pairShorted(4),
+                        pairNotApplicable(5),
+                        pairNotTested(6),
+                        pairForce(7)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The status of a single pair in the cable"
+        ::= { rcDiagVctEntry 9 }
+
+rcDiagVctPair3ErrLength OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Error Pair Length, in meters, measured by Time
+                       Domain Reflectometry."
+        ::= { rcDiagVctEntry 10 }
+
+rcDiagVctPair4Status OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        pairFail(1),
+                        pairNormal(2),
+                        pairOpen(3),
+                        pairShorted(4),
+                        pairNotApplicable(5),
+                        pairNotTested(6),
+                        pairForce(7)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The status of a single pair in the cable"
+        ::= { rcDiagVctEntry 11 }
+
+rcDiagVctPair4ErrLength OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Error Pair Length, in meters, measured by Time
+                       Domain Reflectometry."
+        ::= { rcDiagVctEntry 12 }
+
+rcDiagVctStartTest OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Start VCT test, Set this object to TRUE to perform
+                       a VCT test on the current port. A get on this
+                       object produces an undefines value."
+        ::= { rcDiagVctEntry 13 }
+
+rcDiagVctTestDone OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "When a VCT test is started setting rcDiagVctStartTest,
+                       this object is immediately set to FALSE by the switch
+                       software. It remain FALSE until the test is completed,
+                       when it is set to TRUE. When this object is TRUE,
+                       then the management station can immediately perform
+                       a GET on the test result for this port."
+        ::= { rcDiagVctEntry 14 }
+
+rcDiagVctCableCategory OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         cat3(1),
+                         cat5(2)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Cable type: CAT3 or CAT5."
+        ::= { rcDiagVctEntry 15 }
+
+rcDiagVctCableLength OBJECT-TYPE
+        SYNTAX        Integer32 (0..255)
+        UNITS         "Meters"
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Length of cable in meters based on average electrical 
+                       length of 4 pairs. Measurement can be done when 
+                       traffic is live or not."
+        ::= { rcDiagVctEntry 16 }
+
+rcDiagVctPair1Polarity OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          inversed(1),
+                          normal(2),
+                          invalid(3)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The polarity of a single pair in the cable."
+        ::= { rcDiagVctEntry 17 }
+
+rcDiagVctPair1Swap OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          normal(1),
+                          swapped(2),
+                          invalid(3),
+                          error(4)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The pair swap in the cable."
+        ::= { rcDiagVctEntry 18 }
+
+rcDiagVctPair1Skew OBJECT-TYPE
+        SYNTAX        Integer32 (-1..15)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Differential cable pair length in meters. 
+		       Skew measurement can only be performed when cable
+		       gigabit link is up regardless of traffic activity.
+                       A value of -1 means an error occured when trying
+                       to get the length."
+        ::= { rcDiagVctEntry 19 }
+
+rcDiagVctPair2Polarity OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          inversed(1),
+                          normal(2),
+                          invalid(3)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The polarity of a single pair in the cable."
+        ::= { rcDiagVctEntry 20 }
+
+rcDiagVctPair2Swap OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          normal(1),
+                          swapped(2),
+                          invalid(3),
+                          error(4)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The pair swap in the cable."
+        ::= { rcDiagVctEntry 21 }
+
+rcDiagVctPair2Skew OBJECT-TYPE
+        SYNTAX        Integer32 (-1..15)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Differential cable pair length in meters. 
+		       Skew measurement can only be performed when cable
+		       gigabit link is up regardless of traffic activity.
+                       A value of -1 means an error occured when trying
+                       to get the length."
+        ::= { rcDiagVctEntry 22 }
+
+rcDiagVctPair3Polarity OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          inversed(1),
+                          normal(2),
+                          invalid(3)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The polarity of a single pair in the cable."
+        ::= { rcDiagVctEntry 23 }
+
+rcDiagVctPair3Swap OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          normal(1),
+                          swapped(2),
+                          invalid(3),
+                          error(4)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The pair swap in the cable."
+        ::= { rcDiagVctEntry 24 }
+
+rcDiagVctPair3Skew OBJECT-TYPE
+        SYNTAX        Integer32 (-1..15)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Differential cable pair length in meters. 
+		       Skew measurement can only be performed when cable
+		       gigabit link is up regardless of traffic activity.
+                       A value of -1 means an error occured when trying
+                       to get the length."
+        ::= { rcDiagVctEntry 25 }
+
+rcDiagVctPair4Polarity OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          inversed(1),
+                          normal(2),
+                          invalid(3)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The polarity of a single pair in the cable."
+        ::= { rcDiagVctEntry 26 }
+
+rcDiagVctPair4Swap OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          normal(1),
+                          swapped(2),
+                          invalid(3),
+                          error(4)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The pair swap in the cable."
+        ::= { rcDiagVctEntry 27 }
+
+rcDiagVctPair4Skew OBJECT-TYPE
+        SYNTAX        Integer32 (-1..15)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Differential cable pair length in meters. 
+		       Skew measurement can only be performed when cable
+		       gigabit link is up regardless of traffic activity.
+                       A value of -1 means an error occured when trying
+                       to get the length."
+        ::= { rcDiagVctEntry 28 }
+
+
+
+rcDiagSaveConfig OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to configure whether the various mirror feature
+                      settings should be saved and restored across system
+                      reboot."
+        ::= { rcDiag 10 }
+
+rcDiagMirrorByPortTblSize OBJECT-TYPE
+        SYNTAX      	Integer32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate table size."
+        ::= { rcDiag 11 }
+
+rcDiagPortConvSteeringTblSize OBJECT-TYPE
+        SYNTAX        	Integer32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate table size."
+        ::= { rcDiag 12 }
+
+rcDiagMacConvSteeringTblSize OBJECT-TYPE
+        SYNTAX        	Integer32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate table size."
+        ::= { rcDiag 13 }
+
+rcDiagDiagnosticsEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Used to enable/disable the mirroring feature
+                      for the entire device.  This setting overrides
+                      any setting in the various mirroring tables."
+        DEFVAL                { false }
+        ::= { rcDiag 14 }
+
+
+-- rcDiagPcap Group
+
+rcDiagPcap OBJECT IDENTIFIER ::= { rcDiag 15 }
+
+rcDiagPcapEnable   OBJECT-TYPE
+      SYNTAX  TruthValue
+      MAX-ACCESS    read-write
+      STATUS        current
+      DESCRIPTION   "To enable pcap in secondary CPU"
+      DEFVAL         { false }
+      ::= { rcDiagPcap 1 }
+
+rcDiagPcapBufferWrap   OBJECT-TYPE
+      SYNTAX        TruthValue
+      MAX-ACCESS    read-write
+      STATUS        current
+      DESCRIPTION   "To enable buffer wrap-around when buffer is full.
+                     If set, pcap will continue to capture pkts, otherwise
+                     stops pkt storing"
+      DEFVAL         { false }
+      ::= { rcDiagPcap 2 }
+
+rcDiagPcapPcmciaWrap   OBJECT-TYPE
+      SYNTAX        TruthValue
+      MAX-ACCESS    read-write
+      STATUS        current
+      DESCRIPTION   "To wrap around the PCMCIA when saving data in PCMCIA"
+      DEFVAL         { false }
+      ::= { rcDiagPcap 3 }
+
+rcDiagPcapFrameSize   OBJECT-TYPE
+    SYNTAX        INTEGER (64..9600)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION   "Number of bytes of pkts needs to be stored"
+    DEFVAL         { 64 }
+      ::= { rcDiagPcap 4 }
+
+rcDiagPcapBufferSize   OBJECT-TYPE
+    SYNTAX        INTEGER (2..256)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION   "memory to be allocated for capturing the pkt"
+    DEFVAL        { 2 }
+      ::= { rcDiagPcap 5 }
+
+rcDiagPcapAutoSave   OBJECT-TYPE
+      SYNTAX        TruthValue
+      MAX-ACCESS    read-write
+      STATUS        current
+      DESCRIPTION   "To save data automatically when buffer is full"
+      DEFVAL         { false }
+      ::= { rcDiagPcap 6 }
+
+rcDiagPcapAutoSaveFileName   OBJECT-TYPE
+      SYNTAX       DisplayString (SIZE (0..40))
+      MAX-ACCESS   read-write
+      STATUS       current
+      DESCRIPTION   "Name of the file in which the pkt is to be stored"
+      ::= { rcDiagPcap 7 }
+
+rcDiagPcapAutoSaveDevice   OBJECT-TYPE
+      SYNTAX  INTEGER {
+                 pcmcia(0),
+                 network(1)
+              }
+      MAX-ACCESS  read-write
+      STATUS        current
+      DESCRIPTION   "Where to store the captured pkts. If the option is
+                     network, the user need to enter an IP address also"
+      ::= { rcDiagPcap 8 }
+
+rcDiagPcapAutoSaveNetworkIpAddress   OBJECT-TYPE
+      SYNTAX        IpAddress
+      MAX-ACCESS    read-write
+      STATUS        current
+      DESCRIPTION   "ip address of the remote host where the data
+                     needs to be stored. This field is valid only
+                     if the device is network"
+      ::= { rcDiagPcap 9 }
+
+
+rcDiagPcapFilterTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of entries in the
+                       Filter table"
+        ::= { rcDiagPcap 10 }
+
+
+-- rcDiagPcapFilterTable
+
+rcDiagPcapFilterTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcDiagPcapFilterEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to store pcap secondary filters"
+        ::= { rcDiagPcap 11 }
+
+rcDiagPcapFilterEntry OBJECT-TYPE
+        SYNTAX        RcDiagPcapFilterEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Pcap secondary filter desc"
+        INDEX         {rcDiagPcapFilterId }
+        ::= { rcDiagPcapFilterTable 1 }
+
+RcDiagPcapFilterEntry ::= SEQUENCE {
+        rcDiagPcapFilterId                      INTEGER,
+        rcDiagPcapFilterEnable                  EnableValue,
+        rcDiagPcapFilterAction                  INTEGER,
+        rcDiagPcapFilterSrcMac                  MacAddress,
+        rcDiagPcapFilterSrcMask                 INTEGER,
+        rcDiagPcapFilterIsInverseSrcMac         TruthValue,
+        rcDiagPcapFilterDstMac                  MacAddress,
+        rcDiagPcapFilterDstMask                 INTEGER,
+        rcDiagPcapFilterIsInverseDstMac         TruthValue,
+        rcDiagPcapFilterVlanId                  INTEGER,
+        rcDiagPcapFilterToVlanId                INTEGER,
+        rcDiagPcapFilterIsInverseVlanId         TruthValue,
+        rcDiagPcapFilterPbit                    INTEGER,
+        rcDiagPcapFilterToPbit                  INTEGER,
+        rcDiagPcapFilterIsInversePbit           TruthValue,
+        rcDiagPcapFilterEtherType               INTEGER,
+        rcDiagPcapFilterToEtherType             INTEGER,
+        rcDiagPcapFilterIsInverseEtherType      TruthValue,
+        rcDiagPcapFilterProtocolType            INTEGER,
+        rcDiagPcapFilterToProtocolType          INTEGER,
+        rcDiagPcapFilterIsInverseProtocolType   TruthValue,
+        rcDiagPcapFilterSrcIp                   IpAddress,
+        rcDiagPcapFilterToSrcIp                 IpAddress,
+        rcDiagPcapFilterIsInverseSrcIp          TruthValue,
+        rcDiagPcapFilterDstIp                   IpAddress,
+        rcDiagPcapFilterToDstIp                 IpAddress,
+        rcDiagPcapFilterIsInverseDstIp          TruthValue,
+        rcDiagPcapFilterDscp                    INTEGER,
+        rcDiagPcapFilterToDscp                  INTEGER,
+        rcDiagPcapFilterIsInverseDscp           TruthValue,
+        rcDiagPcapFilterRowStatus               RowStatus,
+        rcDiagPcapFilterDscpMatchZero           TruthValue,
+        rcDiagPcapFilterPbitMatchZero           TruthValue
+    }
+
+rcDiagPcapFilterId OBJECT-TYPE
+        SYNTAX        INTEGER (1..1000)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Unique ID that represents the filter"
+        ::= { rcDiagPcapFilterEntry 1 }
+
+rcDiagPcapFilterEnable OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Filter is enabled or not"
+        DEFVAL        { disable }
+        ::= { rcDiagPcapFilterEntry 2 }
+
+rcDiagPcapFilterAction   OBJECT-TYPE
+        SYNTAX         INTEGER {
+                          drop(0),
+                          capture(1),
+                          trigger-on(2),
+                          trigger-off(3)
+                       }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Action to be takesn when policy is matched"
+        DEFVAL        { capture }
+        ::= { rcDiagPcapFilterEntry 3 }
+
+rcDiagPcapFilterSrcMac   OBJECT-TYPE
+        SYNTAX         MacAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Soruce mac address to match"
+        ::= { rcDiagPcapFilterEntry 4 }
+
+rcDiagPcapFilterSrcMask  OBJECT-TYPE
+        SYNTAX         INTEGER (1..6)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Soruce mac address mask. Used to specify a range"
+        DEFVAL        { 6 }
+        ::= { rcDiagPcapFilterEntry 5 }
+
+rcDiagPcapFilterIsInverseSrcMac OBJECT-TYPE
+        SYNTAX         TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Soruce mac address Inverse. when set the mac
+                       addresses otherthan specified is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 6 }
+
+rcDiagPcapFilterDstMac   OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Destination mac address"
+        ::= { rcDiagPcapFilterEntry 7 }
+
+rcDiagPcapFilterDstMask  OBJECT-TYPE
+        SYNTAX         INTEGER (1..6)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Destination mac address mask. Used to specify a range"
+        DEFVAL        { 6 }
+        ::= { rcDiagPcapFilterEntry 8 }
+
+rcDiagPcapFilterIsInverseDstMac OBJECT-TYPE
+        SYNTAX         TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Destination mac address Inverse. when set the mac
+                       addresses otherthan specified is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 9 }
+
+rcDiagPcapFilterVlanId  OBJECT-TYPE
+        SYNTAX         INTEGER (0..4092)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Vlan-id of the packet to be matched"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 10 }
+
+rcDiagPcapFilterToVlanId  OBJECT-TYPE
+        SYNTAX         INTEGER (0..4092)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To Vlan-id. Used to specify a range"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 11 }
+
+rcDiagPcapFilterIsInverseVlanId   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Vlan-Id Inverse. when set the Vlan-Id
+                       otherthan specified range is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 12 }
+rcDiagPcapFilterPbit  OBJECT-TYPE
+        SYNTAX         INTEGER (0..7)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "pBit of the packet to be matched"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 13 }
+
+rcDiagPcapFilterToPbit  OBJECT-TYPE
+        SYNTAX         INTEGER (0..7)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To pBit. Used to specify a range"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 14 }
+
+rcDiagPcapFilterIsInversePbit   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "pBit Inverse. when set the pBit
+                       otherthan specified range is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 15 }
+
+rcDiagPcapFilterEtherType  OBJECT-TYPE
+        SYNTAX         INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "EtherType of the packet to be matched"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 16 }
+
+rcDiagPcapFilterToEtherType  OBJECT-TYPE
+        SYNTAX         INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To EtherType. Used to specify a range"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 17 }
+
+rcDiagPcapFilterIsInverseEtherType   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "EtherType Inverse. when set the EtherType
+                       otherthan specified range is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 18 }
+
+rcDiagPcapFilterProtocolType  OBJECT-TYPE
+        SYNTAX         INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "ProtocolType of the packet to be matched"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 19 }
+
+rcDiagPcapFilterToProtocolType  OBJECT-TYPE
+        SYNTAX         INTEGER (0..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To ProtocolType. Used to specify a range"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 20 }
+
+rcDiagPcapFilterIsInverseProtocolType   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "ProtocolType Inverse. when set the ProtocolType
+                       otherthan specified range is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 21 }
+
+rcDiagPcapFilterSrcIp  OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Source IP address of the packet to be matched"
+        ::= { rcDiagPcapFilterEntry 22 }
+
+rcDiagPcapFilterToSrcIp  OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To Source IP address. Used to specify a range"
+        ::= { rcDiagPcapFilterEntry 23 }
+
+rcDiagPcapFilterIsInverseSrcIp   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Source IP address Inverse. when set the source IP
+                       otherthan specified range is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 24 }
+
+rcDiagPcapFilterDstIp  OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Destination IP address of the packet to be matched"
+        ::= { rcDiagPcapFilterEntry 25 }
+
+rcDiagPcapFilterToDstIp  OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To Destination IP address. Used to specify a range"
+        ::= { rcDiagPcapFilterEntry 26 }
+
+rcDiagPcapFilterIsInverseDstIp   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Destination IP address Inverse. when set the
+                       Destination IP other than specified is range
+                       matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 27 }
+
+rcDiagPcapFilterDscp  OBJECT-TYPE
+        SYNTAX         INTEGER (0..63)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "DSCP value of the packet to be matched"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 28 }
+
+rcDiagPcapFilterToDscp  OBJECT-TYPE
+        SYNTAX         INTEGER (0..63)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To DSCP. Used to specify a range"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapFilterEntry 29 }
+
+rcDiagPcapFilterIsInverseDscp   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "DSCP Inverse. when set the DSCP
+                       otherthan specified range is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 30 }
+
+rcDiagPcapFilterRowStatus   OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Row Status"
+        ::= { rcDiagPcapFilterEntry 31 }
+
+rcDiagPcapFilterDscpMatchZero   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "When this value is set to true, then 0 value of
+                       Pbit is not taken as disable value. The user will
+                       be allowed to capture packets with Pbit value of
+                       0 also. Be default it would be set to FALSE"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 32 }
+
+rcDiagPcapFilterPbitMatchZero   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "When this value is set to true, then 0 value of
+                       Pbit is not taken as disable value. The user will
+                       be allowed to capture packets with Pbit value of
+                       0 also. Be default it would be set to FALSE"
+        DEFVAL         { false }
+        ::= { rcDiagPcapFilterEntry 33 }
+
+
+-- rcDiagPcapAdvancedFilterTable
+
+
+rcDiagPcapAdvancedFilterTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of entries in the
+                       Filter table advanced parameter"
+        ::= { rcDiagPcap 12 }
+
+rcDiagPcapAdvancedFilterTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcDiagPcapAdvancedFilterEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to store pcap secondary filters"
+        ::= { rcDiagPcap 13 }
+
+rcDiagPcapAdvancedFilterEntry OBJECT-TYPE
+        SYNTAX        RcDiagPcapAdvancedFilterEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Pcap secondary Advanced filter desc"
+        INDEX         {rcDiagPcapAdvancedFilterId }
+        ::= { rcDiagPcapAdvancedFilterTable 1 }
+
+RcDiagPcapAdvancedFilterEntry ::= SEQUENCE {
+        rcDiagPcapAdvancedFilterId                                              INTEGER,
+        rcDiagPcapAdvancedFilterUdpPort                                         INTEGER,
+        rcDiagPcapAdvancedFilterToUdpPort                                       INTEGER,
+        rcDiagPcapAdvancedFilterIsInverseUdpPort        TruthValue,
+        rcDiagPcapAdvancedFilterTcpPort                                 INTEGER,
+        rcDiagPcapAdvancedFilterToTcpPort                               INTEGER,
+        rcDiagPcapAdvancedFilterIsInverseTcpPort        TruthValue,
+        rcDiagPcapAdvancedFilterUserDefinedData         DisplayString,
+        rcDiagPcapAdvancedFilterUserDefinedDataSize     INTEGER,
+        rcDiagPcapAdvancedFilterUserDefinedOffset       INTEGER,
+        rcDiagPcapAdvancedFilterIsInverseUserDefined    TruthValue,
+        rcDiagPcapAdvancedFilterTimer                                   INTEGER,
+        rcDiagPcapAdvancedFilterPacketCount                     INTEGER,
+        rcDiagPcapAdvancedFilterRefreshTimer                    INTEGER,
+        rcDiagPcapAdvancedFilterRowStatus                       RowStatus
+    }
+
+
+rcDiagPcapAdvancedFilterId OBJECT-TYPE
+        SYNTAX        INTEGER (1..1000)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Unique ID that represents the filter"
+        ::= { rcDiagPcapAdvancedFilterEntry 1 }
+
+rcDiagPcapAdvancedFilterUdpPort  OBJECT-TYPE
+        SYNTAX         INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "UdpPort of the packet to be matched"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapAdvancedFilterEntry 2 }
+
+rcDiagPcapAdvancedFilterToUdpPort  OBJECT-TYPE
+        SYNTAX         INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To UdpPort. Used to specify a range"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapAdvancedFilterEntry 3 }
+
+rcDiagPcapAdvancedFilterIsInverseUdpPort   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "UdpPort Inverse. when set the UdpPort
+                       otherthan specified range is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapAdvancedFilterEntry 4 }
+
+rcDiagPcapAdvancedFilterTcpPort  OBJECT-TYPE
+        SYNTAX         INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "TcpPort of the packet to be matched"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapAdvancedFilterEntry 5 }
+
+rcDiagPcapAdvancedFilterToTcpPort  OBJECT-TYPE
+        SYNTAX         INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To TcpPort. Used to specify a range"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapAdvancedFilterEntry 6 }
+
+rcDiagPcapAdvancedFilterIsInverseTcpPort   OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "TcpPort Inverse. when set the TcpPort
+                       otherthan specified range is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapAdvancedFilterEntry 7 }
+
+rcDiagPcapAdvancedFilterUserDefinedData  OBJECT-TYPE
+        SYNTAX         DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "User defined data to match with the packets received"
+        DEFVAL         { "\0"  }
+        ::= { rcDiagPcapAdvancedFilterEntry 8 }
+
+rcDiagPcapAdvancedFilterUserDefinedDataSize   OBJECT-TYPE
+        SYNTAX         INTEGER (0..50)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Length of user defined data"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapAdvancedFilterEntry 9 }
+
+rcDiagPcapAdvancedFilterUserDefinedOffset   OBJECT-TYPE
+        SYNTAX         INTEGER (0..9600)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Offset from which match has to start"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapAdvancedFilterEntry 10 }
+
+
+rcDiagPcapAdvancedFilterIsInverseUserDefined OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "TcpPort Inverse. when set the Userdata
+                       otherthan specified is matched"
+        DEFVAL         { false }
+        ::= { rcDiagPcapAdvancedFilterEntry 11 }
+
+rcDiagPcapAdvancedFilterTimer OBJECT-TYPE
+        SYNTAX         INTEGER (0..3600000)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Timer to start the pcap capture window in ms"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapAdvancedFilterEntry 12 }
+
+rcDiagPcapAdvancedFilterPacketCount OBJECT-TYPE
+        SYNTAX         INTEGER (0..65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Number of packets to be captured before disabling pcap"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapAdvancedFilterEntry 13 }
+
+rcDiagPcapAdvancedFilterRefreshTimer OBJECT-TYPE
+        SYNTAX         INTEGER (0..3600000)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Refresh timer in ms"
+        DEFVAL         { 0 }
+        ::= { rcDiagPcapAdvancedFilterEntry 14 }
+
+rcDiagPcapAdvancedFilterRowStatus OBJECT-TYPE
+        SYNTAX         RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "RowStatus"
+        ::= { rcDiagPcapAdvancedFilterEntry 15 }
+
+rcDiagPcapCopyFileName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the file name. When set, the PCAP
+                       data from PCAP engine RAM is stored into this file
+                       in PCAP engine"
+        ::= { rcDiagPcap 14 }
+
+rcDiagPcapResetStat OBJECT-TYPE
+        SYNTAX        INTEGER {
+                           none(1),
+                           resetStat(2)
+                       }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "To Reset PCAP statistics"
+        ::= { rcDiagPcap 15 }
+
+rcDiagPcapStatPacketCapacityCount OBJECT-TYPE
+        SYNTAX         DisplayString
+        MAX-ACCESS     read-only
+        STATUS         current
+        DESCRIPTION    "Packet Capacity Count"
+        ::= { rcDiagPcap 16 }
+
+rcDiagPcapStatNumberOfPacketsReceived OBJECT-TYPE
+        SYNTAX         DisplayString
+        MAX-ACCESS     read-only
+        STATUS         current
+        DESCRIPTION    "Number of packets received in PCAP engine"
+        ::= { rcDiagPcap 17 }
+
+rcDiagPcapStatNumberOfPacketsAccumulated OBJECT-TYPE
+        SYNTAX         DisplayString
+        MAX-ACCESS     read-only
+        STATUS         current
+        DESCRIPTION    "Number of packets captured in PCAP engine"
+        ::= { rcDiagPcap 18 }
+
+rcDiagPcapStatNumberOfPacketsDroppedInPcapEngine OBJECT-TYPE
+        SYNTAX         DisplayString
+        MAX-ACCESS     read-only
+        STATUS         current
+        DESCRIPTION    "Number of packets dropped in PCAP engine by filters"
+        ::= { rcDiagPcap 19 }
+
+rcDiagPcapStatNumberOfPacketsDroppedInHardware OBJECT-TYPE
+        SYNTAX         DisplayString
+        MAX-ACCESS     read-only
+        STATUS         current
+        DESCRIPTION    "Number of packets dropped in Hardware"
+        ::= { rcDiagPcap 20 }
+
+rcDiagPcapDataValid OBJECT-TYPE
+        SYNTAX         TruthValue
+        MAX-ACCESS     read-only
+        STATUS         current
+        DESCRIPTION    "A true/false value that indicate the return
+                        data whether is valid."
+        ::= { rcDiagPcap 21 }
+
+rcDiagPcapEtherTypeForSvlanLevel OBJECT-TYPE
+        SYNTAX         INTEGER ('05dd'h..'ffff'h)
+        MAX-ACCESS     read-write
+        STATUS         current
+        DESCRIPTION    "EtherType of svlan level."
+        ::= { rcDiagPcap 22 }
+
+END

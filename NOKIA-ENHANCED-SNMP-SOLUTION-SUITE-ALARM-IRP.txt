@@ -1,0 +1,1142 @@
+NOKIA-ENHANCED-SNMP-SOLUTION-SUITE-ALARM-IRP DEFINITIONS ::= BEGIN
+
+-- ===============================================================
+--     Copyright (C) Nokia Networks 2001 - 2002
+-- ===============================================================
+--
+--
+-- Description:  MIB file for the Nokia SNMP solution set for
+--               3GPP Alarm Integration Refernce Point
+--               Purpose is to specify the Fault Management
+--               interface for Nokia NetAct.
+--               Further information can be found in the Interface
+--               specification 
+--                    NE3S interface - Fault Management
+--               Intranet: NET/OSS/EMS Web Pages
+--
+-- 
+-- Protocol:     SNMPv2c MIB (Simple network management protocol,
+--               version 2c, Management Information Base  )
+-- Format:       SMIv2
+--   
+-- Version 
+-- 0.9         : Initial Version
+-- 1.0         : Changes to Description clauses
+--               noiSnmpAlarmIrp instead of nokiaSnmpAlarmIrp
+--               OID's now in module NOKIA-OID-REGISTRATION-MIB
+-- 1.1.        : OID changed, Open SNMP IF now Enhanced SNMP Solution
+--               Suite      
+-- 1.2.3       : NoiNotificationType imported and used to determine the 
+--               type of the entry in the alarm log
+--               Version of the MIB synchronised with Interface Spcification
+--               noiAlarmIrpVersion now 5 character
+-- 1.2.4       : NE3S OID Registration MIB File has been renamed,
+--               to avoid naming conflict with Nokia general OID 
+--               registration MIB.
+-- 1.2.5       : noiOpenInterfaceModule imported from 
+--               NOKIA-NE3S-REGISTRATION-MIB
+--               Previous Version wrong
+-- 1.2.6       : no changes in this MIB but due to changes in the 
+--               NOKIA-ENHANCED-SNMP-SOLUTION-SUITE-COMMON-DEFINITION
+--               version numbering needs to be changed, as both MIB 
+--               shall have same version
+--
+
+--
+-- ===============================================================
+-- Author      : M.Grosse-Kreul et. all.
+-- Version     : 1.2.6
+-- Last Update : 11.1.2002
+--================================================================
+
+--======================================================================
+-- NAMING CONVENTION
+-- 
+-- All Objects are prefixed with 'noi'
+-- noi shall represent the abbreviation 
+--         Nokia  Open  Interface
+--======================================================================
+
+
+IMPORTS
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+                FROM SNMPv2-SMI
+
+        MODULE-COMPLIANCE, NOTIFICATION-GROUP, OBJECT-GROUP
+                FROM SNMPv2-CONF
+
+        NoiAcknowledgementState, NoiAcknowledgementTime, 
+        NoiAcknowledgementUserId,
+        NoiAdditionalText, NoiAlarmId, NoiAlarmLogControl, 
+        NoiAlarmLogCount, NoiAlarmTableCount, NoiAlarmText,
+        NoiSystemDistinguishedName, NoiEventTime, NoiEventType,
+        NoiNotificationId, NoiNotificationType , NoiLogFullAction, 
+        NoiPerceivedSeverity, NoiProbableCause, NoiSpecificProblem 
+                FROM NOKIA-ENHANCED-SNMP-SOLUTION-SUITE-COMMON-DEFINITION
+
+        noiOpenInterfaceModule,  noiFaultManagementVariable, noiAlarmNotification, 
+        noiAlarmTables, noiAlarmLog, noiFMCompliance
+                FROM NOKIA-NE3S-REGISTRATION-MIB;
+
+
+noiSnmpAlarmIrp MODULE-IDENTITY
+        LAST-UPDATED "200211010000Z"
+        ORGANIZATION "Nokia Networks"
+        CONTACT-INFO 
+                     "e-mail: NET-OSS-OPEN-SNMP DL"
+        DESCRIPTION "This SNMP MIB-module specifies the SNMP Solution Set 
+                     of the 3GPP Alarm Integration Reference Point (IRP)
+                     also known as NE3S Interface.
+                     The purpose of this IRP is to define an interface 
+                     though which a network element manager or a network 
+                     element) can communicate alarm information for its 
+                     managed objects to Nokia OS, NetAct.
+                     An alarm is a kind of object that represents an 
+                     abnormal condition for a managed object. An alarm is
+                     active as long as the corresponding abnormal condition
+                     remains. The EMS or NE maintains an 'alarm table' 
+                     and containing all currently active alarms for its
+                     managed objects.
+                     When an alarm is cleared and acknowledged, it is 
+                     removed from the alarm table and no longer accessible.
+                     The 'Alarm Log' contains history information on the 
+                     occurred fault situations and emitted alarms 
+                     notifications."
+        REVISION "200211010000Z"
+        DESCRIPTION "Version 1.2.6"
+::= { noiOpenInterfaceModule 2 }
+
+
+
+--======================================================================
+-- IRP VERSION INFORMATION
+--======================================================================
+
+
+noiAlarmIrpVersion OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(5))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "This object represents the version of the Alarm IRP
+                 supported by the agent. The format is 'nn.m', where 'nn' 
+                 is the main version number of the interface model and 'm' 
+                 the release number within the main version.
+                 This version is 1.2.6"
+        ::= { noiFaultManagementVariable 1 }
+
+
+--======================================================================
+-- General Object Types
+--
+--======================================================================
+noiAlarmLastSendNotificationId OBJECT-TYPE
+        SYNTAX      NoiNotificationId
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represent the notification identifier
+                 of last send notification ( noiAlarmNew, 
+                 noiAlarmCleared, noiAlarmAckStateChanged or  
+                 noiAlarmChanged)
+                 The agent shall store the notification identifier
+                 of the last send FM notification in this object 
+                 immediately after sending the notification.
+                 The manager can retrieve the current value of this
+                 object to detect lost notifications. This mechanism
+                 can be used by the manager when no notification 
+                 is received for a certain time (e.g. 30 minutes)
+                 to evaluate whether an alarm upload or a retrieval
+                 of alarms from the alarm log shall be performed"
+::= { noiFaultManagementVariable 2 }
+
+
+--======================================================================
+-- ALARM TABLE
+-- 
+-- The alarm table is an optional feature of the NE3S Interface 
+-- and need to be supported only when fully compliance with the IRP
+-- specification is desired.
+-- 
+-- If the Agent does not support the alarm table, the following
+-- objects will not implemented:
+--      noiAlarmTableCount
+--      noiAlarmTable
+--      noiAlarmEntry
+--      NoiAlarmEntry
+-- 
+-- 
+--======================================================================
+
+
+noiAlarmTableCount  OBJECT-TYPE
+        SYNTAX      NoiAlarmTableCount
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Contains the number or current active alarms accessible
+                 in the alarm table.
+                 When the alarm table is empty, the value of this
+                 object is zero (0)."
+::= { noiAlarmTables 1 }
+
+
+noiAlarmTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF NoiAlarmEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+                "Table with information about the alarms that are 
+                 currently active in the Network Element and accessible
+                 for the manager.
+                 An Active alarm is characterised by a severity other
+                 than cleared.
+                 New Alarm
+                       When a new alarm is inserted into the alarm table,
+                       - acknowledgement user Id shall be an empty string
+                       - acknowledgement time shall be the event time, 
+                       - acknowledgement state shall be set to 'unacknowledged'
+                       If the agent does not support the concept of 
+                       acknowledgement, the value of acknowledgement 
+                       state will be set to 'indeterminate'.
+                       The object noiAlarmLastSendNotificationId is updated
+                       according to the value of the notification identifier 
+                       of the notication 'noiAlarmNew'
+                       A notification 'noiAlarmNew' is send by the agent.
+
+                 Clear Alarm
+                       When an active alarm is cleared it will be removed 
+                       from the alarm table, if the acknowledgement state is
+                       'acknowledged'.
+                       Otherwise, the alarm will remain in the alarm table
+                       and the severity and event time are updated according
+                       to the values in the notification 'noiAlarmCleared'
+                       If the agent does not support the concept of 
+                       acknowledgement, than the alarm will be removed from 
+                       the alarm table when it is cleared.
+                       The object noiAlarmLastSendNotificationId is updated
+                       according to the value of the notification identifier 
+                       of the notification 'noiAlarmCleared'
+                       A notification 'noiAlarmCleared' is send by agent.
+
+                 Changed Alarm
+                       When the severity of an active alarm is changed
+                       the severity of the alarm in the alarm table is 
+                       changed accordingly. If the alarm has a different 
+                       additional text than the value is changed in the 
+                       alarm table also.
+                       The acknowledgement state will be set to unacknowledged 
+                       implicitly. The acknowledgement user id will be set to 
+                       default value, empty string, the acknowledgement time 
+                       shall have same value as the event time.
+                       Although the value of the acknowledgement state is 
+                       implicitly changed, the agent must not emit the 
+                       'noiAlarmAckStateChanged' notification.
+                       
+                       The event time of the alarm in the alarm table will 
+                       be changed according to the value of the event.
+                       
+                       If the agent does not support the concept of 
+                       acknowledgement than the value of acknowledgement state,
+                       -time and -user id remains unchanged.
+                       The alarm is not removed from the alarm table and a
+                       notification 'noiAlarmChanged' is send by agent.
+                       The object noiAlarmLastSendNotificationId is updated
+                       according to the value of the notification identifier 
+                       of the notification 'noiAlarmChanged'
+
+                 Acknowledged Alarm 
+                       When the state of an alarm is changed the acknowledge-
+                       ment state of an alarm in the alarm table is changed 
+                       accordingly.
+                       The acknowledgement used id will be set according to 
+                       the user. The acknowledgement time is changed also.
+                       
+                       The event time of the alarm in the alarm table will be 
+                       changed according to the value of the event.
+                       
+                       The alarm is removed from the alarm table, when it is 
+                       already cleared e.g. severity of the alarm in the alarm 
+                       table is 'cleared'. Otherwise, the alarm will remain in
+                       the alarm table.
+
+                       The object noiAlarmLastSendNotificationId is updated
+                       according to the value of the notification identifier 
+                       of the notification 'noiAlarmAckStateChanged'
+                       A notification 'noiAlarmAckStateChanged' is send by
+                       agent."
+::= { noiAlarmTables 2 }
+
+
+noiAlarmEntry OBJECT-TYPE
+        SYNTAX       NoiAlarmEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+                "One entry in the alarm table holds one active alarm."
+        INDEX { noiAlarmId }
+::= { noiAlarmTable 1 }
+
+
+NoiAlarmEntry ::= SEQUENCE {
+                 noiAlarmId                  NoiAlarmId,
+                 noiAlarmSystemDN            NoiSystemDistinguishedName,
+                 noiAlarmEventTime           NoiEventTime,
+                 noiAlarmSpecificProblem     NoiSpecificProblem,
+                 noiAlarmText                NoiAlarmText,
+                 noiAlarmPerceivedSeverity   NoiPerceivedSeverity,
+                 noiAlarmAdditionalText      NoiAdditionalText,
+                 noiAlarmProbableCause       NoiProbableCause,
+                 noiAlarmEventType           NoiEventType,
+                 noiAlarmNotificationId      NoiNotificationId,
+                 noiAlarmAckState            NoiAcknowledgementState,
+                 noiAlarmAckTime             NoiAcknowledgementTime,
+                 noiAlarmAckUserId           NoiAcknowledgementUserId
+}
+
+
+--======================================================================
+-- 
+-- The following objects are used in alarm and clear alarm notification
+-- and in conjunction with the alarm table
+--
+--======================================================================
+
+noiAlarmId OBJECT-TYPE
+        SYNTAX      NoiAlarmId
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "This object represents the alarm identifier of an 
+                 alarm in the alarm table It uniquely identifies an 
+                 entry in the alarm table.
+                 The alarmId object is read-only even though it
+                 is used as index in the alarm table"
+::= { noiAlarmEntry 1 }
+
+
+noiAlarmSystemDN OBJECT-TYPE
+        SYNTAX      NoiSystemDistinguishedName
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the System Distinguished Name 
+                  (SDN) of the managed object detecting the fault."
+::= { noiAlarmEntry 2}
+
+
+noiAlarmEventTime OBJECT-TYPE
+        SYNTAX      NoiEventTime
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION 
+                 "This object represents the event time, time of 
+                  occurrence of the event in the Network Element."
+::= { noiAlarmEntry 3 }
+
+
+noiAlarmSpecificProblem OBJECT-TYPE
+        SYNTAX      NoiSpecificProblem
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the specific problem assigned 
+                 to the fault situation."
+::= { noiAlarmEntry 4 }
+
+
+noiAlarmText OBJECT-TYPE
+        SYNTAX      NoiAlarmText
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the alarm text and contains
+                  basic information on the fault"
+::= { noiAlarmEntry 5 }
+
+
+noiAlarmPerceivedSeverity OBJECT-TYPE
+        SYNTAX      NoiPerceivedSeverity
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the perceived severity of 
+                 the fault."
+::= { noiAlarmEntry 6 }
+
+
+noiAlarmAdditionalText OBJECT-TYPE
+        SYNTAX      NoiAdditionalText
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the additional text and provides
+                 further qualification on the fault."
+::= { noiAlarmEntry 7 }
+
+
+noiAlarmProbableCause OBJECT-TYPE
+        SYNTAX      NoiProbableCause
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the probable cause of the alarm"
+::= { noiAlarmEntry 8 }
+
+
+noiAlarmEventType OBJECT-TYPE
+        SYNTAX      NoiEventType
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the event type"
+::= { noiAlarmEntry 9 }
+
+
+noiAlarmNotificationId OBJECT-TYPE
+        SYNTAX      NoiNotificationId
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represent the notification identifier.
+                 It is a unique value for a notification."
+::= { noiAlarmEntry 10 }
+
+
+noiAlarmAckState OBJECT-TYPE
+        SYNTAX      NoiAcknowledgementState
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the acknowledgement status 
+                  of the of the alarm
+                  If the agent does not support the concept of
+                  acknowledgement, than the value 'indeterminate' shall 
+                  be used"
+::= { noiAlarmEntry 11 }
+
+
+noiAlarmAckTime OBJECT-TYPE
+        SYNTAX      NoiAcknowledgementTime
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                 "This object represent the time of the last modification
+                 of the acknowledgement state of an alarm in the alarm 
+                 table."
+::= { noiAlarmEntry 12 }
+
+
+noiAlarmAckUserId OBJECT-TYPE
+        SYNTAX      NoiAcknowledgementUserId
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                 "This object represent the user who made the last 
+                  modification of the acknowledgement state of an alarm 
+                  in the alarm table."
+::= { noiAlarmEntry 13 }
+
+
+--======================================================================
+-- Mandatory ALARM RELATED NOTIFICATIONS
+-- 
+-- The notification of the type "noiAlarmNew" shall be used in case of
+-- an alarm notification.
+--
+-- The notification of the type "noiAlarmCleared" shall be used in case of
+-- a clear alarm notification.
+-- 
+-- The notification of the type "noiAlarmListRebuild" shall be used after
+-- the rebuild of the agent's alarm table.
+-- 
+--======================================================================
+
+noiAlarmNew NOTIFICATION-TYPE
+         OBJECTS {   
+                    noiAlarmSystemDN,
+                    noiAlarmId,
+                    noiAlarmEventTime,
+                    noiAlarmSpecificProblem,
+                    noiAlarmText,
+                    noiAlarmPerceivedSeverity,
+                    noiAlarmAdditionalText,
+                    noiAlarmProbableCause,
+                    noiAlarmEventType,
+                    noiAlarmNotificationId}
+        STATUS      current
+        DESCRIPTION 
+                "This notification is used when a fault situation 
+                 occurs in the NE and the agent send the alarm 
+                 notification to inform the OS about the fault.
+
+                 The value 'cleared' for the noiAlarmPerceivedSeverity
+                 is not allowed for an alarm notification."
+::= { noiAlarmNotification 1 }
+
+
+noiAlarmCleared NOTIFICATION-TYPE
+        OBJECTS {   
+                    noiAlarmSystemDN,
+                    noiAlarmId,
+                    noiAlarmEventTime,
+                    noiAlarmSpecificProblem,
+                    noiAlarmText,
+                    noiAlarmPerceivedSeverity,
+                    noiAlarmAdditionalText,
+                    noiAlarmProbableCause,
+                    noiAlarmEventType,
+                    noiAlarmNotificationId}
+        STATUS      current
+        DESCRIPTION 
+                "This notification is used when an alarm is cleared.
+                 The only permitted value for the 
+                 'noiAlarmPerceivedSeverity' is 'cleared'
+                 The value of noiAlarmId must be equal to the value
+                 Of the noiAlarmId must of the correlated alarm
+                 notification.
+                 The noiAlarmSystemDN , noiAlarmSpecificProblem ,
+                 noiAlarmProbableCause, noiAlarmEventType 
+                 must be equal to the values of the correlated alarm.
+                 The agent might use empty string for noiAlarmText and
+                 NoiAlarmAdditionalText, otherwise the values must  
+                 be equal to the values of the correlated alarm.
+                 
+                 The active alarm is cleared and removed from the
+                 alarm table, if the acknowledgement state is 
+                 'acknowledged'. otherwise, the alarm will remain in 
+                 the alarm table. 
+                 
+                 If the agent does not support the concept of 
+                 acknowledgement, than the alarm will be removed from 
+                 the alarm table when this notification is send by the 
+                 agent"
+::= { noiAlarmNotification 2}
+
+
+--======================================================================
+-- The concept of rebuilding the alarm table provides to altenative
+-- implementations, described in the Interface Specification
+--
+-- The agent shall select one strategy for implementation of the rebuild
+-- process (3GPP compiant or the deiating impemetation). Depening on the 
+-- selection, either the  noiAlarmListRebuild noptification or
+-- noiAlarmListRebuildInitiated noification shall be implemented.
+--======================================================================
+
+
+-- The notification noiAlarmListRebuild shall be used when the 3GPP 
+-- compliant implementation is chosen.
+
+noiAlarmListRebuild NOTIFICATION-TYPE
+        OBJECTS {   
+                    noiAlarmSystemDN,
+                    noiAlarmEventTime,
+                    noiAlarmNotificationId}
+        STATUS      current
+        DESCRIPTION 
+                "This notification is used when the alarm table in the 
+                 agent has been rebuild. The notification will be 
+                 emitted after a successful rebuild.
+                 On reception of this notification, the manager
+                 will synchronise the alarm table in the agent with
+                 it's internal alarm table by retrieving the content
+                 of the alarm table in the agent.
+                 While re-build the alarm table, the agent shall 
+                 not emit notifications, when entering new alarms
+                 into the alarm table.
+                 The agent can decide to log this notification in the 
+                 alarm log like any other notification. The objects,
+                 which are not used for this notification shall remain empty
+                 (strings) or use default value (0) for integer types."
+::= { noiAlarmNotification 3}
+
+
+
+-- This notification is used in conjunction with the alternatve implementation
+-- of the alarm table rebuild, described in the Interface Specification.
+-- The agent must not implement this notification, when the 
+-- noiAlarmListRebuild notification is supported.
+
+noiAlarmListRebuildInitiated NOTIFICATION-TYPE
+        OBJECTS {   
+                    noiAlarmSystemDN,
+                    noiAlarmEventTime,
+                    noiAlarmNotificationId}
+        STATUS      current
+        DESCRIPTION 
+                "This notification is used when the alarm table in the 
+                 agent is about the be rebuild. The notification will be 
+                 emitted prior to the rebuild, immediately after
+                 dropping the content of the alarm table.
+                 On reception of this notification, the manager
+                 shall clean the internal alarm table to be in snyc 
+                 with the agent.
+                 The agent can decide to log this notification in the 
+                 alarm log like any other notification. The objects,
+                 which are not used for this notification shall remain empty
+                (strings) or use default value (0) for integer types "
+::= { noiAlarmNotification 4}
+
+
+
+--======================================================================
+-- This notification is an optional feature of the NE3S Interface 
+-- and need to be supported only when fully compliance
+-- with the Nokia IRP specification is desired.
+-- 
+--======================================================================
+noiAlarmChanged NOTIFICATION-TYPE
+        OBJECTS {   
+                    noiAlarmSystemDN,
+                    noiAlarmId,
+                    noiAlarmEventTime,
+                    noiAlarmSpecificProblem,
+                    noiAlarmText,
+                    noiAlarmPerceivedSeverity,
+                    noiAlarmAdditionalText,
+                    noiAlarmProbableCause,
+                    noiAlarmEventType,
+                    noiAlarmNotificationId}
+        STATUS      current
+        DESCRIPTION 
+                "This notification is used when the severity of an alarm
+                 has changed. The value 'cleared' is not allowed in 
+                 conjunction with this notification.
+                 The value of noiAlarmID must be equal to the value
+                 of the noiAlarmId of the correlated alarm
+                 notification.
+                 The noiAlarmSystemDN , noiAlarmSpecificProblem ,
+                 NoiAlarmText, noiAlarmProbableCause, noiAlarmEventType 
+                 must be equal to the values of the correlated alarm.
+                 The agent may use a different noiAlarmAdditionalText than 
+                 the original alarm.
+                 The noiAlarmEventTime is naturally different from the
+                 original alarm"
+::= { noiAlarmNotification 5}
+
+
+
+--======================================================================
+-- The concept of acknowledgement is an optional feature of the 
+-- NE3S Interface and need to be supported only when fully compliance
+-- with the Nokia IRP specification is desired.
+-- 
+--======================================================================
+
+noiAlarmAckStateChanged NOTIFICATION-TYPE
+        OBJECTS {   
+                    noiAlarmSystemDN,
+                    noiAlarmId,
+                    noiAlarmEventTime,
+                    noiAlarmSpecificProblem,
+                    noiAlarmText,
+                    noiAlarmPerceivedSeverity,
+                    noiAlarmAdditionalText,
+                    noiAlarmProbableCause,
+                    noiAlarmEventType,
+                    noiAlarmNotificationId,
+                    noiAlarmAckState,
+                    noiAlarmAckTime,
+                    noiAlarmAckUserId}
+        STATUS      current
+        DESCRIPTION 
+                "This notification is used when the acknowledgement 
+                 state of an alarm has changed.
+                 The value of noiAlarmID must be equal to the value
+                 ff the noiAlarmId of the correlated alarm
+                 notification. 
+                 The alarm information carried in this notification 
+                 shall contain identical set of parameters as the 
+                 correlated alarm notification.
+                 The alarm is removed from the alarm table when the
+                 alarm has been cleared before (e.g. severity of the
+                 alarm is 'cleared' and this notification has been send
+                 by the agent.
+                 If the alarm in the alarm table is not cleared, it remains
+                 in the table. Values of noiAlarmAckState , noiAlarmAckTime,
+                 noiAlarmAckUserId are updated.
+                 If the agent does not support the concept of acknowledgment
+                 for alarms, than this notification shall not be supported."
+::= { noiAlarmNotification 6}
+
+
+
+
+--======================================================================
+-- ALARM LOG
+-- 
+-- The Alarm Log is an optional feature of the NE3S Interface and 
+-- need to be supported only when fully compliance with the 
+-- specification is desired.
+-- 
+--======================================================================
+
+
+noiAlarmLogFullAction  OBJECT-TYPE
+    SYNTAX      NoiLogFullAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION 
+                 "Note that this object does not affect to the behaviour
+                 of alarm identifier, i.e. when log is in halt mode, alarm 
+                 identifier continues to be incremented by 1 for each 
+                 notification emitted by the NE."
+    DEFVAL { wrap }
+::= { noiAlarmLog 1 }
+
+
+noiAlarmLogControl OBJECT-TYPE
+    SYNTAX  NoiAlarmLogControl
+    MAX-ACCESS  read-write
+    STATUS  current
+    DESCRIPTION 
+                 "This object controls the activity of the log. 
+                 Initially this object is set to logging (0) which 
+                 indicate that the log functionality is operational 
+                 and all emitted notifications are stored in the log 
+                 table. This shall be the initial value after restart 
+                 of the Network Element.
+                 When manager sets this object to flush(1), the NE shall
+                 empty the current log table. All entries in the alarm 
+                 table at the time of setting this object are removed.
+                 After the completion of the flushing the agent 
+                 shall set this object to logging(0) and start immediately
+                 logging all emitted notification (normal mode of operation)
+                 When the manager sets this object to suspend (2), the NE 
+                 shall interrupt logging of emitted notifications.
+                 The manager has to explicitly activate logging for a 
+                 suspended log by setting this object to logging (0)."
+    DEFVAL { logging }
+::= { noiAlarmLog 2 }
+
+
+noiAlarmLogCount  OBJECT-TYPE
+    SYNTAX      NoiAlarmLogCount
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+                 "This object contains the number of current records 
+                 in the alarm Log. When the alarm log is empty , the 
+                 value of this object is 0."
+::= { noiAlarmLog 3 }
+
+
+noiAlarmLogMaxCount  OBJECT-TYPE
+    SYNTAX      NoiAlarmLogCount
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+                 "This object contains the maximum number of records 
+                  in the alarm Log. The value is implementation 
+                  dependent."
+::= { noiAlarmLog 4}
+
+
+noiAlarmLogTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF NoiAlarmLogEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+                 "Log with information about the alarms that are 
+                 currently active in the Network Element.
+                 An Active alarm is characterised by a severity other
+                 than cleared.
+                  "
+::= { noiAlarmLog 5 }
+
+
+noiAlarmLogEntry OBJECT-TYPE
+        SYNTAX       NoiAlarmLogEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+                "One entry in the alarm Log holds one current 
+                 active alarm."
+        INDEX { noiAlarmLogEntryNotificationId }
+::= { noiAlarmLogTable 1 }
+
+
+NoiAlarmLogEntry ::= SEQUENCE {
+               noiAlarmLogEntryNotificationId      NoiNotificationId,
+               noiAlarmLogEntryAlarmId             NoiAlarmId,
+               noiAlarmLogEntrySystemDN            NoiSystemDistinguishedName,
+               noiAlarmLogEntryEventTime           NoiEventTime,
+               noiAlarmLogEntrySpecificProblem     NoiSpecificProblem,
+               noiAlarmLogEntryAlarmText           NoiAlarmText,
+               noiAlarmLogEntryPerceivedSeverity   NoiPerceivedSeverity,
+               noiAlarmLogEntryAdditionalText      NoiAdditionalText,
+               noiAlarmLogEntryProbableCause       NoiProbableCause,
+               noiAlarmLogEntryEventType           NoiEventType,
+               noiAlarmLogEntryAckState            NoiAcknowledgementState,
+               noiAlarmLogEntryAckTime             NoiAcknowledgementTime,
+               noiAlarmLogEntryAckUserId           NoiAcknowledgementUserId,
+               noiAlarmLogEntryNotificationType    NoiNotificationType}
+
+
+noiAlarmLogEntryNotificationId OBJECT-TYPE
+        SYNTAX      NoiNotificationId
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the notification identifier
+                 of a logged notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 1 }
+
+
+noiAlarmLogEntryAlarmId OBJECT-TYPE
+        SYNTAX      NoiAlarmId
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the alarm identifier of a logged
+                 notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 2 }
+
+
+noiAlarmLogEntrySystemDN OBJECT-TYPE
+        SYNTAX      NoiSystemDistinguishedName
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the System Distinguished 
+                 name of a logged notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 3 }
+
+
+noiAlarmLogEntryEventTime OBJECT-TYPE
+        SYNTAX      NoiEventTime
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION 
+                 "This object represents the event time of a logged
+                 notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 4 }
+
+
+noiAlarmLogEntrySpecificProblem OBJECT-TYPE
+        SYNTAX      NoiSpecificProblem
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the specific problem
+                 of a logged notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 5 }
+
+
+noiAlarmLogEntryAlarmText OBJECT-TYPE
+        SYNTAX      NoiAlarmText
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the alarm text
+                 of a logged notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 6 }
+
+
+noiAlarmLogEntryPerceivedSeverity OBJECT-TYPE
+        SYNTAX      NoiPerceivedSeverity
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the perceived severity
+                 of a logged notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 7 }
+
+
+noiAlarmLogEntryAdditionalText OBJECT-TYPE
+        SYNTAX      NoiAdditionalText
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the additional text
+                 of a logged notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 8 }
+
+
+noiAlarmLogEntryProbableCause OBJECT-TYPE
+        SYNTAX      NoiProbableCause
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the probable cause
+                 of a logged notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 9 }
+
+
+noiAlarmLogEntryEventType OBJECT-TYPE
+        SYNTAX      NoiEventType
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the event type
+                 of a logged notification 
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 10 }
+
+
+noiAlarmLogEntryAckState OBJECT-TYPE
+        SYNTAX      NoiAcknowledgementState
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the acknowledgement status of the
+                  of the logged alarm
+                  If the agent does not support the concept of
+                  acknowledgement, than the value indeterminate shall be used"
+::= { noiAlarmLogEntry 11 }
+
+
+noiAlarmLogEntryAckTime OBJECT-TYPE
+        SYNTAX      NoiAcknowledgementTime
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represent the time of the last modification
+                  of the acknowledgement of a logged notification.
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 12 }
+
+
+noiAlarmLogEntryAckUserId OBJECT-TYPE
+        SYNTAX      NoiAcknowledgementUserId
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represent the user who made the last
+                 modification of the acknowledgement state of 
+                 logged notification.
+                 The value of this field shall equal to the 
+                 value of correlated field in the alarm- or clear alarm
+                 notification."
+::= { noiAlarmLogEntry 13 }
+
+
+noiAlarmLogEntryNotificationType OBJECT-TYPE
+        SYNTAX      NoiNotificationType
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represents the type of the logged notification"
+::= { noiAlarmLogEntry 14 }
+
+
+
+
+-- ======================================================================
+-- Mapping between objects in alarm notifications and entries in alarm Log
+--
+--
+--  Object in Alarm notification |  Object in Alarm Log
+--  and alarm table              | 
+-- 
+--  noiAlarmId                   |  noiAlarmLogEntryAlarmId
+--  noiAystemDN                  |  noiAlarmLogEntrySystemDN
+--  noiEeventTime                |  noiAlarmLogEntryEventTime
+--  noiAlarmSpecificProblem      |  noiAlarmLogEntrySpecificProblem
+--  noiAlarmText                 |  noiAlarmLogEntryAlarmText
+--  noiAlarmPerceivedSeverity    |  noiAlarmLogEntryPerceivedSeverity
+--  noiAlarmAdditionalText       |  noiAlarmLogEntryAdditionalText
+--  noiAlarmProbableCause        |  noiAlarmLogEntryProbableCause
+--  noiAlarmEventType            |  noiAlarmLogEntryEventType
+--  noiAlarmAckState             |  noiAlarmLogEntryAckState
+--  noiAlarmAckTime              |  noiAlarmLogEntryAckTime
+--  noiAlarmAckUserId            |  noiAlarmLogEntryAckUserId
+
+--======================================================================
+-- COMPLIANCE STATEMENTS
+--======================================================================
+
+noiAlarmIRPompliance MODULE-COMPLIANCE
+        STATUS current
+        DESCRIPTION 
+                "This specifies the objects that are required to claim 
+                 compliance to Nokia NE3S Interface."
+        MODULE 
+           MANDATORY-GROUPS { 
+                              noiAlarmAdministrationMandatoryGroup,
+                              noiAlarmNotificationMandatoryGroup}
+
+           GROUP noiAlarmNotificationOptionalGroup
+           DESCRIPTION
+                   "This group is not required. A SNMP agent may 
+                    support the concept of changing the 
+                    severity of an alarm and emitting a 
+                    noiAlarmChanged notification."
+
+           GROUP noiAlarmTableOptionalGroup
+           DESCRIPTION
+                   "This group is not required. A SNMP agent may 
+                    support the alarm Table and the related objects
+                    in the group.
+                    Nokia recommend to implement the alarm table feature"
+
+           GROUP noiAlarmTableRebuildOptionalGroup
+           DESCRIPTION
+                   "This group is not required. A SNMP agent may 
+                    support the concept of rebuilding the alarm Table
+                    an the notificaton specified for this group.
+                    This groups requires the implementation of
+                    the optional feature noiAlarmTableOptionalGroup. "
+
+
+           GROUP noiAlarmAcknwledgementOptionalGroup
+           DESCRIPTION
+                   "This group is not required. A SNMP agent may 
+                    support the acknowledgement concept,
+                    the related notification noiAlarmAckStateChanged
+                    and the SET operation on the alarm table.
+                    This groups requires the implementation of
+                    the optional feature noiAlarmTableOptionalGroup. "
+
+           GROUP noiAlarmLogOptionalGroup
+           DESCRIPTION
+                   "This group is not required. A SNMP agent may 
+                    support the alarm Log, and
+                    further related objects in the group."
+
+        ::= { noiFMCompliance 1 }
+
+
+--======================================================================
+-- GROUP DEFINITION
+--======================================================================
+
+
+noiAlarmAdministrationMandatoryGroup OBJECT-GROUP
+        OBJECTS { 
+                  noiAlarmIrpVersion
+                }
+        STATUS      current
+        DESCRIPTION 
+                "A collection of objects that represents mandatory 
+                 administrative attributes for the Alarm IRP."
+        ::= { noiFMCompliance 2 }
+
+
+noiAlarmNotificationMandatoryGroup NOTIFICATION-GROUP
+        NOTIFICATIONS { noiAlarmNew,
+                        noiAlarmCleared }
+        STATUS      current
+        DESCRIPTION 
+                "A collection of mandatory alarm notifications."
+        ::= { noiFMCompliance 4 }
+
+
+noiAlarmNotificationOptionalGroup NOTIFICATION-GROUP
+        NOTIFICATIONS { noiAlarmChanged }
+        STATUS      current
+        DESCRIPTION 
+                "A collection of optional alarm related notifications."
+        ::= { noiFMCompliance 5 }
+
+
+noiAlarmTableOptionalGroup OBJECT-GROUP
+        OBJECTS {   
+                    noiAlarmTableCount,
+                    noiAlarmLastSendNotificationId,
+                    noiAlarmId,
+                    noiAlarmSystemDN,
+                    noiAlarmEventTime,
+                    noiAlarmSpecificProblem,
+                    noiAlarmText,
+                    noiAlarmPerceivedSeverity,
+                    noiAlarmAdditionalText,
+                    noiAlarmProbableCause,
+                    noiAlarmEventType,
+                    noiAlarmNotificationId,
+                    noiAlarmAckState,
+                    noiAlarmAckTime,
+                    noiAlarmAckUserId}
+        STATUS      current
+        DESCRIPTION 
+                "A collection of objects that represents optional 
+                 functionality to store active alarms in the alarm 
+                 table."
+        ::= { noiFMCompliance 6 }
+
+noiAlarmTableRebuildOptionalGroup NOTIFICATION-GROUP
+        NOTIFICATIONS {noiAlarmListRebuild ,
+                       noiAlarmListRebuildInitiated  }
+        STATUS      current
+        DESCRIPTION 
+                "A collection of optional alarm notifications,
+                 to be used in conjunction with the concept of 
+                 rebuilding the alarm table.
+                 Depening on the selected strategy, either the
+                 noiAlarmListRebuild noptification or
+                 noiAlarmListRebuildInitiated noification 
+                 shall be implemented.."
+        ::= { noiFMCompliance 7 }
+
+
+noiAlarmAcknwledgementOptionalGroup NOTIFICATION-GROUP
+        NOTIFICATIONS { noiAlarmAckStateChanged }
+        STATUS      current
+        DESCRIPTION 
+                "A collection of optional alarm related notifications."
+        ::= { noiFMCompliance 8 }
+
+
+noiAlarmLogOptionalGroup OBJECT-GROUP
+        OBJECTS {   
+                    noiAlarmLogFullAction,
+                    noiAlarmLogControl,
+                    noiAlarmLogCount,
+                    noiAlarmLogMaxCount,
+                    noiAlarmLogEntryAlarmId,
+                    noiAlarmLogEntrySystemDN,
+                    noiAlarmLogEntryEventTime,
+                    noiAlarmLogEntrySpecificProblem,
+                    noiAlarmLogEntryAlarmText,
+                    noiAlarmLogEntryPerceivedSeverity,
+                    noiAlarmLogEntryAdditionalText,
+                    noiAlarmLogEntryProbableCause,
+                    noiAlarmLogEntryEventType,
+                    noiAlarmLogEntryNotificationId,
+                    noiAlarmLogEntryAckState,
+                    noiAlarmLogEntryAckTime,
+                    noiAlarmLogEntryAckUserId,
+                    noiAlarmLogEntryNotificationType}
+        STATUS      current
+        DESCRIPTION 
+                "A collection of objects that represents optional 
+                 functionality to store a history of emitted 
+                 notifications."
+        ::= { noiFMCompliance 9 }
+
+END
+
+
+

@@ -1,0 +1,149 @@
+-- ****************************************************************************
+--
+--            Compaq Storage Area Networks Management Appliance
+--         Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 1992-2002 Compaq Computer Corporation.
+--      All Rights Reserved.
+--
+--      The information in this document is subject to change without notice.
+--
+--      COMPAQ COMPUTER CORPORATION SHALL NOT BE LIABLE FOR TECHNICAL
+--      OR EDITORIAL ERRORS OR OMISSIONS CONATINED HEREIN; NOR FOR INCIDENTAL
+--      OR CONSEQUENTIAL DAMAGES RESULTING FROM THE FURNISHING, PERFORMANCE,
+--      OR USE OF THIS MATERIAL.
+--
+--      The Host OS MIB provides operating system information, such as
+--      name, version, file system information, software running, and more.
+--
+--      The Compaq Enterprise number is 232.
+--      The ASN.1 prefix to, and including the Compaq Enterprise is:
+--           1.3.6.1.4.1.232.151.101
+--
+-- ****************************************************************************
+
+
+CPQSANEVENT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+OBJECT-TYPE FROM RFC-1212
+TRAP-TYPE FROM RFC-1215
+enterprises FROM RFC1155-SMI
+DisplayString FROM RFC1213-MIB;
+
+--
+--      DESCRIPTION
+--              "This MIB module describes the Traps Generated 
+--              by the HP OpenView Storage Management Appliance.
+--	        It is ment as notification that an event took place 
+--              and does not supply full details of the event.  All 
+--              the fields are pulled from the Event Service logs as 
+--              recorded by the entity publishing the event."
+--     
+
+Compaq     		OBJECT IDENTIFIER ::= { enterprises 232 }
+cpqSanAppliance		OBJECT IDENTIFIER ::= { Compaq 151 }
+sanEvent 	        OBJECT IDENTIFIER ::= { cpqSanAppliance 101 }
+sanEventObj		OBJECT IDENTIFIER ::= { sanEvent 100 }
+
+--
+-- Generic Trap objects. 
+--
+
+       sanEventEventCode OBJECT-TYPE
+           SYNTAX    OCTET STRING (SIZE(128))
+           ACCESS    read-only
+           STATUS    mandatory
+           DESCRIPTION
+               "Event code written to the SAN Appliance Event log. "
+           ::= { sanEventObj 1 }
+
+       sanEventIPAddress OBJECT-TYPE
+           SYNTAX    OCTET STRING (SIZE (128))
+           ACCESS    read-only
+           STATUS    mandatory
+           DESCRIPTION
+               "The HostName/IPAddress of the entity that generated the event. "
+           ::= { sanEventObj 2 }
+
+        sanEventSeverity OBJECT-TYPE
+           SYNTAX    INTEGER
+           ACCESS    read-only
+           STATUS    mandatory
+           DESCRIPTION
+               "The Severity of the Event. "           
+	   ::= { sanEventObj 3 }
+
+	sanEventCategory OBJECT-TYPE
+           SYNTAX    INTEGER
+           ACCESS    read-only
+           STATUS    mandatory
+           DESCRIPTION
+               "The  Category of the Event as determined by the originator of 
+ 		the event. "           
+           ::= { sanEventObj 4 }
+
+      sanEventGroup OBJECT-TYPE
+           SYNTAX    OCTET STRING (SIZE (128))
+           ACCESS    read-only
+           STATUS    optional
+           DESCRIPTION
+               "The group the subject of the event belongs to. "
+           ::= { sanEventObj 5 }
+
+       sanEventSourceType OBJECT-TYPE
+   	   SYNTAX    OCTET STRING (SIZE (128))
+           ACCESS    read-only
+           STATUS    optional
+           DESCRIPTION
+               "Device type of the subject of the event. "
+           ::= { sanEventObj 6 }
+
+
+       sanEventSourceSubtype OBJECT-TYPE
+           SYNTAX    OCTET STRING (SIZE (128))
+           ACCESS    read-only
+           STATUS    optional
+           DESCRIPTION
+               "Device subtype of the subject of the event. "
+	   ::= { sanEventObj 7 }
+
+       sanEventURL OBJECT-TYPE
+           SYNTAX    OCTET STRING (SIZE (128))
+           ACCESS    read-only
+           STATUS    optional
+           DESCRIPTION
+               "A URL to use to learn more information about this event.
+		It may be the SAN Appliance or an other application. "
+           ::= { sanEventObj 8 }
+
+       sanEventDesc OBJECT-TYPE
+           SYNTAX    OCTET STRING (SIZE (512))
+           ACCESS    read-only
+           STATUS    optional
+           DESCRIPTION
+               "Event Description."
+           ::= { sanEventObj 9 }
+
+--
+-- The trap itself, which incorporate the objects described above.
+--
+
+       sanEventTrap TRAP-TYPE
+           ENTERPRISE  sanEvent
+           VARIABLES { sanEventEventCode, sanEventIPAddress, sanEventSeverity, sanEventCategory, sanEventGroup, sanEventSourceType, sanEventSourceSubtype, sanEventURL, sanEventDesc  }
+           DESCRIPTION
+               "This trap signals (using SNMP) an event has been published to the HP OpenView Storage Management Appliance."
+           ::= 1
+
+       sanTestTrap TRAP-TYPE
+           ENTERPRISE  sanEvent
+           VARIABLES { sanEventIPAddress, sanEventSeverity, sanEventSourceType, sanEventSourceSubtype, sanEventURL  }
+           DESCRIPTION
+               "HP OpenView Storage Management Appliance has sent a test trap."
+           ::= 2
+
+END
+

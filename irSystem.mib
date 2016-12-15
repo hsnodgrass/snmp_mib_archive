@@ -1,0 +1,1456 @@
+MRV-IR-SYSTEM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    OBJECT-TYPE, MODULE-IDENTITY, enterprises, IpAddress, Counter32
+            FROM SNMPv2-SMI
+    DisplayString, RowStatus
+            FROM SNMPv2-TC;
+
+mrvBpd          OBJECT IDENTIFIER ::= { enterprises 33 }
+mrvLx           OBJECT IDENTIFIER ::= { mrvBpd 100 }
+--irSystem        OBJECT IDENTIFIER ::= { mrvLx 1 }
+--irCharMib       OBJECT IDENTIFIER ::= { mrvLx 2 }
+--irTrapMib       OBJECT IDENTIFIER ::= { mrvLx 3 }
+--irHdamMib       OBJECT IDENTIFIER ::= { mrvLx 4 }
+
+irSystemMib MODULE-IDENTITY
+    LAST-UPDATED "200711080000Z"            -- 08 Nov 2007 (LX v5.2.1)
+    ORGANIZATION "MRV Communications - BPD Division"
+    CONTACT-INFO 
+            "Postal: MRV Communications, Inc.
+                     295 Foster Street
+                     Littleton, MA 01460
+
+             E-mail: support@mrv.com"
+    DESCRIPTION
+        "This is the MRV LX System MIB module."
+    ::= { mrvLx 1 }
+
+-- LX Top-Level Groups.
+
+-- LX System Groups.
+
+irSysSystem     OBJECT IDENTIFIER ::= { irSystemMib 1 }
+irDevices       OBJECT IDENTIFIER ::= { irSystemMib 2 }
+irTraps         OBJECT IDENTIFIER ::= { irSystemMib 3 }
+irCluster       OBJECT IDENTIFIER ::= { irSystemMib 4 }
+irEthernet      OBJECT IDENTIFIER ::= { irSystemMib 5 }
+irPower         OBJECT IDENTIFIER ::= { irSystemMib 6 }
+irInterfaces    OBJECT IDENTIFIER ::= { irSystemMib 7 }
+irTar           OBJECT IDENTIFIER ::= { irSystemMib 8 }
+irIpmi          OBJECT IDENTIFIER ::= { irSystemMib 9 }
+
+-- LX SysObjectID values.
+
+irDeviceLx      OBJECT IDENTIFIER ::= { irDevices 1 }
+irLx1001        OBJECT IDENTIFIER ::= { irDeviceLx 1 }
+irLx1002        OBJECT IDENTIFIER ::= { irDeviceLx 2 }
+irLx1004        OBJECT IDENTIFIER ::= { irDeviceLx 3 }
+irLx4008        OBJECT IDENTIFIER ::= { irDeviceLx 4 }
+irLx4016        OBJECT IDENTIFIER ::= { irDeviceLx 5 }
+irLx4032        OBJECT IDENTIFIER ::= { irDeviceLx 6 }
+irLx4048        OBJECT IDENTIFIER ::= { irDeviceLx 7 }
+irLxEm316       OBJECT IDENTIFIER ::= { irDeviceLx 8 }
+irLx8020        OBJECT IDENTIFIER ::= { irDeviceLx 9 }
+irLx8040        OBJECT IDENTIFIER ::= { irDeviceLx 10 }
+irLx4000T       OBJECT IDENTIFIER ::= { irDeviceLx 11 }
+irLx7304T       OBJECT IDENTIFIER ::= { irDeviceLx 12 }
+irLx4108T       OBJECT IDENTIFIER ::= { irDeviceLx 13 }
+
+--
+-- Textual Conventions
+--
+
+--
+-- Trap severity values.
+--
+TrapSeverity ::= INTEGER {
+        cleared(1),
+        informational(2),
+        warning(3),
+        minor(4),
+        major(5),
+        critical(6)
+        }
+
+--
+-- Trigger Creator values.
+--
+TarCreator ::= INTEGER {
+        other(1),
+        system(2),
+        snmp(3)
+        }
+
+--
+-- Trigger Type values.
+--
+TarTrigType ::= INTEGER {
+        other(1),
+        temp(2),
+        humidity(3),
+        instant(4),
+        ping(5),
+        pattern(6),
+        inputSignal(7),
+        compound(8),
+        bootp(9),
+        alarm(10),
+        hdam(11),
+        power(12),
+        analog(13),
+        powerReg(14),
+        powerInput(15),
+        onboardTemp(16),
+        duration(17),
+        hdampower(18),
+        hdampowerReg(19),
+        hdampowerInput(20),
+        powerLoad(21),
+        powerLoadInput(22),
+        powerContact(23),
+        upsBattery(24)
+        }
+
+--
+-- System Group.
+--
+
+irSysImageFilename OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The name of the image file running on the system."
+    ::= { irSysSystem 1 }
+
+irSysImageSource OBJECT-TYPE
+    SYNTAX INTEGER {
+               flash(1),
+               network(2)
+            }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This indicates from where the image file was loaded.
+         A value of flash(1) means the file was loaded from flash.
+         A value of network(2) means the file was loaded from 
+         the server identified by irSysImageServer object."
+    ::= { irSysSystem 2 }
+
+irSysImageServer OBJECT-TYPE
+    SYNTAX IpAddress 
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The IP address of the server to be used when retrieving the 
+         image file via the network."
+    ::= { irSysSystem 3 }
+
+irSysSwVersion OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "A string indicating the software version running on the system." 
+    ::= { irSysSystem 4 }
+
+irSysSwBootVersion OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "A string indicating the boot software version running on the system." 
+    ::= { irSysSystem 5 }
+
+irSysIpAddress OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The IP address assigned to the ethernet interface."
+    ::= { irSysSystem 6 }
+
+irSysSubnetMask OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The IP subnet mask assigned to the ethernet interface."
+    ::= { irSysSystem 7 }
+
+irSysBcastAddress OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The IP broadcast address assigned to the ethernet interface."
+    ::= { irSysSystem 8 }
+
+irSysGateway OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The default gateway IP address configured for the system."
+    ::= { irSysSystem 9 }
+
+irSysAction OBJECT-TYPE
+    SYNTAX INTEGER {
+               other(1),
+               saveConfig(2),
+               reset(3)
+            }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "A read of this object always returns the value other(1).
+         Setting this object to saveConfig(2) saves the current config 
+         to flash. Setting this object to reset(3) resets the device."
+    ::= { irSysSystem 10 }
+
+irSysSnmpSetErrorString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "A text string that provides additional info when an snmp set 
+         request fails." 
+    ::= { irSysSystem 11 }
+
+irSysModelType OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The device model type string."
+    ::= { irSysSystem 12 }
+
+irSysPowerType OBJECT-TYPE
+    SYNTAX INTEGER {
+               powerAC(1),
+               powerDC(2)
+            }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The type of power used by the device."
+    ::= { irSysSystem 13 }
+
+irSysCurrentTemp OBJECT-TYPE
+    SYNTAX INTEGER
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The current temp reading (in celsius) for the onboard temperature
+        sensor."
+    ::= { irSysSystem 14 }
+
+irSysTempThresholdLow OBJECT-TYPE 
+    SYNTAX INTEGER
+    MAX-ACCESS read-write 
+    STATUS current
+    DESCRIPTION
+        "The low threshold temp setting (in celsius) for the device."
+    ::= { irSysSystem 15 }
+
+irSysTempThresholdHigh OBJECT-TYPE
+    SYNTAX INTEGER 
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The high threshold temp setting (in celsius) for the device."
+    ::= { irSysSystem 16 }
+
+    --  value 17 not used
+
+irSysTempHysteresis OBJECT-TYPE
+    SYNTAX INTEGER (0..5)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The hysteresis setting applied to the temp thresholds for the device."
+    ::= { irSysSystem 18 }
+
+irSysPowerLostTimestamp OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "A string containing the timestamp when the device last lost power."
+    ::= { irSysSystem 19 }
+
+irSysFipsMode OBJECT-TYPE
+    SYNTAX INTEGER {
+               on(1),
+               off(2)
+            }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The fips mode status." 
+    ::= { irSysSystem 20 }
+
+irSysFlashMemSize OBJECT-TYPE
+    SYNTAX INTEGER {
+               s8M(1),
+               s16M(2)
+            }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The size of flash memory, in megabytes, on the system."
+    ::= { irSysSystem 21 }
+
+irSysAssetTag OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..32))
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The configured asset tag string."
+    ::= { irSysSystem 22 }
+
+irSysPowerCurrentLoad OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "An Ascii string indicating the total current load, in Amps, used
+         by all power strips attached to this device."
+    ::= { irSysSystem 23 }
+
+--
+--
+-- Power Supply Table.
+--
+
+irPowerSupplyTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrPowerSupplyEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of power supply entries."
+    ::= { irPower 1 }
+
+irPowerSupplyEntry OBJECT-TYPE
+    SYNTAX       IrPowerSupplyEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A power supply entry."
+    INDEX { irPowerIndex }
+    ::= { irPowerSupplyTable 1 }
+
+IrPowerSupplyEntry ::= SEQUENCE {
+    irPowerIndex 
+        INTEGER,
+    irPowerUnitPresent 
+        INTEGER,
+    irPowerInputStatus 
+        INTEGER,
+    irPowerOutputStatus 
+        INTEGER,
+    irPowerStatus 
+        INTEGER,
+    irPowerInputVoltage 
+        DisplayString,
+    irPowerOutputVoltage 
+        DisplayString
+    }
+
+irPowerIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the power unit."
+    ::= { irPowerSupplyEntry 1 }
+
+irPowerUnitPresent OBJECT-TYPE
+    SYNTAX INTEGER {
+               yes(1),
+               no(2)
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This indicates if the power unit is present or not."
+    ::= { irPowerSupplyEntry 2 }
+
+irPowerInputStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               on(1),
+               off(2)
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This indicates if the power unit is plugged into a power source."
+    ::= { irPowerSupplyEntry 3 }
+
+irPowerOutputStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               on(1),
+               off(2)
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This indicates the status of the internal power feed to the device
+         components."
+    ::= { irPowerSupplyEntry 4 }
+
+irPowerStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               on(1),
+               off(2),
+               failed(3)
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The overall status of the power unit."
+    ::= { irPowerSupplyEntry 5 }
+
+irPowerInputVoltage OBJECT-TYPE
+    SYNTAX DisplayString 
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The input voltage reading."
+    ::= { irPowerSupplyEntry 6 }
+
+irPowerOutputVoltage OBJECT-TYPE
+    SYNTAX DisplayString 
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The output voltage reading."
+    ::= { irPowerSupplyEntry 7 }
+
+--
+-- Cluster Config Group.
+--
+
+irClusterGrp     OBJECT IDENTIFIER ::= { irCluster 1 }
+
+irClusterCfgStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               disabled(1),
+               enabled(2)
+            }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This indicates whether cluster config feature is enabled or 
+         disabled."
+    ::= { irClusterGrp 1 }
+
+irClusterName OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..32))
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The name assigned to the cluster."
+    ::= { irClusterGrp 2 }
+
+irClusterSyncStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+                idle(1),
+                syncInProgress(2),
+                syncCompletedSuccess(3),
+                syncCompletedError(4)
+             }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The cluster synch update status."
+    ::= { irClusterGrp 3 }
+
+irClusterAction OBJECT-TYPE
+    SYNTAX INTEGER {
+                other(1),
+                flushAll(2)
+             }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "A read of this object always returns the value other(1).
+         Setting this obejct to flushAll(2) will delete all entries
+         configured in the irClusterTable."
+    ::= { irClusterGrp 4 }
+
+--
+--
+-- Cluster Config Table.
+--
+
+irClusterTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrClusterEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of cluster config entries."
+    ::= { irCluster 2 }
+
+irClusterEntry OBJECT-TYPE
+    SYNTAX       IrClusterEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A cluster config entry."
+    INDEX { irClusterIpAddr }
+    ::= { irClusterTable 1 }
+
+IrClusterEntry ::= SEQUENCE {
+    irClusterIpAddr 
+        IpAddress,
+    irClusterStatus 
+        RowStatus
+    }
+
+irClusterIpAddr OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IP address of the cluster entry."
+    ::= { irClusterEntry 1 }
+
+irClusterStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The row status value for the entry."
+    ::= { irClusterEntry 2 }
+
+--
+-- Ethernet Port Config Table.
+--
+
+irEnetPortConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrEnetPortConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of ethernet port config entries."
+    ::= { irEthernet 1 }
+
+irEnetPortConfigEntry OBJECT-TYPE
+    SYNTAX IrEnetPortConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An ethernet port config entry."
+    INDEX { irEnetPortIndex }
+    ::= { irEnetPortConfigTable 1 }
+
+IrEnetPortConfigEntry ::= SEQUENCE {
+    irEnetPortIndex 
+        INTEGER,
+    irEnetPortSpeed 
+        INTEGER,
+    irEnetPortDuplexMode 
+        INTEGER,
+    irEnetPortAutoNegotiation
+        INTEGER,
+    irEnetPortPhysMedia 
+        INTEGER,
+    irEnetPortLinkStatus 
+        INTEGER,
+    irEnetPortBondingStatus 
+        INTEGER
+    }
+
+irEnetPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port index for this enthernet port entry."
+    ::= { irEnetPortConfigEntry 1 }
+
+irEnetPortSpeed OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     sp10M(1),
+                     sp100M(2)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port speed."
+    ::= { irEnetPortConfigEntry 2 }
+
+irEnetPortDuplexMode OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     none(1),
+                     halfDuplex(2),
+                     fullDuplex(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port duplex mode."
+    ::= { irEnetPortConfigEntry 3 }
+
+irEnetPortAutoNegotiation OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     none(1),
+                     auto(2)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port auto negotiation mode."
+    ::= { irEnetPortConfigEntry 4 }
+
+irEnetPortPhysMedia OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     enet(1),
+                     sfp(2)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The physical media type."
+    ::= { irEnetPortConfigEntry 5 }
+
+irEnetPortLinkStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     up(1),
+                     down(2)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ethernet port link status."
+    ::= { irEnetPortConfigEntry 6 }
+
+irEnetPortBondingStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     none(1),
+                     active(2),
+                     backup(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ethernet port bonding status. For systems with only a
+         single ethernet port, the value will always be none(1)."
+    ::= { irEnetPortConfigEntry 7 }
+
+--
+-- Ethernet Port Stats Table.
+--
+
+irEnetPortStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrEnetPortStatsEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of ethernet port stats entries."
+    ::= { irEthernet 2 }
+
+irEnetPortStatsEntry OBJECT-TYPE
+    SYNTAX IrEnetPortStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An ethernet port stats entry."
+    AUGMENTS { irEnetPortConfigEntry }
+    ::= { irEnetPortStatsTable 1 }
+
+IrEnetPortStatsEntry ::= SEQUENCE {
+    irEnetPortRecvBytes 
+        Counter32,
+    irEnetPortRecvPackets 
+        Counter32,
+    irEnetPortRecvErrors 
+        Counter32,
+    irEnetPortRecvDropped 
+        Counter32,
+    irEnetPortRecvOverruns 
+        Counter32,
+    irEnetPortRecvFrameErrors 
+        Counter32,
+    irEnetPortRecvMulticast 
+        Counter32,
+    irEnetPortRecvCompressed
+        Counter32,
+    irEnetPortXmitBytes 
+        Counter32,
+    irEnetPortXmitPackets 
+        Counter32,
+    irEnetPortXmitErrors 
+        Counter32,
+    irEnetPortXmitDropped 
+        Counter32,
+    irEnetPortXmitOverruns 
+        Counter32,
+    irEnetPortXmitCollisions 
+        Counter32,
+    irEnetPortXmitCompressed
+        Counter32,
+    irEnetPortXmitCarrier
+        Counter32
+    }
+
+irEnetPortRecvBytes OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes received on this port."
+    ::= { irEnetPortStatsEntry 1 }
+
+irEnetPortRecvPackets OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets received on this port."
+    ::= { irEnetPortStatsEntry 2 }
+
+irEnetPortRecvErrors OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets received with error."
+    ::= { irEnetPortStatsEntry 3 }
+
+irEnetPortRecvDropped OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received packets dropped."
+    ::= { irEnetPortStatsEntry 4 }
+
+irEnetPortRecvOverruns OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received packets that ran out of buffers."
+    ::= { irEnetPortStatsEntry 5 }
+
+irEnetPortRecvFrameErrors OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets received with frame errors."
+    ::= { irEnetPortStatsEntry 6 }
+
+irEnetPortRecvMulticast OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received multicast packets."
+    ::= { irEnetPortStatsEntry 7 }
+
+irEnetPortRecvCompressed OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received compressed packets."
+    ::= { irEnetPortStatsEntry 8 }
+
+irEnetPortXmitBytes OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes transmitted on this port."
+    ::= { irEnetPortStatsEntry 9 }
+
+irEnetPortXmitPackets OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets transmitted on this port."
+    ::= { irEnetPortStatsEntry 10 }
+
+irEnetPortXmitErrors OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets that encountered an error on transmission."
+    ::= { irEnetPortStatsEntry 11 }
+
+irEnetPortXmitDropped OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets that were dropped due to transmit errors."
+    ::= { irEnetPortStatsEntry 12 }
+
+irEnetPortXmitOverruns OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets that ran out of buffers."
+    ::= { irEnetPortStatsEntry 13 }
+
+irEnetPortXmitCollisions OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets that encountered collisions on transmission."
+    ::= { irEnetPortStatsEntry 14 }
+
+irEnetPortXmitCompressed OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted compressed packets."
+    ::= { irEnetPortStatsEntry 15 }
+
+irEnetPortXmitCarrier OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted carrier errors."
+    ::= { irEnetPortStatsEntry 16 }
+
+--
+-- IP Interfaces Table.
+--
+
+irIfTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrIfEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of IP interface entries."
+    ::= { irInterfaces 1 }
+
+irIfEntry OBJECT-TYPE
+    SYNTAX IrIfEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An IP interface entry."
+    INDEX { irIfIndex }
+    ::= { irIfTable 1 }
+
+IrIfEntry ::= SEQUENCE {
+    irIfIndex 
+        INTEGER,
+    irIfIpAddress 
+        IpAddress,
+    irIfIpSubnetMask 
+        IpAddress,
+    irIfIpBcastAddress 
+        IpAddress,
+    irIfMtu 
+        INTEGER,
+    irIfName 
+        DisplayString,
+    irIfBoundTo 
+        DisplayString,
+    irIfTelnetPort 
+        INTEGER,
+    irIfSshPort 
+        INTEGER
+    }
+
+irIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index for this interface entry."
+    ::= { irIfEntry 1 }
+
+irIfIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IP address assigned to this interface."
+    ::= { irIfEntry 2 }
+
+irIfIpSubnetMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The subnet mask assigned to this interface."
+    ::= { irIfEntry 3 }
+
+irIfIpBcastAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The broadcast address assigned to this interface."
+    ::= { irIfEntry 4 }
+
+irIfMtu OBJECT-TYPE
+    SYNTAX      INTEGER (0..1500)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MTU size assigned to this interface."
+    ::= { irIfEntry 5 }
+
+irIfName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name string assigned to this interface."
+    ::= { irIfEntry 6 }
+
+irIfBoundTo OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the physical interface to which this interface 
+         is bound."
+    ::= { irIfEntry 7 }
+
+irIfTelnetPort OBJECT-TYPE
+    SYNTAX      INTEGER (0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The telnet port to use when connecting via this interface."
+    ::= { irIfEntry 8 }
+
+irIfSshPort OBJECT-TYPE
+    SYNTAX      INTEGER (0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ssh port to use when connecting via this interface."
+    ::= { irIfEntry 9 }
+
+--
+-- TAR Groups.
+--
+
+irTarSys             OBJECT IDENTIFIER ::= { irTar 1 }
+irTarTable           OBJECT IDENTIFIER ::= { irTar 2 }
+
+--
+-- TAR System Group.
+--
+
+tarNextFreeTrigIndex OBJECT-TYPE
+    SYNTAX      INTEGER (0..200)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The next free index in the trigger table."
+    ::= { irTarSys 1 }
+
+tarNextFreeActionIndex OBJECT-TYPE
+    SYNTAX      INTEGER (0..200)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The next free index in the trigger action table."
+    ::= { irTarSys 2 }
+
+tarNextFreeRuleIndex OBJECT-TYPE
+    SYNTAX      INTEGER (0..200)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The next free index in the trigger rule table."
+    ::= { irTarSys 3 }
+
+
+--
+-- TAR Trigger Table.
+--
+
+tarTrigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF TarTrigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of trigger entries."
+    ::= { irTarTable 1 }
+
+tarTrigEntry OBJECT-TYPE
+    SYNTAX TarTrigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A trigger entry."
+    INDEX { tarTrigIndex }
+    ::= { tarTrigTable 1 }
+
+TarTrigEntry ::= SEQUENCE {
+    tarTrigIndex 
+        INTEGER,
+    tarTrigName 
+        DisplayString,
+    tarTrigType 
+        TarTrigType,
+    tarTrigCreator 
+        TarCreator,
+    tarTrigRowStatus 
+        RowStatus
+    }
+
+tarTrigIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index for this trigger entry."
+    ::= { tarTrigEntry 1 }
+
+tarTrigName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name assigned to this trigger."
+    ::= { tarTrigEntry 2 }
+
+tarTrigType OBJECT-TYPE
+    SYNTAX      TarTrigType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The type of trigger."
+    ::= { tarTrigEntry 3 }
+
+tarTrigCreator OBJECT-TYPE
+    SYNTAX      TarCreator
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The creator of this trigger."
+    ::= { tarTrigEntry 4 }
+
+tarTrigRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The row status for this trigger."
+    ::= { tarTrigEntry 5 }
+
+
+--
+-- TAR Action Table.
+--
+
+tarActionTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF TarActionEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of trigger action entries."
+    ::= { irTarTable 2 }
+
+tarActionEntry OBJECT-TYPE
+    SYNTAX TarActionEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A trigger action entry."
+    INDEX { tarActionIndex }
+    ::= { tarActionTable 1 }
+
+TarActionEntry ::= SEQUENCE {
+    tarActionIndex 
+        INTEGER,
+    tarActionName 
+        DisplayString,
+    tarActionCommand 
+        DisplayString,
+    tarActionCreator 
+        TarCreator,
+    tarActionRowStatus 
+        RowStatus
+    }
+
+tarActionIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index for this action entry."
+    ::= { tarActionEntry 1 }
+
+tarActionName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..19))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name string assigned to this action."
+    ::= { tarActionEntry 2 }
+
+tarActionCommand OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..135))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The command string assigned to this action."
+    ::= { tarActionEntry 3 }
+
+tarActionCreator OBJECT-TYPE
+    SYNTAX      TarCreator
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The creator of this trigger."
+    ::= { tarActionEntry 4 }
+
+tarActionRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The status for this action entry."
+    ::= { tarActionEntry 5 }
+
+--
+-- TAR Rule Table.
+--
+
+tarRuleTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF TarRuleEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of trigger rule entries."
+    ::= { irTarTable 3 }
+
+tarRuleEntry OBJECT-TYPE
+    SYNTAX TarRuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A trigger rule entry."
+    INDEX { tarRuleIndex }
+    ::= { tarRuleTable 1 }
+
+TarRuleEntry ::= SEQUENCE {
+    tarRuleIndex 
+        INTEGER,
+    tarRuleName 
+        DisplayString,
+    tarRuleTrigId 
+        INTEGER,
+    tarRuleActionId 
+        INTEGER,
+    tarRuleStatus 
+        INTEGER,
+    tarRuleExecCount 
+        Counter32,
+    tarRuleErrorCount 
+        Counter32,
+    tarRuleCreator 
+        TarCreator,
+    tarRuleRowStatus 
+        RowStatus
+    }
+
+tarRuleIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index for this rule entry."
+    ::= { tarRuleEntry 1 }
+
+tarRuleName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name string assigned to this rule."
+    ::= { tarRuleEntry 2 }
+
+tarRuleTrigId OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The trigger index entry to which this rule is attached."
+    ::= { tarRuleEntry 3 }
+
+tarRuleActionId OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The trigger action entry to which this rule is attached."
+    ::= { tarRuleEntry 4 }
+
+tarRuleStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     disabled(1),
+                     enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The status for this entry."
+    ::= { tarRuleEntry 5 }
+
+tarRuleExecCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times the action command for this rule has been 
+         executed since the system was started."
+    ::= { tarRuleEntry 6 }
+
+tarRuleErrorCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times the execution of this rule has resulted in 
+         an error."
+    ::= { tarRuleEntry 7 }
+
+tarRuleCreator OBJECT-TYPE
+    SYNTAX      TarCreator
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The creator of this rule."
+    ::= { tarRuleEntry 8 }
+
+tarRuleRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The row status for this entry."
+    ::= { tarRuleEntry 9 }
+
+--
+-- TAR Temp/Humidity Trigger Table.
+--
+
+tarTempTrigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF TarTempTrigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of temp trigger entries."
+    ::= { irTarTable 4 }
+
+tarTempTrigEntry OBJECT-TYPE
+    SYNTAX TarTempTrigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A temp trigger entry."
+    AUGMENTS { tarTrigEntry }
+    ::= { tarTempTrigTable 1 }
+
+TarTempTrigEntry ::= SEQUENCE {
+    tarTempTrigPort 
+        INTEGER,
+    tarTempTrigOperator 
+        INTEGER,
+    tarTempTrigThresholdValue
+        INTEGER,
+    tarTempTrigUnits 
+        INTEGER,
+    tarTempTrigHysteresis 
+        INTEGER
+    }
+
+tarTempTrigPort OBJECT-TYPE
+    SYNTAX      INTEGER (0..40)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The port to which this trigger is attached."
+    ::= { tarTempTrigEntry 1 }
+
+tarTempTrigOperator OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     lessThan(1),
+                     greaterThan(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The logical operator for this trigger."
+    ::= { tarTempTrigEntry 2 }
+
+tarTempTrigThresholdValue OBJECT-TYPE
+    SYNTAX      INTEGER (0..1000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The threshold value for this trigger."
+    ::= { tarTempTrigEntry 3 }
+
+tarTempTrigUnits OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     celsius(1),
+                     fahrenheit(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The units for the threshold value."
+    ::= { tarTempTrigEntry 4 }
+
+tarTempTrigHysteresis OBJECT-TYPE
+    SYNTAX      INTEGER (0..10)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The hysteresis value for this trigger."
+    ::= { tarTempTrigEntry 5 }
+
+--
+-- TAR Signal Trigger Table.
+--
+
+tarSigTrigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF TarSigTrigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of signal trigger entries."
+    ::= { irTarTable 6 }
+
+tarSigTrigEntry OBJECT-TYPE
+    SYNTAX TarSigTrigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A signal trigger entry."
+    AUGMENTS { tarTrigEntry }
+    ::= { tarSigTrigTable 1 }
+
+TarSigTrigEntry ::= SEQUENCE {
+    tarSigTrigPort
+        INTEGER,
+    tarSigTrigSignal
+        INTEGER,
+    tarSigTrigState
+        INTEGER
+    }
+
+tarSigTrigPort OBJECT-TYPE
+    SYNTAX      INTEGER (0..40)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The port to which this trigger is attached."
+    ::= { tarSigTrigEntry 1 }
+
+tarSigTrigSignal OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     cts(1),
+                     dsr(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The input signal type being monitored."
+    ::= { tarSigTrigEntry 2 }
+
+tarSigTrigState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                     low(1),
+                     high(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The signal state that will cause the action to be taken."
+    ::= { tarSigTrigEntry 3 }
+
+
+--
+-- IPMI Groups.
+--
+
+irIpmiSys             OBJECT IDENTIFIER ::= { irIpmi 1 }
+
+ipmiDiscreteOffset OBJECT-TYPE
+    SYNTAX      INTEGER(0..15)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The offset within the discrete sensor for which the event occurred."
+    ::= { irIpmiSys 1 }
+
+ipmiDiscreteSensorName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..98))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An Ascii string indicating the name of the IPMI discrete sensor 
+         for which the event occurred."
+    ::= { irIpmiSys 2 }
+
+ipmiThresholdType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                lowerNonCritical(1),
+                lowerCritical(2),
+                lowerNonRecoverable(3),
+                upperNonCritical(4),
+                upperCritical(5),
+                upperNonRecoverable(6)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The type of threshold sensor event."
+    ::= { irIpmiSys 3 }
+
+ipmiThresholdSensorName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..98))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An Ascii string indicating the name of the IPMI threshold sensor 
+         for which the event occurred."
+    ::= { irIpmiSys 4 }
+
+ipmiThresholdDirection OBJECT-TYPE
+    SYNTAX      INTEGER {
+                goingLow(1),
+                goingHigh(2)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The direction of the threshold sensor event."
+    ::= { irIpmiSys 5 }
+
+ipmiThresholdAssert OBJECT-TYPE
+    SYNTAX      INTEGER {
+                assertion(1),
+                deassertion(2)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The assertion value of the threshold sensor event."
+    ::= { irIpmiSys 6 }
+
+END

@@ -1,0 +1,90 @@
+EXTREME-LACP-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+                MODULE-IDENTITY         FROM SNMPv2-SMI
+                OBJECT-TYPE             FROM SNMPv2-SMI
+                Unsigned32              FROM SNMPv2-SMI
+                TEXTUAL-CONVENTION      FROM SNMPv2-TC
+                TruthValue              FROM SNMPv2-TC
+                RowStatus               FROM SNMPv2-TC
+                DisplayString           FROM RFC1213-MIB
+                extremeAgent            FROM EXTREME-BASE-MIB;
+
+    extremeLacp MODULE-IDENTITY
+        LAST-UPDATED "0502151530Z"
+        ORGANIZATION "Extreme Networks, Inc."
+        CONTACT-INFO "www.extremenetworks.com"
+        DESCRIPTION "Ethernet Automatic Protection Switching information."  
+        ::= { extremeAgent 19 }
+
+    LacpGroupId
+    ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION "This represents the LACP's LAG group id."
+        SYNTAX      DisplayString (SIZE(1..32))
+
+
+    LacpMemberPort
+    ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION "This represents a LACP LAG's member-port."
+        SYNTAX      Unsigned32 (0..4294967295)
+
+
+    extremeLacpTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF ExtremeLacpEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                "This table contains LACP information about all LACP
+                 LAGs on this device."
+        ::= { extremeLacp 1 }
+
+
+    extremeLacpEntry OBJECT-TYPE
+        SYNTAX ExtremeLacpEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                "An individual entry of this table contains LACP 
+                 information related to that LACP LAG."
+        INDEX { extremeLacpGroup,
+                extremeLacpMemberPort }
+        ::= { extremeLacpTable 1 }
+
+    ExtremeLacpEntry ::= SEQUENCE {
+        extremeLacpGroup                LacpGroupId,
+        extremeLacpMemberPort           LacpMemberPort,
+        extremeLacpAggStatus            TruthValue
+    }
+
+
+    extremeLacpGroup  OBJECT-TYPE
+        SYNTAX       LacpGroupId
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  "This represents the LACP LAG (Link Aggregation Group's) 
+                      identifier."
+        ::= { extremeLacpEntry 1 }
+
+    extremeLacpMemberPort  OBJECT-TYPE
+        SYNTAX       LacpMemberPort
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  
+               "This represents a member port within the LAG." 
+        ::= { extremeLacpEntry 2 }
+
+    extremeLacpAggStatus  OBJECT-TYPE
+        SYNTAX       TruthValue
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  
+               "This represents if the member port has been added to the
+                aggregator or not." 
+        ::= { extremeLacpEntry 3 }
+
+    
+END
+-- ################################################################################
+

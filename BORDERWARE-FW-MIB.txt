@@ -1,0 +1,139 @@
+BORDERWARE-FW-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+
+    OBJECT-TYPE, NOTIFICATION-TYPE, 
+    MODULE-IDENTITY, OBJECT-IDENTITY,
+    Integer32, enterprises, IpAddress
+        FROM SNMPv2-SMI
+
+    TEXTUAL-CONVENTION, DisplayString, DateAndTime
+        FROM SNMPv2-TC
+
+    bwProducts
+        FROM BORDERWARE-MIB;
+
+bwFirewall MODULE-IDENTITY
+    LAST-UPDATED "200404110000Z"
+    ORGANIZATION "Borderware Technology Inc."
+    CONTACT-INFO 
+	 "mibs@borderware.com "
+    DESCRIPTION
+	"The private Borderware SNMP extensions."
+    REVISION	 "200404110000Z"
+    DESCRIPTION
+	"Draft. "
+    ::= { bwProducts 1 }
+
+-- Current mib entries -----------------------------------------
+
+bwFirewallConformance OBJECT IDENTIFIER ::= { bwFirewall 3 }
+
+-- OID values assigned in the bwFirewall branch ----------------
+bwAlarm    OBJECT-IDENTITY 
+        STATUS current
+        DESCRIPTION
+                "The entry for alarm objects."
+	::= { bwFirewall  100 }
+
+alTriggerAlarm  OBJECT-TYPE
+    SYNTAX      Integer32 (0..1) 
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+            "The flag to trigger an alarm."
+    ::= { bwAlarm 1 }
+
+alLastChange OBJECT-TYPE
+    SYNTAX      DateAndTime 
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The time value when the alarm condition occurs."
+    ::= { bwAlarm 4 }
+
+-- Removed interface name from implementation 
+-- alInterface OBJECT-TYPE
+--    SYNTAX      DisplayString (SIZE (0..255))
+--    MAX-ACCESS  read-only
+--    STATUS      current
+--    DESCRIPTION
+--            "A textual string containing name of the
+--            interface."
+--    ::= { bwAlarm 7 }
+
+
+alName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "A textual string containing name of the alarm."
+    ::= { bwAlarm 9 }
+
+
+alRemoteIpAddr OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "A source IP address."
+    ::= { bwAlarm 10 }
+
+alDestPort    OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Destination port number."
+    ::= { bwAlarm 15 }
+
+-- definition of trap triggered by the alarm condition.
+
+alAlarm NOTIFICATION-TYPE
+    OBJECTS { 
+              alLastChange, 
+              alName,
+              alRemoteIpAddr,
+              alDestPort
+            }
+    STATUS  current
+    DESCRIPTION
+            "A trap."
+    ::= { bwAlarm 50 }
+
+
+-- Conformance information -------------------------------------------- 
+
+bwFirewallCompliances OBJECT IDENTIFIER ::= { bwFirewallConformance 1 }
+bwFirewallGroups      OBJECT IDENTIFIER ::= { bwFirewallConformance 2 }
+
+-- Compliance statements ----------------------------------------------
+
+bwFirewallCompliance MODULE-COMPLIANCE
+       STATUS       current
+       DESCRIPTION "The compliance statement for SNMP entities which
+                    implement the BORDERWARE-FW-MIB.  "
+
+       MODULE    -- this module
+           MANDATORY-GROUPS { bwAlarmGroup }
+
+       ::= { bwFirewallCompliances 1 }
+
+bwAlarmGroup OBJECT-GROUP
+       OBJECTS {
+                 alTriggerAlarm,
+                 alLastChange,
+                 alName,
+                 alRemoteIpAddr,
+                 alDestPort 
+               }
+       STATUS       current
+       DESCRIPTION "A collection of objects providing for remote
+                    monitoring.  "
+       ::= { bwFirewallGroups 1 }
+
+
+END

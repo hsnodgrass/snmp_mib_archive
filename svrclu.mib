@@ -1,0 +1,429 @@
+-- ****************************************************************************
+--
+--         Common Cluster Management MIB version V2.0 - svrclu.mib
+--         Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 1992,2003 Hewlett-Packard Development Company, L.P.
+--
+--      Hewlett-Packard Company shall not be liable for technical or
+--      editorial errors or omissions contained herein. The information in
+--      this document is provided "as is" without warranty of any kind and
+--      is subject to change without notice. The warranties for HP products
+--      are set forth in the express limited warranty statements
+--      accompanying such products. Nothing herein should be construed as
+--      constituting an additional warranty.
+--
+--      Confidential computer software. Valid license from HP required for
+--      possession, use or copying. Consistent with FAR 12.211 and 12.212,
+--      Commercial Computer Software, Computer Software Documentation, and
+--      Technical Data for Commercial Items are licensed to the U.S.
+--      Government under vendor's standard commercial license.
+--
+--      Refer to the READMIB.RDM file for more information about the
+--      organization of the information in the Compaq Enterprise.
+--
+--      The Digital Enterprise number is 36.
+--      The ASN.1 prefix to, and including the Digital Enterprise is:
+--           1.3.6.1.4.1.36
+--
+-- Description:
+-- This MIB extension allows for the management of Compaq Corp., Digital
+-- Equipment Corp., and other 3rd party cluster products. It allows for
+-- ease of cluster and node member identification.
+
+SVRCLU-MIB DEFINITIONS ::= BEGIN
+
+
+IMPORTS
+    mgmt, enterprises, IpAddress
+        FROM RFC1155-SMI
+    OBJECT-TYPE
+        FROM RFC-1212
+    TRAP-TYPE
+        FROM RFC-1215
+    DisplayString
+        FROM RFC1213-MIB;
+
+-- DEC-MIB { iso(1) org(3) dod(6) internet(1) private(4) enterprises(1) 36 }
+
+    dec OBJECT IDENTIFIER ::= { enterprises 36 }
+    ema OBJECT IDENTIFIER ::= { dec 2 }
+
+
+-- textual conventions for types
+-- For ease of use and to allow for optional registration by external
+-- organizations, there is a specific formula to use to compute the
+-- value for a particular cluster type. The cluster type formula =
+-- (enterprise number * 100) + n where n = 0..99. N is a number that
+-- each company (enterprise number) manages.
+-- Cluster Type value of 1 - 2 will remain valid, numbers 3 - 7 are
+-- grandfathered in from svrclu version 1.0.
+
+ClusterType ::= INTEGER {
+                unknown(1) ,
+                other(2) ,
+                digitalNT(3) ,
+                microsoftNT(4) ,
+                digitalUnixASE(5) ,
+                digitalUnixTCR(6) ,
+                openVMS(7),
+                compaqTruClusterAvailableServer(3601),
+                compaqTruClusterProductionServer(3602),
+                compaqTruClusterServer(3603),
+                compaqOpenVms(3604),
+                cpqclusterMSCS(23200),
+                compaqMSCS(23201)
+                }
+
+ClusterStatus ::= INTEGER {
+                unknown(1) ,       -- Cluster status is unknown
+                other(2) ,         -- Not one of the following:
+                notInstalled(3) ,  -- The cluster software isn't installed
+                notRunning(4) ,    -- The managed node's cluster software
+                                   -- has not started
+                initializing(5) ,  -- The managed node's cluster software
+                                   -- is initializing
+                running(6) ,       -- The cluster is functioning normally
+                suspended(7) ,     -- Cluster activity is temporarily suspended.
+                                   -- This could be due to member transition,
+                                   -- loss of quorum, etc.
+                failed(8)          -- An unrecoverable error occurred.
+                }
+
+MemberStatus ::= INTEGER {
+                unknown(1) , -- Members status is unknown
+                other(2) ,   -- Not one of the following:
+                new(3) ,     -- The node is known to the cluster, but is
+                             -- not yet a member.
+                normal(4) ,  -- The node is an operational cluster member
+                removed(5)   -- The member was removed from the cluster.
+                             -- This is a transitional state that may be
+                             -- returned rarely or not at all.  An
+                             -- implementation may simply remove this
+                             -- members's corresponding row in
+                             -- svrCluMemberTable.
+                }
+
+--  This MIB extension, private to Digital Equipment Corp., allows for
+--  management of clusters.
+mib-extensions-1                OBJECT IDENTIFIER ::= { ema 18 }
+svrSystem                       OBJECT IDENTIFIER ::= { mib-extensions-1 22 }
+svrCluster                      OBJECT IDENTIFIER ::= { svrSystem 4 }
+svrClu                          OBJECT IDENTIFIER ::= { svrCluster 1 }
+
+-- groups in svrClu
+
+svrCluObjects                   OBJECT IDENTIFIER ::= { svrClu 1 }
+svrCluConformance               OBJECT IDENTIFIER ::= { svrClu 2 }
+
+-- groups in svrCluObjects
+
+svrCluMibInfo                   OBJECT IDENTIFIER ::= { svrCluObjects 1 }
+svrCluClusterInfo               OBJECT IDENTIFIER ::= { svrCluObjects 2 }
+
+--
+--  svrCluMibInfo
+--
+--  current state of this MIB.
+svrCluMibMajorRev OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Major revision of this MIB. Should equal 2."
+    ::= { svrCluMibInfo 1 }
+
+svrCluMibMinorRev OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Minor Revision of the MIB. Should equal 0."
+    ::= { svrCluMibInfo 2 }
+
+--
+--  svrCluClusterInfo
+--
+--  Lists and states of cluster members.
+svrCluSoftwareVendor OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Cluster software vendor name."
+    ::= { svrCluClusterInfo 1 }
+
+svrCluSoftwareVersion OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Cluster software version."
+    ::= { svrCluClusterInfo 2 }
+
+svrCluSoftwareStatus OBJECT-TYPE
+    SYNTAX  ClusterStatus
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Status of the cluster software: installed, running, failed, etc."
+    ::= { svrCluClusterInfo 3 }
+
+svrCluClusterType OBJECT-TYPE
+    SYNTAX  ClusterType
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Type of cluster which is running. Must use formula defined at
+         ClusterType enumeration list."
+    ::= { svrCluClusterInfo 4 }
+
+svrCluExtensionOID OBJECT-TYPE
+    SYNTAX  OBJECT IDENTIFIER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The authoritative identification for the MIB that further
+         instruments this specific cluster technology.  If no such
+         identifier exists, the value {0.0} should be returned."
+    ::= { svrCluClusterInfo 5 }
+
+svrCluThisMember OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Index into the member table (svrCluMemberTable) which corresponds to this node."
+    ::= { svrCluClusterInfo 6 }
+
+svrCluClusterName OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The name/alias for this cluster.  This must be a unique name not
+         equal to any of the member names or any network name"
+    ::= { svrCluClusterInfo 7 }
+
+svrCluClusterAddressTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF SvrCluClusterAddressEntry
+    ACCESS   not-accessible
+    STATUS   mandatory
+    DESCRIPTION
+          "This table represents the cluster (aliases) IP
+           addresses. "
+
+     ::={ svrCluClusterInfo  8 }
+
+svrCluClusterAddressEntry OBJECT-TYPE
+    SYNTAX   SvrCluClusterAddressEntry
+    ACCESS   not-accessible
+    STATUS   mandatory
+    DESCRIPTION
+          "Cluster alias IP addresses"
+    INDEX    {
+             svrCluClusterAddressIndex
+             }
+     ::={ svrCluClusterAddressTable  1}
+
+SvrCluClusterAddressEntry   ::=
+      SEQUENCE   {
+          svrCluClusterAddressIndex
+              INTEGER,
+          svrCluClusterAddress
+              IpAddress
+          }
+
+svrCluClusterAddressIndex  OBJECT-TYPE
+     SYNTAX   INTEGER
+     ACCESS   read-only
+     STATUS   mandatory
+     DESCRIPTION
+          "The index for this address."
+     ::= { svrCluClusterAddressEntry  1 }
+
+svrCluClusterAddress  OBJECT-TYPE
+     SYNTAX   IpAddress
+     ACCESS   read-only
+     STATUS   mandatory
+     DESCRIPTION
+        "An IP address of this cluster alias."
+     ::= { svrCluClusterAddressEntry  2 }
+
+
+svrCluServiceName OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Returns the service name of the cluster.
+         Examples are MSCS, NCS, NHAS."
+    ::= { svrCluClusterInfo 9}
+
+--
+--  svrCluMemberTable
+--
+--  List of cluster members/nodes.
+--
+--  Note: Numbering gap to allow for more scalars in the future
+
+svrCluMemberTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF SvrCluMemberEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Table of cluster members."
+    ::= { svrCluClusterInfo 11 }
+
+svrCluMemberEntry OBJECT-TYPE
+    SYNTAX SvrCluMemberEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An entry pertaining to one particular member node."
+    INDEX    {
+             svrCluMemberIndex
+             }
+    ::= { svrCluMemberTable 1 }
+
+SvrCluMemberEntry  ::=
+    SEQUENCE {
+        svrCluMemberIndex
+            INTEGER,
+        svrCluMemberName
+            DisplayString,
+        svrCluMemberComment
+            DisplayString,
+        svrCluMemberStatus
+            MemberStatus
+             }
+
+svrCluMemberIndex OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "A unique index for the entry.  Values of svrCluMemberIndex must
+         remain constant at least between reboots of the network management
+         system on the managed node.  Where possible, this value should
+         reflect the system's native member identifier."
+    ::= { svrCluMemberEntry 1 }
+
+svrCluMemberName OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The host name of this cluster member.  A zero-length value means
+         the member's host name is unknown.  This name may not necessarily
+         resolve to an address."
+    ::= { svrCluMemberEntry 2 }
+
+svrCluMemberComment OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Description of the node."
+    ::= { svrCluMemberEntry 3 }
+
+svrCluMemberStatus OBJECT-TYPE
+    SYNTAX  MemberStatus
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "Status of this member: new, normal, removed, etc."
+    ::= { svrCluMemberEntry 4 }
+
+--
+--  svrCluMemberAddressTable
+--
+--  List of cluster members IP Addresses.
+--
+
+svrCluMemberAddressTable OBJECT-TYPE
+     SYNTAX   SEQUENCE OF SvrCluMemberAddressEntry
+     ACCESS   not-accessible
+     STATUS   mandatory
+     DESCRIPTION
+          "This table represents the managed nodes's knowledge of the
+           IP addressed configured on the other cluster members.
+           This provides a hint for reaching the other members, and
+           a low-level mechanism for identifying members of the same
+           cluster.
+
+           Note that the managed node's addressing information is already
+           available in ipAddrTable, so is not required to be present in
+           this table"
+
+     ::={svrCluClusterInfo  12 }
+
+svrCluMemberAddressEntry OBJECT-TYPE
+     SYNTAX   SvrCluMemberAddressEntry
+     ACCESS   not-accessible
+     STATUS   mandatory
+     DESCRIPTION
+          "A particular cluster member IP address"
+     INDEX    {
+              svrCluMemberIndex,
+              svrCluMemberAddressIndex
+              }
+     ::={svrCluMemberAddressTable  1}
+
+SvrCluMemberAddressEntry   ::=
+      SEQUENCE   {
+          svrCluMemberAddressIndex
+              INTEGER,
+          svrCluMemberAddress
+              IpAddress
+          }
+
+svrCluMemberAddressIndex  OBJECT-TYPE
+     SYNTAX   INTEGER
+     ACCESS    read-only
+     STATUS    mandatory
+     DESCRIPTION
+          "The index for this address."
+     ::= {svrCluMemberAddressEntry  1 }
+
+svrCluMemberAddress  OBJECT-TYPE
+     SYNTAX   IpAddress
+     ACCESS    read-only
+     STATUS    mandatory
+     DESCRIPTION
+        "An IP address of this cluster member. This address may not be
+         reachable from nodes that are not configured into the cluster."
+     ::= {svrCluMemberAddressEntry  2 }
+
+--
+-- TRAP: svrCluMemberAdded
+--
+svrCluMemberAdded TRAP-TYPE
+   ENTERPRISE svrClu
+   VARIABLES {
+     svrCluMemberIndex,
+     svrCluMemberName }
+   DESCRIPTION
+     "Generated when a cluster member is added"
+   ::= 100
+
+--
+-- TRAP: svrCluMemberDeleted
+--
+svrCluMemberDeleted TRAP-TYPE
+   ENTERPRISE svrClu
+   VARIABLES {
+     svrCluMemberIndex,
+     svrCluMemberName }
+   DESCRIPTION
+     "Generated when a cluster member is deleted"
+	
+   --#SEVERITY     MINOR
+   ::= 101
+
+
+
+END
+
+

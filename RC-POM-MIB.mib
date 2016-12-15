@@ -1,0 +1,862 @@
+RC-POM-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcPlugOptMod, EnableValue
+        FROM RAPID-CITY;
+
+rcPlugOptModTableMib MODULE-IDENTITY
+       LAST-UPDATED     "200805090000Z"
+       ORGANIZATION     "Nortel Networks"
+       CONTACT-INFO     "Dwight Croonenberghs
+                         Postal:        Nortel Networks, Inc. 
+                                        600 Technology Park
+                                        Billerica, MA 01821 
+                         E-mail:        dwightc@nortel.com"
+       DESCRIPTION       "OE MIB for Digital Diagnostic Monitoring of pluggable optical modules"
+
+       REVISION "200805090000Z" -- 09 May 2008
+       DESCRIPTION "Version 4: Fixed smilint errors."
+
+       REVISION "200801160000Z" -- 16 Jan. 2008
+       DESCRIPTION "Version 3: Removed rcPlugOptModConfigTable and changed the global config scalar names"
+                                     
+       REVISION "200712170000Z" -- 17 Dec. 2007
+       DESCRIPTION "Version 2: added rcPlugOptModConfigTable and
+                                     rcPlugOptModAlarmMonitorGlobalEnable
+                                     rcPlugOptModWarningMonitorGlobalEnable
+                                     rcPlugOptModAlarmMonitorInterval
+                                     rcPlugOptModWarningMonitorInterval"
+       
+       REVISION "200610200000Z" -- 20 Oct. 2006
+       DESCRIPTION "Version 1: Initial version; added rcPlugOptModTable"
+       ::= { rcPlugOptMod 0 }
+
+
+-- This MIB defines the serial information that can be read from
+-- SFPs and SFPs including the vendor specific Nortel supplied data.
+-- The INF-8074i SFP MSA and the SFF-8053 SFP specifications defined
+-- the first 256 bytes of serial ID information.  The SFF-8472
+-- standard adds new options to those previously defined and adds
+-- new transceiver types.  The SFF-8472 standard also defines an
+-- enhanced digital diagnostic monitoring interface for optical
+-- devices which allows real-time access to device operating
+-- parameters.
+--
+-- If the target device supports the SFF-8472 standard, there is an
+-- extra 256 bit address space.  Pertinant information from that
+-- space is also described here.
+-- TXT about XFPs 
+
+
+rcPlugOptModTable OBJECT-TYPE
+        SYNTAX	  SEQUENCE OF RcPlugOptModEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION "Gibc SFF diagnostic info table"
+        ::= {  rcPlugOptMod 1 }
+
+rcPlugOptModEntry OBJECT-TYPE
+        SYNTAX      RcPlugOptModEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION "Entry containing info. for a particular port"
+        INDEX         { rcPlugOptModPortIndex }
+	::= { rcPlugOptModTable 1 }
+  
+RcPlugOptModEntry ::= SEQUENCE {
+    rcPlugOptModPortIndex                 InterfaceIndex,          -- 1
+
+-- Control information:
+
+    rcPlugOptModDdmStatusMask             BITS,                    -- 2
+    rcPlugOptModCalibration               INTEGER,                 -- 3
+    rcPlugOptModPowerMeasure              INTEGER,                 -- 4
+    rcPlugOptModConnectorType             DisplayString, -- 5 ; 16+1
+    rcPlugOptModVendorName                DisplayString, -- 6 ; 16+1
+    rcPlugOptModVendorPartNumber          DisplayString, -- 7 ; 16+1
+    rcPlugOptModVendorRevNumber           DisplayString,  -- 8 ;  4+1
+    rcPlugOptModVendorSN                  DisplayString, -- 9 ; 16+1
+    rcPlugOptModVendorDateCode            DisplayString,  -- 10;  8+1
+ 
+-- Vendor information:
+
+    rcPlugOptModPEC                       DisplayString, -- 11 ;16+1
+    rcPlugOptModCLEI                      DisplayString, -- 12 ;10+1
+    rcPlugOptModSupportsDDM               TruthValue,              -- 13
+    rcPlugOptModAux1Monitoring            INTEGER,                 -- 14
+    rcPlugOptModAux2Monitoring            INTEGER,                 -- 15
+    rcPlugOptModWaveLength                Integer32,               -- 16
+
+-- The DDM information:
+
+    rcPlugOptModTemperature                     Integer32,             -- 17
+    rcPlugOptModTemperatureHighAlarmThreshold   Integer32,            -- 18
+    rcPlugOptModTemperatureLowAlarmThreshold    Integer32,            -- 19
+    rcPlugOptModTemperatureHighWarningThreshold Integer32,           -- 20
+    rcPlugOptModTemperatureLowWarningThreshold  Integer32,            -- 21
+    rcPlugOptModVoltage                         Integer32,             -- 22
+    rcPlugOptModVoltageHighAlarmThreshold       Integer32,             -- 23
+    rcPlugOptModVoltageLowAlarmThreshold        Integer32,             -- 24
+    rcPlugOptModVoltageHighWarningThreshold     Integer32,             -- 25
+    rcPlugOptModVoltageLowWarningThreshold      Integer32,             -- 26
+    rcPlugOptModBias                            Integer32,             -- 27
+    rcPlugOptModBiasHighAlarmThreshold        Integer32,             -- 28
+    rcPlugOptModBiasLowAlarmThreshold         Integer32,             -- 29
+    rcPlugOptModBiasHighWarningThreshold      Integer32,             -- 30
+    rcPlugOptModBiasLowWarningThreshold       Integer32,             -- 31
+    rcPlugOptModTxPower                       Integer32,             -- 32
+    rcPlugOptModTxPowerHighAlarmThreshold     Integer32,             -- 33
+    rcPlugOptModTxPowerLowAlarmThreshold      Integer32,             -- 34
+    rcPlugOptModTxPowerHighWarningThreshold   Integer32,             -- 35
+    rcPlugOptModTxPowerLowWarningThreshold    Integer32,             -- 36
+    rcPlugOptModRxPower                       Integer32,             -- 37
+    rcPlugOptModRxPowerHighAlarmThreshold     Integer32,             -- 38
+    rcPlugOptModRxPowerLowAlarmThreshold      Integer32,             -- 39
+    rcPlugOptModRxPowerHighWarningThreshold   Integer32,             -- 40
+    rcPlugOptModRxPowerLowWarningThreshold    Integer32,             -- 41
+    rcPlugOptModAux1                          Integer32,             -- 42
+    rcPlugOptModAux1HighAlarmThreshold        Integer32,             -- 43
+    rcPlugOptModAux1LowAlarmThreshold         Integer32,             -- 44
+    rcPlugOptModAux1HighWarningThreshold      Integer32,             -- 45
+    rcPlugOptModAux1LowWarningThreshold       Integer32,             -- 46
+    rcPlugOptModAux2                          Integer32,             -- 47
+    rcPlugOptModAux2HighAlarmThreshold        Integer32,             -- 48
+    rcPlugOptModAux2LowAlarmThreshold         Integer32,             -- 49
+    rcPlugOptModAux2HighWarningThreshold      Integer32,             -- 50
+    rcPlugOptModAux2LowWarningThreshold       Integer32,             -- 51
+
+    rcPlugOptModTemperatureStatus         INTEGER,                 -- 52
+    rcPlugOptModVoltageStatus             INTEGER,                 -- 53
+    rcPlugOptModBiasStatus                INTEGER,                 -- 54
+    rcPlugOptModTxPowerStatus             INTEGER,                 -- 55
+    rcPlugOptModRxPowerStatus             INTEGER,                 -- 56
+    rcPlugOptModAux1Status                INTEGER,                 -- 57
+    rcPlugOptModAux2Status                INTEGER                  -- 58
+    }
+    
+rcPlugOptModPortIndex OBJECT-TYPE
+        SYNTAX      InterfaceIndex
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION "An index value that uniquely identifies a port on a 
+                     blade or line-card."
+        ::= { rcPlugOptModEntry 1 }
+
+rcPlugOptModDdmStatusMask OBJECT-TYPE
+        SYNTAX      BITS {
+                        ddm-ok(0),
+                        ddm-checksum-error(1),
+                        ddm-i2c-read-error(2),
+                        ddm-threshold-error(3),
+                        ddm-calibration-error(4)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "Each bit other than ddm-ok represents a specific error. 
+                     Any combination of error bits is allowed."
+        ::= { rcPlugOptModEntry 2}
+
+rcPlugOptModCalibration OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        internal    (1),
+                        external    (2)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The identifier value indicates type of calibration."
+        ::= { rcPlugOptModEntry 3}
+
+rcPlugOptModPowerMeasure OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        omi        (1),
+                        average    (2)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The identifier value indicates type of external power."
+        ::= { rcPlugOptModEntry 4}
+
+rcPlugOptModConnectorType OBJECT-TYPE
+        SYNTAX      DisplayString(SIZE(17))   -- 16+1
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The connector type is a 16 character field that
+                     contains ASCII characters, left-aligned and padded
+                     on the right with ASCII spaces. This is an assigned
+                     name that indicates some characteristic of the 
+                     layer-1 interface."
+        ::= { rcPlugOptModEntry 5 }
+
+rcPlugOptModVendorName OBJECT-TYPE
+        SYNTAX      DisplayString(SIZE(17))   -- 16+1
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The vendor name is a 16 character field that
+                     contains ASCII characters, left-aligned and padded
+                     on the right with ASCII spaces. The vendor name
+                     shall be the full name of the corporation, a
+                     commonly accepted abbreviation of the name, the
+                     SCSI company code, or the stock exchange code for
+                     the corporation."
+        ::= { rcPlugOptModEntry 6 }
+	
+rcPlugOptModVendorPartNumber OBJECT-TYPE
+        SYNTAX      DisplayString(SIZE(17))   -- 16+1
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The vendor part number is a 16 byte field that
+                     contains ASCII characters, left-aligned and padded
+                     on the right with ASCII spaces, defining the vendor
+                     part number or product name."
+        ::= { rcPlugOptModEntry 7 }
+
+rcPlugOptModVendorRevNumber OBJECT-TYPE
+        SYNTAX      DisplayString(SIZE(5))   -- 4+1
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The vendor revision number is a 4-byte field that
+                     contains ASCII characters, left-aligned and padded
+                     on the right with ASCII spaces, defining the
+                     vendor product revision number."
+        ::= { rcPlugOptModEntry 8 }
+
+rcPlugOptModVendorSN OBJECT-TYPE
+        SYNTAX      DisplayString(SIZE(17))   -- 16+1
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The vendor serial number is a 16 character field
+                     that contains ASCII characters, left-aligned and
+                     padded on the right with ASCII spaces, defining
+                     the vendor serial number for the transceiver."
+        ::= { rcPlugOptModEntry 9 }
+
+rcPlugOptModVendorDateCode OBJECT-TYPE
+        SYNTAX      DisplayString(SIZE(9))    -- 8+1
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The date code is an 8-byte field that contains the
+                     vendor's date code in ASCII. This field is
+                     mandatory and takes the form: YYMMDDLC where
+                     YY is the 2 low order digits of the year (00=2000),
+                     MM is the month, 01 thru 12,
+                     DD is the day, 01 thru 31, and
+                     LC is an optional vendor specific lot code."
+        ::= { rcPlugOptModEntry 10 }
+
+rcPlugOptModPEC OBJECT-TYPE
+        SYNTAX      DisplayString(SIZE(17))   -- 16+1
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This is a 16 byte left-justified ASCII field that
+                     records the Nortel Product Equipment Code order
+                     number for the module. Nortel part numbers are 9
+                     bytes long, so the 10th through 16th byte should
+                     be NULL."
+        ::= { rcPlugOptModEntry 11 }
+
+rcPlugOptModCLEI OBJECT-TYPE
+        SYNTAX      DisplayString(SIZE(11))   -- 10+1
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This is a 10 byte left-justified ASCII field that
+                     records the Nortel supplied Common Language
+                     Equipment Identifier code for the device. The CLEI
+                     code is a Telcordia human-readable representation
+                     of the 1D barcode."
+        ::= { rcPlugOptModEntry 12 }
+ 
+rcPlugOptModSupportsDDM OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This boolean indicates whether or not the device
+                     supports the DDM capability."
+        ::= { rcPlugOptModEntry 13 }
+	
+rcPlugOptModAux1Monitoring OBJECT-TYPE
+        SYNTAX      INTEGER(0..15)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value tells what Aux1 is measuring.The values are
+                     as follows:
+        
+                     0  Auxiliary monitoring not implemented
+                     1  APD Bias Voltage mV (units of 10 mV)
+                     2  Reserved
+                     3  TEC Current (mA)
+                     4  Laser Temperature
+                     5  Laser Wavelength
+                     6  +5V Supply Voltage
+                     7  +3.3V Supply Voltage
+                     8  +1.8V Supply Voltage
+                     9  -5.2V Supply Voltage
+                    10  +5.0V Supply Current (unit of 100 uA)
+                    13  +3.3V Supply Current (unit of 100 uA)
+                    14  +1.8V Supply Current (unit of 100 uA)
+                    15  -5.2V Supply Current (unit of 100 uA)
+                     "
+        ::= { rcPlugOptModEntry 14 } 
+        
+rcPlugOptModAux2Monitoring OBJECT-TYPE
+        SYNTAX      INTEGER(0..15)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value tells you what AUX2 is measuring.The values are
+                     as follows:
+        
+                     0  Auxiliary monitoring not implemented
+                     1  APD Bias Voltage mV (units of 10 mV)
+                     2  Reserved
+                     3  TEC Current (mA)
+                     4  Laser Temperature
+                     5  Laser Wavelength
+                     6  +5V Supply Voltage
+                     7  +3.3V Supply Voltage
+                     8  +1.8V Supply Voltage
+                     9  -5.2V Supply Voltage
+                    10  +5.0V Supply Current (unit of 100 uA)
+                    13  +3.3V Supply Current (unit of 100 uA)
+                    14  +1.8V Supply Current (unit of 100 uA)
+                    15  -5.2V Supply Current (unit of 100 uA)
+                     "
+        ::= { rcPlugOptModEntry 15 } 
+
+rcPlugOptModWaveLength OBJECT-TYPE
+        SYNTAX      Integer32 (0..65535)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "Nominal transmitter output wavelength at room
+                     temperature. It is expressed in nano-meters."
+        ::= {rcPlugOptModEntry 16 }
+
+
+-- These next variables represent either measured values or fixed
+-- threshold values.  Sometimes they involve an integer and a fractional
+-- component and sometimes we may want to convert from mW to dBm.
+-- So maybe what we have in the MIB definition is not the raw numeric
+-- data but rather the ASCII representation of that data including a
+-- minus sign, if necessary, and a decimal point in the right place.
+-- In all cases, we need to display the calibrated data if external
+-- calibration is being used.  For temperature, voltage, bias current
+-- and transmitter power, this involves multiplying the raw value by
+-- a vendor specified slope constant (contained in the device EEPROM)
+-- then adding a vendor specified offset (also contained in the device
+-- EEPROM).  For received power, it involves running the raw value
+-- through a polynomial. The vendor specified coefficients for that
+-- polynomial are contained in the device in IEEE 754 floating-point
+-- format.
+
+rcPlugOptModTemperature OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the internally measured
+                     module temperature. It is expressed in units of
+                     1/256 of a degree Celsius and can range from -40C
+		     to +125C with 0.0001 accuracy.The most significant byte is
+                     the signed integer part of the number and the
+                     least significant byte is the fraction."
+        ::= { rcPlugOptModEntry 17 }
+
+rcPlugOptModTemperatureHighAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     temperature threshold. If the device
+                     temperature exceeds this value, a temperature high
+                     is asserted. It is expressed in the same
+                     units as the measured temperature."
+        ::= { rcPlugOptModEntry 18 }
+
+rcPlugOptModTemperatureLowAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     temperature threshold. If the device
+                     temperature falls below this value, a temperature
+                     low is asserted. It is expressed in the same
+                     units as the measured temperature."
+        ::= { rcPlugOptModEntry 19 }
+
+rcPlugOptModTemperatureHighWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     temperature warning threshold. If the device
+                     temperature exceeds this value, a temperature high
+                     warning is asserted. It is expressed in the same
+                     units as the measured temperature."
+        ::= { rcPlugOptModEntry  20 }
+
+rcPlugOptModTemperatureLowWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     temperature warning threshold. If the device
+                     temperature falls below this value, a temperature
+                     low warning is asserted. It is expressed in the
+                     same units as the measured temperature."
+        ::= { rcPlugOptModEntry 21 }
+
+rcPlugOptModVoltage OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the internally measured
+                     supply voltage. It is a positive number expressed
+                     in microvolts and can range from 0 to 65535 mV."
+        ::= { rcPlugOptModEntry 22 }
+
+rcPlugOptModVoltageHighAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     voltage threshold. If the measured voltage exceeds
+                     this value, a high voltage is asserted. It
+                     is a positive number expressed in microvolts."
+        ::= { rcPlugOptModEntry 23 }
+
+rcPlugOptModVoltageLowAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     voltage threshold. If the measured voltage falls
+                     below this value, a low voltage is asserted.
+                     It is a positive number expressed in microvolts."
+        ::= { rcPlugOptModEntry 24 }
+
+rcPlugOptModVoltageHighWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     voltage warning threshold. If the measured voltage
+                     exceeds this value, a high voltage warning is
+                     asserted. It is a positive number expressed in
+                     microvolts."
+        ::= { rcPlugOptModEntry 25 }
+
+rcPlugOptModVoltageLowWarningThreshold OBJECT-TYPE 
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     voltage warning threshold. If the measured voltage
+                     falls below this value, a low voltage warning is
+                     asserted. It is a positive number expressed in
+                     microvolts."
+        ::= { rcPlugOptModEntry 26 }
+
+rcPlugOptModBias OBJECT-TYPE    
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the internally measured
+                     transmitter laser bias current. It is a positive
+                     number expressed in units of 2 microamps and can
+                     range from 0 to 131 mA with 0.0001 accuracy."
+        ::= { rcPlugOptModEntry 27 }
+
+rcPlugOptModBiasHighAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     current threshold. If the measured bias
+                     current exceeds this value, a high current alarm
+                     is asserted. It is a positive number expressed
+                     in units of 2 microamps and can range from 0 to
+                     131 mA with 0.0001 accuracy."
+        ::= { rcPlugOptModEntry 28 }
+
+rcPlugOptModBiasLowAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     current threshold. If the measured bias
+                     current falls below this value, a low current
+                     is asserted. It is a positive number
+                     expressed in units of 2 microamps and can range
+                     from 0 to 131 mA with 0.0001 accuracy."
+        ::= { rcPlugOptModEntry 29 }
+
+rcPlugOptModBiasHighWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     current warning threshold. If the measured bias
+                     current exceeds this value, a high current warning
+                     is asserted. It is a positive number expressed in
+                     units of 2 microamps and can range from 0 to
+                     131 mA with 0.0001 accuracy."
+        ::= { rcPlugOptModEntry 30 }
+
+rcPlugOptModBiasLowWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     current warning threshold. If the measured bias
+                     current falls below this value, a low current
+                     warning is asserted. It is a positive number
+                     expressed in units of 2 microamps and can range
+                     from 0 to 131 mA with 0.0001 accuracy."
+        ::= { rcPlugOptModEntry 31 }
+
+-- For power readings, we should really display these values in dBm
+-- CP code can convert from mW to dBm.
+
+rcPlugOptModTxPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the internally measured
+                     coupled TX output power. It is a positive number
+                     expressed in units of micro watts and can range
+                     from 0 to 65.535 mW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 32 }
+
+rcPlugOptModTxPowerHighAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     transmit power threshold. If the measured
+                     transmitter power exceeds this value, a
+                     transmitter power high is asserted. It is
+                     a positive number expressed in units of micro
+                     watts and can range from 0 to 65.535 mW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 33 }
+
+rcPlugOptModTxPowerLowAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     transmit power threshold. If the measured
+                     transmitter power falls below this value, a
+                     transmitter power low is asserted. It is a
+                     positive number expressed in units of micro watts
+                     and can range from 0 to 65.535 mW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 34 }
+
+rcPlugOptModTxPowerHighWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     transmit power warning threshold. If the measured
+                     transmitter power exceeds this value, a
+                     transmitter power high warning is asserted. It is
+                     a positive number expressed in units of units of
+                     micro watts and can range from 0 to 65.535 mW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 35 }
+
+rcPlugOptModTxPowerLowWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     transmit power warning threshold. If the measured
+                     transmitter power falls below this value, a
+                     transmitter power low warning is asserted. It is
+                     a positive number expressed in units of micro
+                     watts and can range from 0 to 65.535 mW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 36 }
+
+rcPlugOptModRxPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the internally measured
+                     received power. It is a positive number expressed
+                     in units of micro watts and can range from 0 to
+                     65.535 mW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 37 }
+
+rcPlugOptModRxPowerHighAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     receiver power threshold. If the measured
+                     received power exceeds this value, a receiver
+                     power high is asserted. It is a positive
+                     number expressed in units of micro watts and can
+                     range from 0 to 65.535 mW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 38 }
+
+rcPlugOptModRxPowerLowAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     receiver power threshold. If the measured
+                     received power falls below this value, a receiver
+                     power low is asserted. It is a positive
+                     number expressed in units of micro watts and can
+                     range from 0 to 65.535 mW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 39 }
+
+rcPlugOptModRxPowerHighWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     receiver power warning threshold. If the measured
+                     received power exceeds this value, a receiver
+                     power high warning is asserted. It is a positive
+                     number expressed in units of units of micro watts
+                     and can range from 0 to 65.535 uW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 40 }
+
+rcPlugOptModRxPowerLowWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     receiver power warning threshold. If the measured
+                     received power falls below this value, a receiver
+                     power low warning is asserted. It is a positive
+                     number expressed in units of units of micro watts
+                     and can range from 0 to 65.535 mW (-40 to 18.16 dBm)."
+        ::= { rcPlugOptModEntry 41 }
+
+rcPlugOptModAux1 OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This represents the internally measured A/D
+                     value specified."
+        ::= { rcPlugOptModEntry 42 }
+
+rcPlugOptModAux1HighAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     Aux1 threshold."
+        ::= { rcPlugOptModEntry 43 }
+
+rcPlugOptModAux1LowAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     Aux1 threshold."
+        ::= { rcPlugOptModEntry 44 }
+
+rcPlugOptModAux1HighWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     Aux1 warning threshold."
+        ::= { rcPlugOptModEntry 45 }
+
+rcPlugOptModAux1LowWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     Aux1 warning threshold."
+        ::= { rcPlugOptModEntry 46 }
+
+rcPlugOptModAux2 OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This represents the internally measured A/D
+                     value specified."
+        ::= { rcPlugOptModEntry 47 }
+
+rcPlugOptModAux2HighAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     Aux1 threshold."
+        ::= { rcPlugOptModEntry 48 }
+
+rcPlugOptModAux2LowAlarmThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     Aux1 threshold."
+        ::= { rcPlugOptModEntry 49 }
+
+rcPlugOptModAux2HighWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified high
+                     Aux1 warning threshold."
+        ::= { rcPlugOptModEntry 50 }
+
+rcPlugOptModAux2LowWarningThreshold OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "This value represents the vendor specified low
+                     Aux1 warning threshold."
+        ::= { rcPlugOptModEntry 51 }
+
+
+
+-- These next entries represent the defined and warning bits
+-- contained in DDI bytes at offsets 112 thru 117.
+
+rcPlugOptModTemperatureStatus OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        normal(1),
+                        highWarning(2),
+                        highAlarm(3),
+                        lowWarning(4),
+                        lowAlarm(5)
+                    }
+        MAX-ACCESS  read-only
+        STATUS 	    current
+        DESCRIPTION "Used to indicate the current temperature status"
+        DEFVAL      { normal }
+	::= { rcPlugOptModEntry 52 }
+
+rcPlugOptModVoltageStatus OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        normal(1),
+                        highWarning(2),
+                        highAlarm(3),
+                        lowWarning(4),
+                        lowAlarm(5)
+                    }
+        MAX-ACCESS  read-only
+        STATUS 	    current
+        DESCRIPTION "Used to indicate the current voltage status"
+        DEFVAL      { normal }
+        ::= { rcPlugOptModEntry 53 }
+
+
+rcPlugOptModBiasStatus OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        normal(1),
+                        highWarning(2),
+                        highAlarm(3),
+                        lowWarning(4),
+                        lowAlarm(5)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "Used to indicate the current laser bias status"
+        DEFVAL      { normal }
+        ::= { rcPlugOptModEntry 54 }
+
+rcPlugOptModTxPowerStatus OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        normal(1),
+                        highWarning(2),
+                        highAlarm(3),
+                        lowWarning(4),
+                        lowAlarm(5)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "Used to indicate the current transmitter power
+                     status"
+        DEFVAL      { normal }
+        ::= { rcPlugOptModEntry 55 }
+
+rcPlugOptModRxPowerStatus OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        normal(1),
+                        highWarning(2),
+                        highAlarm(3),
+                        lowWarning(4),
+                        lowAlarm(5)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "Used to indicate the current receiver power status"
+        DEFVAL      { normal }
+        ::= { rcPlugOptModEntry 56 }
+
+rcPlugOptModAux1Status OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        normal(1),
+                        highWarning(2),
+                        highAlarm(3),
+                        lowWarning(4),
+                        lowAlarm(5)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "Used to indicate the current Aux1 status"
+        DEFVAL      { normal }
+        ::= { rcPlugOptModEntry 57 }
+
+rcPlugOptModAux2Status OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        normal(1),
+                        highWarning(2),
+                        highAlarm(3),
+                        lowWarning(4),
+                        lowAlarm(5)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "Used to indicate the current Aux2 status"
+        DEFVAL      { normal }
+        ::= { rcPlugOptModEntry 58 }
+        
+-- ----------------------------------------------------------
+--Global configuration of DDI
+-- ----------------------------------------------------------
+
+rcPlugOptModScalars OBJECT IDENTIFIER ::= { rcPlugOptMod 2 }
+
+rcPlugOptModDdmMonitor OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable/disable the global polling monitor for DDM"
+        DEFVAL	{ disable }
+        ::= { rcPlugOptModScalars 1 }
+
+rcPlugOptModDdmMonitorInterval OBJECT-TYPE
+        SYNTAX        Integer32 (5..60)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Indicate the interval in which the DDM alert registers is polled"
+        DEFVAL	{ 5 }
+        ::= { rcPlugOptModScalars 2 }
+
+rcPlugOptModDdmTrapSend OBJECT-TYPE                 
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   " Enable/disable the global ddm trap send to SNMP manager "
+        DEFVAL	{ enable }
+        ::= { rcPlugOptModScalars 3 }
+        
+rcPlugOptModDdmAlarmPortdown OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   " Enable/disable the global portdown option when ddm alarm occurs "
+        DEFVAL	{ enable }
+        ::= { rcPlugOptModScalars 4 }
+       
+ 
+END

@@ -1,0 +1,952 @@
+RC-ISIS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Unsigned32, Integer32, Counter32, IpAddress, TimeTicks
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, DisplayString, RowStatus, TruthValue, MacAddress
+        FROM SNMPv2-TC
+    InterfaceIndex, InterfaceIndexOrZero
+        FROM IF-MIB
+    EnableValue, rcIsis
+        FROM RAPID-CITY; 
+
+
+rcIsisMib MODULE-IDENTITY
+
+       LAST-UPDATED     "200902270000Z"
+
+       ORGANIZATION     "Nortel Networks, OE Group"
+       CONTACT-INFO     "
+                                        Amit Singh
+                         Postal:        Nortel Networks, Inc.
+                                        600 Technology Park 
+                                        Billerica, MA 01821 
+
+                         Tel:           978-288-7837 
+                         E-mail:        amit@ntl.inf.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200902270000Z" -- 27 Feb 2009
+       DESCRIPTION "Version 6:  Added rcIsisPlsbUnicastFibSysId  under rcIsisPlsbUnicastFibTable "
+
+       REVISION "200807140000Z" -- 14 July 2008
+       DESCRIPTION "Version 5: Added rcIsisPlsbMulticastFibSysId, 
+ 	                       rcIsisPlsbIsidSysId,
+			       rcIsis 10, 11,IsisWideL1Metric,
+			       rcIsisCircuitPlsbWideL1Metric
+			       Modified IsisDefaultMetric to IsisDefaultL1Metric,
+			       rcIsisLocalNickname, rcIsisNgbNickname
+			       Modified rcIsisPlsbMulticastFibEntry,
+			       RcIsisPlsbIsidEntry"
+
+       REVISION "200805130000Z" -- 13 May 2008
+       DESCRIPTION "Version 4: Definition of IsisPlsbNodeNickName, changed syntax of rcIsisCircuitPlsbIndex, imported EnableValue."
+
+       REVISION "200805090000Z" -- 09 May 2008
+       DESCRIPTION "Version 3: Fixed smilint errors."
+
+       REVISION "200803140000Z" -- 14 March 2008
+       DESCRIPTION "Version 2: Added rcIsis 4 - rcIsis 9,
+	                       Modified rcIsisGlobal to rcIsisGlobalGroup"
+	   
+       REVISION "200508180000Z" -- 18 Aug 2005
+       DESCRIPTION "Version 1: Added ISIS enterprise MIB"
+
+       ::= { rcIsis 0 }
+
+-- ISIS Textual Conventions
+
+IsisPlsbNodeNickName ::= TEXTUAL-CONVENTION
+        STATUS       current
+        DESCRIPTION  "Plsb Node Nick name."
+        SYNTAX OCTET STRING (SIZE(3))
+
+-- --------------------------------------------------
+-- ISIS Global configuration objects
+-- --------------------------------------------------
+
+rcIsisGlobalGroup OBJECT IDENTIFIER ::= { rcIsis 1 }
+
+rcIsisGlobalAreaAuthType  OBJECT-TYPE
+        SYNTAX        INTEGER {
+                                none(0),
+                                simple(1),
+                                hmac-md5(2)
+                              }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The authentication type for the area"
+        DEFVAL      { none }
+               ::= { rcIsisGlobalGroup 1 }
+
+rcIsisGlobalAreaKeyId  OBJECT-TYPE
+        SYNTAX        Integer32 (1..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Authentication key-id for the area. This is
+                       required if the auth-type is hmac-md5 else it is
+                       not required."
+        ::= { rcIsisGlobalGroup 2 }
+
+rcIsisGlobalAreaAuthKey  OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Authentication key, this key will be used to
+                       authenticate the LSP's received on the area"
+        ::= { rcIsisGlobalGroup 3 }
+
+rcIsisGlobalDomainAuthType  OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          none(0),
+                          simple(1),
+                          hmac-md5(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The authentication type for the domain"
+        DEFVAL        { none }
+        ::= { rcIsisGlobalGroup 4 }
+
+rcIsisGlobalDomainKeyId  OBJECT-TYPE
+        SYNTAX        Integer32 (1..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The authentication key-id for the domain. This is
+                       required if the auth-type is hmac-md5 else it is
+                       not required."
+        ::= { rcIsisGlobalGroup 5 }
+
+rcIsisGlobalDomainAuthKey  OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Authentication key, this key will be used to
+                       authenticate the LSP's received on the domain"
+        ::= { rcIsisGlobalGroup 6 }
+
+rcIsisGlobalCsnpInt OBJECT-TYPE
+        SYNTAX        Integer32 (1..600)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Interval of time, in seconds, between periodic
+                       transmission of a complete set of CSNPs on
+                       multiaccess networks if this router is the
+                       designated router at this level.
+                       This object follows the resettingTimer behavior.
+                       For ResettingTimer description see the ISIS MIB"
+        DEFVAL        { 10 }
+        ::= { rcIsisGlobalGroup 7 }
+
+rcIsisGlobalRxmtLspInt  OBJECT-TYPE
+        SYNTAX        Integer32 (1..300)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Minimum interval, in seconds, between
+                       re-transmission of a LSP at this level. This
+                       object follows the resettingTimer behavior.
+                       For ResettingTimer description see the ISIS MIB"
+        DEFVAL        { 5 }
+        ::= { rcIsisGlobalGroup 8 }
+
+rcIsisGlobalPSNPInterval OBJECT-TYPE
+        SYNTAX     Integer32 (1..120)
+        UNITS      "seconds"
+        MAX-ACCESS read-write
+        STATUS     current
+        DESCRIPTION "Minimum interval in seconds between sending Partial
+                     Sequence Number PDUs at this level. This object
+                     follows the resettingTimer behavior.
+                     For ResettingTimer description see the ISIS MIB"
+        DEFVAL { 2 }
+        ::= { rcIsisGlobalGroup 9 }
+
+rcIsisGlobalHostName OBJECT-TYPE
+        SYNTAX     OCTET STRING (SIZE (0..255))
+        MAX-ACCESS read-write
+        STATUS     current
+        DESCRIPTION
+            "The hostname listed in LSP, or the system name if host
+             name is not configured."
+        ::= { rcIsisGlobalGroup 10 }
+
+rcIsisGlobalSpfDelay OBJECT-TYPE
+        SYNTAX     Integer32 (100..5000)
+        UNITS      "milliseconds"
+        MAX-ACCESS read-write
+        STATUS     current
+        DESCRIPTION "ISIS SPF delay in miliseconds"
+        DEFVAL { 500 }
+        ::= { rcIsisGlobalGroup 11 }
+
+rcIsisGlobalControlVlan OBJECT-TYPE
+        SYNTAX     Integer32 (1..4094)
+        MAX-ACCESS read-write
+        STATUS     current
+        DESCRIPTION "ISIS control vlan ID"
+        ::= { rcIsisGlobalGroup 12 }
+
+-- --------------------------------------------------
+-- rcIsisCircuitTable
+-- --------------------------------------------------
+
+rcIsisCircuitTable      OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIsisCircuitEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of IS-IS Circuit, this is extension
+                         to the isisCircTable defined in ISIS MIB"
+        ::= { rcIsis 2 }
+
+rcIsisCircuitEntry OBJECT-TYPE
+        SYNTAX          RcIsisCircuitEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIsisCircuit Table. A Entry in
+                         table exists for each ISIS circuit created"
+        INDEX           { rcIsisCircuitIndex }
+        ::= { rcIsisCircuitTable 1 }
+
+RcIsisCircuitEntry   ::=
+        SEQUENCE {
+          rcIsisCircuitIndex        Integer32,
+          rcIsisCircuitType         INTEGER,
+          rcIsisCircuitAuthType     INTEGER,
+          rcIsisCircuitKeyId        INTEGER,
+          rcIsisCircuitAuthKey      OCTET STRING,
+          rcIsisCircuitAddr         IpAddress,
+          rcIsisCircuitMask         IpAddress,
+          rcIsisCircuitOperState    INTEGER,
+          rcIsisCircuitNumAdj       Integer32,
+          rcIsisCircuitNumUpAdj     Integer32
+        }
+
+rcIsisCircuitIndex   OBJECT-TYPE
+        SYNTAX        Integer32 (1..2147483647)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION  "The identifier of this circuit, unique within the
+                      Intermediate System.  This object follows
+                      the index behavior.  This is for SNMP Indexing
+                      purposes only and need not have any relation to
+                      any protocol value."
+        ::= { rcIsisCircuitEntry 1 }
+
+rcIsisCircuitType    OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          bcast(1),
+                          ptpt(2),
+                          passive(3)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "ISIS circuit type this is an extention to
+                       ISIS circuit table, this was required a
+                       standard MIB circuit type does not support
+                       passive type"
+        DEFVAL        { bcast }
+        ::= { rcIsisCircuitEntry 2 }
+
+rcIsisCircuitAuthType    OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         none(0),
+                         simple(1),
+                         hmac-md5(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Authentication type for IIH to be sent/reveived
+                       on the circuit/interface"
+        DEFVAL        { none }
+        ::= { rcIsisCircuitEntry 3 }
+
+rcIsisCircuitKeyId     OBJECT-TYPE
+        SYNTAX        INTEGER (1..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Authentication key id related to IIH key
+                       This can be set only if the auth-type is hmac-md5"
+        ::= { rcIsisCircuitEntry 4 }
+
+rcIsisCircuitAuthKey     OBJECT-TYPE
+        SYNTAX        OCTET STRING(SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Authentication key to be used to authenticate
+                       IIH sent/reveived on the circuit/interface"
+        ::= { rcIsisCircuitEntry 5 }
+
+rcIsisCircuitAddr     OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "IP address associated with the interface"
+        ::= { rcIsisCircuitEntry 6 }
+
+rcIsisCircuitMask     OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "IP mask associated with the interface"
+        ::= { rcIsisCircuitEntry 7 }
+
+rcIsisCircuitOperState     OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        unknown(0),
+                        up(1),
+                        down(2)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "This variable tells the operating state of circ"
+        ::= { rcIsisCircuitEntry 8 }
+
+rcIsisCircuitNumAdj     OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "NUmber of adjacencies"
+        ::= { rcIsisCircuitEntry 9 }
+
+rcIsisCircuitNumUpAdj     OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of adjancencies which are UP"
+        ::= { rcIsisCircuitEntry 10 }
+
+-- --------------------------------------------------
+-- Global stats objects
+-- --------------------------------------------------
+
+rcIsisStats OBJECT IDENTIFIER ::= { rcIsis 3 }
+
+rcIsisStatsClearErrorCounters  OBJECT-TYPE
+     SYNTAX             TruthValue
+     MAX-ACCESS         read-write
+     STATUS             current
+     DESCRIPTION        "Clear ISIS global and interface error counters."
+     DEFVAL             { false }
+     ::= { rcIsisStats 1 }
+
+rcIsisStatsClearPacketCounters  OBJECT-TYPE
+     SYNTAX             TruthValue
+     MAX-ACCESS         read-write
+     STATUS             current
+     DESCRIPTION        "Clear IS-IS control packets sent and received
+                        at each level on all the interface/circuits."
+     DEFVAL             { false }
+     ::= { rcIsisStats 2 }
+
+-- BEGIN rcIsisPlsbTable --
+ 
+rcIsisPlsbTable  OBJECT-TYPE
+          SYNTAX          SEQUENCE OF RcIsisPlsbEntry
+          MAX-ACCESS      not-accessible
+          STATUS          current
+          DESCRIPTION     "Table of PLSB under IS-IS"
+        ::= { rcIsis 4} 
+
+rcIsisPlsbEntry OBJECT-TYPE
+        SYNTAX          RcIsisPlsbEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIsisPlsb Table. A Entry in 
+                         table exists for each plsb instance created"
+        INDEX           { rcIsisPlsbId }
+        ::= { rcIsisPlsbTable 1 }
+
+RcIsisPlsbEntry   ::=
+        SEQUENCE {
+        rcIsisPlsbId              Integer32, 
+        rcIsisPlsbRowStatus       RowStatus,
+        rcIsisPlsbNodeNickName    IsisPlsbNodeNickName,
+        rcIsisPlsbVlans           OCTET STRING,
+        rcIsisPlsbLsdbTrap        EnableValue
+        }
+
+rcIsisPlsbId OBJECT-TYPE
+        SYNTAX          Integer32 (1..100)
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION
+            "PLSB instance ID"
+    ::= { rcIsisPlsbEntry 1 }
+
+rcIsisPlsbRowStatus  OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The state of the rcIsisPlsbEntry.  "
+    ::= { rcIsisPlsbEntry 2 }
+
+rcIsisPlsbNodeNickName OBJECT-TYPE
+        SYNTAX IsisPlsbNodeNickName
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "PLSB node's nickname is used to
+             calculate ISID multicast mac address."
+    ::= { rcIsisPlsbEntry 3 }
+
+rcIsisPlsbVlans OBJECT-TYPE
+        SYNTAX          OCTET STRING(SIZE(512))
+        MAX-ACCESS      read-create   
+        STATUS          current
+        DESCRIPTION
+            "PLSB ISIS vlans for a PLSB instance."
+    ::= { rcIsisPlsbEntry 4 }
+
+rcIsisPlsbLsdbTrap OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "isis PLSB lsdb update trap enable on this plsb instance"
+	DEFVAL        { disable }
+        ::= { rcIsisPlsbEntry 5 }
+
+
+-- BEGIN rcIsisCircuitPlsbTable --
+
+IsisDefaultL1Metric ::= TEXTUAL-CONVENTION
+        DISPLAY-HINT "d"
+        STATUS current
+        DESCRIPTION
+            "Integer sub-range for default metric for single hop.
+             ISO 10589 provides for 4 types of metric.  Only the
+             'default' metric is used in practice."
+        SYNTAX Integer32 (1..63)
+
+IsisWideL1Metric ::= TEXTUAL-CONVENTION
+        DISPLAY-HINT "d"
+        STATUS current
+        DESCRIPTION
+            "Wide Metric for IS Neighbors.  ISO 10589 provides a
+             6 bit metric.  Traffic Engineering extensions provide
+             24 bit metrics."
+        SYNTAX Integer32 (1..16777215)
+
+
+rcIsisCircuitPlsbTable      OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIsisCircuitPlsbEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of IS-IS Circuit PLSB instance"
+        ::= { rcIsis 5 }
+
+rcIsisCircuitPlsbEntry OBJECT-TYPE
+        SYNTAX          RcIsisCircuitPlsbEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIsisCircuitPlsb Table. A Entry in 
+                         table exists for each PLSB instance under a ISIS 
+                        circuit created"
+        INDEX           { rcIsisCircuitPlsbIndex,
+                         rcIsisCircuitPlsbId}
+        ::= { rcIsisCircuitPlsbTable 1 }
+
+RcIsisCircuitPlsbEntry   ::=
+        SEQUENCE {
+          rcIsisCircuitPlsbIndex      InterfaceIndexOrZero,
+          rcIsisCircuitPlsbId         Integer32,        
+          rcIsisCircuitPlsbRowStatus  RowStatus,
+          rcIsisCircuitPlsbState      EnableValue,
+          rcIsisCircuitPlsbType       INTEGER,
+          rcIsisCircuitPlsbL1Metric   IsisDefaultL1Metric,
+	  rcIsisCircuitPlsbWideL1Metric   IsisWideL1Metric
+        }
+
+rcIsisCircuitPlsbIndex   OBJECT-TYPE
+        SYNTAX        InterfaceIndexOrZero
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION  "The identifier of this circuit, unique within the
+                      Intermediate System.  This object follows
+                      the index behavior.  This is for SNMP Indexing
+                      purposes only and need not have any relation to
+                      any protocol value."
+        ::= { rcIsisCircuitPlsbEntry 1 }
+
+rcIsisCircuitPlsbId OBJECT-TYPE
+        SYNTAX          Integer32 (1..100)
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION
+            "PLSB instance ID"
+    ::= { rcIsisCircuitPlsbEntry 2 }
+
+rcIsisCircuitPlsbRowStatus  OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The state of the rcIsisCircuitPlsbEntry.  "
+    ::= { rcIsisCircuitPlsbEntry 3 }
+
+rcIsisCircuitPlsbState OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "PLSB functionality enable on this Plsb 
+                      instance at this port"
+	DEFVAL        { disable }
+        ::= { rcIsisCircuitPlsbEntry 4 }
+
+rcIsisCircuitPlsbType    OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          bcast(1),
+                          ptpt(2)
+                      }
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "ISIS circuit type this is an extention to 
+                       ISIS circuit table, this was required a 
+                       standard MIB circuit type does not support
+                       passive type"
+	    DEFVAL        { ptpt }
+        ::= { rcIsisCircuitPlsbEntry 5 }
+
+rcIsisCircuitPlsbL1Metric OBJECT-TYPE
+        SYNTAX IsisDefaultL1Metric
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The metric value of this circuit for this level."
+        REFERENCE "ISIS.aoi l1DefaultMetric (35)"
+        DEFVAL { 10 }
+    ::= { rcIsisCircuitPlsbEntry 6 }
+
+rcIsisCircuitPlsbWideL1Metric OBJECT-TYPE
+        SYNTAX IsisWideL1Metric
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The metric value of this circuit for this level."
+        DEFVAL { 10 }
+    ::= { rcIsisCircuitPlsbEntry 7 }
+
+
+-- ISIS PLSB Unicast FIB Table
+
+rcIsisPlsbUnicastFibTable      OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIsisPlsbUnicastFibEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of IS-IS PLSB Unicast FIB"
+        ::= { rcIsis 6 }
+
+rcIsisPlsbUnicastFibEntry OBJECT-TYPE
+        SYNTAX          RcIsisPlsbUnicastFibEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIsisPlsbUnicastFib Table. A Entry in 
+                         table exists for each PLSB unicast forwarding entry
+                        generated by ISIS SPF computation"
+        INDEX           { rcIsisPlsbUnicastFibDestinationMacAddr,
+                         rcIsisPlsbUnicastFibVlan,
+                         rcIsisPlsbUnicastFibSysId}
+
+        ::= { rcIsisPlsbUnicastFibTable 1 }
+
+RcIsisPlsbUnicastFibEntry   ::=
+        SEQUENCE {
+          rcIsisPlsbUnicastFibDestinationMacAddr      MacAddress,
+          rcIsisPlsbUnicastFibVlan                    Integer32,    
+          rcIsisPlsbUnicastFibSysId                  OCTET STRING,          
+          rcIsisPlsbUnicastFibOutgoingPort            InterfaceIndex
+        }
+
+rcIsisPlsbUnicastFibDestinationMacAddr OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Destination Mac Address of the unicast FIB entry "
+        ::= { rcIsisPlsbUnicastFibEntry 1 }
+
+rcIsisPlsbUnicastFibVlan OBJECT-TYPE
+        SYNTAX        Integer32 (1..4094)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Vlan of the unicast FIB entry"
+        ::= { rcIsisPlsbUnicastFibEntry 2 }
+
+rcIsisPlsbUnicastFibSysId OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE (6))
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "System ID of the node where unicast FIB entry 
+                       come from"
+        ::= { rcIsisPlsbUnicastFibEntry 3 }
+
+rcIsisPlsbUnicastFibOutgoingPort  OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Outgoing port of the unicast Fib entry."
+        ::= { rcIsisPlsbUnicastFibEntry 4 }
+
+-- ISIS PLSB Multicast FIB Table
+
+rcIsisPlsbMulticastFibTable      OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIsisPlsbMulticastFibEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of IS-IS PLSB Multicast FIB"
+        ::= { rcIsis 7 }
+
+rcIsisPlsbMulticastFibEntry OBJECT-TYPE
+        SYNTAX          RcIsisPlsbMulticastFibEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIsisPlsbmulticastFib Table. A Entry in 
+                         table exists for each PLSB Multicast forwarding entry
+                        generated by ISIS SPF computation"
+        INDEX           { rcIsisPlsbMulticastFibMcastDestMacAddr,
+                          rcIsisPlsbMulticastFibVlan,
+			  rcIsisPlsbMulticastFibSysId}
+        ::= { rcIsisPlsbMulticastFibTable 1 }
+
+RcIsisPlsbMulticastFibEntry   ::=
+        SEQUENCE {
+          rcIsisPlsbMulticastFibMcastDestMacAddr      MacAddress,
+	  rcIsisPlsbMulticastFibVlan                  Integer32, 
+	  rcIsisPlsbMulticastFibSysId                 OCTET STRING,
+          rcIsisPlsbMulticastFibIsid                  Integer32,        
+          rcIsisPlsbMulticastFibOutgoingPorts         DisplayString
+	  }
+
+rcIsisPlsbMulticastFibMcastDestMacAddr OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Multicast destination Mac Address of the 
+                       multicast FIB entry "
+        ::= { rcIsisPlsbMulticastFibEntry 1 }
+
+rcIsisPlsbMulticastFibVlan OBJECT-TYPE
+        SYNTAX        Integer32 (1..4094)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Vlan of the multicast FIB entry"
+        ::= { rcIsisPlsbMulticastFibEntry 2 }
+
+rcIsisPlsbMulticastFibSysId OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE (6))
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "System ID of the node where multicast FIB entry 
+                       come from"
+        ::= { rcIsisPlsbMulticastFibEntry 3 }
+
+rcIsisPlsbMulticastFibIsid OBJECT-TYPE
+        SYNTAX        Integer32 (1..16777215)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Isid id of the multicast FIB entry"
+        ::= { rcIsisPlsbMulticastFibEntry 4 }
+
+rcIsisPlsbMulticastFibOutgoingPorts  OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Nni port of the multicast Fib entry."
+        ::= { rcIsisPlsbMulticastFibEntry 5 }
+
+-- ISIS PLSB ISID Table
+
+rcIsisPlsbIsidTable     OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIsisPlsbIsidEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of IS-IS PLSB ISID"
+        ::= { rcIsis 8 }
+
+rcIsisPlsbIsidEntry OBJECT-TYPE
+        SYNTAX          RcIsisPlsbIsidEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIsisPlsbIsid Table. A Entry in 
+                         table exists for each PLSB i-sid configed or discovered 
+                        by IS-IS "
+        INDEX           { rcIsisPlsbIsidSourceName,
+                          rcIsisPlsbIsidId,
+			  rcIsisPlsbIsidSysId}
+        ::= { rcIsisPlsbIsidTable 1 }
+
+RcIsisPlsbIsidEntry   ::=
+        SEQUENCE {
+          rcIsisPlsbIsidSourceName                    Integer32,
+          rcIsisPlsbIsidId                            Integer32, 
+	  rcIsisPlsbIsidSysId                         OCTET STRING,
+          rcIsisPlsbIsidType                          INTEGER
+        }
+
+rcIsisPlsbIsidSourceName OBJECT-TYPE
+        SYNTAX        Integer32 (1..16777215)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "nick name of node where this i-sid got 
+                       configed or discovered"
+        ::= { rcIsisPlsbIsidEntry 1 }
+
+rcIsisPlsbIsidId OBJECT-TYPE
+        SYNTAX        Integer32 (1..16777215)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "IS-IS PLSB Isid id"
+        ::= { rcIsisPlsbIsidEntry 2 }
+
+rcIsisPlsbIsidSysId OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE (6))
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "System ID of the node where multicast FIB entry 
+                       come from"
+        ::= { rcIsisPlsbIsidEntry 3 }
+
+rcIsisPlsbIsidType OBJECT-TYPE	
+        SYNTAX	      INTEGER {
+			  config(1),
+			  discover(2)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "PLSB i-sid type"
+        ::= { rcIsisPlsbIsidEntry 4 }
+
+
+rcIsisTrap OBJECT IDENTIFIER ::= { rcIsis 9 }
+
+rcIsisLocalLspId OBJECT-TYPE 
+        SYNTAX DisplayString(SIZE (17))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The 8 byte Local LSP ID, consisting of the SystemID,
+             Circuit ID, and Fragment Number."
+    ::= { rcIsisTrap 1 }
+
+rcIsisLocall1Metric OBJECT-TYPE
+        SYNTAX IsisDefaultL1Metric
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "l1-metric for ISIS interface on local Node."
+    ::= { rcIsisTrap 2 }
+
+rcIsisNgbLspId  OBJECT-TYPE
+        SYNTAX DisplayString(SIZE (17))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The 8 byte neighbor LSP ID, consisting of the SystemID,
+             Circuit ID, and Fragment Number."
+    ::= { rcIsisTrap 3 }
+
+rcIsisNgbl1Metric OBJECT-TYPE
+        SYNTAX IsisDefaultL1Metric
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "l1-metric for ISIS interface on neighbor Node."
+    ::= { rcIsisTrap 4 }
+
+rcIsisPlsbTrapType OBJECT-TYPE
+        SYNTAX	        INTEGER {
+			   metricMismatch(1),
+			   duplicateSysid(2),
+			   lsdbUpdate(3),
+                           duplicateNickname(4)   
+			}	
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	""
+	::= {rcIsisTrap 5}
+
+rcIsisLocalSysId OBJECT-TYPE
+        SYNTAX DisplayString(SIZE (14))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "ISIS local node system-id."
+    ::= { rcIsisTrap 6 }
+
+rcIsisLocalInterface OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "ISIS local interface index."
+    ::= { rcIsisTrap 7 }
+
+rcIsisTrapIndicator OBJECT-TYPE
+        SYNTAX INTEGER {
+			alarm(1),
+			clear(2)
+  		    }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "indicates that an alarm has been 
+                Raised, or an alarm has been cleared."
+::= { rcIsisTrap 8 }
+
+rcIsisLocalNickname OBJECT-TYPE
+        SYNTAX DisplayString(SIZE (7))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "ISIS local node nick-name."
+    ::= { rcIsisTrap 9 }
+
+rcIsisNgbNickname OBJECT-TYPE
+        SYNTAX DisplayString(SIZE (7))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "ISIS neighbor node nick-name."
+    ::= { rcIsisTrap 10 }
+
+rcIsisNgbSysId  OBJECT-TYPE
+        SYNTAX DisplayString(SIZE (14))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "ISIS neighbor node system-id."
+    ::= { rcIsisTrap 11 }
+
+-- BEGIN rcIsisAdjTable --
+
+rcIsisAdjTable      OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIsisAdjEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of IS-IS Adjacency, this is extension
+                         to the isisISAdjTable defined in ISIS MIB"
+        ::= { rcIsis 10 }
+
+rcIsisAdjEntry OBJECT-TYPE
+        SYNTAX          RcIsisAdjEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIsisAdj Table. A Entry in 
+                         table exists for each ISIS adjacency"
+        INDEX           {rcIsisAdjCircIndex,
+                         rcIsisAdjIndex }
+        ::= { rcIsisAdjTable 1 }
+
+RcIsisAdjEntry   ::=
+        SEQUENCE {
+          rcIsisAdjCircIndex        Integer32,
+          rcIsisAdjIndex            Unsigned32,
+          rcIsisAdjHostName         OCTET STRING,
+          rcIsisAdjIfIndex          InterfaceIndex
+        }
+
+rcIsisAdjCircIndex   OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION  "The identifier of this circuit, unique within the
+                      Intermediate System.  This object follows
+                      the index behavior.  This is for SNMP Indexing
+                      purposes only and need not have any relation to
+                      any protocol value."
+        ::= { rcIsisAdjEntry 1 }
+
+rcIsisAdjIndex OBJECT-TYPE
+        SYNTAX Unsigned32(1..4294967295)
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "A unique value identifying the IS adjacency from all
+             other such adjacencies on this circuit. This value is
+             automatically assigned by the system when the adjacency
+             is created."
+    ::= { rcIsisAdjEntry 2 }
+
+rcIsisAdjHostName OBJECT-TYPE
+        SYNTAX     OCTET STRING (SIZE (0..255))
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION   
+            "The hostname listed in LSP, or the system name if host 
+             name is not configured."
+        ::= { rcIsisAdjEntry 3 }
+
+rcIsisAdjIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The value of ifIndex for the interface to which this
+             circuit corresponds."
+    ::= { rcIsisAdjEntry 4 }
+
+-- BEGIN rcIsisLSPTable --
+
+rcIsisLSPTable      OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIsisLSPEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of IS-IS LSP, this is extension
+                         to the isisLSPSummaryTable defined in ISIS MIB"
+        ::= { rcIsis 11 }
+
+rcIsisLSPEntry OBJECT-TYPE
+        SYNTAX          RcIsisLSPEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIsisLSP Table. A Entry in 
+                         table exists for each ISIS LSP"
+        INDEX           {rcIsisLSPLevel,
+                         rcIsisLSPID }
+        ::= { rcIsisLSPTable 1 }
+
+RcIsisLSPEntry   ::=
+        SEQUENCE {
+          rcIsisLSPLevel            INTEGER,
+          rcIsisLSPID               OCTET STRING,
+          rcIsisLSPSeq              Unsigned32,
+          rcIsisLSPHostName         OCTET STRING
+        }
+
+rcIsisLSPLevel OBJECT-TYPE
+        SYNTAX INTEGER {
+                area(1),        -- L1
+                domain(2)       -- L2
+        }
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "At which level does this LSP appear?"
+    ::= { rcIsisLSPEntry 1 }
+
+rcIsisLSPID OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (8))
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The 8 byte LSP ID, consisting of the SystemID,
+             Circuit ID, and Fragment Number."
+    ::= { rcIsisLSPEntry 2 }
+
+rcIsisLSPSeq OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The sequence number for this LSP."
+    ::= { rcIsisLSPEntry 3 }
+
+rcIsisLSPHostName OBJECT-TYPE
+        SYNTAX     OCTET STRING (SIZE (0..255))
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION   
+            "The hostname listed in LSP, or the system name if host 
+             name is not configured."
+        ::= { rcIsisLSPEntry 4 }
+
+END

@@ -1,0 +1,1651 @@
+
+RC-IP-MPLS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, IpAddress, Unsigned32
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, DisplayString, TruthValue, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcIpMpls
+        FROM RC-IP-MIB
+    MplsTunnelIndex, MplsTunnelInstanceIndex
+        FROM MPLS-TC-STD-MIB
+    EnableValue
+        FROM RAPID-CITY;
+
+
+rcIpMplsMib MODULE-IDENTITY
+       LAST-UPDATED     "200407140000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+
+       REVISION "200407140000Z"
+       DESCRIPTION "Version 5:  Changes to make MIB compile cleaner:
+                    1.) Removed unused IMPORT MacAddress
+                    2.) Changed to using the enumerated names in
+                        DEFVAL clauses instead of the numeric values."
+
+       REVISION "200406110000Z"
+       DESCRIPTION "Version 4:  Misc changes to make it SMIv2 compliant."
+       ::= { rcIpMpls 0 }
+
+
+-- Textual Conventions.
+
+MplsLsrId ::= TEXTUAL-CONVENTION
+   STATUS        current
+   DESCRIPTION
+        "A unique identifier for an MPLS LSR. This MAY
+          represent an IpV4 address."
+   -- SYNTAX  Unsigned32
+   SYNTAX  IpAddress
+
+
+-- MPLS Group
+
+rcIpMplsGlobalGroup OBJECT IDENTIFIER ::= { rcIpMpls 1 }
+
+rcIpMplsGlobalAdminStatus OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Disable or Enable MPLS globally"
+	DEFVAL	      { disable }
+        ::= { rcIpMplsGlobalGroup 1 }
+
+rcIpMplsGlobalRouterId OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "IP address of the interface to be used as router-id"
+        ::= { rcIpMplsGlobalGroup 2 }
+
+rcIpMplsGlobalAutomaticBeLsp OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Flag to control automatic generation of next hop LSP." 
+        DEFVAL        { false }
+        ::= { rcIpMplsGlobalGroup 3 }
+
+rcIpMplsGlobalLspMerge OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Not used in this release." 
+        DEFVAL        { false }
+        ::= { rcIpMplsGlobalGroup 4 }
+
+rcIpMplsGlobalDiffServDef OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Not used in this release." 
+        DEFVAL        { false }
+        ::= { rcIpMplsGlobalGroup 5 }
+
+rcIpMplsGlobalTtl OBJECT-TYPE
+        SYNTAX        INTEGER (1..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "To set the time to live in hops when IP packets
+                       are being encapsulated in MPLS"
+        ::= { rcIpMplsGlobalGroup 6 }
+
+rcIpMplsGlobalLabelMgmtFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "To set the time to live in hops when IP packets
+                       are being encapsulated in MPLS"
+        DEFVAL        { false }
+        ::= { rcIpMplsGlobalGroup 7 }
+
+rcIpMplsGlobalSessionMgmtFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "To set the time to live in hops when IP packets
+                       are being encapsulated in MPLS"
+        DEFVAL        { false }
+        ::= { rcIpMplsGlobalGroup 8 }
+
+rcIpMplsGlobalLspMgmtFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "To set the time to live in hops when IP packets
+                       are being encapsulated in MPLS"
+        DEFVAL        { false }
+        ::= { rcIpMplsGlobalGroup 9 }
+
+rcIpMplsGlobalTrafficControlFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "To set the time to live in hops when IP packets
+                       are being encapsulated in MPLS"
+        DEFVAL        { false }
+        ::= { rcIpMplsGlobalGroup 10 }
+
+rcIpMplsGlobalInactiveLspRestartTime OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Timer to initiate setting up a tunnel that previously failed."
+        DEFVAL        { 30 }
+        ::= { rcIpMplsGlobalGroup 11 }
+
+rcIpMplsGlobalInactiveLspRestartCount OBJECT-TYPE
+        SYNTAX        INTEGER (0..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "This parameter - if set to
+                        some non-zero (1-255) value, after that many failed trial of
+                        initiating a tunnel it will stop re-trying. But if set to 0(zero)
+                        it will keep on trying as before. The default value is 0(zero)
+                        for backward compatability."
+	DEFVAL        { 0 }
+        ::= { rcIpMplsGlobalGroup 12 }
+
+rcIpMplsInterfaceTableSize OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS          read-only
+        STATUS          current
+        DESCRIPTION     "Size of Mpls Interface Table"
+        ::= { rcIpMpls 2 }
+
+rcIpMplsInterfaceTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpMplsInterfaceEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of configured Mpls Interfaces."
+        ::= { rcIpMpls 3 }
+
+rcIpMplsInterfaceEntry OBJECT-TYPE
+        SYNTAX          RcIpMplsInterfaceEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIpMpls Interfaces In Table."
+        INDEX           { rcIpMplsInterfaceLay3Addr, rcIpMplsInterfaceLay3Mask }
+        ::= { rcIpMplsInterfaceTable 1 }
+
+RcIpMplsInterfaceEntry ::=
+        SEQUENCE {
+                  rcIpMplsInterfaceIndex                        Integer32,
+                  rcIpMplsInterfaceLay3Addr                     IpAddress,
+                  rcIpMplsInterfaceLay3Mask                     IpAddress,
+                  rcIpMplsInterfaceAdminStatus                  EnableValue,
+                  rcIpMplsInterfaceIndLblDistMode               INTEGER,
+                  rcIpMplsInterfaceConsLblRetenMode             INTEGER,
+                  rcIpMplsInterfaceImdLblUseMode                INTEGER,
+                  rcIpMplsInterfaceNoRouteReqRetryMode          TruthValue,
+                  rcIpMplsInterfacePenultimatePopRequest        TruthValue,
+                  rcIpMplsInterfacePropogateLabelReleaseRequest TruthValue,
+                  rcIpMplsInterfaceOnDemandAdvMode              INTEGER,
+                  rcIpMplsInterfaceLabelRequestMode             INTEGER,
+                  rcIpMplsInterfaceMtu                          INTEGER,
+                  rcIpMplsInterfaceLabelProtocol                INTEGER,
+		  rcIpMplsInterfaceTraceFlag			TruthValue,
+                  rcIpMplsInterfaceRowStatus                    RowStatus
+                 }
+
+rcIpMplsInterfaceIndex OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Interface index for the IP interface."
+        ::= { rcIpMplsInterfaceEntry 1 }
+
+rcIpMplsInterfaceLay3Addr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Layer 3 address for the MPLS interface."
+        ::= { rcIpMplsInterfaceEntry 2 }
+
+rcIpMplsInterfaceLay3Mask OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Layer 3 mask for the MPLS interface."
+        ::= { rcIpMplsInterfaceEntry 3 }
+
+rcIpMplsInterfaceAdminStatus OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Indicates whether the MPLS interface is enabled or not."
+        DEFVAL        { disable }
+        ::= { rcIpMplsInterfaceEntry 4 }
+
+rcIpMplsInterfaceIndLblDistMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          independent(1),
+                          ordered(2)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   " Indicates if the label distribution mode is independent or ordered."
+        DEFVAL        { independent }
+        ::= { rcIpMplsInterfaceEntry 5 }
+
+rcIpMplsInterfaceConsLblRetenMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          conservative(1),
+                          liberal(2)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Indicates if conservative or liberal retention mode is used for the MPLS interface."
+        DEFVAL        { liberal }
+        ::= { rcIpMplsInterfaceEntry 6 }
+
+rcIpMplsInterfaceImdLblUseMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          immediate(1),
+                          notImmediate(2)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Indicates what label-use-mode is used by the MPLS interface."
+        DEFVAL        { immediate }
+        ::= { rcIpMplsInterfaceEntry 7 }
+
+rcIpMplsInterfaceNoRouteReqRetryMode OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Not used in this release."
+        DEFVAL        { false }
+        ::= { rcIpMplsInterfaceEntry 8 }
+
+rcIpMplsInterfacePenultimatePopRequest OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Flag to indicate whether to give implicit
+		       NULL labels for local networks."
+        DEFVAL        { true }
+        ::= { rcIpMplsInterfaceEntry 9 }
+
+rcIpMplsInterfacePropogateLabelReleaseRequest OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Not used in this release."
+        DEFVAL        { false }
+        ::= { rcIpMplsInterfaceEntry 10 }
+
+rcIpMplsInterfaceLabelRequestMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          requestNever(1),
+                          requestWhenNeeded(2),
+                          requestOnRequest(3)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Indicates the label requiest mode used by the MPLS interface."
+	DEFVAL        { requestNever }
+        ::= { rcIpMplsInterfaceEntry 11 }
+
+rcIpMplsInterfaceOnDemandAdvMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          downstreamOnDemand(1),
+                          downstreamUnsolicited(2)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Indicates the label advertise mode used by the MPLS interface."
+        DEFVAL        { downstreamUnsolicited }
+        ::= { rcIpMplsInterfaceEntry 12 }
+
+rcIpMplsInterfaceMtu OBJECT-TYPE
+        SYNTAX        INTEGER (64..1518)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Not used in this release."
+        ::= { rcIpMplsInterfaceEntry 13 }
+
+rcIpMplsInterfaceLabelProtocol OBJECT-TYPE
+        SYNTAX  INTEGER {
+                    ldp(1),
+                    rsvp(2),
+                    both(3)
+                }
+        MAX-ACCESS  read-write
+        STATUS  current
+        DESCRIPTION  "Indicates the label protocol used by the interface."
+        DEFVAL  { ldp }
+        ::= { rcIpMplsInterfaceEntry 14 }
+
+rcIpMplsInterfaceTraceFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Flag used for tracing."
+	DEFVAL	{ false }
+        ::= { rcIpMplsInterfaceEntry 15 }
+
+rcIpMplsInterfaceRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Row Status for create/delete"
+        ::= { rcIpMplsInterfaceEntry 16 }
+
+
+rcIpMplsRsvpGroup OBJECT IDENTIFIER ::= { rcIpMpls 4 }
+
+rcIpMplsRsvpAdminStatus OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "State of global RSVP - enabled or disabled"
+        DEFVAL        { disable }
+        ::= { rcIpMplsRsvpGroup 1 }
+
+rcIpMplsRsvpPathUpdateTime OBJECT-TYPE
+        SYNTAX        INTEGER (2..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Time interval in seconds to update
+			PATH soft states"
+        DEFVAL        { 30 }
+        ::= { rcIpMplsRsvpGroup 2 }
+
+rcIpMplsRsvpResvUpdateTime OBJECT-TYPE
+        SYNTAX        INTEGER (2..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Time interval in seconds to update
+                        RESV soft states"
+        DEFVAL        { 30 }
+        ::= { rcIpMplsRsvpGroup 3 }
+
+rcIpMplsRsvpHelloTime OBJECT-TYPE
+        SYNTAX        INTEGER (2..60)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Time interval in milli-seconds to send hello message"
+        DEFVAL        { 3 }
+        ::= { rcIpMplsRsvpGroup 4 }
+
+rcIpMplsRsvpBlockStateAgingTime OBJECT-TYPE
+        SYNTAX        INTEGER (2..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "PSB blockade state aging time in seconds"
+        DEFVAL        { 60 }
+        ::= { rcIpMplsRsvpGroup 5 }
+
+rcIpMplsRsvpMaxBundleMsgSize OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum BUNDLE message size"
+        DEFVAL        { 1500 }
+        ::= { rcIpMplsRsvpGroup 6 }
+
+rcIpMplsRsvpMaxBundleMsgTime OBJECT-TYPE
+        SYNTAX        INTEGER (2..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum time in milli-seconds for an outgoing
+			RSVP message to wait before being sent in the outgoing
+			BUNDLE message"
+        DEFVAL        { 200 }
+        ::= { rcIpMplsRsvpGroup 7 }
+
+rcIpMplsRsvpMaxAckMsgTime OBJECT-TYPE
+        SYNTAX        INTEGER (2..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum time in milli-seconds for an outgoing
+                        RSVP MESSAGE_ID_ACK/ RSVP MESSAGE_ID_NACK
+			object to wait before being sent as a piggy-back
+			in  an unrelated RSVP message or in a separate ACK message"
+        DEFVAL        { 200 }
+        ::= { rcIpMplsRsvpGroup 8 }
+
+rcIpMplsRsvpMaxAckMsgs OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum number of RSVP MESSAGE_ID_ACK/ RSVP MESSAGE_ID_NACK
+			objects to be sent in a single RSVP ACK message"
+        DEFVAL        { 24 }
+        ::= { rcIpMplsRsvpGroup 9 }
+
+rcIpMplsRsvpMaxMsgIdListSize OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum size of MESSAGE_ID_LIST object in MESSAGE_IDs"
+        DEFVAL        { 32 }
+        ::= { rcIpMplsRsvpGroup 10 }
+
+rcIpMplsRsvpMaxMsgIdListTime OBJECT-TYPE
+        SYNTAX        INTEGER (2..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum time in milli-seconds for an outgoing
+                        RSVP refresh message to wait before being sent out"
+        DEFVAL        { 200 }
+        ::= { rcIpMplsRsvpGroup 11 }
+
+rcIpMplsRsvpMaxPiggyBackMsgAcks OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum number of RSVP MESSAGE_ID_ACK/
+			RSVP MESSAGE_ID_NACK objects to be piggy-backed on a
+			single RSVP non-ACK message"
+        DEFVAL        { 4 }
+        ::= { rcIpMplsRsvpGroup 12 }
+
+rcIpMplsRsvpPathAgingTimeMult OBJECT-TYPE
+        SYNTAX        INTEGER (2..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "PATH soft state aging time multiplier - how many times
+			to miss PATH refresh before considering PSB aged out"
+        DEFVAL        { 3 }
+        ::= { rcIpMplsRsvpGroup 13 }
+
+rcIpMplsRsvpResvAgingTimeMult OBJECT-TYPE
+        SYNTAX        INTEGER (2..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "RESV soft state aging time multiplier - how many times
+                        to miss RESV refresh before considering RSB filterspec aged out"
+        DEFVAL        { 3 }
+        ::= { rcIpMplsRsvpGroup 14 }
+
+rcIpMplsRsvpHelloAgingTimeMult OBJECT-TYPE
+        SYNTAX        INTEGER (2..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Hello aging time multiplier - how many times
+                        to miss Hello/HelloAck message before considering link down"
+        DEFVAL        { 3 }
+        ::= { rcIpMplsRsvpGroup 15 }
+
+rcIpMplsRsvpPathVectorLimit OBJECT-TYPE
+        SYNTAX        INTEGER (2..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Path vector limit"
+        DEFVAL        { 32 }
+        ::= { rcIpMplsRsvpGroup 16 }
+
+rcIpMplsRsvpHopCountLimit OBJECT-TYPE
+        SYNTAX        INTEGER (2..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum hop count"
+        DEFVAL        { 32 }
+        ::= { rcIpMplsRsvpGroup 17 }
+
+rcIpMplsRsvpRapidRetransTime OBJECT-TYPE
+        SYNTAX        INTEGER (2..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Initial rapid re-transmission time in milli-seconds"
+        DEFVAL        { 1000 }
+        ::= { rcIpMplsRsvpGroup 18 }
+
+rcIpMplsRsvpRapidRetransIncrement OBJECT-TYPE
+        SYNTAX        INTEGER (2..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Rapid re-transmission increment "
+        DEFVAL        { 2 }
+        ::= { rcIpMplsRsvpGroup 19 }
+
+rcIpMplsRsvpRapidRetransLimit OBJECT-TYPE
+        SYNTAX        INTEGER (2..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum number of attempts to re-transmit message"
+        DEFVAL        { 3 }
+        ::= { rcIpMplsRsvpGroup 20 }
+
+rcIpMplsRsvpReqResvConfFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Require RSVP ResvConf message on successful reservations"
+	DEFVAL        { false }
+        ::= { rcIpMplsRsvpGroup 21 }
+
+rcIpMplsRsvpPathRemoveFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Enable Path_State_Removed flag using in ERROR_SPEC object
+			of PATH_ERR message"
+        DEFVAL        { false }
+        ::= { rcIpMplsRsvpGroup 22 }
+
+rcIpMplsRsvpProtectDomainFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Protection Domain support"
+        DEFVAL        { false }
+        ::= { rcIpMplsRsvpGroup 23 }
+
+rcIpMplsRsvpPathTraceFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "enable PATH direction tracing"
+        DEFVAL        { false }
+        ::= { rcIpMplsRsvpGroup 24 }
+
+rcIpMplsRsvpResvTraceFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "enable RESV direction tracing"
+        DEFVAL        { false }
+        ::= { rcIpMplsRsvpGroup 25 }
+
+rcIpMplsRsvpTrafficControlTraceFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "enable traffic control tracing"
+        DEFVAL        { false }
+        ::= { rcIpMplsRsvpGroup 26 }
+
+rcIpMplsRsvpSessionTraceFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "enable session management tracing"
+        DEFVAL        { false }
+        ::= { rcIpMplsRsvpGroup 27 }
+
+rcIpMplsLdpGroup OBJECT IDENTIFIER ::= { rcIpMpls 5 }
+
+rcIpMplsLdpAdminStatus OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Indicates qhetehr global LDP is enabled or disabled."
+        DEFVAL        { disable }
+        ::= { rcIpMplsLdpGroup 1 }
+
+rcIpMplsLdpHoldTime OBJECT-TYPE
+        SYNTAX        INTEGER (15..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Keep alive time for LDP peers."
+        DEFVAL        { 60 }
+        ::= { rcIpMplsLdpGroup 2 }
+
+rcIpMplsLdpHelloHoldTime OBJECT-TYPE
+        SYNTAX        INTEGER (15..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Time for receiving link hello messages from peer."
+        DEFVAL        { 15 }
+        ::= { rcIpMplsLdpGroup 3 }
+
+rcIpMplsLdpHelloInterval OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Frequency of sending hello messages to peer."
+        DEFVAL        { 5 }
+        ::= { rcIpMplsLdpGroup 4 }
+
+rcIpMplsLdpMaxHops OBJECT-TYPE
+        SYNTAX        INTEGER (1..255)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum number of LSP hops for setting up an LSP."
+        DEFVAL        { 32 }
+        ::= { rcIpMplsLdpGroup 5 }
+
+rcIpMplsLdpPathVectorLimit OBJECT-TYPE
+        SYNTAX        INTEGER (1..32)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Max hop count for loop detection."
+        DEFVAL        { 32 }
+        ::= { rcIpMplsLdpGroup 6 }
+
+rcIpMplsLdpTgtHelloHoldTime OBJECT-TYPE
+        SYNTAX        INTEGER (15..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Time for receiving targetted link hello messages."
+        DEFVAL        { 45 }
+        ::= { rcIpMplsLdpGroup 7 }
+
+
+rcIpMplsLdpLoopDetFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Flag to set loop detection capability."
+        DEFVAL        { false }
+        ::= { rcIpMplsLdpGroup 8 }
+
+rcIpMplsLdpLblMergeFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Not used in this release."
+        DEFVAL        { false }
+        ::= { rcIpMplsLdpGroup 9 }
+
+rcIpMplsLdpAuthFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Not used in this release."
+        DEFVAL        { false }
+        ::= { rcIpMplsLdpGroup 10 }
+
+rcIpMplsLdpInterfaceTableSize OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS          read-only
+        STATUS          current
+        DESCRIPTION     "Size of Mpls LDP Interface Table"
+        ::= { rcIpMpls 6 }
+
+rcIpMplsLdpInterfaceTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpMplsLdpInterfaceEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of configured Mpls LDP Interfaces."
+        ::= { rcIpMpls 7 }
+
+rcIpMplsLdpInterfaceEntry OBJECT-TYPE
+        SYNTAX          RcIpMplsLdpInterfaceEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIpMpls LDP Interfaces In Table."
+        INDEX           { rcIpMplsLdpInterfaceLay3Addr, rcIpMplsLdpInterfaceLay3Mask }
+        ::= { rcIpMplsLdpInterfaceTable 1 }
+
+RcIpMplsLdpInterfaceEntry ::=
+        SEQUENCE {
+                  rcIpMplsLdpInterfaceIndex                     Integer32,
+                  rcIpMplsLdpInterfaceLay3Addr                  IpAddress,
+                  rcIpMplsLdpInterfaceLay3Mask                  IpAddress,
+                  rcIpMplsLdpInterfaceTargetHelloFlag           TruthValue,
+                  rcIpMplsLdpInterfaceTargetResponseFlag        TruthValue,
+                  rcIpMplsLdpInterfaceNonTtlLspFlag             TruthValue,
+                  rcIpMplsLdpInterfaceRowStatus                 RowStatus
+                 }
+
+rcIpMplsLdpInterfaceIndex OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Interface index for LDP interface."
+        ::= { rcIpMplsLdpInterfaceEntry 1 }
+
+rcIpMplsLdpInterfaceLay3Addr OBJECT-TYPE
+	SYNTAX		IpAddress
+	MAX-ACCESS		read-write
+	STATUS		current
+        DESCRIPTION   "Layer 3 address of LDP interface."
+        ::= { rcIpMplsLdpInterfaceEntry 2 }
+
+rcIpMplsLdpInterfaceLay3Mask OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Layer3 mask for LDP interface."
+        ::= { rcIpMplsLdpInterfaceEntry 3 }
+
+rcIpMplsLdpInterfaceTargetHelloFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Flag for enabling target hellos."
+        DEFVAL        { true }
+        ::= { rcIpMplsLdpInterfaceEntry 4 }
+
+rcIpMplsLdpInterfaceTargetResponseFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Flag to enable target response messgaes."
+        DEFVAL        { true }
+        ::= { rcIpMplsLdpInterfaceEntry 5 }
+
+rcIpMplsLdpInterfaceNonTtlLspFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Not used in this release."
+        ::= { rcIpMplsLdpInterfaceEntry 6 }
+
+rcIpMplsLdpInterfaceRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Row status for the LDP interface."
+        ::= { rcIpMplsLdpInterfaceEntry 7 }
+
+rcIpMplsRsvpInterfaceTableSize OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS          read-only
+        STATUS          current
+        DESCRIPTION     "Size of Mpls RSVP Interface Table"
+        ::= { rcIpMpls 8 }
+
+rcIpMplsRsvpInterfaceTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpMplsRsvpInterfaceEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of configured Mpls RSVP Interfaces."
+        ::= { rcIpMpls 9 }
+
+rcIpMplsRsvpInterfaceEntry OBJECT-TYPE
+        SYNTAX          RcIpMplsRsvpInterfaceEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIpMpls RSVP Interfaces In Table."
+        INDEX           { rcIpMplsRsvpInterfaceLay3Addr, rcIpMplsRsvpInterfaceLay3Mask }
+        ::= { rcIpMplsRsvpInterfaceTable 1 }
+
+RcIpMplsRsvpInterfaceEntry ::=
+        SEQUENCE {
+                  rcIpMplsRsvpInterfaceIndex                     Integer32,
+                  rcIpMplsRsvpInterfaceLay3Addr                  IpAddress,
+                  rcIpMplsRsvpInterfaceLay3Mask                  IpAddress,
+                  rcIpMplsRsvpInterfaceAuthFlag                  TruthValue,
+                  rcIpMplsRsvpInterfaceHelloFlag	         TruthValue,
+                  rcIpMplsRsvpInterfaceRefreshReductionFlag      TruthValue,
+		  rcIpMplsRsvpInterfaceMemoryReductionFlag	 TruthValue,
+		  rcIpMplsRsvpInterfaceReliableFlag		 TruthValue,
+		  rcIpMplsRsvpInterfaceEPolicingFlag		 TruthValue,
+                  rcIpMplsRsvpInterfaceRowStatus                 RowStatus
+                 }
+
+rcIpMplsRsvpInterfaceIndex OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Index for RSVP interface table."
+        ::= { rcIpMplsRsvpInterfaceEntry 1 }
+
+rcIpMplsRsvpInterfaceLay3Addr OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Layer 3 address for RSVP interface."
+        ::= { rcIpMplsRsvpInterfaceEntry 2 }
+
+rcIpMplsRsvpInterfaceLay3Mask OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Layer 3 mask for RSVP interface."
+        ::= { rcIpMplsRsvpInterfaceEntry 3 }
+
+rcIpMplsRsvpInterfaceAuthFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Not used in this release."
+	DEFVAL	{ false }
+        ::= { rcIpMplsRsvpInterfaceEntry 4 }
+
+rcIpMplsRsvpInterfaceHelloFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Flag to enable RSVP interface hello."
+        DEFVAL  { false }
+        ::= { rcIpMplsRsvpInterfaceEntry 5 }
+
+rcIpMplsRsvpInterfaceRefreshReductionFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Not used in this release."
+        DEFVAL  { false }
+        ::= { rcIpMplsRsvpInterfaceEntry 6 }
+
+rcIpMplsRsvpInterfaceMemoryReductionFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Not used in this release."
+        DEFVAL  { false }
+        ::= { rcIpMplsRsvpInterfaceEntry 7 }
+
+rcIpMplsRsvpInterfaceReliableFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Not used in this release."
+        DEFVAL  { false }
+        ::= { rcIpMplsRsvpInterfaceEntry 8 }
+
+rcIpMplsRsvpInterfaceEPolicingFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Not used in this release."
+        DEFVAL  { false }
+        ::= { rcIpMplsRsvpInterfaceEntry 9 }
+
+rcIpMplsRsvpInterfaceRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Row status for RSVP interface."
+        ::= { rcIpMplsRsvpInterfaceEntry 10 }
+
+rcIpMplsLdpTargetAddrTableSize OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS          read-only
+        STATUS          current
+        DESCRIPTION     "Size of Mpls LDP target address Table"
+        ::= { rcIpMpls 10 }
+
+rcIpMplsLdpTargetAddrTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpMplsLdpTargetAddrEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of configured Mpls LDP target addresses."
+        ::= { rcIpMpls 11 }
+
+rcIpMplsLdpTargetAddrEntry OBJECT-TYPE
+        SYNTAX          RcIpMplsLdpTargetAddrEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIpMpls LDP target addresses In Table."
+        INDEX           { rcIpMplsLdpTargetAddrBaseAddr, rcIpMplsLdpTargetAddrTgtAddr }
+        ::= { rcIpMplsLdpTargetAddrTable 1 }
+
+RcIpMplsLdpTargetAddrEntry ::=
+        SEQUENCE {
+                  rcIpMplsLdpTargetAddrBaseAddr                  IpAddress,
+                  rcIpMplsLdpTargetAddrTgtAddr                   IpAddress,
+                  rcIpMplsLdpTargetAddrRowStatus                 RowStatus
+                 }
+
+rcIpMplsLdpTargetAddrBaseAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "The LDP interface IP address for which target address should
+                        be configured"
+        ::= { rcIpMplsLdpTargetAddrEntry 1 }
+
+rcIpMplsLdpTargetAddrTgtAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "The IP address configured to be the LDP target address"
+        ::= { rcIpMplsLdpTargetAddrEntry 2 }
+
+rcIpMplsLdpTargetAddrRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION   "Row Status for LDP target address table."
+        ::= { rcIpMplsLdpTargetAddrEntry 3 }
+
+rcIpMplsTunnelGroupTable OBJECT-TYPE     
+	SYNTAX          SEQUENCE OF RcIpMplsTunnelGroupEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of Tunnel Groups."
+        ::= { rcIpMpls 12 }
+
+rcIpMplsTunnelGroupEntry OBJECT-TYPE
+        SYNTAX          RcIpMplsTunnelGroupEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIpMpls tunnel group In Table."
+        INDEX           { rcIpMplsTunnelGroupId }
+        ::= { rcIpMplsTunnelGroupTable 1 }
+
+RcIpMplsTunnelGroupEntry ::=
+        SEQUENCE {
+		  rcIpMplsTunnelGroupId			INTEGER,
+		  rcIpMplsTunnelGroupDestAddr		IpAddress,
+		  rcIpMplsTunnelGroupPrimaryTunnel	DisplayString,
+		  rcIpMplsTunnelGroupActiveTunnel	INTEGER,
+	          rcIpMplsTunnelGroupPersistentFlag	TruthValue,
+		  rcIpMplsTunnelGroupOperation		INTEGER,
+		  rcIpMplsTunnelGroupTunnelList		DisplayString,
+		  rcIpMplsTunnelGroupFtnList		DisplayString,
+		  rcIpMplsTunnelGroupBgpNeighbor	Integer32,
+		  rcIpMplsTunnelGroupRowStatus		RowStatus,
+		  rcIpMplsTunnelGroupBackupTunnel       DisplayString
+                 }
+
+
+rcIpMplsTunnelGroupId OBJECT-TYPE
+	SYNTAX        INTEGER (1..65535)
+	MAX-ACCESS        read-only
+	STATUS        current
+	DESCRIPTION   "Tunnel Group Identifier"
+	::= { rcIpMplsTunnelGroupEntry 1 }
+	
+
+rcIpMplsTunnelGroupDestAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Group the tunnels with same destination IP address into the
+		tunnel group"
+        ::= { rcIpMplsTunnelGroupEntry 2 }
+
+rcIpMplsTunnelGroupPrimaryTunnel OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "List of primary tunnels contained in the tunnel group, diplayed
+                      in the format of <tunnelId>/<priority>[,<tunnelId>/<priority>]"
+	::= { rcIpMplsTunnelGroupEntry 3 }
+
+rcIpMplsTunnelGroupActiveTunnel OBJECT-TYPE
+	SYNTAX        INTEGER (0..65535)
+	MAX-ACCESS        read-only
+	STATUS        current
+	DESCRIPTION   "Active tunnel id in the Tunnel Group"
+	::= { rcIpMplsTunnelGroupEntry 4 }
+
+rcIpMplsTunnelGroupPersistentFlag OBJECT-TYPE
+	SYNTAX        TruthValue
+	MAX-ACCESS        read-write
+	STATUS        current
+	DESCRIPTION   "Tunnel Group Persistent Flag"
+	DEFVAL	      { true }	
+	::= { rcIpMplsTunnelGroupEntry 5 }
+
+rcIpMplsTunnelGroupOperation OBJECT-TYPE
+	SYNTAX	     INTEGER {
+			none(0),
+			addTunnel(1),
+			remTunnel(2)
+		     }
+	MAX-ACCESS        read-write
+	STATUS        current
+	DESCRIPTION   "Add tunnel to the Tunnel Group or remove tunnel from the
+			tunnel group"
+	::= { rcIpMplsTunnelGroupEntry 6 }
+
+rcIpMplsTunnelGroupTunnelList OBJECT-TYPE
+        SYNTAX	      DisplayString
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "List of Tunnels contained in the tunnel group, diplayed
+		in the format of <tunnelId>/<priority>[,<tunnelId>/<priority>], such as string
+		2,4,5 indicated the tunnel group contains tunnel 2, tunnel 4, 
+		and tunnel 5" 
+	::= { rcIpMplsTunnelGroupEntry 7 }
+
+rcIpMplsTunnelGroupFtnList OBJECT-TYPE
+        SYNTAX	      DisplayString
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "List of fecs bineded to the tunnel group, the display 
+			format is same as rcIpMplsTunnelGroupTunnelList"
+	::= { rcIpMplsTunnelGroupEntry 8 }
+
+ rcIpMplsTunnelGroupBgpNeighbor	OBJECT-TYPE
+        SYNTAX	      Integer32
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "BGP neigbors associated with the tunnel group"
+	::= { rcIpMplsTunnelGroupEntry 9 }
+
+rcIpMplsTunnelGroupRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Row status for create/delete the tunnel group."
+	::= { rcIpMplsTunnelGroupEntry 10 }
+
+rcIpMplsTunnelGroupBackupTunnel OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Backup tunnel id in the Tunnel Group displayed
+			in the format <tunnelId/priority>"
+        ::= { rcIpMplsTunnelGroupEntry 11 }
+
+-- Mpls TE Group 
+
+rcIpMplsTeGroup OBJECT IDENTIFIER ::= { rcIpMpls 13 }
+
+rcIpMplsTeFloodThresholdStart OBJECT-TYPE
+        SYNTAX        INTEGER (1..100)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "First TE flooding threshold for significant bandwidth
+		       change in percent."
+        DEFVAL        { 70 }
+        ::= { rcIpMplsTeGroup 1 }
+
+rcIpMplsTeFloodThresholdDelta OBJECT-TYPE
+        SYNTAX        INTEGER (1..100)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Delta TE flooding threshold for significant 
+  		  	Bandwidth change in percent. After start
+   		       	threshold is hit every delta change in link
+   			bandwidth results in flooding link's TE
+   			information."
+        DEFVAL        { 5}
+        ::= { rcIpMplsTeGroup 2 } 
+
+-- Mpls TE Interface table 
+
+rcIpMplsTeInterfaceTable OBJECT-TYPE
+	SYNTAX   	SEQUENCE OF RcIpMplsTeInterfaceEntry
+ 	MAX-ACCESS          not-accessible
+ 	STATUS          current
+ 	DESCRIPTION   	"rcIpMplsInterface Traffic-Eng table. This table 
+			contains rows which are traffic-eng configuration 
+			parameters for the link."
+  	::= { rcIpMpls 14 }
+
+rcIpMplsTeInterfaceEntry OBJECT-TYPE
+        SYNTAX          RcIpMplsTeInterfaceEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIpMplsInterface Te Table."
+	INDEX           { rcIpMplsTeInterfaceLay3Addr}
+        ::= { rcIpMplsTeInterfaceTable 1 }
+
+RcIpMplsTeInterfaceEntry ::=
+        SEQUENCE {
+		rcIpMplsTeInterfaceIndex     			Integer32,     
+	    	rcIpMplsTeInterfaceLay3Addr			IpAddress,
+		rcIpMplsTeInterfaceLay3Mask			IpAddress,
+	    	rcIpMplsTeInterfaceIgp      			INTEGER,
+	    	rcIpMplsTeInterfaceMetric			INTEGER,
+	    	rcIpMplsTeInterfaceMaxBandwidth			INTEGER,
+	    	rcIpMplsTeInterfaceMaxReservableBandwidth	INTEGER,
+	    	rcIpMplsTeInterfaceResourceColor		OCTET STRING
+        }
+
+rcIpMplsTeInterfaceIndex OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Interface index for the IP interface."
+        ::= { rcIpMplsTeInterfaceEntry 1 }
+
+rcIpMplsTeInterfaceLay3Addr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Layer 3 address for the MPLS interface."
+        ::= { rcIpMplsTeInterfaceEntry 2 }
+
+rcIpMplsTeInterfaceLay3Mask OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Layer 3 mask for the MPLS interface."
+        ::= { rcIpMplsTeInterfaceEntry 3 }
+
+rcIpMplsTeInterfaceIgp OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          none(0),
+                          ospf(1)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Traffic-eng IGP protocol to use on link."
+	DEFVAL        { none }
+        ::= { rcIpMplsTeInterfaceEntry 4 }
+
+rcIpMplsTeInterfaceMetric OBJECT-TYPE
+        SYNTAX        INTEGER (0..2147483647)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Traffic-eng metric to assign to the link."
+	DEFVAL        { 0 }
+        ::= { rcIpMplsTeInterfaceEntry 5}
+
+rcIpMplsTeInterfaceMaxBandwidth OBJECT-TYPE
+        SYNTAX        INTEGER (0..2147483647)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum bandwidth on the link in bits/sec in the
+   			direction outwards from the local system."
+	DEFVAL        { 1000000000 }
+        ::= { rcIpMplsTeInterfaceEntry 6}
+
+rcIpMplsTeInterfaceMaxReservableBandwidth OBJECT-TYPE
+        SYNTAX        INTEGER (0..2147483647)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Maximum reservable bandwidth on the link in bits/sec in
+   			the direction outwards from the local system."
+	DEFVAL        { 1000000000}
+        ::= { rcIpMplsTeInterfaceEntry 7 }
+
+rcIpMplsTeInterfaceResourceColor OBJECT-TYPE
+        SYNTAX        OCTET STRING(SIZE(4))
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Resource class/color which represents administrative group
+  		        membership for the link. The integer value represents the
+  			format of a hexadecimal 32-bit mask. A link that is a member 
+  			of more than one administrative group will have multiple 
+  			mask bits set."
+        ::= { rcIpMplsTeInterfaceEntry 8 }
+
+rcIpMplsTunnelTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpMplsTunnelEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of Tunnels with label record info ."
+        ::= { rcIpMpls 15 }
+
+rcIpMplsTunnelEntry OBJECT-TYPE
+        SYNTAX          RcIpMplsTunnelEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIpMpls tunnel In Table."
+        INDEX           { rcIpMplsTunnelId }
+        ::= { rcIpMplsTunnelTable 1 }
+
+RcIpMplsTunnelEntry ::=
+        SEQUENCE {
+                  rcIpMplsTunnelId                 INTEGER,
+                  rcIpMplsTunnelLabelRecordFlag    TruthValue,
+                  rcIpMplsTunnelRowStatus          RowStatus
+                 }
+
+rcIpMplsTunnelId OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Tunnel Identifier"
+        ::= { rcIpMplsTunnelEntry 1 }
+
+rcIpMplsTunnelLabelRecordFlag OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Tunnel Identifier"
+        DEFVAL        { false }
+        ::= { rcIpMplsTunnelEntry 2 }
+
+rcIpMplsTunnelRowStatus  OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Creation or deletion of row"
+        ::= { rcIpMplsTunnelEntry 3 }
+
+-- MPLS tunnel Enterprise Extensions table.
+
+rcIpMplsTunnelExtTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpMplsTunnelExtEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "The mplsTunnelExtTable provides enterprise
+                        extension options for a mplsTunnelEntry that has
+                        be created for a MPLS tunnel. The mplsTunnelEntry
+                        must be created apriori."
+   ::= { rcIpMpls 16 }
+
+rcIpMplsTunnelExtEntry OBJECT-TYPE
+        SYNTAX        RcIpMplsTunnelExtEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "An entry of rcIpMpls Tunnel Ext Table."
+        INDEX         {rcIpMplsTunnelExtIndex, rcIpMplsTunnelExtInstance,
+                       rcIpMplsTunnelExtIngressLSRId, rcIpMplsTunnelExtEgressLSRId
+                      }
+   ::= { rcIpMplsTunnelExtTable 1 }
+
+RcIpMplsTunnelExtEntry ::=
+        SEQUENCE {
+                rcIpMplsTunnelExtIndex                  MplsTunnelIndex,
+                rcIpMplsTunnelExtInstance               MplsTunnelInstanceIndex,
+                rcIpMplsTunnelExtIngressLSRId           MplsLsrId,
+                rcIpMplsTunnelExtEgressLSRId            MplsLsrId,
+                rcIpMplsTunnelExtFrrTableIndex          Unsigned32,
+                rcIpMplsTunnelExtRowStatus              RowStatus
+        }
+
+rcIpMplsTunnelExtIndex OBJECT-TYPE
+        SYNTAX          MplsTunnelIndex
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "Uniquely identifies this row.
+                          This an index object for the mplsTunnelExtTable entry that
+                          in part also specifies the mpls tunnel entry with which this
+
+                          tunnel extension entry is associated. The value of this
+                          object should mimic the value of mplsTunnelIndex of the
+                          MplsTunnelEntry of the mpls tunnel for which this extended
+                          tunnel table entry row is to be applied."
+   ::= { rcIpMplsTunnelExtEntry 1 }
+
+rcIpMplsTunnelExtInstance OBJECT-TYPE
+        SYNTAX          MplsTunnelInstanceIndex
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "Uniquely identifies an instance of a tunnel's extended
+                          entry. This an index object for the mplsTunnelExtTable entry
+ that
+                          in part specifies the mpls tunnel with which this tunnel
+                          extension entry is associated. Uniquely The value of this
+                          object should be equal to the value of MplsTunnelInstance
+                          of the MplsTunnelEntry of the mpls tunnel for which this
+                          extended tunnel table row is to be applied."
+   ::= { rcIpMplsTunnelExtEntry 2 }
+
+rcIpMplsTunnelExtEgressLSRId  OBJECT-TYPE
+        SYNTAX          MplsLsrId
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "The purpose of this object is to uniquely identity a
+                          tunnel within a network to which this extended tunnel
+                          table entry should apply. This an index object for the
+                          mplsTunnelExtTable entry that in part specifies the mpls
+                          tunnel with which this tunnel extension entry is associated.
+                          The value of this object should mimic the value of
+                          mplsTunnelIngressLSRId of the MplsTunnelEntry of the mpls
+                          tunnel for which this extended tunnel table row is to be
+                          applied. Please reference mplsTunnelIngressLSRId for
+                          additional information on it which is mimiced here."
+   ::= { rcIpMplsTunnelExtEntry 3 }
+
+rcIpMplsTunnelExtIngressLSRId  OBJECT-TYPE
+        SYNTAX          MplsLsrId
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "Specifies the egress LSR id for which this extended tunnel
+                          table entry should apply. This is an index object for the
+                          mplsTunnelExtTable entry that in part specifies the mpls
+                          tunnel with which this tunnel extension entry is associated.
+                          The value of this object should mimic the value of
+                          mplsTunnelEngressLSRId of the MplsTunnelEntry of the mpls
+                          tunnel for which this extended tunnel table row is to be
+                          applied."
+   ::= { rcIpMplsTunnelExtEntry 4 }
+
+rcIpMplsTunnelExtFrrTableIndex OBJECT-TYPE
+        SYNTAX          Unsigned32 (0..2147483647)
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "Index into the mplsTunnelFrrTable entry that
+                          specifies the frr path to use for the tunnel that implied
+                          by the index objects of this row entry.
+                          Specifying a frr path to use is optional."
+   ::= { rcIpMplsTunnelExtEntry 5 }
+
+rcIpMplsTunnelExtRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "This variable is used to create, modify, and/or
+                          delete a row in this table."
+   ::= { rcIpMplsTunnelExtEntry 6 }
+
+
+-- MPLS tunnel Frr Path table
+
+rcIpMplsTunnelFrrTable  OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpMplsTunnelFrrEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "The rcIpMplsTunnelFrrTable is used to indicate the
+                          frr constraints for a frr detour LSP for a tunnel
+                          specified as row entry in the mplsTunnelTable.The
+                          frr constraints are established viasignaling, for
+                          the outgoing direction of the tunnel. Each row in
+                          this table is indexed by rcIpMplsTunnelFrrListIndex.
+                          In this implementation it is intended that one row
+                          entry may used as a frr template for multiple tunnels.
+                          Conversely a row entry may be created for each tunnel,
+                          or there may be a combination of both styles, one to one,
+                          and one to many in the relationship between a row
+                          entry of this table and tunnel(s)."
+   ::= { rcIpMpls 17 }
+
+rcIpMplsTunnelFrrEntry  OBJECT-TYPE
+        SYNTAX          RcIpMplsTunnelFrrEntry
+        MAX-ACCESS          not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry in this table represents a tunnel frr path. An
+                          entry is created by a network administrator for
+                          signaled LSP with frr path set up by an MPLS signaling proto
+col."
+        INDEX { rcIpMplsTunnelFrrListIndex }
+   ::= { rcIpMplsTunnelFrrTable 1 }
+
+RcIpMplsTunnelFrrEntry ::= SEQUENCE {
+      rcIpMplsTunnelFrrListIndex          Unsigned32,
+      rcIpMplsTunnelFrrSetupPrio          INTEGER,
+      rcIpMplsTunnelFrrHoldingPrio        INTEGER,
+      rcIpMplsTunnelFrrHopLimit           INTEGER,
+      rcIpMplsTunnelFrrBandwidth          INTEGER,
+      rcIpMplsTunnelFrrProtectionType     INTEGER,
+      rcIpMplsTunnelFrrExclAnyAffinity    OCTET STRING,
+      rcIpMplsTunnelFrrInclAnyAffinity    OCTET STRING,
+      rcIpMplsTunnelFrrInclAllAffinity    OCTET STRING,
+      rcIpMplsTunnelFrrLegacyFlag         TruthValue,
+      rcIpMplsTunnelFrrRowStatus          RowStatus
+   }
+
+rcIpMplsTunnelFrrListIndex OBJECT-TYPE
+        SYNTAX          Unsigned32 (1..65535)
+        MAX-ACCESS          read-only
+        STATUS          current
+        DESCRIPTION     "Primary index into this table identifying a particular
+                          row entry of frr detour LSP contraints."
+   ::= { rcIpMplsTunnelFrrEntry 1 }
+
+rcIpMplsTunnelFrrSetupPrio OBJECT-TYPE
+        SYNTAX          INTEGER (0..7)
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Setup priority for frr detour LSP."
+        DEFVAL          { 0 }
+   ::= { rcIpMplsTunnelFrrEntry 2 }
+
+rcIpMplsTunnelFrrHoldingPrio OBJECT-TYPE
+        SYNTAX          INTEGER (0..7)
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Holding priority for frr detour LSP."
+        DEFVAL          { 0 }
+   ::= { rcIpMplsTunnelFrrEntry 3 }
+
+rcIpMplsTunnelFrrHopLimit OBJECT-TYPE
+        SYNTAX          INTEGER (0..255)
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Maximum number of hops a frr detour LSP is allowed
+                          to traverse."
+        DEFVAL          { 0 }
+   ::= { rcIpMplsTunnelFrrEntry 4 }
+
+rcIpMplsTunnelFrrBandwidth OBJECT-TYPE
+        SYNTAX          INTEGER (0..1000)
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Bandwidth estimate with which to set up the frr detour LSPs
+                          in units of a million bits per second (Mbps)."
+        DEFVAL          { 0 }
+   ::= { rcIpMplsTunnelFrrEntry 5 }
+
+rcIpMplsTunnelFrrProtectionType OBJECT-TYPE
+        SYNTAX          INTEGER {
+                            oneToOneBackup(0),
+                            facilityBackup(1)
+                        }
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Frr backup or resource protection type to be used."
+
+        DEFVAL          { oneToOneBackup }
+   ::= { rcIpMplsTunnelFrrEntry 6 }
+
+rcIpMplsTunnelFrrExclAnyAffinity  OBJECT-TYPE
+        SYNTAX          OCTET STRING(SIZE(4))
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Exclude any link in detour LSP setup which is represented by
+                          administratively defined attributes associated with the bit
+                          pattern of this object. The value represents the format of
+                          a hexadecimal 32-bit vector or mask."
+   ::= { rcIpMplsTunnelFrrEntry 7 }
+
+rcIpMplsTunnelFrrInclAnyAffinity OBJECT-TYPE
+        SYNTAX          OCTET STRING(SIZE(4))
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Allow detour LSP setup on any link which is represented by
+                          administratively defined attributes associated with the bit
+                          pattern of this object. The value represents the format of a
+
+                          hexadecimal 32-bit vector or mask. A value of zero allows a
+                          detour LSP to be setup on any link per the constraint of thi
+s
+                          object."
+   ::= { rcIpMplsTunnelFrrEntry 8 }
+
+rcIpMplsTunnelFrrInclAllAffinity OBJECT-TYPE
+        SYNTAX          OCTET STRING(SIZE(4))
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Only allow detour LSP setup on links which contain at a
+                          minimum the administratively defined attributes represented
+                          by this bit pattern. The value represents the format of a
+                          hexadecimal 32-bit vector or mask. A value of zero allows a
+                          detour LSP to be setup on any link per the constraint of thi
+s
+                          object."
+   ::= { rcIpMplsTunnelFrrEntry 9 }
+
+rcIpMplsTunnelFrrLegacyFlag OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Flag to control the format of the frr object used. When
+                          set to true, the legacy format is used which is a
+                          class type of 7. When set to false the frr format used
+                          is for class type of 1."
+        DEFVAL          { true }
+   ::= { rcIpMplsTunnelFrrEntry 10 }
+
+rcIpMplsTunnelFrrRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "This variable is used to create, modify, and/or
+                          delete a row in this table."
+   ::= { rcIpMplsTunnelFrrEntry 11 }
+
+-- End of rcIpMplsTunnelFrrTable
+-- Begin of rcIpMplsTunnelHopToIpAddrMapTable
+
+rcIpMplsTunnelHopToIpAddrMapTable  OBJECT-TYPE
+   SYNTAX        SEQUENCE OF RcIpMplsTunnelHopToIpAddrEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION
+        "The rcIpMplsTunnelHopToIpAddrMapTable is used to maintain
+          mapping between Hop name and IP Address."
+   ::= { rcIpMpls 18 }
+
+rcIpMplsTunnelHopToIpAddrMapEntry  OBJECT-TYPE
+   SYNTAX        RcIpMplsTunnelHopToIpAddrEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION
+        "An entry in this table represents a mapping between
+         Hop name and the IP Address."
+   INDEX { rcIpMplsTunnelHopToIpAddrMapHopName }
+      ::= { rcIpMplsTunnelHopToIpAddrMapTable 1 }
+
+RcIpMplsTunnelHopToIpAddrEntry ::= SEQUENCE {
+      rcIpMplsTunnelHopToIpAddrMapHopName            DisplayString,
+      rcIpMplsTunnelHopToIpAddrMapIPAddr             IpAddress,
+      rcIpMplsTunnelHopToIpAddrMapIPAddrPrefixLen    INTEGER,
+      rcIpMplsTunnelHopToIpAddrMapRowStatus          RowStatus
+   }
+
+rcIpMplsTunnelHopToIpAddrMapHopName OBJECT-TYPE
+   SYNTAX        DisplayString
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION
+        "Primary index into this table identifying a hop name."
+   ::= { rcIpMplsTunnelHopToIpAddrMapEntry 1 }
+
+rcIpMplsTunnelHopToIpAddrMapIPAddr OBJECT-TYPE
+   SYNTAX       IpAddress
+   MAX-ACCESS   read-create
+   STATUS       current
+   DESCRIPTION
+        "Table column, identifying an IP Address."
+   ::= { rcIpMplsTunnelHopToIpAddrMapEntry 2 }
+
+rcIpMplsTunnelHopToIpAddrMapIPAddrPrefixLen OBJECT-TYPE
+   SYNTAX          INTEGER (0..32)
+   MAX-ACCESS      read-create
+   STATUS          current
+   DESCRIPTION
+        "Table column identifying IP Address prefix length."
+   ::= { rcIpMplsTunnelHopToIpAddrMapEntry 3 }
+
+rcIpMplsTunnelHopToIpAddrMapRowStatus OBJECT-TYPE
+   SYNTAX          RowStatus
+   MAX-ACCESS      read-create
+   STATUS          current
+   DESCRIPTION     "Row status."
+   ::= { rcIpMplsTunnelHopToIpAddrMapEntry 4 }
+
+-- End of mplsTunnelHopToIpAddrMapTable
+-- Begin of ircIpMplsLspTable
+rcIpMplsLspTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpMplsLspEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Table of originated, terminated and transit operational LSPs
+with all cross connect information"
+        ::= { rcIpMpls 19 }
+
+rcIpMplsLspEntry OBJECT-TYPE
+        SYNTAX          RcIpMplsLspEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry of rcIpMpls Lsp in Table."
+        INDEX           { rcIpMplsLspTunnelIndex,
+                          rcIpMplsLspId,
+                          rcIpMplsLspIngressLsrId,
+                          rcIpMplsLspEgressLsrId }
+        ::= { rcIpMplsLspTable 1 }
+
+RcIpMplsLspEntry ::=
+        SEQUENCE {
+                  rcIpMplsLspTunnelIndex              INTEGER,
+                  rcIpMplsLspId                       INTEGER,
+                  rcIpMplsLspIngressLsrId             MplsLsrId,
+                  rcIpMplsLspEgressLsrId              MplsLsrId,
+                  rcIpMplsLspName                     DisplayString,
+                  rcIpMplsLspType                     INTEGER,
+                  rcIpMplsLspDetour                   TruthValue,
+                  rcIpMplsLspIncomingInterface        InterfaceIndex,
+                  rcIpMplsLspIncomingLabel            Integer32,
+                  rcIpMplsLspOutgoingInterface        InterfaceIndex,
+                  rcIpMplsLspOutgoingLabel            Integer32
+                 }
+
+rcIpMplsLspTunnelIndex OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Tunnel Index"
+        ::= { rcIpMplsLspEntry 1 }
+
+rcIpMplsLspId OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "LSP ID"
+        ::= { rcIpMplsLspEntry 2 }
+
+rcIpMplsLspIngressLsrId OBJECT-TYPE
+        SYNTAX        MplsLsrId
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Specifies the Ingress LSR Id"
+        ::= { rcIpMplsLspEntry 3 }
+
+rcIpMplsLspEgressLsrId OBJECT-TYPE
+        SYNTAX        MplsLsrId
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Specifies the Egress LSR Id"
+        ::= { rcIpMplsLspEntry 4 }
+
+rcIpMplsLspName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "LSP Name"
+        ::= { rcIpMplsLspEntry 5 }
+
+rcIpMplsLspType OBJECT-TYPE
+        SYNTAX        INTEGER { head(1), transit(2), tail(3) }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "This value signifies the role that this tunnel
+          entry/instance represents. This value MUST be set
+          to head(1) at the originating point of the tunnel.
+          This value MUST be set to transit(2) at transit
+          points along the tunnel, if transit points are
+          supported. This value MUST be set to tail(3) at the
+          terminating point of the tunnel if tunnel tails are
+          supported."
+        ::= { rcIpMplsLspEntry 6 }
+
+rcIpMplsLspDetour OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The tunnel is a detour tunnel or not"
+        ::= { rcIpMplsLspEntry 7 }
+
+rcIpMplsLspIncomingInterface OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "LSR-assigned ifIndex"
+        ::= { rcIpMplsLspEntry 8 }
+
+rcIpMplsLspIncomingLabel OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Incoming Label value"
+        ::= { rcIpMplsLspEntry 9 }
+
+rcIpMplsLspOutgoingInterface OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "LSR-assigned ifIndex"
+        ::= { rcIpMplsLspEntry 10 }
+
+rcIpMplsLspOutgoingLabel OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Outgoing Label value"
+        ::= { rcIpMplsLspEntry 11 }
+
+-- End of rcIpMplsLspTable
+
+END

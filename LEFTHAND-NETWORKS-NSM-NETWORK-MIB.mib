@@ -1,0 +1,244 @@
+-- ****************************************************************************
+-- LEFTHAND-NETWORKS-NSM-NETWORK-MIB
+-- Management Information Base for SNMP Network Management
+--
+-- This MIB provides network information for a storage node.
+
+-- This MIB must be loaded after:
+--                                LEFTHAND-NETWORKS-GLOBAL-REG-MIB.mib
+--                                LEFTHAND-NETWORKS-NSM-MIB.mib
+--
+-- The LeftHand Networks Enterprise number is 9804.
+-- The ASN.1 prefix to, and including the LeftHand Networks Enterprise is:
+--     1.3.6.1.4.1.9804
+-- ****************************************************************************
+-- Copyright 2009,2010 Hewlett-Packard Development Company, L.P.
+-- Copyright 2008,2009 LeftHand Networks, Inc.
+-- All Rights Reserved.
+--
+-- Hewlett-Packard Company shall not be liable for technical or
+-- editorial errors or omissions contained herein. The information in
+-- this document is provided "as is" without warranty of any kind and
+-- is subject to change without notice. The warranties for HP products
+-- are set forth in the express limited warranty statements
+-- accompanying such products. Nothing herein should be construed as
+-- constituting an additional warranty.
+--
+-- Confidential computer software. Valid license from HP required for
+-- possession, use or copying. Consistent with FAR 12.211 and 12.212,
+-- Commercial Computer Software, Computer Software Documentation, and
+-- Technical Data for Commercial Items are licensed to the U.S.
+-- Government under vendor's standard commercial license.
+-- ****************************************************************************
+
+-- ****************************************************************************
+-- The standard SNMP MIBs contain more network information:
+--
+-- RFC1213-MIB::interfaces .1.3.6.1.2.1.2
+-- IP-MIB::ipv4InterfaceTable .1.3.6.1.2.1.4.28
+-- ****************************************************************************
+
+LEFTHAND-NETWORKS-NSM-NETWORK-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32, IpAddress
+		FROM SNMPv2-SMI
+	OBJECT-GROUP, MODULE-COMPLIANCE
+		FROM SNMPv2-CONF
+	TEXTUAL-CONVENTION, DisplayString, RowStatus
+		FROM SNMPv2-TC
+	lhnModules, lhnNsm
+		FROM LEFTHAND-NETWORKS-GLOBAL-REG-MIB
+	lhnNsmNetwork
+		FROM LEFTHAND-NETWORKS-NSM-MIB;
+
+-- lhnNsm is imported but never used, this will create a smilint warning
+-- however, it's necessary for some MIB compilers
+
+--
+-- Module definition and a brief description of this mib.
+--
+lhnNsmNetworkModule MODULE-IDENTITY
+    LAST-UPDATED        "201006230000Z"
+    ORGANIZATION        "Hewlett Packard Company, StorageWorks Division"
+    CONTACT-INFO        "Product Support
+                         Product URL: www.hp.com/go/p4000
+                         Support URL: www.itrc.hp.com
+                         Product Phone: www.hp.com/go/contact
+                                        1-800-786-7967 (US only)
+                         Support Phone: www.hp.com/go/contact
+                                        1-800-334-5144 (US only)"
+    DESCRIPTION         "HP StorageWorks P4000 Network Information"
+    REVISION            "201006230000Z"
+    DESCRIPTION         "SAN/iQ 7.0, SAN/iQ 8.0, SAN/iQ 8.1, SAN/iQ 8.5"
+
+	::= { lhnModules 3 }
+
+--******************************************************************************
+--
+-- Conformance
+--
+--******************************************************************************
+
+lhnNsmNetworkModuleConformance OBJECT IDENTIFIER
+	::= { lhnNsmNetworkModule 1 }
+
+lhnNsmNetworkModuleCompliances OBJECT IDENTIFIER
+	::= { lhnNsmNetworkModuleConformance 1 }
+
+lhnNsmNetworkModuleGroups OBJECT IDENTIFIER
+	::= { lhnNsmNetworkModuleConformance 2 }
+
+lefthandNetworksNsmNetworkMibCompliance MODULE-COMPLIANCE
+	STATUS current
+	DESCRIPTION "The compliance statement."
+	MODULE
+	MANDATORY-GROUPS {
+			lefthandNetworksNsmNetworkGroup
+		}
+	::= { lhnNsmNetworkModuleCompliances 1 }
+
+lefthandNetworksNsmNetworkGroup OBJECT-GROUP
+	OBJECTS {           
+					networkDeviceCount,
+					networkDeviceName,
+					networkDeviceIpAddress,
+					networkDeviceMask,
+					networkDeviceDefaultGateway,
+					networkDeviceMode,
+					networkDeviceStatus
+			}
+	STATUS              current
+	DESCRIPTION         "The default group for all NSM Network objects."
+	::= { lhnNsmNetworkModuleGroups 1 }
+
+lefthandNetworksNsmNetworkGroupObsolete OBJECT-GROUP
+	OBJECTS {           
+					networkDeviceRowStatus
+			}
+	STATUS              obsolete
+	DESCRIPTION         "The group for all obsolete NSM Network objects."
+	::= { lhnNsmNetworkModuleGroups 2 }
+
+--******************************************************************************
+--
+-- NSM Network Objects
+--
+--******************************************************************************
+--
+-- Additional network interface information can be found
+-- in the standard SNMP MIBs.
+--
+-- IF-MIB::interfaces: .1.3.6.1.2.1.2
+--	ifDescr: 1.3.6.1.2.1.2.2.1.2 (Interface Name)
+--	ifType: 1.3.6.1.2.1.2.2.1.2 (Interface Type)
+--	ifMtu: 1.3.6.1.2.1.2.2.1.3 (Frame Size)
+--	ifSpeed: 1.3.6.1.2.1.2.2.1.5 (Speed for 10/100/1000 MbE Interfaces)
+--	ifHighSpeed: 1.3.6.1.2.1.31.1.1.1.15 (Speed for 10GbE Interfaces)
+--	ifPhysAddress: 1.3.6.1.2.1.2.2.1.6 (MAC Address)
+--	ifAdminStatus: 1.3.6.1.2.1.2.2.1.7 (Interface Status)
+--	ifOperStatus: 1.3.6.1.2.1.2.2.1.8 (Interface Status)
+-- IP-MIB::ipv4InterfaceTable: .1.3.6.1.2.1.4.28
+--	ipv4InterfaceEnableStatus: 1.3.6.1.2.1.4.28.1.3 (Interface Status)
+-- EtherLike-MIB: 1.3.6.1.2.1.10.7
+--	dot3StatsDuplexStatus: 1.3.6.1.2.1.10.7.2.1.19 (Duplex)
+--  dot3PauseAdminMode: 1.3.6.1.2.1.10.7.10.1.1 (Flow Control)
+--	dot3PauseOperMode: 1.3.6.1.2.1.10.7.10.1.2 (Flow Control)
+--
+--******************************************************************************
+
+networkDeviceCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of network devices."
+	::= { lhnNsmNetwork 1 }
+
+networkDeviceTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF NetworkDeviceEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of network devices for the NSM. The
+						number of devices is given by networkDeviceCount."
+	::= { lhnNsmNetwork 2 }
+
+networkDeviceEntry OBJECT-TYPE
+	SYNTAX              NetworkDeviceEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A row of network information."
+	INDEX               {
+							networkDeviceIndex
+						}
+	::= { networkDeviceTable 1 }
+
+	NetworkDeviceEntry ::= SEQUENCE {
+		networkDeviceIndex				Unsigned32,
+		networkDeviceName				DisplayString,
+		networkDeviceIpAddress			IpAddress,
+		networkDeviceMask				IpAddress,
+		networkDeviceDefaultGateway		IpAddress,
+		networkDeviceMode				INTEGER,
+		networkDeviceStatus				DisplayString,
+		networkDeviceRowStatus			RowStatus
+	}
+
+	networkDeviceIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the networkDeviceTable table."
+		::= { networkDeviceEntry 1 }
+
+	networkDeviceName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The network device name."
+		::= { networkDeviceEntry 6 }
+
+	networkDeviceIpAddress OBJECT-TYPE
+		SYNTAX              IpAddress
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The network device IP address."
+		::= { networkDeviceEntry 7 }
+
+	networkDeviceMask OBJECT-TYPE
+		SYNTAX              IpAddress
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The network device netmask."
+		::= { networkDeviceEntry 8 }
+
+	networkDeviceDefaultGateway OBJECT-TYPE
+		SYNTAX              IpAddress
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The network device default gateway."
+		::= { networkDeviceEntry 9 }
+
+	networkDeviceMode OBJECT-TYPE
+		SYNTAX              INTEGER { disabled(1), auto(2), static(3), slave(4) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The network device mode."
+		::= { networkDeviceEntry 10 }
+
+	networkDeviceStatus OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The network device status."
+		::= { networkDeviceEntry 11 }
+
+	networkDeviceRowStatus OBJECT-TYPE
+		SYNTAX              RowStatus
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { networkDeviceEntry 99 }
+
+END
+
+-- END: some MIB compilers require a CR/LF after the END statement --

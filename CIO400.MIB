@@ -1,0 +1,2434 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--                      CIOMIB VERSION 2.0 
+--                      DRAFT 0.21
+--                      Howard Spindel
+--                      08/20/98
+
+
+
+
+
+--                      This is a first draft of the CIO 2.0 MIB.
+--                      See page 2 for notes on the state of this document.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- NOTES ----
+--      Traps will be added.
+--  A second MIB may be created.
+--              It would contain operational information and control
+--      including information about the software running and controls 
+--              to start a rescan, do polling now.
+--  As of 4/2/97, syntax conforms to Simplesoft's MIB compiler.
+--  As of 4/29/97, trap definitions are included.
+
+--  This MIB contains status information about storage devices.
+--  Adaptec plans to create a series of MIBs which contain related
+--  information.  For example, an operational MIB which allows users
+--  to affect operation of the I/O Manager (instead of just obtaining
+--  read-only information about the I/O Manager) is planned.
+
+-- 06/18/97:  Added SMART Enabled event
+-- 07/22/97:  Changed devFormattedMediaCapacity to report kbytes, not bytes
+-- 08/01/97:  Changed statistics bytes read/written to blocks read/written
+-- 09/24/97:  Overall status, enclosure table, updates to match new MIF,
+--            changes for RAID traps
+-- 03/10/98:  Changes to match latest MIF:
+--					Storage Device table adds subidentifier as attribute
+--					Enumerations for Storage Device:Type changed
+--					False/True/Unknown enumeration becomes 0/1/2, not 1/2/3
+--					One new enumerations for Bus Port:Connector Type
+--					Associations:Type changed from codes to strings
+--					Worldwide Identifier:Subidentifier deleted
+--					Operational State Table:Device Group Index is new
+--					SMART status factored into Overall Status
+--					Component Spare Association table added
+-- 04/20/98:  Change volCapacity from bytes to kbytes
+-- 05/26/98:  Add scheduled battery recondition traps (iomgr.msg)
+-- 06/03/98:  Events from fmm.msg
+-- 06/09/09:  Change MIB base OID to ...795.2.12
+-- 07/17/98:  Change "Morph" to "Migrate"
+-- 08/06/98:  Add new statuses from capimm.msg events 67-76 (mostly battery stuff)
+-- 08/20/98:  Add "Running" and "Aborted as volume set activity states for traps
+--            Also added "Stopped" which was inexplicably missing
+
+CIOMIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	enterprises, Counter
+		FROM RFC1155-SMI
+	DisplayString
+		FROM RFC1213-MIB
+	TRAP-TYPE
+		FROM RFC-1215
+	OBJECT-TYPE
+		FROM RFC-1212;
+
+--  This MIB module uses the extended OBJECT-TYPE macro as
+--  defined in [14];
+
+
+adaptec                         OBJECT IDENTIFIER ::= { enterprises 795 }
+storagemanagement               OBJECT IDENTIFIER ::= { adaptec 2 }
+cio2                            OBJECT IDENTIFIER ::= { storagemanagement 12 }
+
+mibRevision                     OBJECT IDENTIFIER ::= { cio2 1 }
+storageDevice                   OBJECT IDENTIFIER ::= { cio2 2 }
+storageController               OBJECT IDENTIFIER ::= { cio2 3 }
+enclosure						OBJECT IDENTIFIER ::= { cio2 4 }
+busPort                         OBJECT IDENTIFIER ::= { cio2 5 }
+aggregatePhysicalExtent         OBJECT IDENTIFIER ::= { cio2 6 }
+aggregateProtectedSpace         OBJECT IDENTIFIER ::= { cio2 7 }
+volumeSet                       OBJECT IDENTIFIER ::= { cio2 8 }
+redundancyGroup                 OBJECT IDENTIFIER ::= { cio2 9 }
+worldWideIds                    OBJECT IDENTIFIER ::= { cio2 10 }
+associations                    OBJECT IDENTIFIER ::= { cio2 11 }
+busPortAssociations             OBJECT IDENTIFIER ::= { cio2 12 }
+componentSpareAssociations		OBJECT IDENTIFIER ::= { cio2 13 }
+overallObjectStatus				OBJECT IDENTIFIER ::= { cio2 14 }
+operationalStates               OBJECT IDENTIFIER ::= { cio2 15 }
+statistics                      OBJECT IDENTIFIER ::= { cio2 16 }
+trapLogCount           			OBJECT IDENTIFIER ::= { cio2 17 }
+trapLog							OBJECT IDENTIFIER ::= { cio2 18 }
+
+ -- the CIO MIB Revision group
+
+
+  -- Implementation of the MIB Revision group is mandatory for all
+  -- systems.  
+
+revMajor OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The major number of the revision of the CIO MIB."
+	::= { mibRevision 1 }
+
+revMinor OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The minor number of the revision of the CIO MIB."
+	::= { mibRevision 2 }
+
+
+ -- the StorageDevice group
+
+  -- Implementation of the StorageDevice group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the Device table
+
+  -- The Device table contains information on the entity's
+  -- storage devices.  
+
+deviceTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF DevEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of storage devices."
+	::= { storageDevice 1 }
+
+devEntry OBJECT-TYPE
+	SYNTAX  DevEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A storage device entry." 
+	INDEX   { devIndex }
+	::= { deviceTable 1 }
+
+DevEntry ::=
+	SEQUENCE 
+	{
+		devIndex
+			INTEGER,
+		devType
+			INTEGER,
+		devTypeDescr
+			DisplayString,
+		devSubIdentifier
+			DisplayString,
+		devMediaBlockSize
+			INTEGER,
+		devFormattedMediaCapacity
+			INTEGER,
+		devRemovableDevice
+			INTEGER,
+		devLoaded
+			INTEGER,
+		devRemovableMedia
+			INTEGER,
+		devMediaLoaded
+			INTEGER,
+		devCompression
+			INTEGER,
+		devEncryption
+			INTEGER
+	}
+
+devIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each storage device
+		beginning with 1."  
+	::= { devEntry 1 }
+
+	
+devType OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		rigidDiskDrive(3),
+		flexibleDisketteDrive(4),
+		opticalWriteOnceReadManyDrive(6),
+		magnetoOpticalDrive(7),
+		compactDiskDrive(8),
+		flashDisk(9),
+		cartridgeRigidDiskDrive(10),
+		opticalFloppyDrive(11),
+		tapeDrive(12),
+		solidState(13),
+		mediaChanger(14),
+		digitalVersatileDiskDrive(15),
+		digitalVersatileDiskRAMDrive(16)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The type of this mass storage device."
+	::= { devEntry 2 }
+
+devTypeDescr OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A longer description of the storage device.  For example: 3.5
+		inch flexible diskette drives using diskettes with a maximum
+		capacity of 1.44MB."
+	::= { devEntry 3 }
+
+devSubIdentifier OBJECT-TYPE
+	SYNTAX	DisplayString (SIZE (0..255))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The sub-identifier for this storage device (e.g., the device's
+		SCSI logical unit number)."
+	::= { devEntry 4 }
+	
+devMediaBlockSize OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The size in bytes of the data blocks used on the
+		storage media. If the media block size is unknown or 
+		inconsistent then this value shall be zero."
+	::= { devEntry 5 }
+
+devFormattedMediaCapacity OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The total size in kilobytes of this storage media after it
+		has been formatted."
+	::= { devEntry 6 }
+
+devRemovableDevice OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		false(0),
+		true(1),
+		unknown(2)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"If true, then this storage device is removable (e.g.: PCMCIA
+		device)."
+	::= { devEntry 7 }
+
+devLoaded OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		false(0),
+		true(1),
+		unknown(2)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"If true, then the storage device is loaded."
+	::= { devEntry 8 }
+
+devRemovableMedia OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		false(0),
+		true(1),
+		unknown(2)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"If true, then the media in this storage device
+		is removable."
+	::= { devEntry 9 }
+
+devMediaLoaded OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		false(0),
+		true(1),
+		unknown(2)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"If true, the media in this storage device is loaded."
+	::= { devEntry 10 }
+
+devCompression OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		false(0),
+		true(1),
+		unknown(2)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"If true, the storage device supports compression."
+	::= { devEntry 11 }
+
+devEncryption OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		false(0),
+		true(1),
+		unknown(2)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"If true, the storage device supports encryption."
+	::= { devEntry 12 }
+
+
+ -- the CIO Storage Controllers group
+
+  -- Implementation of the Storage Controller group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the CIO Storage Controller table
+
+  -- The Storage Controller table contains information on the entity's
+  -- storage controllers.  
+
+ctlrTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF CtlrEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of storage controllers."
+	::= { storageController 1 }
+
+ctlrEntry OBJECT-TYPE
+	SYNTAX  CtlrEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A storage controller entry." 
+	INDEX   { ctlrIndex }
+	::= { ctlrTable 1 }
+
+CtlrEntry ::=
+	SEQUENCE 
+	{
+		ctlrIndex
+			INTEGER,
+		ctlrDescription
+			DisplayString,
+		ctlrProtectionManagement
+			INTEGER,
+		ctlrBusMaster
+			INTEGER,
+		ctlrSecondsSinceLastPowerUp
+			INTEGER
+	}
+
+ctlrIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each storage controller
+		beginning with 1."  
+	::= { ctlrEntry 1 }
+
+
+ctlrDescription OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"Name, brand, and hardware revision level of the
+		storage controller." 
+	::= { ctlrEntry 2 }
+
+
+ctlrProtectionManagement OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		unprotected(3),
+		protected(4),
+		protectedThroughSCSI3SCC(5),
+		protectedThroughSCSI3SCC2(6)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"Indicates whether or not the controller provides redundancy
+		or protection against device failures."
+	::= { ctlrEntry 3 }
+
+ctlrBusMaster OBJECT-TYPE
+	SYNTAX  INTEGER
+	{
+		false(0),
+		true(1),
+		unknown(2)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"If TRUE, then this storage controller is the
+		bus master."
+	::= { ctlrEntry 4 }
+
+ctlrSecondsSinceLastPowerUp OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of seconds that have passed
+		since this controller was last powered on."
+	::= { ctlrEntry 5 }
+
+
+ -- the CIO Enclosures group
+
+  -- Implementation of the Enclosure group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the CIO Enclosure table
+
+  -- The Enclosure table contains information on the entity's
+  -- enclosure devices.  
+
+enclTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF EnclEntry
+	ACCESS	not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of enclosures."
+	::= { enclosure 1 }
+
+enclEntry OBJECT-TYPE
+	SYNTAX  EnclEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"An enclosure entry." 
+	INDEX   { enclIndex }
+	::= { enclTable 1 }
+
+EnclEntry ::=
+	SEQUENCE 
+	{
+		enclIndex
+			INTEGER,
+		enclType
+			INTEGER,
+		enclDescription
+			DisplayString
+	}
+
+enclIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each enclosure
+		beginning with 1."  
+	::= { enclEntry 1 }
+
+enclType OBJECT-TYPE
+	SYNTAX	INTEGER
+	{
+		other(1),
+		unknown(2),
+		decfault(3),
+		safte(4),
+		ses(5),
+		aemi(6)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of the enclosure."
+	::= { enclEntry 2 }
+
+enclDescription OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"Description of the enclosure." 
+	::= { enclEntry 3 }
+
+
+ -- the BusPort group
+
+  -- Implementation of the BusPort group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the BusPort table
+
+  -- The BusPort table contains information on the entity's
+  -- bus ports.  Bus ports are the attachment points for devices
+  -- which connect to a bus.
+
+busPortTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF BusPortEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of bus ports."
+	::= { busPort 1 }
+
+busPortEntry OBJECT-TYPE
+	SYNTAX  BusPortEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A bus port entry." 
+	INDEX   { portIndex }
+	::= { busPortTable 1 }
+
+BusPortEntry ::=
+	SEQUENCE 
+	{
+		portIndex
+			INTEGER,
+		portProtocol
+			INTEGER,
+		portProtocolDescription 
+			DisplayString,
+		portSignalCharacteristics
+			INTEGER,
+		portAddressDescriptor
+			DisplayString,
+		portIsochronous
+			INTEGER,
+		portMaximumWidth
+			INTEGER,
+		portMaximumTransferRate
+			INTEGER,
+		portMaximumAttachments
+			INTEGER,
+		portConnectorType
+			INTEGER,
+		portConnectorTypeDescription
+			DisplayString,
+		portConnectorGender
+			INTEGER
+	}
+
+portIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each bus port
+		beginning with 1."  
+	::= { busPortEntry 1 }
+
+
+portProtocol OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		eisa(3),
+		isa(4),
+		pci(5),
+		ata-atapi(6),
+		flexibleDiskette(7),
+		interface1496(8),
+		scsiParallel(9),
+		scsiFibreChannel(10),
+		scsiSerialBusProtocol(11),
+		scsiSerialBusProtocol2(12),
+		scsiSerialStorageArchitecture(13),
+		vesa(14),
+		pcmcia(15),
+		universalSerialBus(16),
+		parallelPort(17),
+		escon(18),
+		diagnostic(19),
+		i2c(20),
+		power(21),
+		hippi(22),
+		multibus(23),
+		vme(24),
+		ipi(25),
+		ieee488(26),
+		rs232(27),
+		ieee802-3-10Base5(28),
+		ieee802-3-10Base2(29),
+		ieee802-3-1Base5(30),
+		ieee802-3-10Broad36(31),
+		ieee802-3-100BaseVG(32),
+		ieee802-5-Tokenring(33),
+		fddi(34),
+		mca(35)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The protocol describing the electrical
+		characteristics of the Bus Port. If 'Other'
+		is used, then the Protocol Description attribute 
+		shall be used."
+	::= { busPortEntry 2 }
+
+portProtocolDescription OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"Additional description of the protocol describe above."
+	::= { busPortEntry 3 }
+
+portSignalCharacteristics OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		singleEnded(3),
+		differential(4),
+		lowVoltageDifferential(5),
+		optical(6)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The electrical characteristics of the Bus Port being
+		described."
+	::= { busPortEntry 4 }
+
+portAddressDescriptor OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The address descriptor for this bus port.  For
+		example the PCI slot and ID."
+	::= { busPortEntry 5 }
+
+portIsochronous OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		false(0),
+		true(1)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"Indicates whether or not the bus port 
+		supports isochronous transfers."
+	::= { busPortEntry 6 }
+
+portMaximumWidth OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The maximum width, in bits, of this Bus Port's
+		data path. A value of 1 should be used for serial."
+	::= { busPortEntry 7 }
+
+portMaximumTransferRate OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The theoretical maximum transfer rate, in millions
+		of bytes per second, that this Bus Port is capable of
+		achieving under ideal conditions.  A value of zero
+		should be used if the transfer rate is less than 1
+		million bytes per second."
+	::= { busPortEntry 8 }
+
+portMaximumAttachments OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The maximum number of directly addressable entities
+		supported by this bus port's protocol."
+	::= { busPortEntry 9 }
+
+portConnectorType OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		none(3),
+		scsi-A-HighDensityShielded-50pin(4),
+		scsi-A-HighDensityUnshielded-50pin(5),
+		scsi-A-LowDensityShielded-50pin(6),
+		scsi-A-LowDensityUnshielded-50pin(7),
+		scsi-P-HighDensityShielded-68pin(8),
+		scsi-P-HighDensityUnshielded-68pin(9),
+		scsi-SCA-I-80pin(10),
+		scsi-SCA-II-80pin(11),
+		scsi-FibreChannel-DB9-Copper(12),
+		scsi-FibreChannel-Fibre(13),
+		scsi-FibreChannel-SCA-II-40pin(14),
+		scsi-FibreChannel-SCA-II-20pin(15),
+		scsi-FibreChannel-BNC(16),
+		ata-3-5inch-40pin(17),
+		ata-2-5inch-44pin(18),
+		serial-9pin(19),
+		serial-25pin(20),
+		rs232-25pin(21),
+		rs422(22),
+		ieee488(23),
+		aui(24),
+		upt-Category3(25),
+		upt-Category4(26),
+		upt-Category5(27),
+		bnc(28),
+		stp-RJ11(29),
+		stp-RJ45(30),
+		stp-DB9(31),
+		fiberMIC(32),
+		appleAUI(33),
+		pciSlot(34),
+		isaSlot(35),
+		eisaSlot(36),
+		vesaSlot(37),
+		pcmciaSlot(38),
+		pc-CardSlot(39),
+		floppyDiskette5-25inch(40),
+		floppyDiskette3-5inch(41),
+		hssdc-6pin(42),
+		gbicSocket(43),
+		thirteenNinetyFour-6pin(44),
+		scsi-VHDCIshielded-68pin(45)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"Describes how options (cards, devices, etc.)
+		physically connect to this port bus. If 'Other'
+		is used, then the connector type description 
+		attribute shall be used."
+	::= { busPortEntry 10 }
+
+portConnectorTypeDescription OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"Additional description of the connector described
+		above."
+	::= { busPortEntry 11 }
+
+portConnectorGender OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		female(3),
+		male(4)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"Indicates the gender of the connector described
+		above."
+	::= { busPortEntry 12 }
+
+
+ -- the AggregatePhysicalExtent group
+
+  -- Implementation of the AggregatePhysicalExtent group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the AggregatePhysicalExtent table
+
+  -- The AggregatePhysicalExtent table contains information on the entity's
+  -- physical extents.  All of the information for the physical extents which
+  -- are in the same redundancy group and which reside on the same physical disk
+  -- drive are summarized here.
+
+aggregatePExtentTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF AggregatePExtentEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of aggregate physical extent entries."
+	::= { aggregatePhysicalExtent 1 }
+
+aggregatePExtentEntry OBJECT-TYPE
+	SYNTAX  AggregatePExtentEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"An aggregate P Extent entry." 
+	INDEX   { aggPExtentIndex }
+	::= { aggregatePExtentTable 1 }
+
+AggregatePExtentEntry ::=
+	SEQUENCE 
+	{
+		aggPExtentIndex
+			INTEGER,
+		aggPExtentBlocks
+			INTEGER,
+		aggPExtentCheckDataBlocks
+			INTEGER
+	}
+
+aggPExtentIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each aggregate physical extent
+		beginning with 1."  
+	::= { aggregatePExtentEntry 1 }
+
+aggPExtentBlocks OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The total number of consecutive blocks (including check data blocks)
+		contained in the aggregate p extent.  The block size is determined
+		by the storage device associated with this aggregate p extent.
+		Note: If no redundancy group is associated with an aggregate p extent, 
+		then this number indicates that the p extent is available."
+	::= { aggregatePExtentEntry 2 }
+
+aggPExtentCheckDataBlocks OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of blocks contained in the aggregate p extent
+		to be used as check data. If the aggregate p extent is available,
+		then this value shall be zero."
+	::= { aggregatePExtentEntry 3 }
+
+
+ -- the AggregateProtectedSpaceExtent group
+
+  -- Implementation of the AggregateProtectedSpaceExtent group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the AggregateProtectedSpaceExtent table
+
+  -- The AggregateProtectedSpaceExtent table contains information on the entity's
+  -- protected space extents.  All of the information for the protected space extents 
+  -- which are in the same volume set and which reside on the same physical disk
+  -- drive are summarized here.
+
+aggregatePsExtentTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF AggregatePsExtentEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of aggregate protected space extents."
+	::= { aggregateProtectedSpace 1 }
+
+aggregatePsExtentEntry OBJECT-TYPE
+	SYNTAX  AggregatePsExtentEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"An aggregate Ps extent entry." 
+	INDEX   { aggPsExtentIndex }
+	::= { aggregatePsExtentTable 1 }
+
+AggregatePsExtentEntry ::=
+	SEQUENCE 
+	{
+		aggPsExtentIndex
+			INTEGER,
+		aggPsExtentBlocks
+			INTEGER
+	}
+
+aggPsExtentIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each aggregate ps extent
+		beginning with 1."  
+	::= { aggregatePsExtentEntry 1 }
+
+aggPsExtentBlocks OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The total number of user data blocks that is both located
+		on a single storage device and part or all of a single volume set.
+		The block size is determined by the storage device associated with 
+		this aggregate protected space extent. Note: if no volume set is 
+		associated with an aggregate protected space extent, then this 
+		number indicates the number of blocks that are available."
+	::= { aggregatePsExtentEntry 2 }
+
+
+ -- the VolumeSet group
+
+  -- Implementation of the VolumeSet group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the VolumeSet table
+
+  -- The VolumeSet table contains information on the entity's volume sets.
+
+volumeSetTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF VolumeSetEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of volume sets."
+	::= { volumeSet 1 }
+
+volumeSetEntry OBJECT-TYPE
+	SYNTAX  VolumeSetEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A volume set entry." 
+	INDEX   { volIndex }
+	::= { volumeSetTable 1 }
+
+VolumeSetEntry ::=
+	SEQUENCE 
+	{
+		volIndex
+			INTEGER,
+		volName
+			DisplayString,
+		volCapacity
+			INTEGER,
+		volPSExtentStripeLength
+			INTEGER,
+		volPSExtentInterleaveDepth
+			INTEGER
+	}
+
+volIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each volume set
+		beginning with 1."  
+	::= { volumeSetEntry 1 }
+
+volName OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..64))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The name of the volume set."
+	::= { volumeSetEntry 2 }
+
+volCapacity OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The total size in Kbytes of the user data space of
+		this volume set."
+	::= { volumeSetEntry 3 }
+
+volPSExtentStripeLength OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of ps_extents which form a user data stripe.
+		This value shall be zero except when the ps_extent group
+		is used."
+	::= { volumeSetEntry 4 }
+
+volPSExtentInterleaveDepth OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of ps_extents to stripe as a collective set.
+		This value shall be zero except when the ps_extent group
+		is used."
+	::= { volumeSetEntry 5 }
+
+ -- the RedundancyGroup group
+
+  -- Implementation of the RedundancyGroup group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+  -- the RedundancyGroup table
+
+  -- The RedundancyGroup table contains information on the entity's redundancy groups.
+
+redundancyGroupTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF RedundancyGroupEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of redundancy groups."
+	::= { redundancyGroup 1 }
+
+redundancyGroupEntry OBJECT-TYPE
+	SYNTAX  RedundancyGroupEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A redundancy group entry." 
+	INDEX   { redundancyIndex }
+	::= { redundancyGroupTable 1 }
+
+RedundancyGroupEntry ::=
+	SEQUENCE 
+	{
+		redundancyIndex
+			INTEGER,
+		redundancyType
+			INTEGER
+	}
+
+redundancyIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each redundancy group
+		beginning with 1."  
+	::= { redundancyGroupEntry 1 }
+
+redundancyType OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		copy(3),
+		xor(4),
+		p-q(5),
+		s(6),
+		p-s(7),
+		none(8)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"This field specifies the type of redundancy formed."
+	::= { redundancyGroupEntry 2 }
+
+
+ -- the WorldWideID group
+
+  -- Implementation of the WorldWideID group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the WorldWideID table
+
+  -- The WorldWideID table contains information about the identifiers of the
+  -- entities in a storage subsystem.
+
+worldWideIdTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF WorldWideIdEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of worldWideIds."
+	::= { worldWideIds 1 }
+
+worldWideIdEntry OBJECT-TYPE
+	SYNTAX  WorldWideIdEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"An worldWideId entry." 
+	INDEX   { worldWideIdIndex }
+	::= { worldWideIdTable 1 }
+
+WorldWideIdEntry ::=
+	SEQUENCE 
+	{
+		worldWideIdIndex
+			INTEGER,
+		worldWideIdType
+			INTEGER,
+		worldWideId
+			DisplayString
+	}
+
+	worldWideIdIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each WorldWideID
+		beginning with 1."  
+	::= { worldWideIdEntry 1 }
+
+worldWideIdType OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		none(3),
+		vendorProductSerial(4),
+		ieeeExtendedUniqueIdentifier64bit(5),
+		fc-PH64bitNameIdentifier(6),
+		binary(7),
+		unicode(8),
+		lanMACAddress(9),
+		wanAccessAddress(10)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The type of identifier displayed by the 
+		Worldwide Identifier attribute."
+	::= { worldWideIdEntry 2 }
+
+worldWideId OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The Worldwide Identifier for this entity."
+	::= { worldWideIdEntry 3 }
+
+
+ -- the Association group
+
+  -- Implementation of the Association group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the Association table
+
+  -- The Association table contains information about the associations between the
+  -- entities in a storage subsystem.
+
+associationTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF AssociationEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of associations."
+	::= { associations 1 }
+
+associationEntry OBJECT-TYPE
+	SYNTAX  AssociationEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"An association entry." 
+	INDEX   { associationIndex }
+	::= { associationTable 1 }
+
+AssociationEntry ::=
+	SEQUENCE 
+	{
+		associationIndex
+			INTEGER,
+		associationType
+			INTEGER,
+		associationObject1
+			OBJECT IDENTIFIER,
+		associationObject2
+			OBJECT IDENTIFIER
+	}
+
+associationIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each association
+		beginning with 1."  
+	::= { associationEntry 1 }
+
+associationType OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"This field specifies the type of the association. It contains one
+		of the following values: 'Physical Organization', 'Logical Organization',
+		'Logical to Physical Organization', 'Redundancy Organization', 
+		'Spare Organization', 'Cache', 'FRU', 'Operational State',
+		'Statistical', 'SubComponent Software', or 'Worldwide Identifier'."
+	::= { associationEntry 2 }
+
+associationObject1 OBJECT-TYPE
+	SYNTAX  OBJECT IDENTIFIER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The authoritative identifier for the first object referenced."  
+	::= { associationEntry 3 }
+
+associationObject2 OBJECT-TYPE
+	SYNTAX  OBJECT IDENTIFIER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The authoritative identifier for the second object referenced."  
+	::= { associationEntry 4 }
+
+
+ -- the Bus Port Association group
+
+  -- Implementation of the Bus Port Association group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the Bus Port Association table
+
+  -- The Bus Port Association table contains information about the bus port 
+  -- associations in a storage subsystem.
+
+busPortAssociationTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF BusPortAssociationEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of bus port associations."
+	::= { busPortAssociations 1 }
+
+busPortAssociationEntry OBJECT-TYPE
+	SYNTAX  BusPortAssociationEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A bus port association entry." 
+	INDEX   { busPortAssociationIndex }
+	::= { busPortAssociationTable 1 }
+
+BusPortAssociationEntry ::=
+	SEQUENCE 
+	{
+		busPortAssociationIndex
+			INTEGER,
+		busPortAssociationNegotiatedSpeed
+			INTEGER,
+		busPortAssociationNegotiatedWidth
+			INTEGER
+	}
+
+busPortAssociationIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"An unique index for each bus port association.  This index matches
+		an index in the association table for which bus port association
+		information is available."  
+	::= { busPortAssociationEntry 1 }
+
+busPortAssociationNegotiatedSpeed OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The maximum burst transfer rate, in millions of bytes, which was
+		negotiated between the two associated bus ports."  
+	::= { busPortAssociationEntry 2 }
+
+busPortAssociationNegotiatedWidth OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The width, in bits, of the bus ports' data path which was 
+		negotiated between the two associated bus ports."  
+	::= { busPortAssociationEntry 3 }
+
+
+ -- the Component Spare Association group
+
+  -- Implementation of the Bus Port Association group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the Component Spare Association table
+
+  -- The Component Spare Association table contains information about the sparing
+  -- relationship between two objects in the association table. 
+
+componentSpareAssociationTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF ComponentSpareAssociationEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of component spare associations."
+	::= { componentSpareAssociations 1 }
+
+componentSpareAssociationEntry OBJECT-TYPE
+	SYNTAX  ComponentSpareAssociationEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A component spare association entry." 
+	INDEX   { componentSpareAssociationIndex }
+	::= { componentSpareAssociationTable 1 }
+
+ComponentSpareAssociationEntry ::=
+	SEQUENCE 
+	{
+		componentSpareAssociationIndex
+			INTEGER,
+		componentSpareFunctioningState
+			INTEGER
+	}
+
+componentSpareAssociationIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"An unique index for each component spare association.  This index matches
+		an index in the association table for which component spare association
+		information is available."  
+	::= { componentSpareAssociationEntry 1 }
+
+componentSpareFunctioningState OBJECT-TYPE
+	SYNTAX  INTEGER
+	{
+		other(1),
+		unknown(2),
+		inactiveStandby(3),
+		activeStandby(4),
+		activeStandbyLoadBalances(5)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The functioning state of the spares."  
+	::= { componentSpareAssociationEntry 2 }
+
+
+ -- the CIO Overall Status group
+
+
+  -- Implementation of the Overall Status group is mandatory for all
+  -- systems.  
+
+overallStatus OBJECT-TYPE
+	SYNTAX  INTEGER
+	{
+		okay(1),
+		warning(2),
+		failure(3),
+		unknown(4),
+		other(5)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The overall status of objects in the CIO MIB.  Will be
+		 set to the worst status of any individual object."
+	::= { overallObjectStatus 1 }
+
+
+ -- the Operational State group
+
+  -- Implementation of the Operational State group is mandatory for all
+  -- systems.  If an agent is not configured to have a value
+  -- for any of these variables, a string of length 0 is
+  -- returned.
+
+
+  -- the Operational State table
+
+  -- The Operational State table contains information about the operational
+  -- state of the entities in the CIO MIB
+
+operationalStateTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF OperationalStateEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of operational state information."
+	::= { operationalStates 1 }
+
+operationalStateEntry OBJECT-TYPE
+	SYNTAX  OperationalStateEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"An operational state entry." 
+	INDEX   { operationalStateIndex }
+	::= { operationalStateTable 1 }
+
+OperationalStateEntry ::=
+	SEQUENCE 
+	{
+		operationalStateIndex
+			INTEGER,
+		operationalDeviceGroupIndex
+			INTEGER,
+		operationalStatus
+			INTEGER,
+		operationalUsageState
+			INTEGER,
+		operationalAvailabilityStatus
+			INTEGER,
+		operationalAdministrativeStatus
+			INTEGER,
+		operationalFatalErrorCount
+			INTEGER,
+		operationalMajorErrorCount
+			INTEGER,
+		operationalWarningErrorCount
+			INTEGER,
+		operationalCurrentErrorStatus
+			INTEGER,
+		operationalPredictedFailureStatus
+			INTEGER
+	}
+			
+operationalStateIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each operational state table entry
+		beginning with 1."  
+	::= { operationalStateEntry 1 }
+
+operationalDeviceGroupIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field present for DMI compatibility - unused in SNMP, always 0."
+	::= { operationalStateEntry 2 }
+	
+operationalStatus OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		enabled(3),
+		disabled(4),
+		notApplicable(5)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The operational status of the object."  
+	::= { operationalStateEntry 3 }
+
+operationalUsageState OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		idle(3),
+		active(4),
+		busy(5),
+		notApplicable(6)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The usage state of the object."  
+	::= { operationalStateEntry 4 }
+
+operationalAvailabilityStatus OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		running(3),
+		warning(4),
+		inTest(5),
+		notApplicable(6),
+		powerOff(7),
+		offLine(8),
+		offDuty(9),
+		degraded(10),
+		notInstalled(11),
+		installError(12),
+		powerSave(13)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The availability of the object."  
+	::= { operationalStateEntry 5 }
+
+operationalAdministrativeStatus OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		locked(3),
+		unlocked(4),
+		notApplicable(5),
+		shuttingDown(6)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The administrative state of the object."  
+	::= { operationalStateEntry 6 }
+
+operationalFatalErrorCount OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The accumulated Fatal or Non-recoverable error count for 
+		the object."
+	::= { operationalStateEntry 7 }
+
+operationalMajorErrorCount OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The accumulated Major or Critical error count for the object."
+	::= { operationalStateEntry 8 }
+
+operationalWarningErrorCount OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The accumulated Warning or Non-critical error count for the
+		object."
+	::= { operationalStateEntry 9 }
+
+operationalCurrentErrorStatus OBJECT-TYPE
+	SYNTAX  INTEGER
+	{
+		other(1),
+		unknown(2),
+		ok(3),
+		noncritical(4),
+		critical(5),
+		nonrecoverable(6)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"This attribute presents the current error status for the object.
+		The most critical error status in effect should be presented.  I.e. 
+		if a part of the object is 'Critical', while other status is 
+		'Non-critical' then the status 'Critical' should be reported."  
+	::= { operationalStateEntry 10 }
+
+operationalPredictedFailureStatus OBJECT-TYPE
+	SYNTAX  INTEGER 
+	{
+		other(1),
+		unknown(2),
+		notSupported(3),
+		noFailurePredicted(4),
+		deviceFailurePredicted(5),
+		mediaFailurePredicted(6)
+	}
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"Enumeration describing the current Device Predicted Failure
+		Status (e.g.: the S.M.A.R.T. status of the object)."
+	::= { operationalStateEntry 11 }
+
+ -- the Statistics group
+
+  -- Implementation of the Statistics group is mandatory for all
+  -- systems.  
+
+  -- the Statistics table
+
+  -- The Statistics table contains statistical information about 
+  -- the entities in the CIO MIB
+
+statisticsTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF StatisticsEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of statistics."
+	::= { statistics 1 }
+
+statisticsEntry OBJECT-TYPE
+	SYNTAX  StatisticsEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A statistics entry." 
+	INDEX   { statisticsIndex }
+	::= { statisticsTable 1 }
+
+StatisticsEntry ::=
+	SEQUENCE 
+	{
+		statisticsIndex
+			INTEGER,
+		statisticsBlocksRead
+			INTEGER,
+		statisticsBlocksWritten
+			INTEGER,
+		statisticsReadCommands
+			INTEGER,
+		statisticsWriteCommands
+			INTEGER,
+		statisticsReadBucket0
+			INTEGER,
+		statisticsReadBucket1
+			INTEGER,
+		statisticsReadBucket2
+			INTEGER,
+		statisticsReadBucket3
+			INTEGER,
+		statisticsReadBucket4
+			INTEGER,
+		statisticsReadBucket5
+			INTEGER,
+		statisticsReadBucket6
+			INTEGER,
+		statisticsReadBucket7
+			INTEGER,
+		statisticsReadBucket8
+			INTEGER,
+		statisticsReadBucket9
+			INTEGER,
+		statisticsReadBucket10
+			INTEGER,
+		statisticsReadBucket11
+			INTEGER,
+		statisticsReadBucket12
+			INTEGER,
+		statisticsWriteBucket0
+			INTEGER,
+		statisticsWriteBucket1
+			INTEGER,
+		statisticsWriteBucket2
+			INTEGER,
+		statisticsWriteBucket3
+			INTEGER,
+		statisticsWriteBucket4
+			INTEGER,
+		statisticsWriteBucket5
+			INTEGER,
+		statisticsWriteBucket6
+			INTEGER,
+		statisticsWriteBucket7
+			INTEGER,
+		statisticsWriteBucket8
+			INTEGER,
+		statisticsWriteBucket9
+			INTEGER,
+		statisticsWriteBucket10
+			INTEGER,
+		statisticsWriteBucket11
+			INTEGER,
+		statisticsWriteBucket12
+			INTEGER
+	}
+			
+statisticsIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each statistics table entry
+		beginning with 1."  
+	::= { statisticsEntry 1 }
+
+statisticsBlocksRead OBJECT-TYPE
+	SYNTAX  INTEGER 
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of 512 byte blocks read from the object."  
+	::= { statisticsEntry 2 }
+
+statisticsBlocksWritten OBJECT-TYPE
+	SYNTAX  INTEGER 
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of 512 byte blocks written to the object."  
+	::= { statisticsEntry 3 }
+
+statisticsReadCommands OBJECT-TYPE
+	SYNTAX  INTEGER 
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued for the object."
+	::= { statisticsEntry 4 }
+
+statisticsWriteCommands OBJECT-TYPE
+	SYNTAX  INTEGER 
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued for the object."  
+	::= { statisticsEntry 5 }
+
+statisticsReadBucket0 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, size  < 512 bytes."
+	::= { statisticsEntry 6 }
+
+statisticsReadBucket1 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 512 bytes <= size < 1K bytes."
+	::= { statisticsEntry 7 }
+
+statisticsReadBucket2 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 1K bytes <= size < 2K bytes."
+	::= { statisticsEntry 8 }
+
+statisticsReadBucket3 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 2K bytes <= size < 4K bytes."
+	::= { statisticsEntry 9 }
+
+statisticsReadBucket4 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 4K bytes <= size < 8K bytes."
+	::= { statisticsEntry 10 }
+
+statisticsReadBucket5 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 8K bytes <= size < 16K bytes."
+	::= { statisticsEntry 11 }
+
+statisticsReadBucket6 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 16K bytes <= size < 32K bytes."
+	::= { statisticsEntry 12 }
+
+statisticsReadBucket7 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 32K bytes <= size < 64K bytes."
+	::= { statisticsEntry 13 }
+
+statisticsReadBucket8 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 64K bytes <= size < 128K bytes."
+	::= { statisticsEntry 14 }
+
+statisticsReadBucket9 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 128K bytes <= size < 256K bytes."
+	::= { statisticsEntry 15 }
+
+statisticsReadBucket10 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 256K bytes <= size < 512K bytes."
+	::= { statisticsEntry 16 }
+
+statisticsReadBucket11 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, 512K bytes <= size < 1M bytes."
+	::= { statisticsEntry 17 }
+
+statisticsReadBucket12 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of read commands issued, size >= 1M bytes."
+	::= { statisticsEntry 18 }
+
+statisticsWriteBucket0 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, size  < 512 bytes."
+	::= { statisticsEntry 19 }
+
+statisticsWriteBucket1 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 512 bytes <= size < 1K bytes."
+	::= { statisticsEntry 20 }
+
+statisticsWriteBucket2 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 1K bytes <= size < 2K bytes."
+	::= { statisticsEntry 21 }
+
+statisticsWriteBucket3 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 2K bytes <= size < 4K bytes."
+	::= { statisticsEntry 22 }
+
+statisticsWriteBucket4 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 4K bytes <= size < 8K bytes."
+	::= { statisticsEntry 23 }
+
+statisticsWriteBucket5 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 8K bytes <= size < 16K bytes."
+	::= { statisticsEntry 24 }
+
+statisticsWriteBucket6 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 16K bytes <= size < 32K bytes."
+	::= { statisticsEntry 25 }
+
+statisticsWriteBucket7 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 32K bytes <= size < 64K bytes."
+	::= { statisticsEntry 26 }
+
+statisticsWriteBucket8 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 64K bytes <= size < 128K bytes."
+	::= { statisticsEntry 27 }
+
+statisticsWriteBucket9 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 128K bytes <= size < 256K bytes."
+	::= { statisticsEntry 28 }
+
+statisticsWriteBucket10 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 256K bytes <= size < 512K bytes."
+	::= { statisticsEntry 29 }
+
+statisticsWriteBucket11 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, 512K bytes <= size < 1M bytes."
+	::= { statisticsEntry 30 }
+
+statisticsWriteBucket12 OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of write commands issued, size >= 1M bytes."
+	::= { statisticsEntry 31 }
+
+---------------------------------------------------------------------------
+-- The remainder of this MIB pertains to traps.
+-- These traps are only vaguely DMI-like.
+
+cycTraps                OBJECT IDENTIFIER ::= { cio2 9000 }
+
+ -- the Trap Log Count
+
+  -- Implementation of the Trap Log Count is mandatory for all
+  -- systems.  
+
+trapLogNumEntries OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number entries in the Trap Log."
+	::= { trapLogCount 1 }
+
+  -- the Trap Log table
+
+  -- Implementation of the Trap Log Count is mandatory for all
+  -- systems.  
+
+  -- The Trap Log table contains entries for each trap in the log.
+
+trapLogTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF TrapLogEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A circular list of trap log entries.  The number of
+		entries is given by the value of trapLogCount.  Current
+		maximum trap log count is fixed at 125, but should be
+		programmable (via MIB variable and .INI file) in the future."
+	::= { trapLog 1 }
+
+trapLogEntry OBJECT-TYPE
+	SYNTAX  TrapLogEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A trap log entry." 
+	INDEX   { trapLogIndex }
+	::= { trapLogTable 1 }
+
+TrapLogEntry ::=
+	SEQUENCE 
+	{
+		trapLogIndex
+			INTEGER,
+		trapLogString 
+			DisplayString,
+		trapLogTimeStamp
+			INTEGER
+	}
+
+trapLogIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A unique index value for each trap log table entry
+		beginning with 1."  
+	::= { trapLogEntry 1 }
+
+trapLogString OBJECT-TYPE
+	SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"A textual string containing the text of the last trap."
+	::= { trapLogEntry 2 }
+
+trapLogTimeStamp OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of seconds which have elapsed between powerup and
+		the trap occurrence."
+	::= { trapLogEntry 3 }
+
+--------------------------------------------------------------------------
+-- The traps supported by this mib.
+
+-- The following are the objects defined for traps
+	
+cycSeverity OBJECT-TYPE
+	SYNTAX INTEGER
+	{
+		unknown(1),
+		informational(2),
+		warning(3),
+		critical(4)
+	}
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"Severity level of the trap."
+	::= { cycTraps 9001 }
+
+cycObject OBJECT-TYPE
+	SYNTAX OBJECT IDENTIFIER
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"The object identifier of the object referred to by the trap."
+	::= { cycTraps 9002 }
+
+cycPhysicalObjectState OBJECT-TYPE
+	SYNTAX INTEGER
+	{
+		newlyDiscovered(1),
+		failed(2),
+		recovered(3),
+		changed(4),
+		selfMonitoringWarning(5),
+		selfMonitoringEnabled(6),
+		cacheParametersChanged(7),
+		cacheOn(8),
+		cacheOff(9),
+		deleted(10),
+		batteryReconditionScheduled(11),
+		scheduledBatteryReconditionDeleted(12),
+		batteryChangedGoodToLow(13),
+		batteryChangedLowToGood(14),
+		batteryChangedLowToReconditioning(15),
+		batteryChangedGoodToReconditioning(16),
+		batteryChangedReconditioningToLow(17),
+		batteryChangedReconditioningToGood(18),
+		batteryReconditionCompleted(19),
+		batteryReconditionStarted(20),
+		initializeStarted(21),
+		initializeCompleted(22),
+		initializeFailed(23),
+		initializeAbortedByUser(24),
+		verifyStarted(25),
+		verifyCompleted(26),
+		verifyFailed(27),
+		verifyAbortedByUser(28),
+		batteryOkay(29),
+		batteryDead(30),
+		batteryFailedCharge(31),
+		batteryOvercharged(32),
+		batteryCurrentTooHigh(33),
+		batteryTemperatureTooHigh(34),
+		batteryVoltageTooLow(35),
+		batteryMissing(36),
+		batteryShortCircuit(37)
+	}
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"New state for the object referred to by the trap."
+	::= { cycTraps 9003 }
+
+cycVolumeSetState OBJECT-TYPE
+	SYNTAX INTEGER
+	{
+		unsafeShutdown(1),
+		badBlockRepaired(2),
+		offline(3),
+		offlineMemberFailed(4),
+		online(5),
+		criticalState(6),
+		protectionDisabled(7),
+		protectionEnabled(8),
+		selfMonitoringWarning(9),
+		selfMonitoringEnabled(10),
+		memberMissing(11),
+		dedicatedSpareDeleted(12),
+		dedicatedSpareAdded(13),
+		poolSpareDeleted(14),
+		poolSpareAdded(15),
+		dedicatedSpareUsed(16),
+		poolSpareUsed(17),
+		lastSpareUsed(18),
+		lastSpareDeleted(19),
+		cacheParametersChanged(20),
+		cacheOn(21),
+		cacheOff(22),
+		cacheFlushFailed(23),
+		cacheAllocationFailed(24),
+		arrayAdded(25),
+		arrayDeleted(26),
+		scsiAddressesChangedForMembers(27),
+		nameChanged(28)
+	}
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"New state for the object referred to by the trap."
+	::= { cycTraps 9004 }
+
+cycVolumeSetActivity OBJECT-TYPE
+	SYNTAX INTEGER
+	{
+		reconstruct(1),
+		initialize(2),
+		verify(3),
+		spareTest(4),
+		scheduledReconstruct(5),
+		scheduledInitialize(6),
+		scheduledVerify(7),
+		scheduledSpareTest(8),
+		mirrorBreak(9),
+		mirrorCreate(10),
+		migration(11),
+		expansion(12)
+	}
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"New activity for the object referred to by the trap."
+	::= { cycTraps 9005 }
+
+cycVolumeSetActivityState OBJECT-TYPE
+	SYNTAX INTEGER
+	{
+		started(1),
+		startedAutofix(2),
+		completed(3),
+		completedWithMiscompares(4),
+		abortedDueToIOError(5),
+		abortedDueToIOErrorWithMiscompares(6),
+		abortedByOperator(7),
+		abortedByOperatorWithMiscompares(8),
+		failed(9),
+		deleted(10),
+		priorityChanged(11),
+		scheduled(12),
+		modified(13),
+		failedToStart(14),
+		abortedNoMemory(15),
+		restarted(16),
+		suspended(17),
+		resumed(18),
+		stopped(19),
+		running(20),
+		aborted(21)
+	}
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"Status of a new activity for the object referred to by the trap."
+	::= { cycTraps 9006 }
+
+cycSpareState OBJECT-TYPE
+	SYNTAX INTEGER
+	{
+		ok(1),
+		notFunctional(2)
+	}
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"New state for the object referred to by the trap."
+	::= { cycTraps 9007 }
+
+cycEnclosureComponent OBJECT-TYPE
+	SYNTAX INTEGER
+	{
+		cabinet(1),
+		fan(2),
+		powerSupply(3),
+		door(4),
+		speaker(5),
+		temperatureSensor(6),
+		deviceInSlot(7)
+	}
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"The part of the enclosure affected by this trap."
+	::= { cycTraps 9008 }
+
+cycEnclosureComponentNumber OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"The ordinal number of the part of the enclosure affected 
+		by this trap.  Numbers ordinarily start at 1, such as Fan
+		1.  A number of 0 refers to all such parts as a single piece.
+		For example, Fan 0 refers to all fans."
+	::= { cycTraps 9009 }
+
+cycEnclosureComponentState OBJECT-TYPE
+	SYNTAX INTEGER
+	{
+		found(1),
+		notResponding(2),
+		operational(3),
+		malfunctioning(4),
+		removed(5),
+		inserted(6),
+		unknownState(7),
+		operationalAndOn(8),
+		operationalAndOff(9),
+		malfunctioningButOn(10),
+		malfunctioningAndOff(11),
+		notPresent(12),
+		present(13),
+		locked(14),
+		unlocked(15),
+		outOfNormalRange(16),
+		inNormalRange(17),
+		runningAtHalfCapacity(18),
+		runningAtMaximumCapacity(19),
+		decreaseToHalfCapacityFailed(20),
+		increaseToMaximumCapacityFailed(21)
+	}
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"Description of the change in status in the affected 
+		enclosure part."
+	::= { cycTraps 9010 }
+	
+-- Following are the actual traps generated.
+
+-- This Trap is issued when a storage controller changes state.
+			
+cycStorageControllerStateChange TRAP-TYPE
+	ENTERPRISE cio2
+	VARIABLES 
+	{
+		cycSeverity,
+		cycObject,
+		cycPhysicalObjectState
+	}
+	DESCRIPTION
+		"CIO storage controller %d has changed state."
+	--#SUMMARY	 "The storage controller %d has changed state."
+	--#ARGUMENTS {1}
+	::= 101	
+
+-- This Trap is issued when a bus port state.
+			
+cycBusPortStateChange TRAP-TYPE
+	ENTERPRISE cio2
+	VARIABLES 
+	{
+		cycSeverity,
+		cycObject,
+		cycPhysicalObjectState
+	}
+	DESCRIPTION
+		"CIO bus port %d has changed state."
+	--#SUMMARY	 "The bus port %d has changed state."
+	--#ARGUMENTS {1}
+	::= 102	
+
+-- This Trap is issued when a storage device changes state.
+			
+cycStorageDeviceStateChange TRAP-TYPE
+	ENTERPRISE cio2
+	VARIABLES 
+	{
+		cycSeverity,
+		cycObject,
+		cycPhysicalObjectState
+	}
+	DESCRIPTION
+		"CIO storage device %d has changed state."
+	--#SUMMARY	 "The storage device %d has changed state."
+	--#ARGUMENTS {1}
+	::= 103	
+
+-- This Trap is issued when a volume set changes state.
+			
+cycVolumeSetStateChange TRAP-TYPE
+	ENTERPRISE cio2
+	VARIABLES 
+	{
+		cycSeverity,
+		cycObject,
+		cycVolumeSetState
+	}
+	DESCRIPTION
+		"CIO volume set %d has changed state."
+	--#SUMMARY	 "The volume set %d has changed state."
+	--#ARGUMENTS {1}
+	::= 104	
+
+-- This Trap is issued when a volume set changes activity.
+			
+cycVolumeSetActivityChange TRAP-TYPE
+	ENTERPRISE cio2
+	VARIABLES 
+	{
+		cycSeverity,
+		cycObject,
+		cycVolumeSetActivity,
+		cycVolumeSetActivityState
+	}
+	DESCRIPTION
+		"CIO volume set %d has changed activity."
+	--#SUMMARY	 "The volume set %d has changed activity."
+	--#ARGUMENTS {1}
+	::= 105	
+
+-- This Trap is issued when a spare changes state.
+			
+cycSpareStateChange TRAP-TYPE
+	ENTERPRISE cio2
+	VARIABLES 
+	{
+		cycSeverity,
+		cycObject,
+		cycSpareState
+	}
+	DESCRIPTION
+		"CIO spare %d has changed state."
+	--#SUMMARY	 "The spare %d has changed state."
+	--#ARGUMENTS {1}
+	::= 106	
+
+cycEnclosureStateChange TRAP-TYPE
+	ENTERPRISE cio2
+	VARIABLES
+	{
+		cycSeverity,
+		cycObject,
+		cycEnclosureComponent,
+		cycEnclosureComponentNumber,
+		cycEnclosureComponentState
+	}
+	DESCRIPTION
+		"A component in CIO enclosure %d has changed state."
+	--#SUMMARY  "A component in CIO enclosure %d has changed state."
+	--#ARGUMENTS {1}
+	::= 107
+	
+END	

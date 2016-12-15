@@ -1,0 +1,615 @@
+MRV-IR-TRAP-MIB DEFINITIONS ::= BEGIN
+          
+IMPORTS
+
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+            FROM SNMPv2-SMI
+    DisplayString
+            FROM SNMPv2-TC
+    irEnetPortIndex,
+    irEnetPortLinkStatus,
+    mrvLx,
+    irPowerIndex, 
+    irPowerStatus,
+    irSysCurrentTemp,
+    irSysTempThresholdLow, 
+    irSysTempThresholdHigh,
+    irSysTempHysteresis,
+    ipmiDiscreteOffset,
+    ipmiDiscreteSensorName,
+    ipmiThresholdType,
+    ipmiThresholdSensorName,
+    ipmiThresholdDirection,
+    ipmiThresholdAssert
+        FROM MRV-IR-SYSTEM-MIB
+    irHdamPortIndex,
+    irHdamPowerPortIndex,
+    irHdamPowerIndex,
+    irHdamPowerStatus,
+    irAlarmPortIndex, 
+    irAlarmSlotIndex, 
+    irAlarmPointIndex,
+    irAlarmName, 
+    irAlarmContactState, 
+    irAlarmTrapSeverity, 
+    irAlarmCount,
+    irAlarmDescription,
+    irAnalogPortIndex,
+    irAnalogSlotIndex,
+    irAnalogPointIndex,
+    irAnalogName,
+    irAnalogDescription,
+    irAnalogCalValue,
+    irAnalogThresholdSeverity,
+    irAnalogThresholdHighAlarmCount,
+    irAnalogThresholdLowAlarmCount
+        FROM MRV-IR-HDAM-MIB
+    irCharPortIndex,
+    irTempValue,
+    irTempThresholdHigh,
+    irTempThresholdLow,
+    irTempTrapSeverity,
+    irHumidityValue,
+    irHumidityThresholdHigh,
+    irHumidityThresholdLow,
+    irHumidityTrapSeverity,
+    irLdAlarmPortIndex,
+    irLdAlarmPointIndex,
+    irLdAlarmName,
+    irLdAlarmDescription,
+    irLdAlarmContactState,
+    irLdAlarmTrapSeverity,
+    irLdAlarmCount
+        FROM MRV-IR-CHAR-MIB;
+
+irTrapMib MODULE-IDENTITY
+    LAST-UPDATED "200703220000Z"        -- 22 Mar 2007 (LX v5.1.0)
+    ORGANIZATION "MRV Communications - BPD Division"
+    CONTACT-INFO 
+            "Postal: MRV Communications, Inc.
+                     295 Foster Street
+                     Littleton, MA 01460"
+    DESCRIPTION
+        "This is the MRV LX Trap MIB module."
+    ::= { mrvLx 3 }
+
+
+--
+-- Trap Groups
+--
+
+irTrapObjects      OBJECT IDENTIFIER ::= { irTrapMib 1 }
+irTraps            OBJECT IDENTIFIER ::= { irTrapMib 2 }
+
+
+--
+-- Trap Objects.
+--
+
+irTextString OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "An ascii text string."
+    ::= { irTrapObjects 1 }
+
+irTimeStamp OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "A text string containing timestamp."
+    ::= { irTrapObjects 2 }
+
+irUserName OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "A text string used for a user name."
+    ::= { irTrapObjects 3 }
+
+irIpAddress OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "A text string used for an ip address."
+    ::= { irTrapObjects 4 }
+
+--
+-- LX Traps.
+--
+
+irNotifyEvent NOTIFICATION-TYPE
+    OBJECTS  { 
+                irTextString
+             }
+    STATUS  current
+    DESCRIPTION
+        "A notification sent to indicate a system event. 
+         irTextString object provides a description of the event."
+    ::= { irTraps 1 }
+
+irTempHighTholdAlarmRaised NOTIFICATION-TYPE
+    OBJECTS  { 
+                irCharPortIndex,
+                irTempValue,
+                irTempThresholdHigh,
+                irTempTrapSeverity
+             }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the current temp value has gone 
+         above the value set in irTempThresholdHigh object.
+         irTempValue object indicates the current temp value."
+    ::= { irTraps 2 }
+
+irTempHighTholdAlarmCleared NOTIFICATION-TYPE
+    OBJECTS  { 
+                irCharPortIndex,
+                irTempValue,
+                irTempThresholdHigh,
+                irTempTrapSeverity
+             }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the current temp value has dropped 
+         below the value set in irTempThresholdHigh object after having
+         gone above that value. irTempValue object indicates the 
+         current temp value."
+    ::= { irTraps 3 }
+
+irTempLowTholdAlarmRaised NOTIFICATION-TYPE
+    OBJECTS  { 
+                irCharPortIndex,
+                irTempValue,
+                irTempThresholdLow,
+                irTempTrapSeverity
+             }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the current temp value has dropped 
+         below the value set in irTempThresholdLow object.
+         irTempValue object indicates the current temp value."
+    ::= { irTraps 4 }
+
+irTempLowTholdAlarmCleared NOTIFICATION-TYPE
+    OBJECTS  { 
+                irCharPortIndex,
+                irTempValue,
+                irTempThresholdLow,
+                irTempTrapSeverity
+             }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the current temp value has returned 
+         above the value set in irTempThresholdLow object after having
+         fallen below that value. irTempValue object indicates the 
+         current temp value."
+    ::= { irTraps 5 }
+
+irHumidityHighTholdAlarmRaised NOTIFICATION-TYPE
+    OBJECTS { 
+                irCharPortIndex,
+                irHumidityValue,
+                irHumidityThresholdHigh,
+                irHumidityTrapSeverity
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the current humidity value has gone 
+         above the value set in irHumidityThresholdHigh object.
+         irHumidityValue object indicates the current humidity value."
+    ::= { irTraps 6 }
+
+irHumidityHighTholdAlarmCleared NOTIFICATION-TYPE
+    OBJECTS { 
+                irCharPortIndex,
+                irHumidityValue,
+                irHumidityThresholdHigh,
+                irHumidityTrapSeverity
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the current temp value has dropped 
+         below the value set in irHumidityThresholdHigh object after having
+         gone above that value. irHumidityValue object indicates the 
+         current humidity value."
+    ::= { irTraps 7 }
+
+irHumidityLowTholdAlarmRaised NOTIFICATION-TYPE
+    OBJECTS { 
+                irCharPortIndex,
+                irHumidityValue,
+                irHumidityThresholdLow,
+                irHumidityTrapSeverity
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the current humidity value has dropped 
+         below the value set in irHumidityThresholdLow object. 
+         irHumidityValue object indicates the current humidity value."
+    ::= { irTraps 8 }
+
+irHumidityLowTholdAlarmCleared NOTIFICATION-TYPE
+    OBJECTS { 
+                irCharPortIndex,
+                irHumidityValue,
+                irHumidityThresholdLow,
+                irHumidityTrapSeverity
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the current humidity value has gone 
+         above the value set in irHumidityThresholdLow object after having
+         gone below that value. irHumidityValue object indicates the 
+         current humidity value."
+    ::= { irTraps 9 }
+
+irClusterSyncStarted NOTIFICATION-TYPE
+    OBJECTS { 
+                irTimeStamp
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that a cluster config synch has started."
+    ::= { irTraps 10 }
+
+irClusterSyncCompleted NOTIFICATION-TYPE
+    OBJECTS { 
+                irTimeStamp
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that a cluster config synch has completed."
+    ::= { irTraps 11 }
+
+irClusterSoftwareUpdateStarted NOTIFICATION-TYPE
+    OBJECTS { 
+                irTimeStamp
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that a cluster system software update 
+         has started."
+    ::= { irTraps 12 }
+
+irClusterSoftwareUpdateCompleted NOTIFICATION-TYPE
+    OBJECTS { 
+                irTimeStamp
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that a cluster system software update 
+         has completed."
+    ::= { irTraps 13 }
+
+irClusterBootloaderUpdateStarted NOTIFICATION-TYPE
+    OBJECTS { 
+                irTimeStamp
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that a cluster boot loader software update 
+         has started."
+    ::= { irTraps 14 }
+
+irClusterBootloaderUpdateCompleted NOTIFICATION-TYPE
+    OBJECTS { 
+                irTimeStamp
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that a cluster boot loader software update 
+         has completed."
+    ::= { irTraps 15 }
+
+irPowerSupplyStatusChanged NOTIFICATION-TYPE
+    OBJECTS { 
+                irPowerIndex,
+                irPowerStatus
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that a power supply status has changed."
+    ::= { irTraps 16 }
+
+irLoginFailed NOTIFICATION-TYPE
+    OBJECTS { 
+                irUserName,
+                irIpAddress,
+                irCharPortIndex
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that a user attempted to login and failed.
+         irCharPortIndex indicates the physical or tcp port.
+         irUserName indicates the user name.
+         irIpAddress indicates the ip address of the remote machine
+         from which the user attempted the login. If the IP address values is 
+         non-zero, it indicates a network connection and irCharPortIndex 
+         indicates the tcp port. If the IP address is zero, it indicates 
+         login attemp was local and irCharPortIndex indicates the physical 
+         port."
+    ::= { irTraps 17 }
+
+irHdamAlarmRaised NOTIFICATION-TYPE
+    OBJECTS { 
+                irAlarmPortIndex,
+                irAlarmSlotIndex,
+                irAlarmPointIndex,
+                irAlarmName,
+                irAlarmContactState,
+                irAlarmTrapSeverity,
+                irAlarmCount,
+                irAlarmDescription
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the HDAM unit generated an alarm."
+    ::= { irTraps 18 }
+
+irHdamAlarmCleared NOTIFICATION-TYPE
+    OBJECTS { 
+                irAlarmPortIndex,
+                irAlarmSlotIndex,
+                irAlarmPointIndex,
+                irAlarmName,
+                irAlarmContactState,
+                irAlarmTrapSeverity,
+                irAlarmCount,
+                irAlarmDescription
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the HDAM unit has cleared an alarm."
+    ::= { irTraps 19 }
+
+irHdamContactLost NOTIFICATION-TYPE
+    OBJECTS { 
+                irHdamPortIndex
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the LX has lost contact with the 
+         HDAM unit."
+    ::= { irTraps 20 }
+
+irHdamContactRegained NOTIFICATION-TYPE
+    OBJECTS { 
+                irHdamPortIndex
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the LX has regained contact with the 
+         HDAM unit."
+    ::= { irTraps 21 }
+
+irHdamPowerStatusChanged NOTIFICATION-TYPE
+    OBJECTS { 
+                irHdamPowerPortIndex,
+                irHdamPowerIndex,
+                irHdamPowerStatus
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the HDAM power status has changed. 
+         irHdamPowerIndex indicates the power index (A or B).
+         irHdamPowerStatus indicates the new power status."
+    ::= { irTraps 22 }
+
+    -- value 23 not used
+
+irOnBoardLowTempExceeded NOTIFICATION-TYPE
+    OBJECTS { 
+                irSysCurrentTemp,
+                irSysTempThresholdLow,
+                irSysTempHysteresis
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the onboard temperature has exceeded the 
+         configured low temperature threshold (plus hysteresis) value."
+    ::= { irTraps 24 }
+
+irOnBoardLowTempCleared NOTIFICATION-TYPE
+    OBJECTS { 
+                irSysCurrentTemp,
+                irSysTempThresholdLow,
+                irSysTempHysteresis
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the onboard temperature has fallen back
+         below the configured low temperature threshold (plus hysteresis) 
+         value."
+    ::= { irTraps 25 }
+
+
+irOnBoardHighTempExceeded NOTIFICATION-TYPE
+    OBJECTS { 
+                irSysCurrentTemp,
+                irSysTempThresholdHigh,
+                irSysTempHysteresis
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the onboard temperature has exceeded the 
+         configured high temperature threshold (minus hysteresis) value."
+    ::= { irTraps 26 }
+
+irOnBoardHighTempCleared NOTIFICATION-TYPE
+    OBJECTS { 
+                irSysCurrentTemp,
+                irSysTempThresholdHigh,
+                irSysTempHysteresis
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the onboard temperature has fallen back
+         below the configured high temperature threshold (minus hysteresis) 
+         value."
+    ::= { irTraps 27 }
+
+irAdminLoginFailed NOTIFICATION-TYPE
+    OBJECTS { 
+                irUserName,
+                irCharPortIndex
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that an administrator login failed.
+         irUserName indicates the user name.
+         irCharPortIndex indicates the port."
+    ::= { irTraps 28 }
+
+irEnetPortBondLinkStatusChanged NOTIFICATION-TYPE
+    OBJECTS { 
+                irEnetPortIndex,
+                irEnetPortLinkStatus
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the enet port bonding link status has 
+         changed. This trap is generated only on systems with multiple enet
+         ports.
+         irEnetPortIndex is the index of the ethernet port in question. 
+         irEnetPortLinkStatus is the new link status of the ethernet port."
+    ::= { irTraps 29 }
+
+irHdamAnalogHighAlarmRaised NOTIFICATION-TYPE
+    OBJECTS { 
+                irAnalogPortIndex,
+                irAnalogSlotIndex,
+                irAnalogPointIndex,
+                irAnalogName,
+                irAnalogDescription,
+                irAnalogCalValue,
+                irAnalogThresholdSeverity,
+                irAnalogThresholdHighAlarmCount
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the HDAM analog loop module generated 
+         a high threshold raised alarm."
+    ::= { irTraps 30 }
+
+irHdamAnalogHighAlarmCleared NOTIFICATION-TYPE
+    OBJECTS { 
+                irAnalogPortIndex,
+                irAnalogSlotIndex,
+                irAnalogPointIndex,
+                irAnalogName,
+                irAnalogDescription,
+                irAnalogCalValue,
+                irAnalogThresholdSeverity,
+                irAnalogThresholdHighAlarmCount
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the HDAM analog loop module generated 
+         a high threshold cleared alarm."
+    ::= { irTraps 31 }
+
+irHdamAnalogLowAlarmRaised NOTIFICATION-TYPE
+    OBJECTS { 
+                irAnalogPortIndex,
+                irAnalogSlotIndex,
+                irAnalogPointIndex,
+                irAnalogName,
+                irAnalogDescription,
+                irAnalogCalValue,
+                irAnalogThresholdSeverity,
+                irAnalogThresholdLowAlarmCount
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the HDAM analog loop module generated 
+         a low threshold raised alarm."
+    ::= { irTraps 32 }
+
+irHdamAnalogLowAlarmCleared NOTIFICATION-TYPE
+    OBJECTS { 
+                irAnalogPortIndex,
+                irAnalogSlotIndex,
+                irAnalogPointIndex,
+                irAnalogName,
+                irAnalogDescription,
+                irAnalogCalValue,
+                irAnalogThresholdSeverity,
+                irAnalogThresholdLowAlarmCount
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the HDAM analog loop module generated 
+         a low threshold cleared alarm."
+    ::= { irTraps 33 }
+
+irLdamAlarmRaised NOTIFICATION-TYPE
+    OBJECTS { 
+                irLdAlarmPortIndex,
+                irLdAlarmPointIndex,
+                irLdAlarmName,
+                irLdAlarmDescription,   
+                irLdAlarmContactState,
+                irLdAlarmTrapSeverity,
+                irLdAlarmCount
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the LDAM alarm point generated an alarm."
+    ::= { irTraps 34 }
+
+irLdamAlarmCleared NOTIFICATION-TYPE
+    OBJECTS { 
+                irLdAlarmPortIndex,
+                irLdAlarmPointIndex,
+                irLdAlarmName,
+                irLdAlarmDescription,   
+                irLdAlarmContactState,
+                irLdAlarmTrapSeverity,
+                irLdAlarmCount
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that the LDAM alarm point has been cleared."
+    ::= { irTraps 35 }
+
+irIpmiDiscreteDeassertEvent NOTIFICATION-TYPE
+    OBJECTS { 
+                ipmiDiscreteOffset,
+                ipmiDiscreteSensorName
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that an IPMI discrete sensor Deassert event 
+         has occurred."
+    ::= { irTraps 36 }
+
+irIpmiDiscreteAssertEvent NOTIFICATION-TYPE
+    OBJECTS { 
+                ipmiDiscreteOffset,
+                ipmiDiscreteSensorName
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that an IPMI discrete sensor Assert event 
+         has occurred."
+    ::= { irTraps 37 }
+
+irIpmiThresholdEvent NOTIFICATION-TYPE
+    OBJECTS { 
+                ipmiThresholdType,
+                ipmiThresholdSensorName,
+                ipmiThresholdDirection,
+                ipmiThresholdAssert
+            }
+    STATUS  current
+    DESCRIPTION
+        "This trap indicates that an IPMI threshold sensor event has occurred."
+    ::= { irTraps 38 }
+
+END
+

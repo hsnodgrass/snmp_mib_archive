@@ -1,0 +1,1485 @@
+-- ****************************************************************************
+--
+-- This MIB module defines the management objects of COMPAQ's
+-- TruCluster Server product.
+--
+--
+--                   Copyright (c) 1995-1999 by
+--                   Digital Equipment Corporation
+--
+--  This software is furnished under a license and may be used and
+--  copied only in accordance with the terms of such license with the
+--  the inclusion of the above copyright notice. This software or any
+--  other copies thereof may not be provided or otherwise made available
+--  to any other person. No title to and ownership of the software is 
+--  hereby transferred.
+--
+--  The information in this software is subject to change without 
+--  notice and should not be construed as a commitment by Compaq
+--  Computer Corporation.
+--
+--  Compaq assumes no responsibility for the use or reliability of 
+--  its software on equipment which is not supplied by Compaq.
+--
+-- ****************************************************************************
+
+TRUCLUSTER-SERVER-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        MODULE-IDENTITY, OBJECT-TYPE, Unsigned32,
+        Integer32, Counter64, IpAddress                   FROM SNMPv2-SMI
+        MODULE-COMPLIANCE, OBJECT-GROUP                   FROM SNMPv2-CONF
+        TEXTUAL-CONVENTION, DisplayString, TimeStamp      FROM SNMPv2-TC
+        svrCluster, svrCluMemberIndex                     FROM SVRCLU-MIB
+    ;
+
+    -- root registry from SVRCLU-MIB
+    --
+    svrUNIXCluster     OBJECT IDENTIFIER ::= { svrCluster 3 }
+
+    truClusterServerModule MODULE-IDENTITY
+        LAST-UPDATED "9912080830Z"
+        ORGANIZATION "COMPAQ"
+        CONTACT-INFO "pm_feedback@zso.dec.com"
+        DESCRIPTION
+            "This MIB module defines the management objects of COMPAQ's
+             TruCluster Server product."
+
+        REVISION "9912080830Z"
+        DESCRIPTION
+        "Rev 1.4  08 Dec 1999 8:30am GMT  sun
+             Changed all the CFS counters in truCluCfsClPerfTable to Counter64 type
+                 due to the kernel change.
+             Added truCluCfsClPerfTableOctet64 for the SMIv1 compatibility of
+                 the updated truCluCfsClPerfTable.
+             Added truCluAliasAddress."
+
+        REVISION "9904010830Z"
+        DESCRIPTION
+        "Rev 1.3  1 Apr 1999 8:30am GMT  sun
+             Added the SMIv1 support for the Counter64 objects.
+             Removed Overview group and made all objects member-specific."
+
+        REVISION "9902150830Z"
+        DESCRIPTION
+        "Rev 1.2  15 Feb 1999 8:30am GMT  sun
+             Updated with the initial implementation experience."
+
+        REVISION "9809300830Z"
+        DESCRIPTION
+        "Rev 1.1  30 Sept 1998 8:30am GMT  sun
+             Incorporated input from the initial version."
+
+        REVISION "9808310830Z"
+        DESCRIPTION
+        "Rev 1.0  31 Aug 1998 8:30am GMT  sun
+           Initial version of the MIB module, developed to support
+           TruCluster Server Version 5.0"
+
+    ::= { svrUNIXCluster 1 }
+
+
+-- *********************
+--
+-- textual conventions
+--
+-- *********************
+
+    OctetCounter64 ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION
+            "Unsigned 64-bit integer as 8 bytes in network byte order (
+             a format known as big-endian).  It expresses a Counter64
+             quantity in SMIv1."
+        SYNTAX      OCTET STRING (SIZE(8))
+
+    DrdDeviceType ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION
+            "The type of DRD (Device Request Dispatcher) devices."
+        SYNTAX      INTEGER {
+                        daioDisk   (1),  -- direct-access io disk
+                        servedDisk (2),  -- served disk
+                        servedTape (3),  -- served tape
+                        servedChanger (4)  -- served tape changer
+                    }
+
+
+-- ******************************
+--
+-- Assignment of the OID groups
+--
+-- ******************************
+
+    truCluObjects       OBJECT IDENTIFIER ::= { truClusterServerModule 1 }
+    truCluConformance   OBJECT IDENTIFIER ::= { truClusterServerModule 2 }
+
+    truCluNotifications OBJECT IDENTIFIER ::= { truCluObjects 1 }
+    truCluAlias         OBJECT IDENTIFIER ::= { truCluObjects 2 }
+    truCluCfs           OBJECT IDENTIFIER ::= { truCluObjects 3 }
+    truCluDrd           OBJECT IDENTIFIER ::= { truCluObjects 4 }
+    truCluMc            OBJECT IDENTIFIER ::= { truCluObjects 5 }
+
+
+-- ************************
+--
+-- truCluAlias group
+--
+--   Cluster alias group
+--
+-- ************************
+
+    --
+    -- Alias name table
+    --
+    truCluAliasNameTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluAliasNameEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table of cluster aliases in a cluster."
+        ::= { truCluAlias 1 }
+
+    truCluAliasNameEntry OBJECT-TYPE
+        SYNTAX      TruCluAliasNameEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the cluster name table (truCluAliasNameTable)."
+        INDEX       { truCluAliasIndex }
+        ::= { truCluAliasNameTable 1 }
+
+    TruCluAliasNameEntry ::=
+        SEQUENCE {
+            truCluAliasIndex
+                Integer32,
+            truCluAliasName
+                DisplayString,
+            truCluAliasFlags
+                BITS,
+	    truCluAliasAddress
+                IpAddress
+        }
+
+    truCluAliasIndex OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A unique ID of this alias."
+        ::= { truCluAliasNameEntry 1 }
+
+    truCluAliasName OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The alias name, may or may not include dotted IP domain name."
+        ::= { truCluAliasNameEntry 2 }
+
+    truCluAliasFlags OBJECT-TYPE
+        SYNTAX      BITS {
+                         default (0),
+                              -- Indicating the default cluster name, which
+                              -- means truCluAliasName holds the same value
+                              -- as svrCluClusterName does.
+                         enabled (1),  -- This alias is enabled.
+                         ipv4    (2),  -- This alias is an IPv4 address.
+                         ipv6    (3)   -- This alias is an IPv6 address.
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Per-alias flags, reflecting the state of the alias."
+        ::= { truCluAliasNameEntry 3 }
+
+    truCluAliasAddress OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The alias IP address."
+        ::= { truCluAliasNameEntry 4 }
+
+    --
+    -- Alias membership table.
+    --
+    truCluAliasMemberTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluAliasMemberEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table of member nodes in an alias."
+        ::= { truCluAlias 2 }
+
+    truCluAliasMemberEntry OBJECT-TYPE
+        SYNTAX      TruCluAliasMemberEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the cluster alias membership table
+             (truCluAliasMemberTable)."
+        INDEX       { truCluAliasIndex, svrCluMemberIndex }
+        ::= { truCluAliasMemberTable 1 }
+
+    TruCluAliasMemberEntry ::=
+        SEQUENCE {
+            truCluAliasMemberName
+                DisplayString,
+            truCluAliasMemberFlags
+                BITS,
+            truCluAliasMemberSelectWeight
+                Integer32,
+            truCluAliasMemberSelectPriority
+                Integer32,
+            truCluAliasMemberRouterPriority
+                Integer32
+        }
+
+    truCluAliasMemberName OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The cluster member name in the alias.  This is the same name
+             identified by svrCluMemberName."
+        ::= { truCluAliasMemberEntry 1 }
+
+    truCluAliasMemberFlags OBJECT-TYPE
+        SYNTAX      BITS {
+                         joined  (0),  -- This member has joined this alias.
+                         xoff    (1),  -- This member is temporarily rejecting
+                                       --   incoming alias traffic.
+                         bit3    (2),  -- This bit is TBD.
+                         bit4    (3),  -- This bit is TBD.
+                         enabled (4),  -- This member may be a router for
+                                       --   this alias but has not joined it.
+                         virtual (5)   -- This member has declared this alias
+                                       --   to be part of a virtual subnet.
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Per-member-per-alias flags, reflecting the member's state
+             within the alias."
+        ::= { truCluAliasMemberEntry 2 }
+
+    truCluAliasMemberSelectWeight OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Alias Selection Weight -- an integer indicating in relative terms
+             how many connections this member may accept on behalf of the
+             alias.  A member's selection weight divided by the sum of all
+             members' selection weights represents the percentage of alias
+             incoming connections this member can expect to receive over
+             time (other factors being equal).  A selection weight of zero (0)
+             means that no incoming connections will be given to this member."
+        DEFVAL      { 1 }
+        ::= { truCluAliasMemberEntry 3 }
+
+    truCluAliasMemberSelectPriority OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Alias Selection Priority -- an integer indicating this member's
+             relative primacy in the receipt of new connections for the alias.
+             Incoming connections to the alias will be exclusively distributed
+             among those members with the highest numeric value for selection
+             priority (that is, all connections are distributed among those
+             members with selection priority = 10 if they exist; if no 10's
+             exist, all connections are distributed among those members with
+             selection priority = 9, and so forth.  Modifying the selection
+             priority makes it possible for an administrator to determine the
+             failover order for members implementing a particular cluster
+             alias."
+        DEFVAL      { 1 }
+        ::= { truCluAliasMemberEntry 4 }
+
+    truCluAliasMemberRouterPriority OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Alias Router Priority -- an integer value to control selection
+             of the designated alias router in a common subnet design."
+        DEFVAL      { 1 }
+        ::= { truCluAliasMemberEntry 5 }
+
+    --
+    -- Alias performance table.
+    --
+    truCluAliasPerfTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluAliasPerfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table contains the alias performance counters from a local
+             member's perspective.  Some of the terms used are the following:
+             'forwarded within cluster' and 'received within cluster'
+             refering to tunneled connections ('forwarded' means the local
+             member tunneled the connection or packet to another cluster
+             member; 'received within cluster' means the local member
+             was the tunnelee), 'Data packets' refering to PDUs within
+             a TCP connection, and 'Datagrams' refering to UDP PDUs
+             (PDU stands for 'protocol data unit', also known as packet).
+            "
+        ::= { truCluAlias 3 }
+
+    truCluAliasPerfEntry OBJECT-TYPE
+        SYNTAX      TruCluAliasPerfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the alias performance table (truCluAliasPerfTable)."
+        AUGMENTS    { truCluAliasNameEntry }
+        ::= { truCluAliasPerfTable 1 }
+
+    TruCluAliasPerfEntry ::=
+        SEQUENCE {
+            truCluAliasPerfCnxRcvNet
+                Counter64,
+            truCluAliasPerfCnxFwdClu
+                Counter64,
+            truCluAliasPerfCnxRcvClu
+                Counter64,
+            truCluAliasPerfDataRcvNet
+                Counter64,
+            truCluAliasPerfDataFwdClu
+                Counter64,
+            truCluAliasPerfDataRcvClu
+                Counter64,
+            truCluAliasPerfDgmRcvNet
+                Counter64,
+            truCluAliasPerfDgmFwdClu
+                Counter64,
+            truCluAliasPerfDgmRcvClu
+                Counter64,
+            truCluAliasPerfFragRcvNet
+                Counter64,
+            truCluAliasPerfFragFwdClu
+                Counter64,
+            truCluAliasPerfFragRcvClu
+                Counter64
+        }
+
+    truCluAliasPerfCnxRcvNet OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Connections received from the network."
+        ::= { truCluAliasPerfEntry 1 }
+
+    truCluAliasPerfCnxFwdClu OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Connections forwarded within the cluster."
+        ::= { truCluAliasPerfEntry 2 }
+
+    truCluAliasPerfCnxRcvClu OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Connections received within the cluster."
+        ::= { truCluAliasPerfEntry 3 }
+
+    truCluAliasPerfDataRcvNet OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Data packets received from the network."
+        ::= { truCluAliasPerfEntry 4 }
+
+    truCluAliasPerfDataFwdClu OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Data packets forwarded within the cluster."
+        ::= { truCluAliasPerfEntry 5 }
+
+    truCluAliasPerfDataRcvClu OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Data packets received within the cluster."
+        ::= { truCluAliasPerfEntry 6 }
+
+    truCluAliasPerfDgmRcvNet OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Datagrams received from the network."
+        ::= { truCluAliasPerfEntry 7 }
+
+    truCluAliasPerfDgmFwdClu OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Datagrams forwarded within the cluster."
+        ::= { truCluAliasPerfEntry 8 }
+
+    truCluAliasPerfDgmRcvClu OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Datagrams received within the cluster."
+        ::= { truCluAliasPerfEntry 9 }
+
+    truCluAliasPerfFragRcvNet OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Fragments received from the network."
+        ::= { truCluAliasPerfEntry 10 }
+
+    truCluAliasPerfFragFwdClu OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Fragments forwarded within the cluster."
+        ::= { truCluAliasPerfEntry 11 }
+
+    truCluAliasPerfFragRcvClu OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Fragments received within the cluster."
+        ::= { truCluAliasPerfEntry 12 }
+
+    --
+    -- Alias performance table for SMIv1 compatibility.
+    --
+    -- Because there is not a standard translation of Counter64 type
+    -- in SMIv1, this table uses OCTET STRING to present the same
+    -- set of Counter64 objects in the SMIv2 version of the alias
+    -- performance table (truCluAliasPerfTable).
+    --
+    truCluAliasPerfTableOctet64 OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluAliasPerfEntryOctet64
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table contains the alias performance counters from a local
+             member's perspective.  Some of the terms used are the following:
+             'forwarded within cluster' and 'received within cluster'
+             refering to tunneled connections ('forwarded' means the local
+             member tunneled the connection or packet to another cluster
+             member; 'received within cluster' means the local member
+             was the tunnelee), 'Data packets' refering to PDUs within
+             a TCP connection, and 'Datagrams' refering to UDP PDUs
+             (PDU stands for 'protocol data unit', also known as packet).
+
+             This table is equivalent with the SMIv2 version of the alias
+             performance table (truCluAliasPerfTable).  The difference here
+             is that the objects use OCTET STRING instead of Counter64 for
+             SMIv1 compatibility.
+            "
+        ::= { truCluAlias 4 }
+
+    truCluAliasPerfEntryOctet64 OBJECT-TYPE
+        SYNTAX      TruCluAliasPerfEntryOctet64
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the alias performance table
+             (truCluAliasPerfTableOctet64.)"
+        AUGMENTS    { truCluAliasNameEntry }
+        ::= { truCluAliasPerfTableOctet64 1 }
+
+    TruCluAliasPerfEntryOctet64 ::=
+        SEQUENCE {
+            truCluAliasPerfCnxRcvNetOctet64
+                OctetCounter64,
+            truCluAliasPerfCnxFwdCluOctet64
+                OctetCounter64,
+            truCluAliasPerfCnxRcvCluOctet64
+                OctetCounter64,
+            truCluAliasPerfDataRcvNetOctet64
+                OctetCounter64,
+            truCluAliasPerfDataFwdCluOctet64
+                OctetCounter64,
+            truCluAliasPerfDataRcvCluOctet64
+                OctetCounter64,
+            truCluAliasPerfDgmRcvNetOctet64
+                OctetCounter64,
+            truCluAliasPerfDgmFwdCluOctet64
+                OctetCounter64,
+            truCluAliasPerfDgmRcvCluOctet64
+                OctetCounter64,
+            truCluAliasPerfFragRcvNetOctet64
+                OctetCounter64,
+            truCluAliasPerfFragFwdCluOctet64
+                OctetCounter64,
+            truCluAliasPerfFragRcvCluOctet64
+                OctetCounter64
+        }
+
+    truCluAliasPerfCnxRcvNetOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Connections received from the network."
+        ::= { truCluAliasPerfEntryOctet64 1 }
+
+    truCluAliasPerfCnxFwdCluOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Connections forwarded within the cluster."
+        ::= { truCluAliasPerfEntryOctet64 2 }
+
+    truCluAliasPerfCnxRcvCluOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Connections received within the cluster."
+        ::= { truCluAliasPerfEntryOctet64 3 }
+
+    truCluAliasPerfDataRcvNetOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Data packets received from the network."
+        ::= { truCluAliasPerfEntryOctet64 4 }
+
+    truCluAliasPerfDataFwdCluOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Data packets forwarded within the cluster."
+        ::= { truCluAliasPerfEntryOctet64 5 }
+
+    truCluAliasPerfDataRcvCluOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Data packets received within the cluster."
+        ::= { truCluAliasPerfEntryOctet64 6 }
+
+    truCluAliasPerfDgmRcvNetOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Datagrams received from the network."
+        ::= { truCluAliasPerfEntryOctet64 7 }
+
+    truCluAliasPerfDgmFwdCluOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Datagrams forwarded within the cluster."
+        ::= { truCluAliasPerfEntryOctet64 8 }
+
+    truCluAliasPerfDgmRcvCluOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Datagrams received within the cluster."
+        ::= { truCluAliasPerfEntryOctet64 9 }
+
+    truCluAliasPerfFragRcvNetOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Fragments received from the network."
+        ::= { truCluAliasPerfEntryOctet64 10 }
+
+    truCluAliasPerfFragFwdCluOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Fragments forwarded within the cluster."
+        ::= { truCluAliasPerfEntryOctet64 11 }
+
+    truCluAliasPerfFragRcvCluOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Fragments received within the cluster."
+        ::= { truCluAliasPerfEntryOctet64 12 }
+
+    truCluAliasUpdatePeriod OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "seconds"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of seconds that must elapse between updates
+             of the alias performance tables (truCluAliasPerfTable
+             and truCluAliasPerfTableOctet64)."
+        ::= { truCluAlias 5 }
+
+    truCluAliasLastUpdate OBJECT-TYPE
+        SYNTAX      TimeStamp
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Last update of the alias performance tables (truCluAliasPerfTable
+             and truCluAliasPerfTableOctet64), measured by the value of sysUpTime."
+        ::= { truCluAlias 6 }
+
+
+-- ***********************************
+--
+-- truCluCfs group
+--
+--   Cluster File System (CFS) group
+--
+-- ***********************************
+
+    --
+    -- Cluster File System (CFS) entry table.
+    --
+
+    truCluCfsTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluCfsEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table of CFS entries in a cluster.  This table excludes
+             any local use file systems, such as procfs (process file system)."
+        ::= { truCluCfs 1 }
+
+    truCluCfsEntry OBJECT-TYPE
+        SYNTAX      TruCluCfsEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the CFS entry table (truCluCfsTable)."
+        INDEX       { truCluCfsIndex }
+        ::= { truCluCfsTable 1 }
+
+    TruCluCfsEntry ::=
+        SEQUENCE {
+            truCluCfsIndex
+                Integer32,
+            truCluCfsName
+                DisplayString,
+            truCluCfsMountPoint
+                DisplayString,
+            truCluCfsServerName
+                DisplayString,
+            truCluCfsStatus
+                Integer32
+        }
+
+    truCluCfsIndex OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A unique index for this file system."
+        ::= { truCluCfsEntry 1 }
+
+    truCluCfsName OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The name of the file system; for example, cluster_root#root,
+            /dev/rz0c, or goshen:/select."
+        ::= { truCluCfsEntry 2 }
+
+    truCluCfsMountPoint OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The name of the file system's mount point."
+        ::= { truCluCfsEntry 3 }
+
+    truCluCfsServerName OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The name of the CFS server node for this file system."
+        ::= { truCluCfsEntry 4 }
+
+    truCluCfsStatus OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        ok (0),
+                            -- Access to the file system is OK.
+                        noServer (1),
+                            -- No systems connected to the storage are up.
+                            -- The filesystem stays in the namespace unless
+                            -- explicitly unmounted so that if one of the
+                            -- nodes reboots, the filesystem will move to
+                            -- a served state (OK) again.
+                        failoverInProgress (2),
+                            -- A failover of the CFS server node serving
+                            -- the file system is in progress.
+                        relocationInProgress (3),
+                            -- A planned relocation of the CFS server node
+                            -- serving the file system is in progress.
+                        other (4)
+                            -- Other transient errors that cause the access
+                            -- to the file system to fail.
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The status of this file system from a local member's point of
+             view."
+        ::= { truCluCfsEntry 5 }
+
+    --
+    -- Cluster File System (CFS) client performance table.
+    --
+    truCluCfsClPerfTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluCfsClPerfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table contains the CFS client-side performance counters of
+             each cluster file system from a local member's perspective.
+             Each row in the table shows how much the local CFS client
+             has hit a file system with the uncached accesses (real hits)."
+        ::= { truCluCfs 2 }
+
+    truCluCfsClPerfEntry OBJECT-TYPE
+        SYNTAX      TruCluCfsClPerfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the CFS client performance table
+             (truCluCfsClPerfTable)."
+        AUGMENTS    { truCluCfsEntry }
+        ::= { truCluCfsClPerfTable 1 }
+
+    TruCluCfsClPerfEntry ::=
+        SEQUENCE {
+            truCluCfsClPerfReadOps
+                Counter64,
+            truCluCfsClPerfWriteOps
+                Counter64,
+            truCluCfsClPerfLookupOps
+                Counter64,
+            truCluCfsClPerfGetAttrOps
+                Counter64,
+            truCluCfsClPerfReadLinkOps
+                Counter64,
+            truCluCfsClPerfAccessOps
+                Counter64,
+            truCluCfsClPerfOtherOps
+                Counter64
+       }
+
+    truCluCfsClPerfReadOps OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached read operations in 8k blocks (that is, reading
+             a 35k file would count as 5 read operations)."
+        ::= { truCluCfsClPerfEntry 1 }
+
+    truCluCfsClPerfWriteOps OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Write operations (always uncached) in 8k blocks (that is,
+             writing a 42k file would count as 6 write operations)."
+        ::= { truCluCfsClPerfEntry 2 }
+
+    truCluCfsClPerfLookupOps OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached lookup operations."
+        ::= { truCluCfsClPerfEntry 3 }
+
+    truCluCfsClPerfGetAttrOps OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached getattr (get attribute) operations."
+        ::= { truCluCfsClPerfEntry 4 }
+
+    truCluCfsClPerfReadLinkOps OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached readlink operations.  Due to the use of Context
+             Dependent Symbolic Link (CDSL), there are many more symbolic
+             links in a cluster."
+        ::= { truCluCfsClPerfEntry 5 }
+
+    truCluCfsClPerfAccessOps OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached access (querying access permission) operations."
+        ::= { truCluCfsClPerfEntry 6 }
+
+    truCluCfsClPerfOtherOps OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Remaining 'interesting' vnode operations such as create, rmdir,
+             mkdir, remove, rename, open, close, and so forth.
+             All of these operations are uncached by nature - so all hits
+             represent actual filesystem hits (just as the operations above
+             only count actual filesystem hits by ignoring cached hits)."
+        ::= { truCluCfsClPerfEntry 7 }
+
+    --
+    -- Cluster File System (CFS) client performance table for SMIv1 compatibility.
+    --
+    -- Because there is not a standard translation of Counter64 type
+    -- in SMIv1, this table uses OCTET STRING to present the same
+    -- set of Counter64 objects in the SMIv2 version of the CFS client
+    -- performance table (truCluCfsClPerfTable).
+    --
+    truCluCfsClPerfTableOctet64 OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluCfsClPerfEntryOctet64
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table contains the CFS client-side performance counters of
+             each cluster file system from a local member's perspective.
+             Each row in the table shows how much the local CFS client
+             has hit a file system with the uncached accesses (real hits)."
+        ::= { truCluCfs 3 }
+
+    truCluCfsClPerfEntryOctet64 OBJECT-TYPE
+        SYNTAX      TruCluCfsClPerfEntryOctet64
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the CFS client performance table
+             (truCluCfsClPerfTable)."
+        AUGMENTS    { truCluCfsEntry }
+        ::= { truCluCfsClPerfTableOctet64 1 }
+
+    TruCluCfsClPerfEntryOctet64 ::=
+        SEQUENCE {
+            truCluCfsClPerfReadOpsOctet64
+                OctetCounter64,
+            truCluCfsClPerfWriteOpsOctet64
+                OctetCounter64,
+            truCluCfsClPerfLookupOpsOctet64
+                OctetCounter64,
+            truCluCfsClPerfGetAttrOpsOctet64
+                OctetCounter64,
+            truCluCfsClPerfReadLinkOpsOctet64
+                OctetCounter64,
+            truCluCfsClPerfAccessOpsOctet64
+                OctetCounter64,
+            truCluCfsClPerfOtherOpsOctet64
+                OctetCounter64
+       }
+
+    truCluCfsClPerfReadOpsOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached read operations in 8k blocks (that is, reading
+             a 35k file would count as 5 read operations)."
+        ::= { truCluCfsClPerfEntryOctet64 1 }
+
+    truCluCfsClPerfWriteOpsOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Write operations (always uncached) in 8k blocks (that is,
+             writing a 42k file would count as 6 write operations)."
+        ::= { truCluCfsClPerfEntryOctet64 2 }
+
+    truCluCfsClPerfLookupOpsOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached lookup operations."
+        ::= { truCluCfsClPerfEntryOctet64 3 }
+
+    truCluCfsClPerfGetAttrOpsOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached getattr (get attribute) operations."
+        ::= { truCluCfsClPerfEntryOctet64 4 }
+
+    truCluCfsClPerfReadLinkOpsOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached readlink operations.  Due to the use of Context
+             Dependent Symbolic Link (CDSL), there are many more symbolic
+             links in a cluster."
+        ::= { truCluCfsClPerfEntryOctet64 5 }
+
+    truCluCfsClPerfAccessOpsOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncached access (querying access permission) operations."
+        ::= { truCluCfsClPerfEntryOctet64 6 }
+
+    truCluCfsClPerfOtherOpsOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Remaining 'interesting' vnode operations such as create, rmdir,
+             mkdir, remove, rename, open, close, and so forth.
+             All of these operations are uncached by nature - so all hits
+             represent actual filesystem hits (just as the operations above
+             only count actual filesystem hits by ignoring cached hits)."
+        ::= { truCluCfsClPerfEntryOctet64 7 }
+
+    truCluCfsUpdatePeriod OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "seconds"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of seconds that must elapse between updates of the
+             cluster file system performance table (truCluCfsClPerfTable
+             and truCluCfsClPerfTableOctet64)."
+        ::= { truCluCfs 4 }
+
+    truCluCfsLastUpdate OBJECT-TYPE
+        SYNTAX      TimeStamp
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Last update of the cluster file system performance table
+             (truCluCfsClPerfTable and truCluCfsClPerfTableOctet64),
+             measured by the value of sysUpTime."
+        ::= { truCluCfs 5 }
+
+
+-- ******************************************
+--
+-- truCluDrd group
+--
+--   Device Request Dispatcher (DRD) group
+--
+-- ******************************************
+
+    --
+    -- Device Request Dispatcher (DRD) device table
+    --
+    truCluDrdDeviceTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluDrdDeviceEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table of DRD devices in a cluster."
+        ::= { truCluDrd 1 }
+
+    truCluDrdDeviceEntry OBJECT-TYPE
+        SYNTAX      TruCluDrdDeviceEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the DRD device table (truCluDrdDeviceTable)."
+        INDEX       { truCluDrdDeviceIndex }
+        ::= { truCluDrdDeviceTable 1 }
+
+    TruCluDrdDeviceEntry ::=
+        SEQUENCE {
+            truCluDrdDeviceIndex
+                Unsigned32,
+            truCluDrdDeviceName
+                DisplayString,
+            truCluDrdDeviceType
+                DrdDeviceType,
+            truCluDrdDeviceStatus
+                Integer32,
+            truCluDrdDeviceAccessNode
+                DisplayString,
+            truCluDrdDeviceMibId
+                Integer32
+        }
+
+    truCluDrdDeviceIndex OBJECT-TYPE
+        SYNTAX      Unsigned32 
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A unique ID for identifying a DRD device cluster wide,
+             also known as, the device hardware id."
+        ::= { truCluDrdDeviceEntry 1 }
+
+    truCluDrdDeviceName OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The name of the DRD device."
+        ::= { truCluDrdDeviceEntry 2 }
+
+    truCluDrdDeviceType OBJECT-TYPE
+        SYNTAX      DrdDeviceType
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The device type of the DRD device."
+        ::= { truCluDrdDeviceEntry 3 }
+
+    truCluDrdDeviceStatus OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        ok (0),
+                            -- Access to the device is OK.
+                        noServer (1),
+                            -- No systems connected to the device are up.  It
+                            -- could also happen when pulling the cable from
+                            -- a locally connected device.
+                        reconfigInProgress (2),
+                            -- Something like failover, CFS planned relocation,
+                            -- reassignment of a new DRD access node, and so
+                            -- forth.
+                        other (3)
+                            -- Other transient errors.
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The status of the access node of this DRD device from a local
+             member's perspective."
+        ::= { truCluDrdDeviceEntry 4 }
+
+    truCluDrdDeviceAccessNode OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The access node which a local member perceives as the DRD server
+             of this device.  The access node can be the local member itself.
+             A zero (0) length string is returned if the DRD device status
+             (truCluDrdDeviceStatus) of this device is not OK."
+        ::= { truCluDrdDeviceEntry 5 }
+
+    truCluDrdDeviceMibId OBJECT-TYPE
+       SYNTAX      Integer32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "A MIB ID that is the same value identified by the index
+            of hrDeviceIndex in Host Resources MIB (RFC1514).
+            This ID is member wide, different from truCluDrdDeviceIndex
+            which is cluster wide.  This ID is 0 if the device is
+            internal (private) to another member."
+       ::= { truCluDrdDeviceEntry 6 }
+
+    --
+    -- DRD server and device mapping table.
+    --
+    truCluDrdServerTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluDrdServerEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This table illustrates the mapping between the DRD
+             devices and their server nodes in a cluster."
+        ::= { truCluDrd 2 }
+
+    truCluDrdServerEntry OBJECT-TYPE
+        SYNTAX      TruCluDrdServerEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the DRD server and device mapping table
+             (truCluDrdServerTable)."
+        INDEX       { truCluDrdDeviceIndex, svrCluMemberIndex }
+        ::= { truCluDrdServerTable 1 }
+
+    TruCluDrdServerEntry ::=
+        SEQUENCE {
+            truCluDrdServerName
+                DisplayString
+        }
+
+    truCluDrdServerName OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The name of the DRD server node, that is the same member
+             node identified by the value of svrCluMemberName."
+        ::= { truCluDrdServerEntry 1 }
+
+    --
+    -- Device Request Dispatcher (DRD) server performance table.
+    --
+    truCluDrdSvPerfTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluDrdSvPerfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table contains the performance counters of the DRD devices
+             that are directly served by a local member.
+             A counter in this table is indexed by both a device ID
+             (truCluDrdDeviceIndex) and the ID (svrCluMemberIndex) of a
+             cluster member accessing the device.  Each row in the table
+             shows how much a cluster member has accessed the device via
+             the local DRD server."
+        ::= { truCluDrd 3 }
+
+    truCluDrdSvPerfEntry OBJECT-TYPE
+        SYNTAX      TruCluDrdSvPerfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the DRD server performance table
+             (truCluDrdSvPerfTable)."
+        INDEX       { truCluDrdDeviceIndex, svrCluMemberIndex }
+        ::= { truCluDrdSvPerfTable 1 }
+
+    TruCluDrdSvPerfEntry ::=
+        SEQUENCE {
+            truCluDrdSvPerfReadOps
+                Counter32,
+            truCluDrdSvPerfWriteOps
+                Counter32,
+            truCluDrdSvPerfReadBytes
+                Counter64,
+            truCluDrdSvPerfWriteBytes
+                Counter64
+        }
+
+    truCluDrdSvPerfReadOps OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Read operations the member has issued to the device."
+        ::= { truCluDrdSvPerfEntry 1 }
+
+    truCluDrdSvPerfWriteOps OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Write operations the member has issued to the device."
+        ::= { truCluDrdSvPerfEntry 2 }
+
+    truCluDrdSvPerfReadBytes OBJECT-TYPE
+        SYNTAX      Counter64
+        UNITS       "bytes"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of bytes the member has read from the device."
+        ::= { truCluDrdSvPerfEntry 3 }
+
+    truCluDrdSvPerfWriteBytes OBJECT-TYPE
+        SYNTAX      Counter64
+        UNITS       "bytes"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of bytes the member has written to the device."
+        ::= { truCluDrdSvPerfEntry 4 }
+
+    --
+    -- Partial DRD server performance table for SMIv1 compatibility.
+    --
+    -- Because there is not a standard translation of Counter64 type
+    -- in SMIv1, this table uses OCTET STRING to present those Counter64
+    -- objects in the SMIv2 version of the DRD server performance table
+    -- (truCluDrdSvPerfTable).
+    --
+
+    truCluDrdSvPerfTableOctet64 OBJECT-TYPE
+        SYNTAX      SEQUENCE OF TruCluDrdSvPerfEntryOctet64
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The table contains the performance counters of the DRD devices
+             that are directly served by a local member.
+             A counter in this table is indexed by both a device ID
+             (truCluDrdDeviceIndex) and the ID (svrCluMemberIndex) of a
+             cluster member accessing the device.  Each row in the table
+             shows how much a cluster member has accessed the device via
+             the local DRD server.
+
+             The objects in this table are equivalent to those Counter64
+             objects in the SMIv2 version of the DRD server performance
+             table (truCluDrdSvPerfTable).  The difference here is that
+             they use OCTET STRING for SMIv1 compatibility.
+            "
+        ::= { truCluDrd 4 }
+
+    truCluDrdSvPerfEntryOctet64 OBJECT-TYPE
+        SYNTAX      TruCluDrdSvPerfEntryOctet64
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry in the DRD server performance table
+             (truCluDrdSvPerfTableOctet64)."
+        INDEX       { truCluDrdDeviceIndex, svrCluMemberIndex }
+        ::= { truCluDrdSvPerfTableOctet64 1 }
+
+    TruCluDrdSvPerfEntryOctet64 ::=
+        SEQUENCE {
+            truCluDrdSvPerfReadBytesOctet64
+                OctetCounter64,
+            truCluDrdSvPerfWriteBytesOctet64
+                OctetCounter64
+        }
+
+    truCluDrdSvPerfReadBytesOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        UNITS       "bytes"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of bytes the member has read from the device."
+        ::= { truCluDrdSvPerfEntryOctet64 1 }
+
+    truCluDrdSvPerfWriteBytesOctet64 OBJECT-TYPE
+        SYNTAX      OctetCounter64
+        UNITS       "bytes"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of bytes the member has written to the device."
+        ::= { truCluDrdSvPerfEntryOctet64 2 }
+
+    truCluDrdUpdatePeriod OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "seconds"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of seconds that must elapse between updates of
+             the DRD server performance tables (truCluDrdSvPerfTable
+             and truCluDrdSvPerfTableOctet64)."
+        ::= { truCluDrd 5 }
+
+    truCluDrdLastUpdate OBJECT-TYPE
+        SYNTAX      TimeStamp
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Last update of the DRD server performance tables (truCluDrdSvPerfTable
+             and truCluDrdSvPerfTableOctet64), measured by the value of sysUpTime."
+        ::= { truCluDrd 6 }
+
+
+-- ****************************
+--
+-- Memory Channel
+--
+-- truCluMcPerformanceTable  (TBD: the metrics need to be defined and
+--                                 clarified for both MC1 & MC2)
+-- ****************************
+
+
+-- ****************************
+--
+-- truCluNotifications group
+--
+--     The notification group
+--
+-- ****************************
+
+    --
+    -- The truCluNotificationsPrefix value of 0 is to provide for
+    -- mapping to/from SNMPv1.
+    --
+    truCluNotificationsPrefix OBJECT IDENTIFIER ::= { truCluNotifications 0 }
+
+    truCluCfsServerNew NOTIFICATION-TYPE
+        OBJECTS {
+            truCluCfsName,
+            truCluCfsMountPoint,
+            truCluCfsServerName
+            }
+        STATUS current
+        DESCRIPTION
+            "A new CFS server has been elected for a cluster file system.
+             The variables are the following:
+               truCluCfsName       - the name of the cluster file system.
+               truCluCfsMountPoint - the mount point of the cluster file system.
+               truCluCfsServerName - the name of the cluster member, as
+                                     the newly elected CFS server.
+            "
+        ::= { truCluNotificationsPrefix 100 }
+
+    truCluDrdDeviceAccessNodeNew NOTIFICATION-TYPE
+        OBJECTS {
+            truCluDrdDeviceName,
+            truCluDrdDeviceAccessNode
+            }
+        STATUS current
+        DESCRIPTION
+            "A new access node has been elected for a DRD device.
+             The variables are the following:
+               truCluDrdDeviceName       - the name of the device.
+               truCluDrdDeviceAccessNode - the name of the cluster member, as
+                                           the newly elected access node.
+            "
+        ::= { truCluNotificationsPrefix 101 }
+
+    truCluAliasMemberJoined NOTIFICATION-TYPE
+        OBJECTS {
+            truCluAliasMemberName,
+            truCluAliasName
+            }
+        STATUS current
+        DESCRIPTION
+            "A cluster member has joined an alias service.
+             The variables are the following:
+               truCluAliasMemberName  - the name of the cluster member.
+               truCluAliasName        - the name of the alias.
+            "
+        ::= { truCluNotificationsPrefix 102 }
+
+    truCluAliasMemberLeft NOTIFICATION-TYPE
+        OBJECTS {
+            truCluAliasMemberName,
+            truCluAliasName
+            }
+        STATUS current
+        DESCRIPTION
+            "A cluster member has left an alias service.
+             The variables are the following:
+               truCluAliasMemberName  - the name of the cluster member.
+               truCluAliasName        - the name of the alias.
+            "
+        ::= { truCluNotificationsPrefix 103 }
+
+
+-- *****************************
+--
+-- truCluConformance group
+--
+--   The compliance statements.
+--
+-- *****************************
+
+    truCluMibCompliances OBJECT IDENTIFIER ::= { truCluConformance 1 }
+    truCluMibGroups      OBJECT IDENTIFIER ::= { truCluConformance 2 }
+
+    truCluAliasGroup OBJECT-GROUP
+        OBJECTS {
+            truCluAliasIndex,
+            truCluAliasName,
+            truCluAliasFlags,
+            truCluAliasMemberName,
+            truCluAliasMemberFlags,
+            truCluAliasMemberSelectWeight,
+            truCluAliasMemberSelectPriority,
+            truCluAliasMemberRouterPriority,
+            truCluAliasPerfCnxRcvNet,
+            truCluAliasPerfCnxFwdClu,
+            truCluAliasPerfCnxRcvClu,
+            truCluAliasPerfDataRcvNet,
+            truCluAliasPerfDataFwdClu,
+            truCluAliasPerfDataRcvClu,
+            truCluAliasPerfDgmRcvNet,
+            truCluAliasPerfDgmFwdClu,
+            truCluAliasPerfDgmRcvClu,
+            truCluAliasPerfFragRcvNet,
+            truCluAliasPerfFragFwdClu,
+            truCluAliasPerfFragRcvClu,
+            truCluAliasUpdatePeriod,
+            truCluAliasLastUpdate
+                }
+        STATUS      current
+        DESCRIPTION
+            "The group of all cluster alias objects."
+        ::= { truCluMibGroups 1 }
+
+    truCluCfsGroup OBJECT-GROUP
+        OBJECTS {
+            truCluCfsIndex,
+            truCluCfsName,
+            truCluCfsMountPoint,
+            truCluCfsServerName,
+            truCluCfsStatus,
+            truCluCfsClPerfReadOps,
+            truCluCfsClPerfWriteOps,
+            truCluCfsClPerfLookupOps,
+            truCluCfsClPerfGetAttrOps,
+            truCluCfsClPerfReadLinkOps,
+            truCluCfsClPerfAccessOps,
+            truCluCfsClPerfOtherOps,
+            truCluCfsUpdatePeriod,
+            truCluCfsLastUpdate
+                }
+        STATUS      current
+        DESCRIPTION
+            "The group of all CFS objects."
+        ::= { truCluMibGroups 2 }
+
+    truCluDrdGroup OBJECT-GROUP
+        OBJECTS {
+            truCluDrdDeviceIndex,
+            truCluDrdDeviceName,
+            truCluDrdDeviceType,
+            truCluDrdDeviceStatus,
+            truCluDrdDeviceAccessNode,
+            truCluDrdDeviceMibId,
+            truCluDrdServerName,
+            truCluDrdSvPerfReadOps,
+            truCluDrdSvPerfWriteOps,
+            truCluDrdSvPerfReadBytes,
+            truCluDrdSvPerfWriteBytes,
+            truCluDrdUpdatePeriod,
+            truCluDrdLastUpdate
+                }
+        STATUS      current
+        DESCRIPTION
+            "The group of all DRD objects."
+        ::= { truCluMibGroups 3 }
+
+    truCluMibBasicCompliance MODULE-COMPLIANCE
+        STATUS current
+        DESCRIPTION
+            "This statement describes the requirements for conformance
+             to this MIB module."
+        MODULE      -- this module
+            MANDATORY-GROUPS {
+                truCluAliasGroup,
+                truCluCfsGroup,
+                truCluDrdGroup
+            }
+        ::= { truCluMibCompliances 1 }
+
+END
+
+

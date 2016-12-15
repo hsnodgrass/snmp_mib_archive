@@ -1,0 +1,332 @@
+-- SECTION 1: Top Level Definitions
+
+
+RAPIDCITY-VLAN-MIB DEFINITIONS ::= BEGIN
+
+
+-- Rapid City VLAN MIB Release 0.0.0
+-- Revision 11/25/97
+
+-- Copyright 1997 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+-- This MIB contains the Rapid City VLAN MIB with minor
+-- adaptations for the C100/5000BH environment
+
+
+-- Imports
+
+-- %%% replace and add more
+IMPORTS
+	OBJECT-TYPE
+	    FROM RFC-1212
+    DisplayString, RowStatus, MacAddress, TruthValue
+        FROM SNMPv2-TC-v1
+    InterfaceIndex
+        FROM IF-MIB
+    enterprises, IpAddress
+        FROM RFC1155-SMI;
+
+
+-- Groups
+
+-- These two belong somewhere else if we use other RC MIBs
+rapidcity			OBJECT IDENTIFIER ::= { enterprises 2272 }
+rapidcityfoo		OBJECT IDENTIFIER ::= { rapidcity 1 }
+
+rcVlan              OBJECT IDENTIFIER ::= { rapidcityfoo 3 }
+
+
+-- SECTION 2: VLAN Group
+--
+-- The VLAN group contains information pertaining to all
+-- VLANs in the system.
+--
+-- The remainder of this file is pasted from Rapid City documents
+
+-- VLAN Table
+
+rcVlanNumVlans OBJECT-TYPE
+	SYNTAX	      INTEGER (1..128)
+        ACCESS        read-only
+        STATUS        mandatory
+        DESCRIPTION   "Number of VLANs currently defined"
+        ::= { rcVlan 1 }
+
+rcVlanTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcVlanEntry
+        ACCESS        not-accessible
+        STATUS        mandatory
+        DESCRIPTION   "A list of Virtual LAN entries.  VLAN 1 is the default."
+        ::= { rcVlan 2 }
+
+rcVlanEntry OBJECT-TYPE
+        SYNTAX        RcVlanEntry
+        ACCESS        not-accessible
+        STATUS        mandatory
+        DESCRIPTION   "Entry containing information for a particular
+                      Virtual LAN."
+        INDEX         { rcVlanId }
+        ::= { rcVlanTable 1 }
+
+RcVlanEntry ::= SEQUENCE {
+		rcVlanId INTEGER,
+		rcVlanName DisplayString,
+		rcVlanColor INTEGER,
+		rcVlanHighPriority TruthValue,
+		rcVlanRoutingEnable TruthValue,
+		rcVlanIfIndex InterfaceIndex,
+		rcVlanAction INTEGER,
+		rcVlanResult INTEGER,
+		rcVlanStgId INTEGER,
+		rcVlanType INTEGER,
+		rcVlanPortMembers OCTET STRING,
+		rcVlanPotentialMembers OCTET STRING,
+		rcVlanStaticMembers OCTET STRING,
+		rcVlanNotAllowToJoin OCTET STRING,
+		rcVlanProtocolId INTEGER,
+		rcVlanSubnetAddr IpAddress,
+		rcVlanSubnetMask IpAddress,
+                rcVlanAgingTime  INTEGER,
+		rcVlanMacAddress MacAddress,
+		rcVlanRowStatus RowStatus
+	}
+
+rcVlanId OBJECT-TYPE
+        SYNTAX        INTEGER (1..4095)
+        ACCESS        read-only
+        STATUS        mandatory
+        DESCRIPTION   "A value that uniquely identifies the Virtual LAN 
+                      associated with this entry.  This value correspond
+		      to the lower 12 bits in the IEEE VLAN field."
+        ::= { rcVlanEntry 1 }
+
+rcVlanName OBJECT-TYPE
+	SYNTAX	      DisplayString (SIZE (0..20))
+	ACCESS 	      read-write
+	STATUS 	      mandatory
+	DESCRIPTION   "VLAN Name"
+	::= { rcVlanEntry 2 }
+
+rcVlanColor OBJECT-TYPE
+        SYNTAX        INTEGER (0..32)
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "Color  assigned to this VLAN.  The color
+		      is a proprietary number scheme used by
+                      the DM to associate an integer value with a
+                      particular color.  The color  is treated
+                      transparently in the device." 
+        ::= { rcVlanEntry 3 }
+
+rcVlanHighPriority OBJECT-TYPE
+        SYNTAX 	      TruthValue
+        ACCESS 	      read-write
+        STATUS 	      mandatory
+        DESCRIPTION   "Control whether this VLAN should be given 
+                      high priority."
+	DEFVAL 	      { false }
+        ::= { rcVlanEntry 4 }
+
+rcVlanRoutingEnable OBJECT-TYPE
+        SYNTAX 	      TruthValue
+        ACCESS 	      read-write
+        STATUS 	      mandatory
+        DESCRIPTION   "Control whether routing should be enabled on this 
+                      VLAN." 
+	DEFVAL	      { false }
+        ::= { rcVlanEntry 5 }
+
+rcVlanIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex 
+        ACCESS        read-only
+        STATUS        mandatory
+        DESCRIPTION   "If rcVlanRoutingEnable is set to TRUE, then this
+                      value will indicate the 'logical' ifIndex that is
+                      assigned to this VLAN.  Otherwise, this value is
+                      meaningless and should be set to zero."
+        ::= { rcVlanEntry 6 }
+
+rcVlanAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         none(1),          -- none of the following
+		         flushMacFdb(2),   -- flush MAC forwarding table
+		         flushArp(3),	   -- flush ARP table
+		         flushIp(4),	   -- flush IP route table
+		         flushDynMemb(5),  -- flush Dynamic Members
+                         all(6)		   -- flush all tables 
+                      }
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "Vlan related actions."
+        DEFVAL        { none }
+        ::= { rcVlanEntry 7 }
+
+rcVlanResult OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         none(1),        -- none of the following
+                         inProgress(2),  -- in progress
+                         success(3),     -- success
+                         fail(4)         -- failure
+                      }
+        ACCESS        read-only
+        STATUS        mandatory
+        DESCRIPTION   "Result from the last Vlan action."
+        DEFVAL        { none }
+        ::= { rcVlanEntry 8 }
+
+rcVlanStgId OBJECT-TYPE
+        SYNTAX        INTEGER (0..128)
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "Used to indicate the spanning tree group this
+                      VLAN is associated it.  If this vlan is not
+                      be associated with any spanning tree group, this
+                      value should be set to zero(0)."
+        DEFVAL        { 1 }
+        ::= { rcVlanEntry 9 }
+
+rcVlanType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         byPort(1),       -- VLAN by Port 
+                         byIpSubnet(2),   -- VLAN by IP subnet 
+                         byProtocolId(3), -- VLAN by Protocol Id
+		         bySrcMac(4),	  -- VLAN by Src MAC address
+		         byDstMcast(5)	  -- VLAN by Dst MultiCast
+                      }
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "Used to indicate the type of VLAN."
+        ::= { rcVlanEntry 10 }
+
+rcVlanPortMembers OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(32))
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "A bitfield used to identify which ports in the
+                      system are members (static or dynamic) to this
+                      VLAN.
+ 
+                      The bitfield is 32 octets long representing
+                      ports 0 to 255 (inclusive)."
+        ::= { rcVlanEntry 11 }
+ 
+rcVlanPotentialMembers OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(32))
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "A bitfield used to identify which ports in the
+                      system are potential members to join this VLAN. 
+ 
+                      The bitfield is 32 octets long representing
+                      ports 0 to 255 (inclusive)."
+        ::= { rcVlanEntry 12 }
+ 
+rcVlanStaticMembers OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(32))
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "A bitfield used to identify how ports are 
+		      members of this VLAN.
+
+                      A one(1) value in a bit means the port is a
+                      static member of this VLAN.  A zero(0) value 
+		      in a bit means the port is a dynamic member 
+		      of this VLAN.
+
+                      The bitfield is 32 octets long representing
+                      ports 0 to 255 (inclusive)."
+        ::= { rcVlanEntry 13 }
+
+rcVlanNotAllowToJoin OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(32))
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "A bitfield used to identify which ports are not
+                      allowed to join this VLAN.
+                          
+                      A one(1) value in a bit means the port is not
+                      allowed to join a VLAN.  A zero(0) value in a bit
+                      means the port is allowed to join a VLAN.
+ 
+                      The bitfield is 32 octets long representing
+                      ports 0 to 255 (inclusive)."
+        ::= { rcVlanEntry 14 }
+
+rcVlanProtocolId OBJECT-TYPE
+        SYNTAX        INTEGER {
+		         none(0),
+		         ip(1),
+                         ipx802dot3(2),
+                         ipx802dot2(3),
+                         ipxSnap(4),
+                         ipxEthernet2(5),
+                         appleTalk(6),
+                         decLat(7),
+                         decOther(8),
+                         sna802dot2(9),
+                         snaEthernet2(10),
+                         netBios(11),
+                         xns(12)
+	              }
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "The protocol id of this VLAN.  This value 
+		      is meaningful only if 'rcVlanType' is equal to 
+                      'byProtocolId'."
+        ::= { rcVlanEntry 15 }
+
+rcVlanSubnetAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "The IP subnet address of this VLAN.  This value 
+		      is meaningful only if 'rcVlanType' is equal to 
+                      'byIpSubnet'."
+        ::= { rcVlanEntry 16 }
+
+rcVlanSubnetMask OBJECT-TYPE
+        SYNTAX        IpAddress
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "The IP subnet mask of this VLAN.  This value
+		      is meaningful only if 'rcVlanType' is equal to 
+		      'byIpSubnet'."
+        ::= { rcVlanEntry 17 }
+
+rcVlanAgingTime OBJECT-TYPE
+        SYNTAX        INTEGER (10..1000000)
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION   "The timeout period in seconds for aging out
+                      dynamic members of policy-based VLANs."
+        DEFVAL        { 600 }
+        ::= { rcVlanEntry 18 }
+
+rcVlanMacAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        ACCESS        read-only
+        STATUS        mandatory
+        DESCRIPTION   "The MAC address assigned to this VLAN.
+		      This field is only relevant when the VLAN
+		      is configured for routing."
+        ::= { rcVlanEntry 19 }
+
+rcVlanRowStatus OBJECT-TYPE
+	SYNTAX 	      RowStatus
+	ACCESS 	      read-write
+	STATUS 	      mandatory
+	DESCRIPTION   "Used to create/delete entries"
+	::= { rcVlanEntry 20 }
+
+
+END

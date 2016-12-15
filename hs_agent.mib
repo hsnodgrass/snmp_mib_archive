@@ -1,0 +1,1299 @@
+--  Compaq Computer Corporation Steam Agent Private MIB 
+--
+--  MIB for release 2.2 of StorageWorks Enterprise Array Manager (STEAM) Daemon Agent.
+--  
+--  Copyright (c) 1996,1997,1998-2001 Compaq Computer Corporation.  All Rights Reserved.
+--  Reproduction of this document is authorized on condition that the 
+--  foregoing notice is included.
+--
+--  This SNMP MIB Specification contains Compaq's confidential
+--  and proprietary intellectual property.  Compaq retains all title and 
+--  ownership in the Specification, including any revisions.
+--
+--  It is Compaq's intent to encourage the widespread use of this
+--  Specification in connection with the management of storage subsystems using the
+--  StorageWorks Command Console or Enterprise Storage Manager Graphical User Interface or 
+--  other SNMP management utilities.  Compaq grants vendors, end-users,
+--  and other interested parties a non-exclusive license to use this 
+--  Specification in connection with the management of Compaq StorageWorks
+--  RAID Controller products.
+--   
+--  This Specification is supplied AS IS, and Compaq makes no warranty,
+--  either expressed or implied, as to the use, operation, condition, or
+--  performance of the Specification.
+--
+--
+--     StorageWorks Enterprise Array Manager (STEAM) Management Information Base (MIB)
+--
+--  iso(1) org(3) dod(6) internet(1) private(4) enterprises(1) dec(36)
+--  ema(2) sysobjids(15) raidmanager(21)
+--
+-- :CPQ,DEV:
+--
+--    16 Mar 2001 (dmc)
+--    Added these developer's comments.
+--    Changed references in above copyright statements from Digital to Compaq
+--    Added value of unknown(3) to ssCacheBatteryStatus.
+--    Added cacheBatteryStateUnknownTrap (22)
+--
+-- :CPQ,ENDDEV:
+
+	 RAIDMANAGER-MIB DEFINITIONS ::= BEGIN
+
+	 IMPORTS
+		 enterprises
+			 FROM RFC1155-SMI
+		 OBJECT-TYPE
+			 FROM RFC-1212
+		 DisplayString           
+			FROM RFC1213-MIB;
+
+	dec              OBJECT IDENTIFIER ::= { enterprises 36 }
+	ema              OBJECT IDENTIFIER ::= { dec 2 }
+	sysobjids        OBJECT IDENTIFIER ::= { ema 15 }
+	raidmanager      OBJECT IDENTIFIER ::= { sysobjids 21 }
+
+-- raidmanager MIB
+	agent            OBJECT IDENTIFIER ::= { raidmanager 1 }
+	workstation      OBJECT IDENTIFIER ::= { raidmanager 2 }
+	subsys           OBJECT IDENTIFIER ::= { raidmanager 3 }
+
+--      Agent Information Group
+
+	agManufacturer OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The name of the Enterprise Storage Manager Agent manufacturer."
+		      
+	     ::= { agent 1 }
+	
+	agMajVersion OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "Enterprise Storage Manager Agent Major Version Number (e.g., 3 
+		     for 3.0)."
+		      
+	     ::= { agent 2 }
+
+	agMinVersion OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "Enterprise Storage Manager Agent Minor Version Number (e.g., 0 
+		     for 3.0)."
+		      
+	     ::= { agent 3 }
+
+	agHostName OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Host System Network Name where the agent resides."
+		      
+	     ::= { agent 4 }
+
+
+	agEnterprise OBJECT-TYPE
+	     SYNTAX  OBJECT IDENTIFIER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Enterprise ID subtree for Enterprise Storage Manager Agent MIB 
+		      is registered."
+		      
+	     ::= { agent 5 }
+
+	agDescription OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Enterprise Array Storage Agent description."
+		      
+	     ::= { agent 6 }
+
+	
+-- Workstation Group
+
+	wsCPU OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The workstation CPU type (e.g., 80486)."
+		      
+	     ::= { workstation 1 }
+
+	wsComputerType OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The workstation Computer type (e.g., PC/AT)."
+		      
+	     ::= { workstation 2 }
+
+	wsModel OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The workstation model number."
+		      
+	     ::= { workstation 3 }
+
+	wsSubModel OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The workstation submodel number."
+		      
+	     ::= { workstation 4 }
+
+	wsBiosVersion OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The workstation BIOS Version."
+		      
+	     ::= { workstation 5 }
+
+	wsOS OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The workstation operating system name (e.g., WINNT)."
+		      
+	     ::= { workstation 6 }
+
+	wsOSMajVersion OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The workstation OS major version number 
+		     (e.g., 3 for WINNT 3.51)."
+		      
+	     ::= { workstation 7 }
+
+	wsOSMinVersion OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The workstation OS minor version number (e.g., 51 for
+		     WINNT 3.51)."
+		      
+	     ::= { workstation 8 }
+
+
+-- Subsystem Group
+
+	ssTotalSubSystems OBJECT-TYPE
+	     SYNTAX  INTEGER 
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The total number of subsystems presently serviced
+		      by this agent."
+		      
+	     ::= { subsys 1 }
+
+
+-- Subsystem Status Group
+
+	ssStatusTable OBJECT-TYPE                                  
+	     SYNTAX  SEQUENCE OF SsEntry
+	     ACCESS  not-accessible
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This table holds the status information for
+		      each subsystem."
+		      
+	     ::= { subsys 2 }
+
+	ssEntry OBJECT-TYPE
+	     SYNTAX  SsEntry
+	     ACCESS  not-accessible
+	     STATUS  mandatory
+	     DESCRIPTION
+	     "The subsystem information entry."
+	     INDEX   { ssEntryIndex }
+		      
+	     ::= { ssStatusTable 1 }
+
+	SsEntry ::=                                              
+	  SEQUENCE{
+		ssEntryIndex
+			INTEGER,
+		ssSubsysName           
+			DisplayString,
+		ssOverallStatus         
+			INTEGER,
+		ssDiskStatus            
+			INTEGER,
+		ssPowerStatus           
+			INTEGER,
+		ssFanStatus             
+			INTEGER,
+		ssCacheBatteryStatus    
+			INTEGER,
+		ssTemperatureStatus     
+			INTEGER,
+		ssCommStatus            
+			INTEGER,
+		ssEmuExtInputStatus     
+			INTEGER,
+		ssEmuPresent            
+			INTEGER,
+		ssController1Status     
+			INTEGER,
+		ssController1SerNum     
+			DisplayString,
+		ssController1RDAC       
+			INTEGER,
+		ssController1Type       
+			DisplayString,
+		ssController1ProdID       
+			DisplayString,
+		ssController1FwRev       
+			DisplayString,
+		ssController1HwRev       
+			DisplayString,
+		ssController2Status     
+			INTEGER,
+		ssController2SerNum     
+			DisplayString,
+		ssController2RDAC       
+			INTEGER,
+		ssController2Type       
+			DisplayString,
+		ssController2ProdID       
+			DisplayString,
+		ssController2FwRev       
+			DisplayString,
+		ssController2HwRev       
+			DisplayString,
+		ssUpsStatus       
+			INTEGER,
+		ssLunStatus       
+			INTEGER,
+		ssDiskName
+			DisplayString,
+		ssPowerSupplyLocation
+			DisplayString,
+		ssFanLocation
+			DisplayString,
+		ssCacheBatteryLocation
+			DisplayString,
+		ssTemperatureSensorLocation
+			DisplayString,
+		ssCabinetNumber
+			INTEGER,
+		ssLunName
+			DisplayString,
+                ssDiskPort
+			INTEGER,
+                ssDiskTarget
+			INTEGER
+
+	  }
+
+	ssEntryIndex OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The index into ssStatusTable ."
+		      
+	     ::= { ssEntry 1 }
+
+	ssSubsysName OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The local Subsystem Name."
+		      
+	     ::= { ssEntry 2 }
+
+	ssOverallStatus OBJECT-TYPE
+             SYNTAX  INTEGER  {
+                          green(0),
+                          yellow(1),
+                          red(2)
+                      }
+ 	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		      "This variable reports the overall status of the
+		       storage subsystem. 
+		       GREEN: Normal Operating Condition
+		       YELLOW: Warning Condition
+		       RED: Subsystem Communication Failure; No response to Agent requests."
+					      
+	     ::= { ssEntry 3 }
+
+	ssDiskStatus OBJECT-TYPE
+             SYNTAX  INTEGER  {
+                          allok(0),
+                          atleast1failure(1)
+                     }
+ 	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This variable reports the overall status for the
+		      physical devices in the subsystem." 
+
+	     ::= { ssEntry 4 }
+
+	ssPowerStatus OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          allok(0),
+                          atleast1failure(1)
+                      }
+ 	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This variable reports the status for the
+		      Power Supply system in the subsystem." 
+
+	     ::= { ssEntry 5 }
+
+	ssFanStatus OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          allok(0),
+                          atleast1failure(1)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This variable reports the status for the
+		      FAN system in the subsystem." 
+
+	     ::= { ssEntry 6 }
+
+
+	ssCacheBatteryStatus OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          normalcharge(0),
+                          lowcharge(1),
+                          failure(2),
+                          unknown(3)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This variable reports the status for the
+		      Cache Battery in the subsystem. This status object is currently
+		      non-functional but in place for future use."
+
+	     ::= { ssEntry 7 }
+
+	ssTemperatureStatus OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          normal(0),
+                          overtempcondition(1)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This variable reports the status for the
+		      Temperature in the subsystem." 
+
+	     ::= { ssEntry 8 }
+
+	ssCommStatus OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          normal(0),
+                          communicationfailure(1)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This variable reports the status for the
+		      communication to the Primary Controller." 
+
+	     ::= { ssEntry 9 }
+
+	ssEmuExtInputStatus OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          allok(0),
+                          atleast1failure(1)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This variable reports the status for the
+		      EMU external input." 
+
+	     ::= { ssEntry 10 }
+
+	ssEmuPresent OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          emunotpresent(0),
+                          enupresent(1)
+                      }
+	      ACCESS  read-only
+	      STATUS  mandatory
+	      DESCRIPTION
+		      "This variable reports the availability of the
+		       Environment Monitoring Unit for the storage subsystem." 
+
+	     ::= { ssEntry 11 }
+
+
+	ssController1Status OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          normal(0),
+                          failed(1)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This variable reports the status for the
+		      Primary Controller."
+
+	     ::= { ssEntry 12 }
+
+	ssController1SerNum OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Primary Controller's Serial Number."
+		      
+	     ::= { ssEntry 13 }
+
+	ssController1RDAC OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          singlemode(0),
+                          dualmode(1)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Primary Controller MODE."
+		      
+	     ::= { ssEntry 14 }
+
+	ssController1Type OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Primary Controller's Type indicator."
+		      
+	     ::= { ssEntry 15 }
+
+	ssController1ProdID OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Primary Controller's Product ID."
+		      
+	     ::= { ssEntry 16 }
+
+	ssController1FwRev OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Primary Controller's Firmware Revision."
+		      
+	     ::= { ssEntry 17 }
+
+	ssController1HwRev OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Primary Controller's Hardware Revision."
+		      
+	     ::= { ssEntry 18 }
+
+	ssController2Status OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          normal(0),
+                          failed(1)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "This variable reports the status for the
+		      Secondary Controller."
+
+	     ::= { ssEntry 19 }
+
+	ssController2SerNum OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Secondary Controller's Serial Number."
+		      
+	     ::= { ssEntry 20 }
+
+	ssController2RDAC OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          singlemode(0),
+                          dualmode(1)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Secondary Controller MODE."
+		      
+	     ::= { ssEntry 21 }
+
+	ssController2Type OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Secondary Controller's Type indicator."
+		      
+	     ::= { ssEntry 22 }
+
+	ssController2ProdID OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Secondary Controller's Product ID."
+		      
+	     ::= { ssEntry 23 }
+
+	ssController2FwRev OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Secondary Controller's Firmware Revision."
+		      
+	     ::= { ssEntry 24 }
+
+	ssController2HwRev OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The Secondary Controller's Hardware Revision."
+		      
+	     ::= { ssEntry 25 }
+
+	ssUpsStatus OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          upsnotpresent(0),
+                          upspresent(1)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "Uninterruptable Power Supply status (Currently for future use)."
+	      
+	     ::= { ssEntry 26 }
+
+	ssLunStatus OBJECT-TYPE
+            SYNTAX  INTEGER  {
+                          good(0),
+                          reduced(1),
+			  reconstruct(2),
+		          failure(4)
+                      }
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "LUN status."
+	      
+	     ::= { ssEntry 27 }
+
+	ssDiskName OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The name of disk with state change."
+		      
+	     ::= { ssEntry 28 }
+
+	ssPowerSupplyLocation OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The location of power supply with state change."
+		      
+	     ::= { ssEntry 29 }
+
+	ssFanLocation OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The location of fan with state change."
+		      
+	     ::= { ssEntry 30 }
+
+	ssCacheBatteryLocation OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The location of controller cache battery with state change."
+		      
+	     ::= { ssEntry 31 }
+
+	ssTemperatureSensorLocation OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The location of temperature sensor with state change."
+		      
+	     ::= { ssEntry 32 }
+
+	ssCabinetNumber OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The current cabinet number which has FRU state change."
+		      
+	     ::= { ssEntry 33 }
+
+	ssLunName OBJECT-TYPE
+	     SYNTAX  DisplayString
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The name of the LUN with a state change."
+		      
+	     ::= { ssEntry 34 }
+
+	ssDiskPort OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The current disk channel number."
+		      
+	     ::= { ssEntry 35 }
+
+	ssDiskTarget OBJECT-TYPE
+	     SYNTAX  INTEGER
+	     ACCESS  read-only
+	     STATUS  mandatory
+	     DESCRIPTION
+		     "The current disk SCSI Target ID."
+		      
+	     ::= { ssEntry 36 }
+
+-- Traps
+
+   diskFailureTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssDiskName,     
+                     ssCabinetNumber,
+                     ssDiskPort,
+                     ssDiskTarget
+                   }
+        DESCRIPTION
+            "A disk drive has failed.
+
+             Details:
+
+             A disk device has failed.  
+
+             User Action:
+
+             Replace the disk device."
+
+	     --#TYPE      "Disk device has failed"
+             --#SUMMARY   "Disk %s in cabinet %d located on port %d; target %d on host: %s; subsystem: %s has failed."
+             --#ARGUMENTS {2,3,4,5,0,1}
+             --#SEVERITY  MAJOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 1
+
+   diskInformationTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssDiskName,    
+                     ssCabinetNumber,
+                     ssDiskPort,
+                     ssDiskTarget
+
+                   }
+        DESCRIPTION
+            "A disk drive has recovered.
+
+             Details:
+
+             A disk device has recovered. 
+ 
+             User Action:
+
+             None."
+
+	     --#TYPE      "Disk device has recovered"
+             --#SUMMARY   "Disk %s in cabinet %d located on channel %d; target %d on host: %s; subsystem: %s has recovered."
+             --#ARGUMENTS {2,3,4,5,0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 2
+
+   powerSupplyFailureTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssCabinetNumber,
+                     ssPowerSupplyLocation
+                   }
+        DESCRIPTION
+            "One power supply has failed.
+
+             Details:
+
+             The power supply in the specified location has failed.
+
+             User Action:
+
+             Replace power supply."
+
+	     --#TYPE      "Power supply device has failed"
+             --#SUMMARY	  "Power supply %d in cabinet %d on host: %s; subsystem: %s has failed."
+             --#ARGUMENTS {3,2,0,1}
+             --#SEVERITY  MAJOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 3
+
+   powerSupplyInformationTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssCabinetNumber,
+                     ssPowerSupplyLocation
+                   }
+        DESCRIPTION
+            "Power supply has recovered.
+
+             Details:
+
+             The power supply in the specified location has gone from BAD to good.
+
+             User Action:
+
+             None."
+
+	     --#TYPE      "Power supply device has recovered"
+             --#SUMMARY	  "Power supply %d in cabinet %d on host: %s; subsystem: %s has recovered."
+             --#ARGUMENTS {3,2,0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 4
+
+   fanFailureTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssCabinetNumber,
+                     ssFanLocation
+                   }
+        DESCRIPTION
+            "A fan has failed.
+
+             Details:
+
+             The fan in the specified location has failed.
+
+             User Action:
+
+             Replace fan."
+
+	     --#TYPE      "Fan device has failed"
+             --#SUMMARY   "Fan %d in cabinet %d on host: %s; subsystem: %s has failed."
+             --#ARGUMENTS {3,2,0,1}
+             --#SEVERITY  MAJOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 5
+
+   fanInformationTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssCabinetNumber,
+                     ssFanLocation
+                   }
+        DESCRIPTION
+            "A fan has recovered.
+
+             Details:
+
+             The fan in the specified location has recovered.
+
+             User Action:
+
+             None."
+
+	     --#TYPE      "Fan device has recovered"
+             --#SUMMARY	  "Fan %d in cabinet %d on host: %s; subsystem: %s has recovered."
+             --#ARGUMENTS {3,2,0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 6
+
+   cacheBatteryFailureTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+		     ssCacheBatteryLocation
+                   }
+        DESCRIPTION
+            "A controller cache battery has failed.
+
+             Details:
+
+             The cache battery in specified location has failed.
+
+             User Action:
+
+             Replace cache battery or replenish charge."
+
+	     --#TYPE      "Cache battery device has failed"
+             --#SUMMARY	  "Cache Battery %d on host: %s; subsystem: %s has failed."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  MAJOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 7
+
+   cacheBatteryLowTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+		     ssCacheBatteryLocation
+                   }
+        DESCRIPTION
+            "A controller cache battery has LOW state.
+
+             Details:
+
+             The cache battery in specified location has LOW state.
+
+             User Action:
+
+             Replace cache battery or replenish charge."
+
+	     --#TYPE      "Cache battery device has LOW state"
+             --#SUMMARY   "Cache Battery %d on host: %s; subsystem: %s has LOW state."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  MINOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 8
+
+   cacheBatteryInformationTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+		     ssCacheBatteryLocation
+                   }
+        DESCRIPTION
+            "A controller cache battery has good state.
+
+             Details:
+
+             The cache battery in specified location has good state.
+
+             User Action:
+
+             None."
+
+	     --#TYPE      "Cache battery device has good state"
+             --#SUMMARY	  "Cache Battery %d on host: %s; subsystem: %s has good state."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 9
+
+   temperatureOverThresholdTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssCabinetNumber,
+                     ssTemperatureSensorLocation
+                   }
+        DESCRIPTION
+            "A temperature sensor has exceeded WARNING threshold limit.
+
+             Details:
+
+             The temperature sensor in the specified location has exceeded WARNING threshold limit.
+
+             User Action:
+
+             Lower environmental temperature or raise internal threshold limit depending upon application."
+
+	     --#TYPE      "Temperature device has exceeded WARNING threshold limit"
+             --#SUMMARY   "Temperature Sensor %d in cabinet %d on host: %s; subsystem: %s has exceeded WARNING threshold limit."
+             --#ARGUMENTS {3,2,0,1}
+             --#SEVERITY  MAJOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 10
+
+   temperatureInformationTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssCabinetNumber,
+                     ssTemperatureSensorLocation
+                   }
+        DESCRIPTION
+            "A temperature sensor indicates temperature below WARNING threshold limit.
+
+             Details:
+
+             The temperature sensor in the specified location indicates below WARNING threshold limit.
+
+             User Action:
+
+             None."
+
+	     --#TYPE      "Temperature device indicates below WARNING threshold limit"
+             --#SUMMARY	  "Temperature Sensor %d in cabinet %d on host: %s; subsystem: %s has recovered below WARNING threshold limit."
+             --#ARGUMENTS {3,2,0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 11
+
+   communicationFailureTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName 
+                   }
+        DESCRIPTION
+            "Communication with the subsystem has failed.
+
+             Details:
+
+             The Agent lost communication with subsystem.
+
+             User Action:
+
+             Possible causes are data path interruption, 
+             communication LUN failure, 
+             2 or more power supplies failed,
+             2 or more fans failed, 
+             temperature overlimit, 
+             both controllers failed."
+
+
+	     --#TYPE      "Agent communication with subsystem lost."
+             --#SUMMARY   "Agent on host: %s; subsystem: %s has lost communication with subsystem."
+             --#ARGUMENTS {0,1}
+             --#SEVERITY  CRITICAL
+             --#TIMEINDEX 1
+             --#STATE     NONOPERATIONAL
+
+        ::= 12
+
+   communicationInformationTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName 
+                   }
+        DESCRIPTION
+            "Communication with the subsystem has recovered.
+
+             Details:
+
+             The Agent recovered communication with subsystem.
+
+             User Action:
+	    
+             None."
+
+
+	     --#TYPE      "Agent communication with subsystem recovered."
+             --#SUMMARY	  "Agent on host: %s; subsystem: %s has recovered communication with subsystem."
+             --#ARGUMENTS {0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 13
+
+   controllerFailureTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName 
+                   }
+        DESCRIPTION
+            "The Secondary Controller in the subsytem has failed.
+
+             Details:
+
+             The Secondary Controller has failed.
+
+             User Action:
+
+             Replace controller.  Possible causes are PCMCIA memory card ejected, 
+             controller physically removed, 
+             actual hardware failure."
+
+	     --#TYPE      "The Secondary Controller has failed."
+             --#SUMMARY	  "The Secondary Controller on host: %s; subsystem: %s has failed."
+             --#ARGUMENTS {0,1}
+             --#SEVERITY  MAJOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 14
+
+   controllerInformationTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName 
+                   }
+        DESCRIPTION
+            "The Secondary Controller in the subsytem has recovered.
+
+             Details:
+
+             The Secondary Controller has recovered.
+
+             User Action:
+
+             None."
+
+	     --#TYPE      "The Secondary Controller has recovered."
+             --#SUMMARY   "The Secondary Controller on host: %s; subsystem: %s has recovered."
+             --#ARGUMENTS {0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 15
+
+   lunFailureTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssLunName     
+                   }
+        DESCRIPTION
+            "A LUN has failed.
+
+             Details:
+
+             The LUN has failed and is off-line.
+
+             User Action:
+
+             Possible cause is too many failed disk drives that make up the LUN,
+	     the OS can no longer communicate with the LUN for other reasons."
+
+	     --#TYPE      "A LUN has failed."
+             --#SUMMARY	  "LUN %s on host: %s; subsystem: %s has failed."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  CRITICAL
+             --#TIMEINDEX 1
+             --#STATE     NONOPERATIONAL
+
+        ::= 16
+
+   lunReconstructTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssLunName     
+                   }
+        DESCRIPTION
+            "A LUN has started the reconstruction process.
+
+             Details:
+
+             The LUN has started the reconstruction process but is available for normal use.
+             Possible causes are an available disk drive was created as a spare to be inserted into the set,
+             an existing spare was automatically added to the set for reconstruction upon failure of a member disk device.
+
+             User Action:
+		
+             None."
+
+	     --#TYPE      "A LUN has started the reconstruction process."
+             --#SUMMARY	  "LUN %s on host: %s; subsystem: %s in now in reconstruct mode."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  MINOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 17
+
+   lunReducedTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssLunName     
+                   }
+        DESCRIPTION
+            "A LUN has become degraded.
+
+             Details:
+
+             A LUN has become degraded due to a member disk device failure.
+
+             User Action:
+		
+             Replace the failed disk device; add a spare to the system to cause a reconstruct."
+
+	     --#TYPE      "A LUN has become degraded."
+             --#SUMMARY	  "LUN %s on host: %s; subsystem: %s in now degraded."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  MAJOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 18
+
+   lunInformationTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssLunName     
+                   }
+        DESCRIPTION
+            "A LUN has become optimal.
+
+             Details:
+
+             A LUN has become optimal due to a successful completion of the reconstruction process.
+
+             User Action:
+		
+             None."
+
+	     --#TYPE      "A LUN has become optimal."
+             --#SUMMARY	  "LUN %s on host: %s; subsystem: %s in now optimal."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 19
+
+   externalInputFailureTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssCabinetNumber
+                   }
+        DESCRIPTION
+            "The user-defined External Input to the EMU indicates a failure.
+
+             Details:
+
+             The External Input to the EMU indicates a failure.
+
+             User Action:
+
+             If the state of the is FAILURE, then one of the user-defined external input 
+             devices is reporting a problem."
+
+	     --#TYPE      "The External Input to the EMU indicates a failure."
+             --#SUMMARY	  "The External Input to the EMU in cabinet %d on host: %s; subsystem: %s indicates a failure."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  MAJOR
+             --#TIMEINDEX 1
+             --#STATE     DEGRADED
+
+        ::= 20
+
+   externalInputInformationTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+                     ssCabinetNumber
+                   }
+        DESCRIPTION
+            "The user-defined External Input to the EMU indicates a recovery.
+
+             Details:
+
+             The External Input to the EMU indicates a recovery.
+
+             User Action:
+		
+             None."
+
+	     --#TYPE      "The External Input to the EMU indicates a recovery."
+             --#SUMMARY	  "The External Input to the EMU in cabinet %d on host: %s; subsystem: %s indicates a recovery."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 21
+
+   cacheBatteryStateUnknownTrap TRAP-TYPE
+        ENTERPRISE raidmanager
+        VARIABLES  { agHostName,    -- or sysName,
+                     ssSubsysName, 
+		     ssCacheBatteryLocation
+                   }
+        DESCRIPTION
+            "A controller cache battery has unknown state.
+
+             Details:
+
+             The cache battery in specified location has an unknown state.
+
+             User Action:
+
+             None."
+
+	     --#TYPE      "Cache battery device has unknown state"
+             --#SUMMARY	  "Cache Battery %d on host: %s; subsystem: %s has unknown state."
+             --#ARGUMENTS {2,0,1}
+             --#SEVERITY  INFORMATIONAL
+             --#TIMEINDEX 1
+             --#STATE     OPERATIONAL
+
+        ::= 22
+
+	END
+

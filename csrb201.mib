@@ -1,0 +1,116 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-SOURCE-ROUTING-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion Source Routing MIB Release 2.0.0
+-- Revision 03/20/96
+
+-- Copyright 1994-96 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	EnableIndicator
+		FROM CENTILLION-ROOT-MIB
+	cndot1dSr
+		FROM CENTILLION-BRIDGE-MIB
+	OBJECT-TYPE
+		FROM RFC-1212;
+
+
+-- SECTION 2: Source Routing Port Table 
+
+cndot1dSrPortTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF Cndot1dSrPortEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A table that contains information about every
+		port that is associated with this source route
+		bridge."
+	::= { cndot1dSr 1 }
+
+cndot1dSrPortEntry OBJECT-TYPE
+	SYNTAX  Cndot1dSrPortEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of information for each port of a source
+		route bridge."
+	INDEX   { cndot1dSrPort }
+	::= { cndot1dSrPortTable 1 }
+
+Cndot1dSrPortEntry ::= SEQUENCE {
+	cndot1dSrPort
+		INTEGER,
+	cndot1dSrPortAREHopCount
+		INTEGER,
+	cndot1dSrPortSTEHopCount
+		INTEGER
+	}
+
+cndot1dSrPort OBJECT-TYPE
+	SYNTAX  INTEGER (1..65535)
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The port number of the port for which this entry
+		contains Source Route management information."
+	::= { cndot1dSrPortEntry 1 }
+
+cndot1dSrPortAREHopCount OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-write
+	STATUS  mandatory
+	DESCRIPTION
+		"The maximum number of routing descriptors allowed
+		in an All Paths Explorer frames."
+	::= { cndot1dSrPortEntry 2 }
+
+cndot1dSrPortSTEHopCount OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-write
+	STATUS  mandatory
+	DESCRIPTION
+		"The maximum number of routing descriptors allowed
+		in an Spanning Tree Explorer frames."
+	::= { cndot1dSrPortEntry 3 }
+
+cndot1dSrExplorerProxy OBJECT-TYPE
+	SYNTAX  EnableIndicator
+	ACCESS  read-write
+	STATUS  mandatory
+	DESCRIPTION
+		"Indicates whether the bridge proxies explorer
+		packets."
+	::= { cndot1dSr 3 }
+
+cndot1dSrBridgeNum OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+               "A bridge number uniquely identifies a bridge when
+                more than one bridge is used to span the same two
+                segments.  Current source routing protocols limit
+                this value to the range: 0 through 15. A value of
+                65535 signifies that no bridge number is assigned
+                to this bridge. This bridge number is global to a
+                SR bridge group. That is all local segments defined
+                to a SR bridge group will use the same bridge number."
+	::= { cndot1dSr 4 }
+
+END

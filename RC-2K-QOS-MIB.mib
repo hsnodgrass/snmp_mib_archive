@@ -1,0 +1,1324 @@
+
+RC-2K-QOS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter64
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex 
+        FROM IF-MIB
+    rc2kQos
+        FROM RC-2K-MIB
+    EnableValue
+        FROM RAPID-CITY;
+
+rc2kQosMib MODULE-IDENTITY
+       LAST-UPDATED     "200809260000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+       
+       REVISION "200809260000Z" -- 26 Sept 2008
+       DESCRIPTION "Version 11: Added rc2kQosFabricInterfaceStatsTable, rc2kQosFabricInterfaceStatsEntry,
+                                                         Rc2kQosFabricInterfaceStatsEntry, rc2kQosFabricInterfaceStatsSlotNumber,
+                                                         rc2kQosFabricInterfaceStatsLaneNumber, rc2kQosFabricInterfaceStatsFOQDropEvents,
+                                                         rc2kQosFabricInterfaceStatsFOQTotalDropEvents, rc2kQosFabricInterfaceStatsFabricDropEvents ,
+                                                         rc2kQosFabricInterfaceStatsFabricTotalDropEvents   "
+
+       REVISION "200807100000Z" -- 10 July 2008
+       DESCRIPTION "Version 10: Added rc2kQos 20-23"	   
+
+       REVISION "200805180000Z" -- 18 May 2008
+       DESCRIPTION "Version 9: Fixed new smilint errors."
+
+       REVISION "200805090000Z" -- 09 May 2008
+       DESCRIPTION "Version 8: Fixed smilint errors."
+
+       REVISION "200803140000Z" -- 14 March 2008
+       DESCRIPTION "Version 7: Modified rc2kQosDECoding,
+	                       Added rc2kQosUseCfiAsDei"	   
+
+       REVISION "200712060000Z" -- 06 December 2007
+       DESCRIPTION "Version 6: Added rc2kQos 15-18"
+
+       REVISION "200705140000Z" -- 14 May 2007
+       DESCRIPTION "Version 5: Corrected rc2kQosEgressRedColorQosToTagOutIeee8021P,
+ 					 rc2kQosEgressYellowColorQosToTagOutIeee8021P and
+					 rc2kQosEgressGreenColorQosToTagOutIeee8021P to read-write"
+
+       REVISION "200704160000Z" -- 16 Apr 2007
+       DESCRIPTION "Version 4: Added rc2kQosQosDropThresholdPercentage,
+                                     rc2kQosQosDropActualPercentage and rc2kQosQosDropTrapState 
+                               Added rc2kQosEgressGreenColorQosToTagTable, rc2kQosEgressYellowColorQosToTagTable, 
+                                     rc2kQosWredThresholdMediumDropTable, rc2kQosWredThresholdLowDropTable and 
+                                     rc2kQosStatsTable"  
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rc2kQos 0 }
+
+-- 2k Qos
+
+rc2kQosQosTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosQosEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"This table is used to define the Quality Of
+			Service(QOS) profiles for the system.  The system 
+			can support eight different QOS levels.  Each QOS
+			level can be individually configured." 
+        ::= { rc2kQos 1 }
+
+rc2kQosQosEntry OBJECT-TYPE
+        SYNTAX        	Rc2kQosQosEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"QOS profile entry."
+        INDEX         	{ rc2kQosQosRow }
+        ::= { rc2kQosQosTable 1 }
+
+Rc2kQosQosEntry ::= SEQUENCE {
+                rc2kQosQosRow INTEGER,
+                rc2kQosQosLevel INTEGER,
+                rc2kQosQosName DisplayString,
+                rc2kQosQosAdminWeight Integer32,
+                rc2kQosQosOperWeight Integer32,
+                rc2kQosOctapidMode INTEGER,	--excluded
+                rc2kQosQosAdminThreshold INTEGER,
+                rc2kQosQosOperThreshold INTEGER,
+                rc2kQosPidMode INTEGER,
+	        rc2kQosQosDropThresholdPercentage INTEGER,
+		rc2kQosQosDropActualPercentage INTEGER,
+		rc2kQosQosDropTrapState EnableValue
+
+        }
+
+rc2kQosQosRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..8)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosQosEntry 1 }
+
+rc2kQosQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "QOS level"
+        ::= { rc2kQosQosEntry 2 }
+
+rc2kQosQosName OBJECT-TYPE
+        SYNTAX        	DisplayString (SIZE (0..20))
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Qos level name"
+        ::= { rc2kQosQosEntry 3 }
+
+rc2kQosQosAdminWeight OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Administrative transmit opportunity percentage"
+        ::= { rc2kQosQosEntry 4 }
+
+rc2kQosQosOperWeight OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Operational transmit opportunity percentage"
+        ::= { rc2kQosQosEntry 5 }
+
+rc2kQosOctapidMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          modeSingle(1),
+                          mode100(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Octapid mode"
+        ::= { rc2kQosQosEntry 6 }
+
+rc2kQosQosAdminThreshold OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          none(0),
+                          oneEight(1),
+                          oneQuarter(2),
+                          threeEight(3),
+                          halfSdram(4),
+                          fiveEight(5),
+                          threeQuarter(6),
+                          sevenEights(7),
+                          allSdram(8),
+                          notpresent(9)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Administrative queue threshold"
+        ::= { rc2kQosQosEntry 7 }
+
+rc2kQosQosOperThreshold OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          none(0),
+                          oneEight(1),
+                          oneQuarter(2),
+                          threeEight(3),
+                          halfSdram(4),
+                          fiveEight(5),
+                          threeQuarter(6),
+                          sevenEights(7),
+                          allSdram(8),
+                          notpresent(9)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Operational queue threshold"
+        ::= { rc2kQosQosEntry 8 }
+
+rc2kQosPidMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          modeSingle(1),
+                          mode100(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Pid mode"
+        ::= { rc2kQosQosEntry 9 }
+rc2kQosQosDropThresholdPercentage OBJECT-TYPE
+        SYNTAX        	INTEGER (0..100)
+        MAX-ACCESS    	read-write
+        STATUS          current
+        DESCRIPTION   	"The threshold percentage for QoS trap timer
+			 for a particular queuing class"  
+        DEFVAL        	{ 0 }
+        ::= { rc2kQosQosEntry 10 }
+
+rc2kQosQosDropActualPercentage OBJECT-TYPE
+        SYNTAX        	INTEGER (0..100)
+        MAX-ACCESS    	read-only
+        STATUS          current
+        DESCRIPTION   	"The actual page drop percentage on a queue"
+	DEFVAL		{ 0 }
+        ::= { rc2kQosQosEntry 11 }
+
+rc2kQosQosDropTrapState OBJECT-TYPE
+        SYNTAX        	EnableValue
+        MAX-ACCESS    	read-write
+        STATUS          current
+        DESCRIPTION   	"Disable/enable page drop traps
+			 for a particular queuing class"  
+        DEFVAL        	{ enable }
+        ::= { rc2kQosQosEntry 12 }
+
+-- 2k Qos Ingress Tag To Qos Table
+
+rc2kQosIngressTagToQosTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosIngressTagToQosEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"This table is used to specify the 802.1P
+			to QOS (802.1P->QOS) mapping on packet 
+			ingress."
+        ::= { rc2kQos 2 }
+
+rc2kQosIngressTagToQosEntry OBJECT-TYPE
+        SYNTAX        	Rc2kQosIngressTagToQosEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"Entry containing infomation of 8021P->Qos mapping"
+        INDEX         	{ rc2kQosIngressTagToQosRow }
+        ::= { rc2kQosIngressTagToQosTable 1 }
+
+Rc2kQosIngressTagToQosEntry ::= SEQUENCE {
+                rc2kQosIngressTagToQosRow INTEGER,
+                rc2kQosIngressTagToQosInIeee8021P INTEGER,
+                rc2kQosIngressTagToQosQosLevel INTEGER
+        }
+
+rc2kQosIngressTagToQosRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..8)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosIngressTagToQosEntry 1 }
+
+rc2kQosIngressTagToQosInIeee8021P OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "802.1P"
+        ::= { rc2kQosIngressTagToQosEntry 2 }
+
+rc2kQosIngressTagToQosQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Qos level"
+        ::= { rc2kQosIngressTagToQosEntry 3 }
+
+-- 2k Ingress DsField To Qos Table
+
+rc2kQosIngressDsFieldToQosTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosIngressDsFieldToQosEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	deprecated
+	DESCRIPTION	"This table is used to specify the DSCP
+			field to QOS (DsField->QOS) mapping on
+			packet ingress."
+        ::= { rc2kQos 3 }
+
+rc2kQosIngressDsFieldToQosEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosIngressDsFieldToQosEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing infomation of DsField->Qos mapping"
+        INDEX         { rc2kQosIngressDsFieldToQosRow }
+        ::= { rc2kQosIngressDsFieldToQosTable 1 }
+
+Rc2kQosIngressDsFieldToQosEntry ::= SEQUENCE {
+                rc2kQosIngressDsFieldToQosRow INTEGER,
+                rc2kQosIngressDsFieldToQosInDsField INTEGER,
+                rc2kQosIngressDsFieldToQosQosLevel INTEGER
+        }
+
+rc2kQosIngressDsFieldToQosRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..64)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosIngressDsFieldToQosEntry 1 }
+
+rc2kQosIngressDsFieldToQosInDsField OBJECT-TYPE
+        SYNTAX        INTEGER (0..63)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "diffserv dsField"
+        ::= { rc2kQosIngressDsFieldToQosEntry 2 }
+
+rc2kQosIngressDsFieldToQosQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "qos level"
+        ::= { rc2kQosIngressDsFieldToQosEntry 3 }
+
+-- 2k Egress Qos To Tag Table
+
+rc2kQosEgressQosToTagTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosEgressQosToTagEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION  	"This table is used to specify the QOS to
+			802.1P (QOS->802.1P) mapping on packet
+			egress."
+        ::= { rc2kQos 4 }
+
+rc2kQosEgressQosToTagEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosEgressQosToTagEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Qos->Qos mapping"
+        INDEX         { rc2kQosEgressQosToTagRow }
+        ::= { rc2kQosEgressQosToTagTable 1 }
+
+Rc2kQosEgressQosToTagEntry ::= SEQUENCE {
+                rc2kQosEgressQosToTagRow INTEGER,
+                rc2kQosEgressQosToTagQosLevel INTEGER,
+                rc2kQosEgressQosToTagOutIeee8021P INTEGER
+        }
+
+rc2kQosEgressQosToTagRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..8)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosEgressQosToTagEntry 1 }
+
+rc2kQosEgressQosToTagQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "qos level"
+        ::= { rc2kQosEgressQosToTagEntry 2 }
+
+rc2kQosEgressQosToTagOutIeee8021P OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "802.1P"
+        ::= { rc2kQosEgressQosToTagEntry 3 }
+
+-- 2k Egress Qos To DsField Table
+
+rc2kQosEgressQosToDsFieldTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosEgressQosToDsFieldEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	deprecated
+        DESCRIPTION   	"This table is used to specify the QOS to
+			DSCP field (QOS->DsField) mapping on packet
+			egress."
+        ::= { rc2kQos 5 }
+
+rc2kQosEgressQosToDsFieldEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosEgressQosToDsFieldEntry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing infomation of Qos->Qos mapping"
+        INDEX         { rc2kQosEgressQosToDsFieldRow }
+        ::= { rc2kQosEgressQosToDsFieldTable 1 }
+
+Rc2kQosEgressQosToDsFieldEntry ::= SEQUENCE {
+                rc2kQosEgressQosToDsFieldRow INTEGER,
+                rc2kQosEgressQosToDsFieldQosLevel INTEGER,
+                rc2kQosEgressQosToDsFieldOutDsField INTEGER
+        }
+
+rc2kQosEgressQosToDsFieldRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..8)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosEgressQosToDsFieldEntry 1 }
+
+rc2kQosEgressQosToDsFieldQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "qos level"
+        ::= { rc2kQosEgressQosToDsFieldEntry 2 }
+
+rc2kQosEgressQosToDsFieldOutDsField OBJECT-TYPE
+        SYNTAX        INTEGER (0..63)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "diffserv dsField"
+        ::= { rc2kQosEgressQosToDsFieldEntry 3 }
+
+-- 2k Traffic Profile Table
+
+rc2kQosTrafficProfileTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosTrafficProfileEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"This table is used to specify traffic profiles 
+			for the system.  These traffic profiles are
+			used for policying purposes to guarantee streams
+			of traffic do not egress the system above a
+			certain rate.  These traffic profiles are applied
+			in the 'rcIpFilterTable'."
+        ::= { rc2kQos 6 }
+
+rc2kQosTrafficProfileEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosTrafficProfileEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Qos->Qos mapping"
+        INDEX         { rc2kQosTrafficProfileId }
+        ::= { rc2kQosTrafficProfileTable 1 }
+
+Rc2kQosTrafficProfileEntry ::= SEQUENCE {
+                rc2kQosTrafficProfileId INTEGER,
+                rc2kQosTrafficProfileName DisplayString,
+                rc2kQosTrafficProfileEnable TruthValue,
+                rc2kQosTrafficProfileTranslateDscpEnable TruthValue,
+                rc2kQosTrafficProfileInProfileDscp DisplayString,
+                rc2kQosTrafficProfileOutProfileDscp DisplayString,
+                rc2kQosTrafficProfileDiscardEnable TruthValue,
+                rc2kQosTrafficProfileAverageRate Integer32,
+                rc2kQosTrafficProfilePeakRate Integer32,
+                rc2kQosTrafficProfileRowStatus RowStatus
+        }
+
+rc2kQosTrafficProfileId OBJECT-TYPE
+        SYNTAX        	INTEGER (1..64)
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Profile id"
+        ::= { rc2kQosTrafficProfileEntry 1 }
+
+rc2kQosTrafficProfileName OBJECT-TYPE
+        SYNTAX        	DisplayString (SIZE (0..32))
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Profile name"
+        ::= { rc2kQosTrafficProfileEntry 2 }
+
+rc2kQosTrafficProfileEnable OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Enable this entry"
+	DEFVAL		{ false }
+        ::= { rc2kQosTrafficProfileEntry 3 }
+
+rc2kQosTrafficProfileTranslateDscpEnable OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION    	"Used to specify whether translation of the DSCP
+			field should be performed.  If enabled, the value 
+			in the DSCP field for packets that fall within 
+			the traffic profile will get translated to
+			'rc2kQosTrafficProfileInProfileDscp'.  Packets
+			that fall outside the traffic profile will get
+			translated to 'rc2kQosTrafficProfileOutProfileDscp'.
+			If disabled, no translation is performed." 
+	DEFVAL		{ false }
+        ::= { rc2kQosTrafficProfileEntry 4 }
+
+rc2kQosTrafficProfileInProfileDscp OBJECT-TYPE
+        SYNTAX          DisplayString(SIZE(6))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to specify the DSCP value for 'good' packets."
+        ::= { rc2kQosTrafficProfileEntry 5 }
+
+rc2kQosTrafficProfileOutProfileDscp OBJECT-TYPE
+        SYNTAX          DisplayString(SIZE(6))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to specify the DSCP value for 'violation'
+                        packets."
+        ::= { rc2kQosTrafficProfileEntry 6 }
+
+rc2kQosTrafficProfileDiscardEnable OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to specify whether packets that fall outside
+			the traffic profile should be discarded."
+	DEFVAL		{ true }
+        ::= { rc2kQosTrafficProfileEntry 7 }
+
+rc2kQosTrafficProfileAverageRate OBJECT-TYPE
+        SYNTAX        	Integer32
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Average rate in packets per second."
+        ::= { rc2kQosTrafficProfileEntry 8 }
+
+rc2kQosTrafficProfilePeakRate OBJECT-TYPE
+        SYNTAX        	Integer32
+        MAX-ACCESS        	read-write
+        STATUS        	deprecated
+        DESCRIPTION   	"Peak rate in packets per second."
+        ::= { rc2kQosTrafficProfileEntry 9 }
+
+rc2kQosTrafficProfileRowStatus OBJECT-TYPE
+        SYNTAX        	RowStatus
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to create/delete entries."
+        ::= { rc2kQosTrafficProfileEntry 10 }
+
+-- 2k Ingress Dscp To Qos Table
+
+rc2kQosIngressDscpToQosTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF Rc2kQosIngressDscpToQosEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "This table is used to specify the DSCP to
+                        QOS (Dscp->QOS) mapping on packet ingress."
+        ::= { rc2kQos 7 }
+
+rc2kQosIngressDscpToQosEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosIngressDscpToQosEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing information of Dscp->Qos mapping"
+        INDEX         { rc2kQosIngressDscpToQosRow }
+        ::= { rc2kQosIngressDscpToQosTable 1 }
+
+Rc2kQosIngressDscpToQosEntry ::= SEQUENCE {
+                rc2kQosIngressDscpToQosRow INTEGER,
+                rc2kQosIngressDscpToQosInDscp INTEGER,
+                rc2kQosIngressDscpToQosInDscpBinaryFormat DisplayString,
+                rc2kQosIngressDscpToQosQosLevel INTEGER
+        }
+
+rc2kQosIngressDscpToQosRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..64)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosIngressDscpToQosEntry 1 }
+
+rc2kQosIngressDscpToQosInDscp OBJECT-TYPE
+        SYNTAX        INTEGER (0..63)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "A 6-bit value used to define the Differentiated
+                      Service Code Point(DSCP)."
+        ::= { rc2kQosIngressDscpToQosEntry 2 }
+
+rc2kQosIngressDscpToQosInDscpBinaryFormat OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(6))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The 'rc2kQosIngressDscpToQosInDscp' value shown
+                      in a binary format (network order)."
+        ::= { rc2kQosIngressDscpToQosEntry 3 }
+
+rc2kQosIngressDscpToQosQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "qos level"
+        ::= { rc2kQosIngressDscpToQosEntry 4 }
+
+
+-- 2k Egress Qos To Dscp Table
+
+rc2kQosEgressQosToDscpTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF Rc2kQosEgressQosToDscpEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "This table is used to specify the QOS to
+                        DSCP field (QOS->DsField) mapping on packet
+                        egress."
+        ::= { rc2kQos 8 }
+
+rc2kQosEgressQosToDscpEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosEgressQosToDscpEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Qos->Qos mapping"
+        INDEX         { rc2kQosEgressQosToDscpRow }
+        ::= { rc2kQosEgressQosToDscpTable 1 }
+
+Rc2kQosEgressQosToDscpEntry ::= SEQUENCE {
+                rc2kQosEgressQosToDscpRow INTEGER,
+                rc2kQosEgressQosToDscpQosLevel INTEGER,
+                rc2kQosEgressQosToDscpOutDscp INTEGER,
+                rc2kQosEgressQosToDscpOutDscpBinaryFormat DisplayString
+        }
+
+rc2kQosEgressQosToDscpRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..8)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosEgressQosToDscpEntry 1 }
+
+rc2kQosEgressQosToDscpQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "qos level"
+        ::= { rc2kQosEgressQosToDscpEntry 2 }
+
+rc2kQosEgressQosToDscpOutDscp OBJECT-TYPE
+        SYNTAX        INTEGER (0..63)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "A 6-bit value used to define the Differentiated
+                      Service Code Point(DSCP)."
+        ::= { rc2kQosEgressQosToDscpEntry 3 }
+
+rc2kQosEgressQosToDscpOutDscpBinaryFormat OBJECT-TYPE
+        SYNTAX        DisplayString(SIZE(6))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The 'rc2kQosEgressQosToDscpOutDscp' value show
+                      in a binary format (network order)."
+        ::= { rc2kQosEgressQosToDscpEntry 4 }
+
+-- 2k Egress Qos (For Green Color Packets ) To Tag Table
+
+rc2kQosEgressGreenColorQosToTagTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosEgressGreenColorQosToTagEntry
+        MAX-ACCESS      not-accessible
+        STATUS        	current
+        DESCRIPTION   	"This table is used to specify the green color
+			QOS to 802.1P (QOS -> 802.1P) mapping on packet 
+			egress."
+        ::= { rc2kQos 9 }
+
+rc2kQosEgressGreenColorQosToTagEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosEgressGreenColorQosToTagEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Qos -> Qos mapping
+                       for green colored packets."
+        INDEX         { rc2kQosEgressGreenColorQosToTagRow }
+        ::= { rc2kQosEgressGreenColorQosToTagTable 1 }
+
+Rc2kQosEgressGreenColorQosToTagEntry ::= SEQUENCE {
+                rc2kQosEgressGreenColorQosToTagRow          INTEGER,
+                rc2kQosEgressGreenColorQosToTagQosLevel     INTEGER,
+                rc2kQosEgressGreenColorQosToTagOutIeee8021P INTEGER
+        }
+
+rc2kQosEgressGreenColorQosToTagRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..8)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosEgressGreenColorQosToTagEntry 1 }
+
+rc2kQosEgressGreenColorQosToTagQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Qos level"
+        ::= { rc2kQosEgressGreenColorQosToTagEntry 2 }
+
+rc2kQosEgressGreenColorQosToTagOutIeee8021P OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "802.1P. This value shows the Pbit mapping with Qos
+                       level on the egress packet  "
+        ::= { rc2kQosEgressGreenColorQosToTagEntry 3 }
+
+-- 2k Egress Qos (For Yellow Color Packets ) To Tag Table
+
+rc2kQosEgressYellowColorQosToTagTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosEgressYellowColorQosToTagEntry
+        MAX-ACCESS      not-accessible
+        STATUS        	current
+        DESCRIPTION   	"This table is used to specify the yellow color
+			QOS to 802.1P (QOS -> 802.1P) mapping on packet 
+			egress."
+        ::= { rc2kQos 10 }
+
+rc2kQosEgressYellowColorQosToTagEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosEgressYellowColorQosToTagEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Qos -> Qos mapping
+                       for Yellow colored packets."
+        INDEX         { rc2kQosEgressYellowColorQosToTagRow }
+        ::= { rc2kQosEgressYellowColorQosToTagTable 1 }
+
+Rc2kQosEgressYellowColorQosToTagEntry ::= SEQUENCE {
+                rc2kQosEgressYellowColorQosToTagRow          INTEGER,
+                rc2kQosEgressYellowColorQosToTagQosLevel     INTEGER,
+                rc2kQosEgressYellowColorQosToTagOutIeee8021P INTEGER
+        }
+
+rc2kQosEgressYellowColorQosToTagRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..8)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosEgressYellowColorQosToTagEntry 1 }
+
+rc2kQosEgressYellowColorQosToTagQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Qos level"
+        ::= { rc2kQosEgressYellowColorQosToTagEntry 2 }
+
+rc2kQosEgressYellowColorQosToTagOutIeee8021P OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "802.1P, The value shows the Pbit Mapping with the Qos
+			level on Egress packet"
+        ::= { rc2kQosEgressYellowColorQosToTagEntry 3 }
+
+-- 2k Egress Qos (For Red Color Packets ) To Tag Table
+
+rc2kQosEgressRedColorQosToTagTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosEgressRedColorQosToTagEntry
+        MAX-ACCESS      not-accessible
+        STATUS        	current
+        DESCRIPTION   	"This table is used to specify the red color
+			QOS to 802.1P (QOS -> 802.1P) mapping on packet 
+			egress."
+        ::= { rc2kQos 11 }
+
+rc2kQosEgressRedColorQosToTagEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosEgressRedColorQosToTagEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Qos -> Qos mapping
+                       for red colored packets."
+        INDEX         { rc2kQosEgressRedColorQosToTagRow }
+        ::= { rc2kQosEgressRedColorQosToTagTable 1 }
+
+Rc2kQosEgressRedColorQosToTagEntry ::= SEQUENCE {
+                rc2kQosEgressRedColorQosToTagRow          INTEGER,
+                rc2kQosEgressRedColorQosToTagQosLevel     INTEGER,
+                rc2kQosEgressRedColorQosToTagOutIeee8021P INTEGER
+        }
+
+rc2kQosEgressRedColorQosToTagRow OBJECT-TYPE
+        SYNTAX        INTEGER (1..8)
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Used to uniquely identify a row in this table."
+        ::= { rc2kQosEgressRedColorQosToTagEntry 1 }
+
+rc2kQosEgressRedColorQosToTagQosLevel OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Qos level"
+        ::= { rc2kQosEgressRedColorQosToTagEntry 2 }
+
+rc2kQosEgressRedColorQosToTagOutIeee8021P OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "802.1P. The value shows the Pbit mapping with the Qos
+	               level of Egress packet"
+        ::= { rc2kQosEgressRedColorQosToTagEntry 3 }
+
+-- WRED THRESHOLD TABLE
+rc2kQosWredThreshold		OBJECT IDENTIFIER ::= { rc2kQos 12 }
+
+-- WRED THRESHOLD HIGH DROP TABLE
+rc2kQosWredThresholdHighDropTable	OBJECT-TYPE 
+	SYNTAX		SEQUENCE OF Rc2kQosWredThresholdHighDropEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"This table is used to specify the WRED drop 
+			thresholds for High Drop Curve Set"
+	::= { rc2kQosWredThreshold 1 }
+
+rc2kQosWredThresholdHighDropEntry	OBJECT-TYPE 
+	SYNTAX		Rc2kQosWredThresholdHighDropEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Entry containing information for different Qmin 
+			and Qmax for High Drop Curve Set"
+	INDEX		{ rc2kQosWredThresholdHighDropColor }
+	::= { rc2kQosWredThresholdHighDropTable 1 }
+
+Rc2kQosWredThresholdHighDropEntry ::=
+	SEQUENCE
+	{ 
+		rc2kQosWredThresholdHighDropColor	INTEGER,
+		rc2kQosWredThresholdHighDropQmin	INTEGER,
+		rc2kQosWredThresholdHighDropQmax	INTEGER
+	}
+
+rc2kQosWredThresholdHighDropColor	OBJECT-TYPE
+	SYNTAX		INTEGER
+			{
+			    green(1),
+			    yellow(2),
+			    red(3),
+			    uncolored(4)
+			}
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Colored Queue for WRED Threshold High Drop Curve Set."
+	::= { rc2kQosWredThresholdHighDropEntry 1 }
+
+rc2kQosWredThresholdHighDropQmin	OBJECT-TYPE
+	SYNTAX		INTEGER (1..100)
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Minimum drop threshold."
+	::= { rc2kQosWredThresholdHighDropEntry 2 }
+
+rc2kQosWredThresholdHighDropQmax	OBJECT-TYPE
+	SYNTAX		INTEGER (1..100)
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Maximum drop threshold."
+	::= { rc2kQosWredThresholdHighDropEntry 3 }
+
+-- WRED THRESHOLD MEDIUM DROP TABLE
+rc2kQosWredThresholdMediumDropTable	OBJECT-TYPE 
+	SYNTAX		SEQUENCE OF Rc2kQosWredThresholdMediumDropEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"This table is used to specify the WRED drop
+			thresholds for Medium Drop Curve Set"
+	::= { rc2kQosWredThreshold 2 }
+
+rc2kQosWredThresholdMediumDropEntry	OBJECT-TYPE 
+	SYNTAX		Rc2kQosWredThresholdMediumDropEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Entry containing information for different Qmin 
+			and Qmax for Medium Drop Curve Set"
+	INDEX		{ rc2kQosWredThresholdMediumDropColor }
+	::= { rc2kQosWredThresholdMediumDropTable 1 }
+
+Rc2kQosWredThresholdMediumDropEntry ::=
+	SEQUENCE
+	{
+		rc2kQosWredThresholdMediumDropColor	INTEGER,
+		rc2kQosWredThresholdMediumDropQmin	INTEGER,
+		rc2kQosWredThresholdMediumDropQmax	INTEGER
+	}
+
+rc2kQosWredThresholdMediumDropColor	OBJECT-TYPE
+	SYNTAX		INTEGER
+			{
+			    green(1),
+			    yellow(2),
+			    red(3),
+			    uncolored(4)
+			}
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Colored Queue for WRED Threshold Medium Drop Curve Set."
+	::= { rc2kQosWredThresholdMediumDropEntry 1 }
+
+rc2kQosWredThresholdMediumDropQmin	OBJECT-TYPE
+	SYNTAX		INTEGER (1..100)
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Minimum drop threshold."
+	::= { rc2kQosWredThresholdMediumDropEntry 2 }
+
+rc2kQosWredThresholdMediumDropQmax	OBJECT-TYPE
+	SYNTAX		INTEGER (1..100)
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Maximum drop threshold."
+	::= { rc2kQosWredThresholdMediumDropEntry 3 }
+
+-- WRED THRESHOLD LOW DROP TABLE
+rc2kQosWredThresholdLowDropTable	OBJECT-TYPE 
+	SYNTAX		SEQUENCE OF Rc2kQosWredThresholdLowDropEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"This table is used to specify the WRED drop 
+			thresholds for Low Drop Curve Set"
+	::= { rc2kQosWredThreshold 3 }
+
+rc2kQosWredThresholdLowDropEntry	OBJECT-TYPE 
+	SYNTAX		Rc2kQosWredThresholdLowDropEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Entry containing information for different 
+			Qmin and Qmax for Low Drop Curve Set"
+	INDEX		{ rc2kQosWredThresholdLowDropColor }
+	::= { rc2kQosWredThresholdLowDropTable 1 }
+
+Rc2kQosWredThresholdLowDropEntry ::=
+	SEQUENCE
+	{
+		rc2kQosWredThresholdLowDropColor	INTEGER,
+		rc2kQosWredThresholdLowDropQmin		INTEGER,
+		rc2kQosWredThresholdLowDropQmax		INTEGER
+	}
+
+rc2kQosWredThresholdLowDropColor	OBJECT-TYPE
+	SYNTAX		INTEGER
+			{
+			    green(1),
+			    yellow(2),
+			    red(3),
+			    uncolored(4)
+			}
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Colored Queue for WRED Threshold Low Drop Curve Set."
+	::= { rc2kQosWredThresholdLowDropEntry 1 }
+
+rc2kQosWredThresholdLowDropQmin	OBJECT-TYPE
+	SYNTAX		INTEGER (1..100)
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Minimum drop threshold."
+	::= { rc2kQosWredThresholdLowDropEntry 2 }
+
+rc2kQosWredThresholdLowDropQmax	OBJECT-TYPE
+	SYNTAX		INTEGER (1..100)
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Maximum drop threshold."
+	::= { rc2kQosWredThresholdLowDropEntry 3 }
+
+-- 2k Qos Traps due to page drop
+rc2kQosDropTrapTimer OBJECT-TYPE
+        SYNTAX        	INTEGER (0..1440)
+        MAX-ACCESS    	read-write
+        STATUS          current
+        DESCRIPTION   	"The timer settings for traps being sent 
+		         on discard of packets on QoS queues"
+        DEFVAL          { 900 }
+        ::= { rc2kQos 13 }
+
+-- 2k QoS Egress Queue Stats
+rc2kQosStatsTable OBJECT-TYPE
+	SYNTAX        SEQUENCE OF Rc2kQosStatsEntry
+	MAX-ACCESS    not-accessible
+	STATUS        current
+	DESCRIPTION   "This table contains Qos statistic of the for all interface. 
+	               Which includes Pbit Tx and drop by pages in 8 Qos level"
+	::= { rc2kQos 14 }
+
+
+rc2kQosStatsEntry OBJECT-TYPE
+	SYNTAX        Rc2kQosStatsEntry
+	MAX-ACCESS    not-accessible
+	STATUS        current
+	DESCRIPTION   "Qos Statistics table entry contain the pbit Tx and dorp of a interface"
+	INDEX         {rc2kQosStatsIfIndex}
+	::= { rc2kQosStatsTable 1 }
+ 
+Rc2kQosStatsEntry ::=
+	SEQUENCE {
+		rc2kQosStatsIfIndex   	 InterfaceIndex,
+		rc2kQosStatsTxPbit0Pages Counter64,
+		rc2kQosStatsDrPbit0Pages Counter64,
+		rc2kQosStatsTxPbit1Pages Counter64,
+		rc2kQosStatsDrPbit1Pages Counter64,
+		rc2kQosStatsTxPbit2Pages Counter64,
+		rc2kQosStatsDrPbit2Pages Counter64,
+		rc2kQosStatsTxPbit3Pages Counter64,
+		rc2kQosStatsDrPbit3Pages Counter64,
+		rc2kQosStatsTxPbit4Pages Counter64,
+		rc2kQosStatsDrPbit4Pages Counter64,
+		rc2kQosStatsTxPbit5Pages Counter64,
+		rc2kQosStatsDrPbit5Pages Counter64,
+		rc2kQosStatsTxPbit6Pages Counter64,
+		rc2kQosStatsDrPbit6Pages Counter64,
+		rc2kQosStatsTxPbit7Pages Counter64,
+		rc2kQosStatsDrPbit7Pages Counter64
+		}
+
+rc2kQosStatsIfIndex OBJECT-TYPE
+       SYNTAX        InterfaceIndex
+       MAX-ACCESS    not-accessible
+       STATUS        current
+       DESCRIPTION   "port number"
+       ::= { rc2kQosStatsEntry 1 }
+
+rc2kQosStatsTxPbit0Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Transmitted for p-bit 0"
+       ::= { rc2kQosStatsEntry 2 }
+
+rc2kQosStatsDrPbit0Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Dropped for p-bit 0"
+       ::= { rc2kQosStatsEntry 3 }
+
+rc2kQosStatsTxPbit1Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Transmitted for p-bit 1"
+       ::= { rc2kQosStatsEntry 4 }
+
+rc2kQosStatsDrPbit1Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Dropped for p-bit 1"
+       ::= { rc2kQosStatsEntry 5 }
+
+rc2kQosStatsTxPbit2Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Transmitted for p-bit 2"
+       ::= { rc2kQosStatsEntry 6 }
+
+rc2kQosStatsDrPbit2Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Dropped for p-bit 2"
+       ::= { rc2kQosStatsEntry 7 }
+
+rc2kQosStatsTxPbit3Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Transmitted for p-bit 3"
+       ::= { rc2kQosStatsEntry 8 }
+
+rc2kQosStatsDrPbit3Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Dropped for p-bit 3"
+       ::= { rc2kQosStatsEntry 9 }
+
+rc2kQosStatsTxPbit4Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Transmitted for p-bit 4"
+       ::= { rc2kQosStatsEntry 10 }
+
+rc2kQosStatsDrPbit4Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Dropped for p-bit 4"
+       ::= { rc2kQosStatsEntry 11 }
+
+rc2kQosStatsTxPbit5Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Transmitted for p-bit 5"
+       ::= { rc2kQosStatsEntry 12 }
+
+rc2kQosStatsDrPbit5Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Dropped for p-bit 5"
+       ::= { rc2kQosStatsEntry 13 }
+
+rc2kQosStatsTxPbit6Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Transmitted for p-bit 6"
+       ::= { rc2kQosStatsEntry 14 }
+
+rc2kQosStatsDrPbit6Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Dropped for p-bit 6"
+       ::= { rc2kQosStatsEntry 15 }
+
+rc2kQosStatsTxPbit7Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Transmitted for p-bit 7"
+       ::= { rc2kQosStatsEntry 16 }
+
+rc2kQosStatsDrPbit7Pages OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Pages Dropped for p-bit 7"
+       ::= { rc2kQosStatsEntry 17 }
+
+-- 2k Qos PCP Table
+rc2kQosDECoding		OBJECT-TYPE
+        SYNTAX        	INTEGER
+			{
+			   ad8p0d(1),
+			   ad7p1d(2),
+			   ad6p2d(3),
+			   m7p1d(4),
+			   m6p2d(5),
+			   m5p3d(6),
+			   dei(7)
+			}
+        MAX-ACCESS    	read-write
+        STATUS          current
+        DESCRIPTION   	"This indicates the DE Coding 
+			 that should be used"
+        DEFVAL          { ad8p0d }
+        ::= { rc2kQos 15 }
+
+
+-- 2k Qos Combine Pass Drop (PnD) Queue Bandwidth
+rc2kQosCombinePassDropQueueBW	OBJECT-TYPE
+        SYNTAX		TruthValue
+        MAX-ACCESS	read-write
+        STATUS		current
+        DESCRIPTION	"Combine Pass-Drop queue bandwidth"
+        DEFVAL		{ false }
+        ::= { rc2kQos 16 }
+
+
+-- 2k Qos Split Pass Drop (PnD) Queue Bandwidth
+rc2kQosSplitPassDropQueueBW	OBJECT-TYPE
+        SYNTAX		TruthValue
+        MAX-ACCESS	read-write
+        STATUS		current
+        DESCRIPTION	"Split Pass-Drop queue bandwidth"
+        DEFVAL		{ false }
+        ::= { rc2kQos 17 }
+
+
+-- 2k Egress Qos PCP Table
+rc2kQosEgressQosPCPTable OBJECT-TYPE
+        SYNTAX        	SEQUENCE OF Rc2kQosEgressQosPCPEntry
+        MAX-ACCESS      not-accessible
+        STATUS        	current
+        DESCRIPTION  	"This table is used to specify 
+			the Priority Code Point table."
+        ::= { rc2kQos 18 }
+
+rc2kQosEgressQosPCPEntry OBJECT-TYPE
+        SYNTAX        Rc2kQosEgressQosPCPEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing information of PCP Table"
+        INDEX         { rc2kQosEgressQosPCPRow }
+        ::= { rc2kQosEgressQosPCPTable 1 }
+
+Rc2kQosEgressQosPCPEntry ::= SEQUENCE {
+                rc2kQosEgressQosPCPRow 		         Integer32,
+                rc2kQosEgressQosPCPLevel 		 Integer32,
+                rc2kQosEgressQosPCPInProfileIeee8021P    Integer32,
+                rc2kQosEgressQosPCPOutOfProfileIeee8021P Integer32
+        }
+
+rc2kQosEgressQosPCPRow 	OBJECT-TYPE
+        SYNTAX        	Integer32 (1..8)
+        MAX-ACCESS    	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"Used to uniquely identify a row in this table."
+        ::= { rc2kQosEgressQosPCPEntry 1 }
+
+rc2kQosEgressQosPCPLevel OBJECT-TYPE
+        SYNTAX        Integer32 (0..7)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Qos level"
+        ::= { rc2kQosEgressQosPCPEntry 2 }
+
+rc2kQosEgressQosPCPInProfileIeee8021P OBJECT-TYPE
+        SYNTAX        	Integer32 (0..7)
+        MAX-ACCESS    	read-only
+        STATUS        	current
+        DESCRIPTION   	"In Profile 802.1P"
+        ::= { rc2kQosEgressQosPCPEntry 3 }
+
+rc2kQosEgressQosPCPOutOfProfileIeee8021P OBJECT-TYPE
+        SYNTAX        Integer32 (0..7)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Out Of Profile 802.1P"
+        ::= { rc2kQosEgressQosPCPEntry 4 }
+
+-- 2k Qos Use-CFI-As-DEI
+rc2kQosUseCfiAsDei	OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS    	read-write
+        STATUS          current
+        DESCRIPTION   	"This indicates whether to use 
+			 CFI bit (for non 88a8 packets) 
+			 as DEI bit or not."
+        DEFVAL          { false }
+        ::= { rc2kQos 19 }
+
+rc2kQosFOQDropTrapInterval OBJECT-TYPE
+        SYNTAX        	Integer32 (0..1440)
+        MAX-ACCESS    	read-write
+        STATUS          current
+        DESCRIPTION   	"The time interval indicating how often FOQ drop traps 
+			should be sent. An interval of 0 disables the traps."
+        DEFVAL          { 15 }
+        ::= { rc2kQos 20 }
+
+rc2kQosFabricDropTrapInterval OBJECT-TYPE
+        SYNTAX        	Integer32 (0..1440)
+        MAX-ACCESS    	read-write
+        STATUS          current
+        DESCRIPTION   	"The time interval indicating how often Fabric drop traps 
+			should be sent. An interval of 0 disables the traps."
+        DEFVAL          { 15 }
+        ::= { rc2kQos 21 }
+
+rc2kQosTotalDropReadings OBJECT-TYPE
+        SYNTAX        	Integer32
+        MAX-ACCESS    	read-only
+        STATUS          current
+        DESCRIPTION   	"The total count of drop samples. This is 
+			used when sending FOQ/Fabric Drop Traps"
+        DEFVAL          { 0 }
+        ::= { rc2kQos 22 }
+
+rc2kQosDropReadings OBJECT-TYPE
+        SYNTAX        	Integer32
+        MAX-ACCESS    	read-only
+        STATUS          current
+        DESCRIPTION   	"The total number of drop samples 
+			within the drop trap time interval. 
+			This is used when sending FOQ/Fabric 
+			Drop Traps."
+        DEFVAL          { 0 }
+        ::= { rc2kQos 23 }
+
+-- 2k QoS Fabric Interface Drop Stats
+
+rc2kQosFabricInterfaceStatsTable OBJECT-TYPE
+	SYNTAX        SEQUENCE OF Rc2kQosFabricInterfaceStatsEntry
+	MAX-ACCESS    not-accessible
+	STATUS        current
+	DESCRIPTION   ""
+	::= { rc2kQos 24 }
+
+rc2kQosFabricInterfaceStatsEntry OBJECT-TYPE
+	SYNTAX        Rc2kQosFabricInterfaceStatsEntry
+	MAX-ACCESS    not-accessible
+	STATUS        current
+	DESCRIPTION   "A Fabric Interface Drop Statistics table entry."
+	INDEX         { rc2kQosFabricInterfaceStatsSlotNumber,
+			rc2kQosFabricInterfaceStatsLaneNumber }
+	::= { rc2kQosFabricInterfaceStatsTable 1 }
+ 
+Rc2kQosFabricInterfaceStatsEntry ::=
+	SEQUENCE {
+		rc2kQosFabricInterfaceStatsSlotNumber			Integer32,
+		rc2kQosFabricInterfaceStatsLaneNumber			Integer32,
+		rc2kQosFabricInterfaceStatsFOQDropEvents 		Counter64,
+		rc2kQosFabricInterfaceStatsFOQTotalDropEvents 		Counter64,
+		rc2kQosFabricInterfaceStatsFabricDropEvents 		Counter64,
+		rc2kQosFabricInterfaceStatsFabricTotalDropEvents 	Counter64
+		}
+
+rc2kQosFabricInterfaceStatsSlotNumber OBJECT-TYPE
+       SYNTAX        Integer32 (1..10)
+       MAX-ACCESS    not-accessible
+       STATUS        current
+       DESCRIPTION   "Slot Number"
+       ::= { rc2kQosFabricInterfaceStatsEntry 1 }
+
+rc2kQosFabricInterfaceStatsLaneNumber OBJECT-TYPE
+       SYNTAX        Integer32 (0..3)
+       MAX-ACCESS    not-accessible
+       STATUS        current
+       DESCRIPTION   "Lane number. 0 - Left, 1 - Middle, 2 - Right."
+       ::= { rc2kQosFabricInterfaceStatsEntry 2 }
+
+rc2kQosFabricInterfaceStatsFOQDropEvents OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Count of FOQ drop events occurred 
+		     in this drop-trap time period."
+       ::= { rc2kQosFabricInterfaceStatsEntry 3 }
+
+rc2kQosFabricInterfaceStatsFOQTotalDropEvents OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Total count of FOQ drop events"
+       ::= { rc2kQosFabricInterfaceStatsEntry 4 }
+
+rc2kQosFabricInterfaceStatsFabricDropEvents OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Count of Fabric drop events occurred 
+		     in this drop-trap time period."
+       ::= { rc2kQosFabricInterfaceStatsEntry 5 }
+
+rc2kQosFabricInterfaceStatsFabricTotalDropEvents OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Total count of Fabric drop events"
+       ::= { rc2kQosFabricInterfaceStatsEntry 6 }
+
+
+END

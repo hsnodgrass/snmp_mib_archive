@@ -1,0 +1,241 @@
+--
+-- Copyright (c) 2004-2005, Infoblox, Inc
+-- All rights reserved.
+
+IB-DHCPONE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+   OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, enterprises
+        FROM SNMPv2-SMI
+   TEXTUAL-CONVENTION FROM SNMPv2-TC
+   ibDHCPOne, IbString, IbIpAddr FROM IB-SMI-MIB;
+
+ibDhcpModule MODULE-IDENTITY
+    LAST-UPDATED "200501100000Z"  --  Jan 10, 2005
+    ORGANIZATION "Infoblox"
+    CONTACT-INFO "See IB-SMI-MIB for information."
+    DESCRIPTION "This file defines the Infoblox DHCP One MIB."
+
+    REVISION  "200501100000Z"  --  Jan 10, 2005
+    DESCRIPTION   "Added copyright"
+                                                                                                
+    REVISION  "200405210000Z"  --  May 21, 2004
+    DESCRIPTION   "Creation of the MIB file"
+
+    ::= { ibDHCPOne 1 }
+
+-- DNSOne DHCP Subnet Definition
+
+ibDHCPSubnetTable OBJECT-TYPE
+   SYNTAX SEQUENCE OF IbDHCPSubnetEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "A table of DHCP Subnet statistics."
+   ::= { ibDhcpModule 1 }
+
+ibDHCPSubnetEntry OBJECT-TYPE
+   SYNTAX        IbDHCPSubnetEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "A conceptual row of the ibDHCPSubnetEntry containing 
+                  info about a particular network using DHCP."
+   INDEX         {ibDHCPSubnetNetworkAddress }
+   ::= { ibDHCPSubnetTable 1 }
+
+IbDHCPSubnetEntry ::=
+   SEQUENCE {
+     ibDHCPSubnetNetworkAddress     IbIpAddr,
+     ibDHCPSubnetNetworkMask        IbIpAddr,
+     ibDHCPSubnetPercentUsed        IbString
+   }
+
+ibDHCPSubnetNetworkAddress OBJECT-TYPE
+   SYNTAX        IbIpAddr
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "DHCP Subnet in IpAddress format. A subnetwork may have many 
+                  ranges for lease."
+   ::= { ibDHCPSubnetEntry 1 }
+
+ibDHCPSubnetNetworkMask OBJECT-TYPE
+   SYNTAX        IbIpAddr
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "DHCP Subnet mask in IpAddress format." 
+   ::= { ibDHCPSubnetEntry 2 }
+
+ibDHCPSubnetPercentUsed OBJECT-TYPE
+   SYNTAX        IbString
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Percentage of dynamic DHCP address for subnet leased out at this 
+                  time. Fixed addresses are always counted as leased for this
+                  calcuation if the fixed addresses are within ranges of leases."
+   ::= { ibDHCPSubnetEntry 3 }
+
+-- DNSOne DHCP Lease Definition
+
+ibDHCPLeaseTable  OBJECT-TYPE
+   SYNTAX SEQUENCE OF IbDHCPLeaseEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "A table of DHCP lease statistics."
+   ::= { ibDhcpModule 2 }
+
+ibDHCPLeaseEntry OBJECT-TYPE
+   SYNTAX        IbDHCPLeaseEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "A conceptual row of the ibDHCPStatisticsEntry 
+                  containing info about a particular lease."
+   INDEX         { ibDHCPLeaseAddress }
+::= { ibDHCPLeaseTable 1}
+
+IbDHCPLeaseEntry ::=
+   SEQUENCE {
+     ibDHCPLeaseAddress             IbIpAddr,
+     ibDHCPLeaseMACAddress          IbString,
+     ibDHCPLeaseStart               IbString,
+     ibDHCPLeaseEnd                 IbString,
+     ibDHCPLeaseBindState           IbString,
+     ibDHCPLeaseNextBindState       IbString,
+     ibDHCPLeaseClientHostName      IbString,
+     ibDHCPLeaseUID                 IbString
+   }
+
+ibDHCPLeaseAddress OBJECT-TYPE
+   SYNTAX        IbIpAddr
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "DHCP issued IP Address."
+   ::= { ibDHCPLeaseEntry 1 }
+
+ibDHCPLeaseMACAddress OBJECT-TYPE
+   SYNTAX        IbString
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "MAC Address of DHCP client."
+   ::= { ibDHCPLeaseEntry 2 }
+
+ibDHCPLeaseStart OBJECT-TYPE
+   SYNTAX        IbString
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Start time of DHCP lease."
+   ::= { ibDHCPLeaseEntry 3 }
+
+ibDHCPLeaseEnd OBJECT-TYPE
+   SYNTAX        IbString
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "End time of DHCP lease."
+   ::= { ibDHCPLeaseEntry 4 }
+
+ibDHCPLeaseBindState OBJECT-TYPE
+   SYNTAX        IbString
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Binding State of DHCP lease."
+   ::= { ibDHCPLeaseEntry 5 }
+
+ibDHCPLeaseNextBindState OBJECT-TYPE
+   SYNTAX        IbString
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Next Binding State of DHCP lease."
+   ::= { ibDHCPLeaseEntry 6 }
+
+ibDHCPLeaseClientHostName OBJECT-TYPE
+   SYNTAX        IbString
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Client provided host name during DHCP registration."
+   ::= { ibDHCPLeaseEntry 7 }
+
+ibDHCPLeaseUID OBJECT-TYPE
+   SYNTAX        IbString
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Client provided UID during DHCP registration."
+   ::= { ibDHCPLeaseEntry 8 }
+
+ibDHCPStatistics MODULE-IDENTITY
+   LAST-UPDATED "200507150000Z"
+   ORGANIZATION "Infoblox"
+   CONTACT-INFO "Infoblox"
+   DESCRIPTION "DHCP packet statistics"
+   ::= { ibDhcpModule 3 }
+
+ibDhcpTotalNoOfDiscovers OBJECT-TYPE
+   SYNTAX  Counter
+   ACCESS  read-only
+   STATUS  mandatory
+   DESCRIPTION "This variable indicates the number of
+		 discovery messages received"
+   ::= { ibDHCPStatistics 1 }
+
+ibDhcpTotalNoOfRequests OBJECT-TYPE
+   SYNTAX  Counter
+   ACCESS  read-only
+   STATUS  mandatory
+   DESCRIPTION "This variable indicates the number of
+		 requests received"
+   ::= { ibDHCPStatistics 2 }
+
+ibDhcpTotalNoOfReleases OBJECT-TYPE
+   SYNTAX  Counter
+   ACCESS  read-only
+   STATUS  mandatory
+   DESCRIPTION "This variable indicates the number of
+		 releases received"
+   ::= { ibDHCPStatistics 3 }
+
+ibDhcpTotalNoOfOffers OBJECT-TYPE
+   SYNTAX  Counter
+   ACCESS  read-only
+   STATUS  mandatory
+   DESCRIPTION "This variable indicates the number of
+		 offers sent"
+   ::= { ibDHCPStatistics 4 }
+
+ibDhcpTotalNoOfAcks OBJECT-TYPE
+   SYNTAX  Counter
+   ACCESS  read-only
+   STATUS  mandatory
+   DESCRIPTION "This variable indicates the number of
+		 acks sent"
+   ::= { ibDHCPStatistics 5 }
+
+ibDhcpTotalNoOfNacks OBJECT-TYPE
+   SYNTAX  Counter
+   ACCESS  read-only
+   STATUS  mandatory
+   DESCRIPTION "This variable indicates the number of
+		 nacks sent"
+   ::= { ibDHCPStatistics 6 }
+
+ibDhcpTotalNoOfDeclines OBJECT-TYPE
+   SYNTAX  Counter
+   ACCESS  read-only
+   STATUS  mandatory
+   DESCRIPTION "This variable indicates the number of
+		 declines received"
+   ::= { ibDHCPStatistics 7 }
+
+ibDhcpTotalNoOfInforms OBJECT-TYPE
+   SYNTAX  Counter
+   ACCESS  read-only
+   STATUS  mandatory
+   DESCRIPTION "This variable indicates the number of
+		 informs received"
+   ::= { ibDHCPStatistics 8 }
+
+ibDhcpTotalNoOfOthers OBJECT-TYPE
+   SYNTAX  Counter
+   ACCESS  read-only
+   STATUS  mandatory
+   DESCRIPTION "This variable indicates the number of
+		 other messages received"
+   ::= { ibDHCPStatistics 9 }
+
+END

@@ -1,0 +1,312 @@
+-- SECTION 1: Top Level Definitions
+
+
+BNET-ATM-TOPOLOGY-MIB DEFINITIONS ::= BEGIN
+
+
+-- Copyright 1995 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+-- Imports
+
+IMPORTS
+
+	VpiInteger
+		FROM LAN-EMULATION-CLIENT-MIB
+        IpAddress, TimeTicks
+                FROM RFC1155-SMI
+        OBJECT-TYPE
+                FROM RFC-1212
+	s5AtmTop
+		FROM S5-ROOT-MIB;
+
+
+
+bnetAtmTopGbl     OBJECT IDENTIFIER ::= { s5AtmTop 1 }
+ 
+bnetAtmTopLinks    OBJECT IDENTIFIER ::= { s5AtmTop 2 }
+ 
+-- The following is global information about the reporting agent.
+ 
+
+bnetAtmTopGblStatus OBJECT-TYPE
+        SYNTAX  INTEGER {
+                  topOn(1),
+                  topOff(2)
+                }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "Indicates if the agent is participating in
+                ATM topology discovery. The values are:
+                  topOn(1)....topology is on
+                  topOff(2)...topology is off
+                When the value is topOff(2) the status of
+                bnetAtmTopLinkTable entries is undefined and the topolgy 
+                discovery is disabled for the entire device.
+
+                When the value is topOn(1) the status of the topology 
+                discovery of a given port is defined by the 
+                bnetAtmTopLinksPeerStatus in the bnetAtmTopLinkTable.
+
+                The agent must save the setting of this object
+                in nonvolatile memory (i.e., save across reboots)."
+        ::= { bnetAtmTopGbl 1 }
+ 
+bnetAtmTopGblLstChg OBJECT-TYPE
+        SYNTAX  TimeTicks
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The value of sysUpTime the last time an entry in the
+                bnetAtmTopLinkTable was added, deleted, or modified.  If
+                bnetAtmTopLinkTable has not changed since cold/warm
+                start of the agent, then the value is zero."
+        ::= { bnetAtmTopGbl 2 }
+ 
+bnetAtmTopGblCurNum OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The current number of entries in the bnetAtmTopLinkTable."
+        ::= { bnetAtmTopGbl 3 }
+ 
+bnetAtmTopGblCurMibVer OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The current version of the ATM Topology mib.
+                This object is provided by agent so NMS can distinguish
+                variations in the mib as they occur in the future."
+        ::= { bnetAtmTopGbl 4 }
+
+bnetAtmTopGblOperStatus OBJECT-TYPE
+        SYNTAX  INTEGER {
+                  topOn(1),
+                  topOff(2),
+		  topUnavailable(3)
+                }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "Indicates if the agent is participating in
+                ATM topology discovery. The values are:
+                  topOn(1)....topology is on
+                  topOff(2)...topology is off
+                When the value is topOff(2) the status of
+                bnetAtmTopLinkTable entries is undefined and the topolgy 
+                discovery is disabled for the entire device.
+
+                When the value is topOn(1) the status of the topology 
+                discovery of a given port is defined by the 
+                bnetAtmTopLinksPeerStatus in the bnetAtmTopLinkTable.
+
+                The agent must save the setting of this object
+                in nonvolatile memory (i.e., save across reboots).
+
+		When status is topUnavailable(3), this implies that
+		ilmi is not configured on this switch at all."
+        ::= { bnetAtmTopGbl 5 }
+ 
+
+-- 
+ 
+-- Aggregates bnetAtmTopLinkPeer information on each ILMI entity and
+-- adds local context.
+
+bnetAtmTopLinksTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF BnetAtmTopLinksEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+		"A table of all physical and virtual links attached to this
+		 switch. This table is built by aggregating information
+		 from all ILMI or PNNI entities in the switch and adding
+		local port information."
+        ::= { bnetAtmTopLinks 1 }
+ 
+bnetAtmTopLinksEntry OBJECT-TYPE
+        SYNTAX  BnetAtmTopLinksEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "A row in the ATM topology table. Entries in the table
+                can not be created or deleted via SNMP."
+        INDEX   { bnetAtmTopLinksSlotNumIndx,
+		  bnetAtmTopLinksPortNumIndx,
+		  bnetAtmTopLinksLcnIndx		
+		}
+        ::= { bnetAtmTopLinksTable 1 }
+ 
+BnetAtmTopLinksEntry ::= SEQUENCE {
+	bnetAtmTopLinksSlotNumIndx INTEGER,
+	bnetAtmTopLinksPortNumIndx INTEGER,
+	bnetAtmTopLinksLcnIndx VpiInteger,
+	bnetAtmTopLinksTopoState INTEGER,
+	bnetAtmTopLinksPeerSlotNum INTEGER,
+	bnetAtmTopLinksPeerPortNum INTEGER,
+	bnetAtmTopLinksPeerIpAddr IpAddress,
+	bnetAtmTopLinksPeerChassisType INTEGER,
+	bnetAtmTopLinksPeerChassisSubType INTEGER
+      }
+
+bnetAtmTopLinksSlotNumIndx OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "Our slot number."
+        ::= { bnetAtmTopLinksEntry 1 }
+ 
+bnetAtmTopLinksPortNumIndx OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "Our port number."
+        ::= { bnetAtmTopLinksEntry 2 }
+
+bnetAtmTopLinksLcnIndx OBJECT-TYPE
+        SYNTAX  VpiInteger 
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+" Logical Channel Number, This will give the VP, when the ILMI entity uses
+the VP signalling. This allows to have multiple NNI or UNI links on a single
+port."
+        ::= { bnetAtmTopLinksEntry 3 }
+
+bnetAtmTopLinksTopoState OBJECT-TYPE
+        SYNTAX  INTEGER {
+                unavailable(1),
+                notParticipating(2),
+                participating(3)
+                }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The current state of link from topology point of view.
+		 Possible values:
+			unavailable(1)       - third party device or 
+					 	older version of Bay device
+			notParticipating(2) - peer has set TopoOff  
+			participating(3)     - actively providing topo info. "
+        ::= { bnetAtmTopLinksEntry 4 }
+
+
+bnetAtmTopLinksPeerSlotNum OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		"The peer's slot number." 
+        ::= { bnetAtmTopLinksEntry 5 }
+
+bnetAtmTopLinksPeerPortNum OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		"The peer's port number." 
+        ::= { bnetAtmTopLinksEntry 6 }
+
+bnetAtmTopLinksPeerIpAddr OBJECT-TYPE
+        SYNTAX  IpAddress
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		"The peer's IP address." 
+        ::= { bnetAtmTopLinksEntry 7 }
+
+bnetAtmTopLinksPeerChassisType OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The chassis type of the device that sent the topology
+                message. This number is the leaf of the s5 ChassisType
+		OID registered in s5reg*.mib."
+        ::= { bnetAtmTopLinksEntry 8 }
+ 
+bnetAtmTopLinksPeerChassisSubType OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        "Any relavant additional information of the chassis of the peer 
+         Bay device. This is an integer field which could be used as 
+         backplane type or any information for stackable devices etc."
+        ::= { bnetAtmTopLinksEntry 9 }
+
+
+-- Encoded Octet Strings for ATM Topology Table
+
+bnetAtmTopLinksEosSize OBJECT-TYPE
+	SYNTAX	INTEGER (0..1440)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current size of a row in the table
+		bnetAtmTopLinksEosTable.  This allows applications
+		to be able to break apart rows in the table."
+	::= { bnetAtmTopLinks 2 }
+
+bnetAtmTopLinksEosTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF BnetAtmTopLinksEosEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table of encoded octet strings of
+		entries in table bnetAtmTopLinksTable.
+		The number of entries is determined by
+		packing of 'rows' from bnetAtmTopLinksTable."
+	::= { bnetAtmTopLinks 3 }
+
+bnetAtmTopLinksEosEntry OBJECT-TYPE
+	SYNTAX	BnetAtmTopLinksEosEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the table of encoded octet
+		strings for table bnetAtmTopLinksTable.
+		Instance returned in Response PDU:
+		  On GETs: instance specified is the
+		           instance returned.
+		  On GET-NEXTs: instance returned is the
+		                instance of the last record
+		                contained in the octet string.
+
+		Entries in the table can not be created
+		or deleted via SNMP."
+        INDEX   { bnetAtmTopLinksSlotNumIndx,
+		  bnetAtmTopLinksPortNumIndx,
+		  bnetAtmTopLinksLcnIndx	}
+	::= { bnetAtmTopLinksEosTable 1 }
+
+BnetAtmTopLinksEosEntry ::= SEQUENCE {
+	bnetAtmTopLinksEos OCTET STRING
+	}
+
+bnetAtmTopLinksEos OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..1400))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An encoded octet string. On reads it contains
+		an integral number of 'rows' from table
+		bnetAtmTopLinksTable. All 'rows' are the same size
+		which is defined by object bnetAtmTopLinksEosSize."
+	::= { bnetAtmTopLinksEosEntry 1 }
+
+END

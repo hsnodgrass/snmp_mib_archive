@@ -1,0 +1,77 @@
+-- SECTION 1: Top Level Definitions
+
+CENTILLION-SONET-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion SONET MIB Release 1.0.0
+-- Revision 02/12/98
+
+-- Copyright 1998 Bay Networks Communications, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+   Counter32
+         FROM SNMPv2-SMI-v1
+   OBJECT-TYPE
+         FROM RFC-1212
+   ifIndex
+         FROM RFC1213-MIB
+   atmSonet
+         FROM CENTILLION-ROOT-MIB;
+
+
+-- Groups
+
+atmSonetConfig          OBJECT IDENTIFIER ::=   { atmSonet 1 }
+
+
+-- SECTION 2: SONET Section Table
+
+-- Centillion SONET/SDH Section group contains additional
+-- information not contained in RFC SONET/SDH Section groups.
+
+cnSonetSectionTable OBJECT-TYPE
+   SYNTAX  SEQUENCE OF CnSonetSectionEntry
+   ACCESS  not-accessible
+   STATUS  mandatory
+   DESCRIPTION
+           "The Centillion SONET/SDH Section table."
+   ::= { atmSonetConfig 1 }
+
+cnSonetSectionEntry OBJECT-TYPE
+   SYNTAX  CnSonetSectionEntry
+   ACCESS  not-accessible
+   STATUS  mandatory
+   DESCRIPTION
+           "An entry in the Centillion SONET/SDH
+           Section table."
+   INDEX   { ifIndex }
+   ::= { cnSonetSectionTable 1 } 
+
+CnSonetSectionEntry ::=
+   SEQUENCE {
+      cnSonetSectionBip8Errors   Counter32
+   }
+
+cnSonetSectionBip8Errors OBJECT-TYPE
+   SYNTAX  Counter32
+   ACCESS  read-only 
+   STATUS  mandatory
+   DESCRIPTION
+      "Section Bit Interleaved Parity.
+       Number of STS-3(c) frames with BIP-8 errors."
+   ::= { cnSonetSectionEntry 1 }
+
+END

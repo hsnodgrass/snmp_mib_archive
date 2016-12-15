@@ -1,0 +1,202 @@
+BORDERWARE-SMG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+
+    OBJECT-TYPE, OBJECT-IDENTITY, MODULE-IDENTITY, 
+		Counter32, Integer32
+        FROM SNMPv2-SMI
+	
+    DisplayString
+        FROM SNMPv2-TC
+		
+	borderware, bwProducts, bwProductId
+		FROM BORDERWARE-MIB;
+
+bwMailFirewall  MODULE-IDENTITY
+    LAST-UPDATED "200405260000Z"
+    ORGANIZATION "Borderware Technology Inc."
+    CONTACT-INFO 
+	 "mibs@borderware.com "
+    DESCRIPTION
+	"The private Borderware Mail Firewall SNMP extensions."
+    REVISION	 "200405260000Z"
+    DESCRIPTION
+	"Draft. "
+	::= { bwProducts 11 }
+	
+bwMailFirewall4 OBJECT IDENTIFIER ::= { bwProductId 11 }
+bwMailFirewallConformance OBJECT IDENTIFIER ::= { bwMailFirewall 3 }
+
+-- Conformance information -------------------------------------------- 
+
+bwMailFirewallCompliances    OBJECT IDENTIFIER ::= { bwMailFirewallConformance 1 }
+bwMailFirewallGroups         OBJECT IDENTIFIER ::= { bwMailFirewallConformance 2 }
+
+-- Compliance statements ----------------------------------------------
+
+bwMailFirewallCompliance MODULE-COMPLIANCE
+       STATUS       current
+       DESCRIPTION "The compliance statement for SNMP entities which
+                    implement the BORDERWARE-SMG-MIB.  "
+
+       MODULE    -- this module
+           MANDATORY-GROUPS { bwMessagesGroup }
+
+       ::= { bwMailFirewallCompliances 1 }
+
+-- Group declarations --------------------------------------------------
+
+bwMessagesGroup OBJECT-GROUP
+       OBJECTS {
+                 queuedMessages,
+                 deferredMessages,
+                 totalMessages
+               }
+       STATUS       current
+       DESCRIPTION "A collection of objects providing for remote
+                    monitoring of current condition of mail handler.  "
+       ::= { bwMailFirewallGroups 1 }
+
+bwMailStatsGroup OBJECT-GROUP
+       OBJECTS {
+	    			mailInterval,
+	    			mailRcvd,
+	    			mailSent,
+	    			mailSpam,
+	    			mailReject,
+	    			mailVirus,
+	    			mailClean
+               }
+       STATUS       current
+       DESCRIPTION "A collection of objects providing for remote
+                    monitoring of historical condition of mail handler.  "
+       ::= { bwMailFirewallGroups 2 }
+
+
+-- Table definitions -----------------------------------------------------
+
+mailTable OBJECT-GROUP
+	OBJECTS {
+				bwMailStatsGroup,
+				bwMessagesGroup
+		    }
+    STATUS	current
+    DESCRIPTION
+	"Complete mail activity summary."
+    ::= { bwMailFirewall 10 }
+
+mailEntry OBJECT-TYPE
+    SYNTAX     SEQUENCE OF MailEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry containing mail statistics."
+    INDEX      { mailInterval }
+    ::= { mailTable  1 }
+
+MailEntry ::= SEQUENCE {
+    mailInterval	DisplayString,
+    mailRcvd		Counter32,
+    mailSent		Counter32,
+    mailSpam	    Counter32,
+    mailReject  	Counter32,
+    mailVirus		Counter32,
+    mailClean		Counter32
+}
+
+mailStatus    OBJECT-IDENTITY 
+        STATUS current
+        DESCRIPTION
+                "The entry for current stats on MTA"
+	::= { mailTable  2 }
+
+
+-- The current data ----------------------------------------------------
+
+queuedMessages  OBJECT-TYPE
+    SYNTAX      Counter32 
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The number of queued mail messages."
+    ::= { mailStatus 1 }
+
+deferredMessages OBJECT-TYPE
+    SYNTAX      Counter32 
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The number of deferred mail messages."
+    ::= { mailStatus 2 }
+
+totalMessages OBJECT-TYPE
+    SYNTAX      Counter32 
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The total number of mail messages."
+    ::= { mailStatus 3}
+
+
+-- The historical data -------------------------------------------------
+
+mailInterval OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Time interval pertaining to the data in this sequence."
+    ::= { mailEntry 1 } 
+
+mailRcvd OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Number of received messages for this interval."
+    ::= { mailEntry 2 } 
+
+mailSent OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Number of sent messages for this interval."
+    ::= { mailEntry 3 } 
+
+mailSpam OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Number of spam messages for this interval."
+    ::= { mailEntry 4 } 
+
+mailReject OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Number of rejected messages for this interval"
+    ::= { mailEntry 5 } 
+
+mailVirus OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Number of messages identified as containig a 
+	 virus for this interval."
+    ::= { mailEntry 6 } 
+
+mailClean OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Number of clean messages for this interval."
+    ::= { mailEntry 7 } 
+
+END

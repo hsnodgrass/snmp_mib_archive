@@ -1,0 +1,270 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-DOT5-EXTENSIONS-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion IEEE 802.5 Token Ring Extensions MIB Release 2.0.1
+-- Revision 03/20/96
+
+-- Copyright 1994-96 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	extensions, EnableIndicator
+		FROM CENTILLION-ROOT-MIB;
+
+
+-- Textual Conventions
+
+-- The following identifies the configuration of the ring port.
+
+TrPortConnType ::=
+	INTEGER {
+		trPortDTR(1),		-- port has a direct connection to
+					-- a ring station
+
+		tr4PortStation(2),	-- port is a standard ring station
+
+		trPortRiRoPhantom(3),	-- port is connected to Ring-In or
+					-- Ring-Out of a MAU and provides
+					-- phantom drive
+
+		trPortRiRoNoPhantom(4), -- port is Ring-In/Ring-Out and
+					-- does not provide phantom drive
+
+                trPortHub(16),		-- detects phantom, NICs attached
+					-- to port
+
+                trPortStation(17),	-- sources phantom, attached to a
+					-- concentrator port
+
+                trPortBay_Ro(18),	-- connects to a Bay Hub RI port,
+					-- sources phantom
+
+                trPortBay_Ri(19),	-- connects to a Bay Hub RO port,
+					-- detects phantom
+
+                trPortOther_Ro(20),	-- connects to a non-Bay Hub RI
+					-- port, detects phantom
+
+                trPortOther_Ri(21),	-- connects to a non-Bay Hub RO
+					-- port, source phantom
+
+                trPortFdtr_hub(22),	-- full duplex stations attached
+					-- to port, detects phantom
+
+                trPortFdtr_station(23),	-- full duplex, sources phantom,
+					-- used for inter-switch link
+
+                trPortAutoStationHub(24)     -- Automatically determines
+                                             -- Station or hub connection type
+	}
+
+
+-- Groups
+
+cnDot5Extensions OBJECT IDENTIFIER ::= { extensions 3 }
+
+
+
+-- SECTION 2: MIB Objects
+
+
+-- Centillion Token Ring Extensions Table
+
+cnDot5ExtnTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF CnDot5ExtnEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"This table contains Token Ring interface
+                parameters and state variables, one entry
+                per 802.5 interface."
+	::= { cnDot5Extensions 1 }
+
+cnDot5ExtnEntry OBJECT-TYPE
+	SYNTAX  CnDot5ExtnEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"A list of Token Ring status and parameter
+                values for an 802.5 interface."
+	INDEX   { cnDot5ExtnIfIndex }
+	::= { cnDot5ExtnTable 1 }
+
+CnDot5ExtnEntry ::= SEQUENCE {
+	cnDot5ExtnIfIndex
+		INTEGER,
+	cnDot5ExtnPortConnType
+		TrPortConnType,
+	cnDot5ExtnPortSpeedSense
+		EnableIndicator,
+	cnDot5ExtnAdminRingSpeed
+		INTEGER
+
+	}
+
+cnDot5ExtnIfIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The value of this object identifies the
+		802.5 interface for which this entry
+		contains management information.  The
+		value of this object for a particular
+		interface has the same value as the
+		ifIndex object, defined in [4,6],
+		for the same interface."
+	::= { cnDot5ExtnEntry 1 }
+
+cnDot5ExtnPortConnType OBJECT-TYPE
+	SYNTAX	TrPortConnType
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of connection used on this port. Setting a value
+                to this object requires the port to be reset and re-opened
+                before taking effect. Allowable	connections for TR4 are:
+		Station - (default for TR4) the port is configured as a 
+		  	  standard ring station,
+		Ring-In/Ring-Out - the port is connected to the Ring-In
+                                   or Ring-Out port of a MAU with an
+                                   appropriate cable.
+                DTR - the port has a direct connection to a ring station.
+
+                A different set of connection type for TR8 are :
+		Hub, Station, Bay/SNPX RO, Bay/SNPX RI, Other RO,
+		Other RI, FDTR Hub, FDTR Station"
+	::= { cnDot5ExtnEntry 2 }
+
+cnDot5ExtnPortSpeedSense OBJECT-TYPE
+	SYNTAX	EnableIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicates whether speed sensing is enabled (default),
+		or disabled on the port. This is used in conjuection with
+		the RingSpeed to either match or force to the configured
+		speed."
+	::= { cnDot5ExtnEntry 3 }
+
+cnDot5ExtnAdminRingSpeed OBJECT-TYPE
+	SYNTAX	INTEGER {
+		autoDetect(1),
+		forceFourMegabit(2),
+		forceSixteenMegabit(3),
+		matchFourMegabit(4),
+		matchSixteenMegabit(5),
+		force32Megabit(6),
+		autoDetect16or32(7),
+		autoDetect4or16or32(8)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The configured ring speed of the port. The speed will take
+		effect on the next opening of the ring. The speeds of
+		'force' indicates that the port should enter the ring
+		regardless of the current ring speed. The 'match' speeds
+		indcate the the port should insert at the configured speed,
+		only if the current ring speed matches the port speed.
+		The operational ring speed may be obtained by the usual
+		dot5RingSpeed object. The 'auto detect' indicates that the
+		ring detect and insert at the current ring speed."
+	::= { cnDot5ExtnEntry 4 }
+
+
+
+-- Centillion 5000 Token Ring Extention Table
+
+cnS5TrExtnTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF CnS5TrExtnEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "This table contains additional Token Ring interface
+                parameters and state variables, one entry per
+                802.5 interface for 5000BH token ring cards."
+        ::= { cnDot5Extensions 2 }
+ 
+cnS5TrExtnEntry OBJECT-TYPE
+        SYNTAX  CnS5TrExtnEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "A list of Token Ring additional status and parameter
+                values for an 802.5 interface for 5000BH token ring
+                cards."
+        INDEX   { cnS5TrExtnIfIndex }
+        ::= { cnS5TrExtnTable 1 }
+ 
+CnS5TrExtnEntry ::= SEQUENCE {
+	cnS5TrExtnIfIndex
+		INTEGER,
+        cnS5TrExtnFrontPortConnect
+		INTEGER,	
+	cnS5TrExtnOperBkplaneAtt
+		INTEGER
+        }
+
+cnS5TrExtnIfIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The value of this object identifies the
+                802.5 interface for which this entry
+                contains management information.  The
+                value of this object for a particular
+                interface has the same value as the
+                ifIndex object, defined in [4,6],
+                for the same interface."
+        ::= { cnS5TrExtnEntry 1 }
+
+cnS5TrExtnFrontPortConnect OBJECT-TYPE
+        SYNTAX  INTEGER {
+		other(1),
+		disable(2),
+		enable(3)
+		}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "If enabled, front port insertion is allowed.  This setting
+		 has no meaning other than in tr8PortHub mode."  
+        ::= { cnS5TrExtnEntry 2 }
+
+cnS5TrExtnOperBkplaneAtt OBJECT-TYPE
+	SYNTAX	INTEGER {
+		other(1),
+		notCapable(2),
+		capableAndAttached(3),
+		capableAndDetached(4)
+	}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This object returns the operating backplane 
+		 attachment state of a token ring port.  For the
+		 ports that do not have backplane attachment
+		 capability, notCapable(2) is returned."
+        ::= { cnS5TrExtnEntry 3 }
+
+
+END

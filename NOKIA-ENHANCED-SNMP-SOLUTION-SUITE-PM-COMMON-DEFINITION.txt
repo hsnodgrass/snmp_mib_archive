@@ -1,0 +1,174 @@
+NOKIA-ENHANCED-SNMP-SOLUTION-SUITE-PM-COMMON-DEFINITION DEFINITIONS ::= BEGIN
+
+-- ===============================================================
+--     Copyright (C) Nokia Networks 2001 - 2002
+-- ===============================================================
+--
+--
+-- Description:  MIB file for the Nokia SNMP solution set for
+--               3GPP Performance Management Integration Reference Point
+--               Purpose is to specify the SNMP fragment of the 
+--               Performance Management interface for Nokia NetAct.
+--               Further information can be found in the Interface
+--               specification 
+--                  EnhancedSNMP Solution Suite  - Performance Management
+--               
+--
+-- Protocol:     SNMPv2c MIB (Simple network management protocol,
+--               Version 2c, Management Information Base  )
+-- Format:       SMIv2
+--
+-- Version 
+-- 0.1         : Initial Version
+-- 0.2         : NoiMeasurementActivationError, NoiMeasurementJobStatus
+--               modified
+-- 0.3         : NoiMeasurementFileTransfer, NoiMeasurementResultTransfer added
+-- 0.4           Changes to Names of Textual Conventions (Job File to 
+--               Schedule File)
+--               MeasurementResultIdenifier
+-- 1.0.2       : Version sycnhronised with Version of the specification
+--               Objects are read-write to enable setting the values 
+--               from EM
+-- 1.0.3       : NE3S OID Registration MIB File has been renamed,
+--               to avoid naming conflict with Nokia general OID 
+--               registration MIB.
+-- 1.0.4       : noiOpenInterfaceModule imported from 
+--               NOKIA-NE3S-REGISTRATION-MIB
+--               Previous Version wrong
+-- 1.0.5       ; No semantical changes. Version update only
+-- 1.0.6       : stopDateError(7) added in TC NoiMeasurementActivationError
+--
+-- ===============================================================
+-- Author      : M.Grosse-Kreul et. al.
+-- Version     : 1.0.6
+-- Last Update : 27.2.2002
+--================================================================
+
+
+--======================================================================
+-- NAMING CONVENTION
+-- 
+-- All Items (Module Identity and Textual Convention)
+-- are prefixed with 'Noi' or 'noi'
+-- 'Noi' shall represent the abbreviation  of Nokia  Open  Interface 
+--======================================================================
+
+IMPORTS
+       
+        Integer32, MODULE-IDENTITY
+                FROM SNMPv2-SMI
+
+        DisplayString, TEXTUAL-CONVENTION
+                FROM SNMPv2-TC
+
+        noiOpenInterfaceModule
+                FROM NOKIA-NE3S-REGISTRATION-MIB;
+
+-- ======================================================================
+-- MODULE DEFINITION
+-- ======================================================================
+
+noiSnmpPMIrpCommon MODULE-IDENTITY
+        LAST-UPDATED "200202270000Z"
+        ORGANIZATION "Nokia Networks"
+        CONTACT-INFO 
+                    "e-mail: NET-OSS-OPEN-SNMP DL (Microsoft Outlook, Nokia internal)
+                             DL.NET-OSS-OPEN-SNMP-DL@nokia.com"
+        DESCRIPTION "The definition of common parameters used for 
+                     Nokia SNMP Solution Set of the Performance
+                     Management also known as Open SNMP Interface."
+        REVISION "200202270000Z"
+        DESCRIPTION "Version 1.0.6"
+::= { noiOpenInterfaceModule 3 }
+
+
+--======================================================================
+-- TEXTUAL CONVENTIONS
+-- 
+-- Conventions are in alphabetical order
+--======================================================================
+
+
+NoiMeasurementActivationError ::= TEXTUAL-CONVENTION
+       STATUS current
+       DESCRIPTION
+                "Specifies the error code used by the agent to indicate the 
+                 reason why the activation of a measurement job has failed.
+                 The agent will update this object immediately when the 
+                 activation of a measurement job has failed."
+        SYNTAX INTEGER {
+                noError (1),
+                noMeasurementScheduleFileCreatedError (2),
+                syntaxErrorInMeasurementScheduleFileError (3),
+                corruptedFileError (4),
+                unknownMeasurementTypeError(5),
+                startDateError (6),
+                stopDateError (7),
+                intervalError (8),
+                unknowDNError (9),
+                activationError (10),
+                internalError(11),
+                complexityLimitationError(12),
+                invalidHourError(13),
+                invalidMinutesError(14),
+                invalidDurationError(15)}
+
+NoiMeasurementFileName ::= TEXTUAL-CONVENTION
+       STATUS current
+       DESCRIPTION
+                "Contains a file name of a measurement result file
+                 or a measurement schdedule file"
+        SYNTAX DisplayString (SIZE (1..150))
+
+
+NoiMeasurementFileDirectory ::= TEXTUAL-CONVENTION
+       STATUS current
+       DESCRIPTION
+                "Contains the name of the directory in the agent where the 
+                 measurement schedule files are stored."
+        SYNTAX DisplayString (SIZE (0..100))
+
+
+
+NoiMeasurementResultIdentifier ::= TEXTUAL-CONVENTION
+       STATUS current
+       DESCRIPTION
+                " The measurement result identifier uniquely idenifies an entry
+                  in the measurement result table. It represents a consecutive 
+                  sequence of positive integer numbers."
+        SYNTAX Integer32 (1..2147483647)
+
+
+NoiMeasurementFileTransfer ::= TEXTUAL-CONVENTION
+       STATUS current
+       DESCRIPTION
+                "Specifies the supported file transfer mechanism"
+       SYNTAX INTEGER {
+                ftp (1),
+                tftp (2) }
+
+
+NoiMeasurementJobStatus ::= TEXTUAL-CONVENTION
+       STATUS current
+       DESCRIPTION
+                ""
+       SYNTAX INTEGER {
+                idle(1),
+                activating (2),
+                activationFailed (3),
+                active(4) }
+
+
+NoiMeasurementResultTransfer ::= TEXTUAL-CONVENTION
+       STATUS current
+       DESCRIPTION
+                "Specifies the supported mechanism 
+                 for measurement data transfer"
+       SYNTAX INTEGER {
+                notificationBased (1),
+                pollingBased (2) }
+
+
+END
+
+

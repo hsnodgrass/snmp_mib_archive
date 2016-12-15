@@ -1,0 +1,275 @@
+ADTRAN-ATLAS-VOICE-MIB  DEFINITIONS ::= BEGIN
+
+-- TITLE:       Adtran Voice Interface MIB
+-- FILENAME:    atvoice.mib
+-- PARTNUMBER:
+-- AUTHOR:      Benny Sharp
+
+-- HISTORY:
+--   02/05/2002	 Created.
+
+-- This MIB defines a generic ATLAS voice interface.
+
+IMPORTS
+       enterprises
+              FROM RFC1155-SMI
+       OBJECT-TYPE
+              FROM RFC-1212
+       DisplayString
+              FROM RFC1213-MIB;
+
+-- OBJECT IDENTIFIERS
+adtran                  OBJECT IDENTIFIER ::= { enterprises 664 }
+adMgmt                  OBJECT IDENTIFIER ::= { adtran 2 }
+adATLASmg               OBJECT IDENTIFIER ::= { adMgmt 154 }
+adGenATLASmg            OBJECT IDENTIFIER ::= { adATLASmg 1 }
+adATLASVoicemg          OBJECT IDENTIFIER ::= { adGenATLASmg 10 }
+
+
+adATLASVoiceIfNumber OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The number of voice ports (regardless of their current
+        state) present on this system."
+
+    ::= { adATLASVoicemg 1 }
+
+
+--___________________________________________________________
+--          The ATLAS Voice Interface Status Table         --
+--___________________________________________________________
+
+adATLASVoiceIfTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF AdATLASVoiceIfEntry
+        ACCESS   not-accessible
+        STATUS   mandatory
+        DESCRIPTION
+        "The ATLAS Voice Interface Status Table"
+        ::= {adATLASVoicemg   2 }
+
+adATLASVoiceIfEntry OBJECT-TYPE
+        SYNTAX   AdATLASVoiceIfEntry
+        ACCESS   not-accessible
+        STATUS   mandatory
+        DESCRIPTION
+        "An entry in the ATLAS Voice Interface Status Table"
+        INDEX { adATLASVoiceIfIndex }
+        ::= {adATLASVoiceIfTable 1}
+
+AdATLASVoiceIfEntry ::=
+        SEQUENCE {
+            adATLASVoiceIfIndex          INTEGER,
+            adATLASVoiceIfSlotNum        INTEGER,
+            adATLASVoiceIfPortNum        INTEGER,
+            adATLASVoiceIfPortStat       INTEGER,
+            adATLASVoiceIfTxSignalBits   DisplayString,
+            adATLASVoiceIfRxSignalBits   DisplayString
+        }
+
+-- Interface Number
+adATLASVoiceIfIndex OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "The index value which uniquely identifies the object
+        instance."
+        ::= { adATLASVoiceIfEntry 1 }
+
+-- Slot Number
+adATLASVoiceIfSlotNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the slot number of a
+        particular ATLAS module with a voice interface."
+        ::= { adATLASVoiceIfEntry 2 }
+
+-- Port Number
+adATLASVoiceIfPortNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the port number of a
+        particular voice interface on an ATLAS module."
+        ::= { adATLASVoiceIfEntry 3 }
+
+-- Port Status
+adATLASVoiceIfPortStat OBJECT-TYPE
+        SYNTAX    INTEGER{
+                      inactive(1),              -- FXS, FXO, E&M
+                      disabled(2),              -- FXS, FXO, E&M
+                      idle(3),                  -- FXS, FXO, E&M
+                      test(4),                  -- FXS, FXO, E&M
+        	      tipOpen(5),               -- FXS, FXO
+        	      offhook(6),               -- FXS, FXO
+        	      reverseBattery(7),        -- FXS, FXO
+        	      testActive(8),            -- FXS, FXO
+        	      testOffhook(9),           -- FXS
+        	      testRevBatt(10),          -- FXS
+        	      testRinging(11),          -- FXS
+        	      testTipOpen(12),          -- FXS
+        	      testTipOpenRingGND(13),   -- FXS
+                      testDisabled(14),         -- FXS
+                      testRingOffhook(15),      -- FXS
+                      testLO(16),               -- FXO
+                      testLCNormTRPolarity(17), -- FXO
+                      testLCNoBatt(18),         -- FXO
+                      testLCRevTRPolarity(19),  -- FXO
+                      testRingGND(20),          -- FXO
+                      transOnly(21),            -- E&M
+                      testELeadOpen(22),        -- E&M
+                      testELeadClosed(23),      -- E&M
+                      callInProgress(24)        -- E&M
+        	  }
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the call or port status of a
+        particular voice interface on an ATLAS module.  Applicable
+        voice interfaces for each option follow:
+        1 - 4	FXS, FXO, E&M
+        5 - 8   FXS, FXO
+        9 - 15  FXS
+        16 - 20 FXO
+        21 - 24 E&M"
+        ::= { adATLASVoiceIfEntry 4 }
+
+-- Transmit Signaling Bits
+adATLASVoiceIfTxSignalBits OBJECT-TYPE
+        SYNTAX    DisplayString(SIZE(4))
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "Transmit signaling bits: ABCD represented as a
+        character string of 1's and 0's."
+        ::= { adATLASVoiceIfEntry 5 }
+
+-- Receive Signaling Bits
+adATLASVoiceIfRxSignalBits OBJECT-TYPE
+        SYNTAX    DisplayString(SIZE(4))
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "Receive signaling bits: ABCD represented as a
+        character string of 1's and 0's."
+        ::= { adATLASVoiceIfEntry 6 }
+
+--___________________________________________________________
+--           The ATLAS Voice Interface Test Table          --
+--___________________________________________________________
+
+adATLASVoiceTstTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF AdATLASVoiceTstEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+        "The ATLAS Voice Interface Test Table"
+        ::= {adATLASVoicemg   3}
+
+adATLASVoiceTstEntry OBJECT-TYPE
+        SYNTAX    AdATLASVoiceTstEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+        "An entry in the ATLAS Voice Interface Test Table"
+        INDEX { adATLASVoiceTstIndex }
+        ::= {adATLASVoiceTstTable 1}
+
+AdATLASVoiceTstEntry ::=
+        SEQUENCE {
+            adATLASVoiceTstIndex     INTEGER,
+            adATLASVoiceTst2W        INTEGER,
+            adATLASVoiceTstTxABCD    INTEGER,
+            adATLASVoiceTst1kHzTone  INTEGER,
+            adATLASVoiceTstLpBk      INTEGER
+        }
+
+-- The ATLAS Voice Interface Test Table Index
+adATLASVoiceTstIndex OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "The index value which uniquely identifies the
+        object instance."
+        ::= { adATLASVoiceTstEntry 1 }
+
+-- 2 Wire Test Setting
+adATLASVoiceTst2W OBJECT-TYPE
+        SYNTAX    INTEGER{
+                      off (1),                  -- FXS, FXO, E&M
+                      loopOpen (2),             -- FXO
+                      loopClosed (3),           -- FXO
+                      ringGround (4),           -- FXO
+                      active (5),               -- FXS
+                      tipOpen (6),              -- FXS
+                      reverseBattery (7),       -- FXS
+                      disable (8),              -- FXS
+                      ringing (9),              -- FXS
+                      eLeadOpen(10),            -- E&M
+        	      eLeadClosed(11)           -- E&M
+	          }
+        ACCESS    read-write
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the 2 Wire Test setting on a
+        particular voice interface on an ATLAS module.  Applicable
+        voice interfaces for each option follow:
+        1       FXS, FXO, E&M
+        2 - 4   FXO
+        5 - 9   FXS
+        10 - 11 E&M"
+        ::= { adATLASVoiceTstEntry 2 }
+
+-- Transmit Signaling Bits Test Setting
+adATLASVoiceTstTxABCD OBJECT-TYPE
+        SYNTAX    INTEGER{
+                      txOff (1),
+        	      tx0000 (2),
+        	      tx0101 (3),
+        	      tx1010 (4),
+        	      tx1111 (5)
+        	  }
+        ACCESS    read-write
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the Transmit Signaling Bits
+        Test setting on a particular voice interface on an ATLAS
+        module."
+        ::= { adATLASVoiceTstEntry 3 }
+
+-- Tone Test Setting
+adATLASVoiceTst1kHzTone OBJECT-TYPE
+        SYNTAX    INTEGER{
+        	      off (1),
+        	      near (2),
+        	      far (3)
+                  }
+        ACCESS    read-write
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the Tone Test setting on a
+        particular voice interface on an ATLAS module.  Near
+        is for sending tone towards the 2W port.  Far is for
+        sending tone towards the PCM (DS0 or B-Channel)."
+        ::= { adATLASVoiceTstEntry 4 }
+
+-- Loopback Test Setting
+adATLASVoiceTstLpBk OBJECT-TYPE
+        SYNTAX    INTEGER{
+          	      off (1),
+        	      analog (2),
+        	      digital (3)
+        	  }
+        ACCESS    read-write
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the Loopback Test setting on a
+        particular voice interface on an ATLAS module."
+        ::= { adATLASVoiceTstEntry 5 }
+END

@@ -1,0 +1,371 @@
+-- File: modemmgmt.mib
+--	Bay Networks Remote Annex Private Enterprise MIB
+--
+--  Copyright 1997 Bay Networks, Inc.  ALL RIGHTS RESERVED.
+--
+--  ALL RIGHTS RESERVED. Licensed Material - Property of Bay Networks, Inc.
+--  This software is made available solely pursuant to the terms of a
+--  software license agreement which governs its use.
+--  Unauthorized duplication, distribution or sale are strictly prohibited.
+--
+--  This information is subject to change without notice, and should
+--  not be construed as a commitment by Bay Networks, Inc.  Bay Networks, Inc.,
+--  assumes no responsibility for any errors that may appear in this
+--  document.
+--
+--  $Id: 
+--
+-- overview
+--
+--
+
+  XYLO-MODEM-MIB DEFINITIONS ::= BEGIN
+
+  IMPORTS
+		Counter
+			FROM RFC1155-SMI
+		DisplayString
+			FROM RFC1213-MIB
+		OBJECT-TYPE
+			FROM RFC-1212
+		anxModem
+			FROM XYLO-MIB-SMI;
+
+--  xylogics		OBJECT IDENTIFIER ::= { enterprises 15 } 
+--  anxModem		OBJECT IDENTIFIER ::= { annex 100 }
+
+
+-- modem Identification MIB objects.
+	mdmIdObjects	OBJECT IDENTIFIER ::= { anxModem 3 }
+
+-- modem command MIB objects.
+	mdmCtlObjects	OBJECT IDENTIFIER ::= { anxModem 4 }
+
+-- modem statistics MIBobjects.
+	mdmStatsObjects	OBJECT IDENTIFIER ::= { anxModem 7 }
+
+-- The following is only supported on the 8000 and 5399
+-- modem Identification group. This group identifies the modem hardware
+-- and revision version. Also use this group to assign a modem to a bank
+-- of modem. The bank of modem is synonmous with the 'type_of_modem' in
+-- the config file.
+
+	mdmIdTable	OBJECT-TYPE
+			SYNTAX SEQUENCE OF MdmIdEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A table of modem identification objects per modem."
+			::= { mdmIdObjects 1 }
+
+	mdmIdEntry	OBJECT-TYPE
+			SYNTAX	MdmIdEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A row in the modem identfication table."
+			INDEX	{ mdmNumber }
+			::= { mdmIdTable 1 }
+	
+	MdmIdEntry	::= SEQUENCE {
+			mdmNumber	INTEGER,
+			mdmIdHardwareRev DisplayString,
+			mdmIdSoftwareRev DisplayString
+			}
+
+	mdmNumber	OBJECT-TYPE
+			SYNTAX	INTEGER (1..65535)			
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"A unique number from 1 to totalModems that
+			identifies each internal modem."
+			::= { mdmIdEntry 1 }
+
+	mdmIdHardwareRev	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (1..80))
+			ACCESS read-only
+			STATUS mandatory
+	                DESCRIPTION
+			"Modem hardware version.
+			Note. 1. Currently we provide a hardware revision as
+				part of the software revision string. This 
+				object returns a value of ascii 0"
+			::= { mdmIdEntry 2 }
+
+	mdmIdSoftwareRev	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (1..80))
+			ACCESS read-only
+			STATUS mandatory
+	                DESCRIPTION
+			"Modem software version. This object obsoletes
+			anxpModemFirmware."
+			::= { mdmIdEntry 3 }
+
+	mdmId56kProprietaryCode	OBJECT-TYPE
+		SYNTAX	INTEGER {
+			none(1),
+			x2-v34(2),
+			k56flex-v34(3)
+			}
+		ACCESS  read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"This object corresponds to the cli command set56k.
+
+			none(1) means no proprietary modem code is running.
+			In the future, when the 56k standard is in place, 
+			none(1) will indicate it is loaded."			
+		::= { mdmIdObjects 2 }
+
+
+-- modem control command group. 
+	mdmCtlResetAll	OBJECT-TYPE
+		SYNTAX	INTEGER {
+			ready(1),
+			execute(2)
+			}
+		ACCESS  read-write
+		STATUS	mandatory
+		DESCRIPTION
+			"Setting this object to execute(2) causes a
+			hardware reset on all internal modems. 
+			This will terminate any active 
+			session on the modem. Setting this object will not 
+			read or change the modem configuration. Reading this 
+			object will always return ready(1). This object is 
+			similar to NA/admin command 'reset int_modem all'. 
+			This object replaces the option intmodems(18) for the
+			MIB object anxcReset."
+		::= { mdmCtlObjects 1 }
+
+	mdmCtlReadConfig OBJECT-TYPE
+		SYNTAX	INTEGER {
+			ready(1),
+			execute(2)
+			}
+		ACCESS	read-write
+		STATUS	mandatory
+		DESCRIPTION	
+			"Read modem config file. Setting this object to 
+			execute(2) will not disrupt active calls.  The
+			new configuration information is passed to the modem
+			when connecting the next call. This command is similar 
+			to the NA/admin command 'reset annex modem'.
+			This object replaces the option modem(10) for the
+			MIB object anxcReset."
+		::= { mdmCtlObjects 2 }
+
+	mdmCtlTable	OBJECT-TYPE
+			SYNTAX SEQUENCE OF MdmCtlEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+				"A table of modem control objects executable
+				per modem."
+			::= { mdmCtlObjects 3 }
+
+	mdmCtlResetModemThresh	OBJECT-TYPE
+			SYNTAX	INTEGER (1..65535)			
+			ACCESS  read-write
+			STATUS	mandatory
+			DESCRIPTION
+			"After every configurable number (as specified by
+			the modem_reset_threshold parameter) of consecutive
+			failures on a modem, it will be reset.  This will not
+			affect the consecutive failure count which is already
+			maintained for the modem_error_threshold Annex 
+			parameter, thereby working independent of the 
+			modem_error_threshold Annex parameter.  This means
+			that even though the modem will be reset, after every
+			modem_reset_threshold consecutive failures, it will
+			be put out of service when the number of consecutive
+			modem failures exceeds the value specified by the 
+			modem_error_threshold paramter."
+			::= { mdmCtlObjects 4 }
+
+	mdmCtlEntry	OBJECT-TYPE
+			SYNTAX	MdmCtlEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+				"A row in the modem control table."
+			INDEX	{ mdmNumber }
+			::= { mdmCtlTable 1 }
+	
+	MdmCtlEntry	::= SEQUENCE {
+			mdmCtlReset	INTEGER,
+			mdmCtlState	INTEGER
+			}
+
+	mdmCtlReset	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				ready(1),
+				execute(2)
+			}
+			ACCESS read-write
+			STATUS	mandatory
+			DESCRIPTION
+			"Does hardware reset on a specific modem. 
+			Executing this object will end any current session
+ 			on the modem. However this object will not read or 
+			change the modem configuration. Reading this object 
+			will always return ready(1). This object is similar 
+			to NA/admin command 'reset int_modem modem#'. 
+			This object obsoletes the object anxpModemReset."
+			::= { mdmCtlEntry 1 }
+	
+	mdmCtlState	OBJECT-TYPE
+			SYNTAX	INTEGER {
+			busy(1),
+			available(2),
+			busiedOut(3),
+			failed(4),
+			crashed(5),
+			outOfService(6)
+			}
+			ACCESS	read-write
+			STATUS	mandatory
+		DESCRIPTION
+		"Command to put a modem back into service
+		(if busied out) or to put the modem out of service (if
+		available). Busying out a modem will take the modem out
+		of service and no calls will be assigned to this modem.
+		This object is similar NA/admin parameter busy_out. This
+ 		object can be seen after setting up a modem list.
+		This object replaces anxpModemStatus object."
+			::= { mdmCtlEntry 2 }
+
+-- modem statistics MIB objects. The modem statistics MIB table represents
+-- cumulative modem statistics for a particular modem. 
+-- Note: these are read only objects.
+ 
+	mdmStatTable	OBJECT-TYPE
+			SYNTAX SEQUENCE OF MdmStatEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A table of modem statistics."
+			::= { mdmStatsObjects 1 }
+
+	mdmStatEntry	OBJECT-TYPE
+			SYNTAX	MdmStatEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A row in the modem statistics table."
+			INDEX	{ mdmNumber }
+			::= { mdmStatTable 1 }
+	
+	MdmStatEntry	::= SEQUENCE {
+			mdmStatAssign		Counter,
+			mdmStatChat		Counter,
+			mdmStatDcd		Counter,
+			mdmStatConsecFail	Counter,
+                        mdmStatStatus  		INTEGER,
+    			mdmStatTotCalls		Counter,
+    			mdmStatTotFailures	Counter
+			}
+	
+	mdmStatAssign	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"A call progress counter, displayed by CLI command
+			'inmoderr'. Number of times this modem has been
+			assigned to a call."
+			::= { mdmStatEntry 1 }
+
+	mdmStatChat	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"A call progress counter, displayed by CLI command
+			'inmoderr'. Number of times this modem has been
+			told to answer."
+			::= { mdmStatEntry 2 }
+
+	mdmStatDcd	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"A call progress counter, displayed by CLI command
+			'inmoderr'. Number of times this modem has established
+			a connection."
+			::= { mdmStatEntry 3 }
+
+	mdmStatConsecFail OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"A call progress counter, displayed by CLI command
+			'inmoderr'. Number of consecutive times this modem has
+			failed to establish a connection."
+			::= { mdmStatEntry 4 }
+
+	mdmStatStatus	OBJECT-TYPE
+		SYNTAX  INTEGER {
+			busy(1),
+			available(2),
+			busiedOut(3),
+			failed(4),
+			crashed(5),
+			outOfService(6)
+		}
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Current State of the modem.
+			State explaination are:
+			  busy(1) - Modem is handling a call.
+			  avail(2) - modem is idle and available.
+			  busiedOut(3) - modem is taken out of service by the
+			      system manager.
+			  failed(4) - Boot-up diagnostic has marked this modem
+			      as failed.
+			  crashed(5) - The driver has determined this modem as
+			      failed.
+			  outOfService(6) - The modem was taken out of service 
+			      automatically.
+			This MIB object corresponds to the status reported by
+			the na/admin command `modem -m <modem number>'."
+		::= { mdmStatEntry 5 }
+
+	mdmStatTotCalls OBJECT-TYPE
+		SYNTAX	Counter
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"The total number of calls handled by this modem. This
+			counter is reset to zero after system reboot or 
+			after the modem is reset."
+		::= { mdmStatEntry 6 }
+
+	mdmStatTotFailures OBJECT-TYPE
+		SYNTAX	Counter
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"The total number of calls failed to be answered by
+			this modem.  This counter is reset to zero after system
+			reboot or after the modem os reset."
+		::= { mdmStatEntry 7 }
+
+
+--
+	mdmAvailModems OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"The number of modems available to the dial-in point.
+			That is, the number of modems not busy, buisied-out,
+			failed, crashed, out of service or otherwise
+			unavailable for calls at this time."
+		::= { mdmStatsObjects 2 }
+
+END

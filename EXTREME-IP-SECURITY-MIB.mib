@@ -1,0 +1,473 @@
+EXTREME-IP-SECURITY-MIB DEFINITIONS ::= BEGIN
+
+      IMPORTS
+                MODULE-IDENTITY                                                     FROM SNMPv2-SMI
+                OBJECT-TYPE                                                         FROM SNMPv2-SMI
+                IpAddress                                                           FROM SNMPv2-SMI
+                Counter64                                                           FROM SNMPv2-SMI
+                Integer32                                                           FROM SNMPv2-SMI             
+                TEXTUAL-CONVENTION, DisplayString, MacAddress, RowStatus            FROM SNMPv2-TC
+                InetAddressType, InetAddress , InetPortNumber                       FROM INET-ADDRESS-MIB 
+                extremeAgent                                                        FROM EXTREME-BASE-MIB;
+
+
+     extremeIpSecurity MODULE-IDENTITY
+                LAST-UPDATED "200502140000Z"
+            ORGANIZATION "Extreme Networks, Inc."
+            CONTACT-INFO "www.extremenetworks.com"
+            DESCRIPTION "Extreme IP Security MIB"
+         ::= { extremeAgent 34 }
+
+     extremeIpSecurityTraps     OBJECT IDENTIFIER
+         ::= { extremeIpSecurity 1 }
+
+     extremeIpSecurityTrapsPrefix     OBJECT IDENTIFIER
+         ::= { extremeIpSecurityTraps 0 }
+
+     extremeIpSecurityViolation NOTIFICATION-TYPE
+        OBJECTS { extremeIpSecurityVlanIfIndex,
+                  extremeIpSecurityVlanDescr,
+                  extremeIpSecurityPortIfIndex,
+                  extremeIpSecurityIpAddr,
+                  extremeIpSecurityMacAddress,
+                  extremeIpSecurityViolationType }
+        STATUS      current
+        DESCRIPTION
+            "For vlans/ports on which one or more of the IP Security 
+            features have been enabled, this trap will be generated when a packet 
+            received on that vlan/port is in violation of the configured IP 
+            Security protections"
+        ::= { extremeIpSecurityTrapsPrefix 1 }
+ 
+     extremeIpSecurityVlanIfIndex OBJECT-TYPE
+         SYNTAX Integer32
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "The ifIndex of the VLAN on which the violating packet was received."
+         ::= { extremeIpSecurityTraps 1 }
+
+     extremeIpSecurityVlanDescr OBJECT-TYPE
+         SYNTAX DisplayString (SIZE(0..32))
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "The description(name) of the VLAN on which the violating packet was received."
+         ::= { extremeIpSecurityTraps 2 }
+
+    extremeIpSecurityPortIfIndex  OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+        "The ifIndex of the port on which the violating packet was received."
+        ::= { extremeIpSecurityTraps 3 }
+
+    extremeIpSecurityIpAddr  OBJECT-TYPE
+        SYNTAX  IpAddress
+        MAX-ACCESS accessible-for-notify
+        STATUS       current
+        DESCRIPTION
+        "Source IP address of the violating packet"
+        ::= { extremeIpSecurityTraps 4 }
+
+    extremeIpSecurityMacAddress  OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+        "Source MAC address in the violating packet"
+        ::= { extremeIpSecurityTraps 5 }
+
+        extremeIpSecurityViolationType OBJECT-TYPE
+        SYNTAX  INTEGER {
+            rogueDhcpServerPacket(1),
+            badIpMacBindingInArpPacket(2),
+            badIpInArpPacket(3),
+            badMacInArpPacket(4)
+        }
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+        "The type of IP Security violation that occurred
+            - rogueDhcpServerPacket(1)
+                    A rogue DHCP server packet was received.
+            - badIpMacBindingInArpPacket(2)
+                    The IP-MAC binding received in the ARP packet does not exist in 
+                    the DHCP Bindings table.
+            - badIpInArpPacket(3)
+                    The Source IP address in the ARP payload is invalid.
+            - badMacInArpPacket(4)
+                    One of the MAC addresses in the ARP payload does not match with
+                    its counterpart in the ethernet header."
+        ::= { extremeIpSecurityTraps 6 }
+
+
+--
+-- protocol anomaly traps
+--
+
+-- internal conventions 
+
+     HexOctet ::= TEXTUAL-CONVENTION
+         DISPLAY-HINT    "2x"
+         STATUS          current
+         DESCRIPTION
+            "A single hexidecimal octet used to specify TCP flags" 
+         SYNTAX          OCTET STRING (SIZE (2))
+
+     VlanTag ::= TEXTUAL-CONVENTION
+         STATUS          current
+         DESCRIPTION
+            "The tag used when encapsulating packets transmitted" 
+         SYNTAX         INTEGER (0..4095) 
+
+    IpProtocol ::= TEXTUAL-CONVENTION
+        DISPLAY-HINT    "d"
+        STATUS          current
+        DESCRIPTION
+             "The value of the IP Protocol field of an IP Datagram
+              Header. This identifies the protocol layer above IP. For
+              example, the value 6 is used for TCP and the value 17 is used
+              for UDP.  The values of this field are defined in the Assigned
+              Numbers RFC."
+        SYNTAX          INTEGER {
+                        unknown(0),
+                        icmp(1),
+                        tcp(6),
+                        udp(17)
+                    }
+
+    TcpFlagAnomalyReason ::= TEXTUAL-CONVENTION
+        STATUS          current
+        DESCRIPTION
+           " 1) (TCP flag SYN is set) and (its TCP source port < 1024). OR   
+             2) (TCP flag == 0) and (TCP seq # == 0). OR   
+             3) (TCP flag FIN/URG/PSH bits sre set) and (TCP seq # == 0). OR   
+             4) Both TCP iflag SYN and FIN are set" 
+        SYNTAX          INTEGER {
+                        unknown(0),
+                        flagSynAndSrcPort(1),
+                        flagAndSeq(2),
+                        flagFinAndUrgAandPshandSeq(3),
+                        flagSynAndFin(4)
+                    }
+
+    IcmpAnomalyReason ::= TEXTUAL-CONVENTION
+        STATUS          current
+        DESCRIPTION
+           " 1) the size of ICMP is large than pre-configured allowed size  
+             2) Fragmented ICMP packet" 
+        SYNTAX          INTEGER {
+                        unknown(0),
+                        icmpOverSize(1),
+                        icmpFragmented(2)
+                    }
+
+    TcpFragmentAnomalyReason ::= TEXTUAL-CONVENTION
+        STATUS          current
+        DESCRIPTION
+           " 1) TCP packet and incompleted TCP header (IP payload less tahn MIN_TCP_HDR_SIZE)   
+             2) Fragmented TCP packet (IP fragment offset = 1) " 
+        SYNTAX          INTEGER {
+                        unknown(0),
+                        tcpHdrLessSize(1),
+                        tcpFragmented(2)
+                    }
+
+-- anomaly traps
+
+     extremeIpSecurityAnomalyTraps     OBJECT IDENTIFIER
+         ::= { extremeIpSecurity 2 }
+
+     extremeIpSecurityAnomalyTrapsPrefix     OBJECT IDENTIFIER
+         ::= { extremeIpSecurityAnomalyTraps 0 }
+
+
+-- anomaly ip address traps
+
+     extremeIpSecurityAnomalyIpViolation NOTIFICATION-TYPE
+        OBJECTS { esAnomalyPortIfIndex, 
+                  esAnomalyVlanIfIndex,
+                  esAnomalyVlanDescr,
+                  esAnomalySrcMacAddress,
+                  esAnomalyDestMacAddress,
+                  esAnomalyVlanTag,
+                  esAnomalySrcIpAddrType,
+                  esAnomalySrcIpAddr,
+                  esAnomalyDestIpAddrType,
+                  esAnomalyDestIpAddr,
+                  esAnomalyIpProto} 
+        STATUS      current
+        DESCRIPTION
+            "For ports on which the protocol anomaly protection IP 
+            features has been enabled, this trap will be generated when a packet 
+            received on that port if the packet's source IP == destination IP" 
+        ::= { extremeIpSecurityAnomalyTrapsPrefix  1 }
+
+
+-- anomaly L4port traps
+
+     extremeIpSecurityAnomalyL4PortViolation NOTIFICATION-TYPE
+        OBJECTS { esAnomalyPortIfIndex, 
+                  esAnomalyVlanIfIndex,
+                  esAnomalyVlanDescr,
+                  esAnomalySrcMacAddress,
+                  esAnomalyDestMacAddress,
+                  esAnomalyVlanTag,
+                  esAnomalySrcIpAddrType,
+                  esAnomalySrcIpAddr,
+                  esAnomalyDestIpAddrType,
+                  esAnomalyDestIpAddr,
+                  esAnomalyIpProto,
+                  esAnomalySrcL4Port,
+                  esAnomalyDestL4Port} 
+        STATUS    current
+        DESCRIPTION
+            "For ports on which the protocol anomaly protection L4port 
+            features has been enabled, this trap will be generated when a packet 
+            received on that port if 
+            1) the packet is a TCP or UDP packetr.  AND 
+            2) its source L4 port == destination port" 
+        ::= { extremeIpSecurityAnomalyTrapsPrefix 2 }
+
+
+-- anomaly TCP flags trap 
+
+     extremeIpSecurityAnomalyTcpFlagViolation NOTIFICATION-TYPE
+        OBJECTS { esAnomalyPortIfIndex, 
+                  esAnomalyVlanIfIndex,
+                  esAnomalyVlanDescr,
+                  esAnomalySrcMacAddress,
+                  esAnomalyDestMacAddress,
+                  esAnomalyVlanTag,
+                  esAnomalySrcIpAddrType,
+                  esAnomalySrcIpAddr,
+                  esAnomalyDestIpAddrType,
+                  esAnomalyDestIpAddr,
+                  esAnomalySrcL4Port,
+                  esAnomalyDestL4Port,
+                  esAnomalyTcpFlagReason,
+                  esAnomalyTcpFlag,
+                  esAnomalyTcpSeq} 
+        STATUS    current
+        DESCRIPTION
+            "For ports on which the protocol anomaly protection TCP flags 
+            features has been enabled, this trap will be generated when a TCP 
+            packet received on that port if 
+            1) (TCP flag SYN is set) and (its TCP source port < 1024). OR   
+            2) (TCP flag == 0) and (TCP seq # == 0). OR   
+            3) (TCP flag FIN/URG/PSH bits sre set) and (TCP seq # == 0). OR   
+            4) Both TCP iflag SYN and FIN are set" 
+        ::= { extremeIpSecurityAnomalyTrapsPrefix  3 }
+
+
+-- anomaly fragmented TCP trap 
+
+     extremeIpSecurityAnomalyTcpFragmentViolation NOTIFICATION-TYPE
+        OBJECTS { esAnomalyPortIfIndex, 
+                  esAnomalyVlanIfIndex,
+                  esAnomalyVlanDescr,
+                  esAnomalySrcMacAddress,
+                  esAnomalyDestMacAddress,
+                  esAnomalyVlanTag,
+                  esAnomalySrcIpAddrType,
+                  esAnomalySrcIpAddr,
+                  esAnomalyDestIpAddrType,
+                  esAnomalyDestIpAddr,
+                  esAnomalyTcpFragmentReason,
+                  esAnomalyTcpHdrSize}
+        STATUS    current
+        DESCRIPTION
+            "For ports on which the protocol anomaly protection TCP fragment 
+            features has been enabled, this trap will be generated when a packet 
+            received on that port if 
+            1) the packet is a TCP, and its size of the TCP header is less than pre-configured value; or
+            2) the packet is a TCP and it is a IP fragmented packet (IP offset != 0)" 
+        ::= { extremeIpSecurityAnomalyTrapsPrefix  4 }
+
+
+-- anomaly ICMP trap 
+
+     extremeIpSecurityAnomalyIcmpViolation NOTIFICATION-TYPE
+        OBJECTS { esAnomalyPortIfIndex, 
+                  esAnomalyVlanIfIndex,
+                  esAnomalyVlanDescr,
+                  esAnomalySrcMacAddress,
+                  esAnomalyDestMacAddress,
+                  esAnomalyVlanTag,
+                  esAnomalySrcIpAddrType,
+                  esAnomalySrcIpAddr,
+                  esAnomalyDestIpAddrType,
+                  esAnomalyDestIpAddr,
+                  esAnomalyIcmpReason}
+        STATUS    current
+        DESCRIPTION
+            "For ports on which the protocol anomaly protection ICMP 
+            features has been enabled, this trap will be generated when an ICMP 
+            packet received on that port if 
+            1) the size of ICMP (IP payload) is large thant pre-configured value; or   
+            2) it is a fragmented IP/ICMP packet (IP offset != 0)" 
+        ::= { extremeIpSecurityAnomalyTrapsPrefix  5 }
+
+
+-- internal objects
+
+     esAnomalyPortIfIndex  OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+        "The ifIndex of the port on which the violating packet was received."
+        ::= { extremeIpSecurityAnomalyTraps  1 }
+
+     esAnomalyVlanIfIndex OBJECT-TYPE 
+         SYNTAX Integer32
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "The ifIndex of the VLAN on which the violating packet was received."
+         ::= { extremeIpSecurityAnomalyTraps  2 }
+
+     esAnomalyVlanDescr OBJECT-TYPE
+         SYNTAX DisplayString (SIZE(0..32))
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "The description(name) of the VLAN on which the violating packet was received."
+         ::= { extremeIpSecurityAnomalyTraps  3 }
+
+     esAnomalySrcMacAddress OBJECT-TYPE
+         SYNTAX MacAddress
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "Source MAC address in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  4 }
+
+     esAnomalyDestMacAddress OBJECT-TYPE
+         SYNTAX MacAddress
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "Destination MAC address in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  5 }
+
+     esAnomalySrcIpAddrType OBJECT-TYPE
+         SYNTAX InetAddressType 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "source IP address type: ipv4 or ipv6"
+         ::= { extremeIpSecurityAnomalyTraps  6 }
+
+     esAnomalySrcIpAddr OBJECT-TYPE
+         SYNTAX InetAddress 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "source IP address in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  7 }
+
+     esAnomalyDestIpAddrType OBJECT-TYPE
+         SYNTAX InetAddressType 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "destination IP address type: ipv4 or ipv6"
+         ::= { extremeIpSecurityAnomalyTraps  8 }
+
+     esAnomalyDestIpAddr OBJECT-TYPE
+         SYNTAX InetAddress 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "destination IP address in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  9 }
+
+     esAnomalyIpProto OBJECT-TYPE
+         SYNTAX IpProtocol 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "IP protocol in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  10 }
+
+     esAnomalySrcL4Port OBJECT-TYPE
+         SYNTAX InetPortNumber 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "tcp/udp source port number in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  11 }
+
+     esAnomalyDestL4Port OBJECT-TYPE
+         SYNTAX InetPortNumber 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "tcp/udp destination port in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  12 }
+
+
+     esAnomalyTcpFlag OBJECT-TYPE
+         SYNTAX       HexOctet 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "TCP flags in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  13 }
+
+     esAnomalyTcpSeq OBJECT-TYPE
+         SYNTAX       Integer32 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "TCP sequence number in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  14 }
+
+     esAnomalyTcpHdrSize OBJECT-TYPE
+         SYNTAX       Integer32 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "TCP Header size in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  15 }
+
+     esAnomalyTcpFlagReason OBJECT-TYPE
+         SYNTAX       TcpFlagAnomalyReason 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "TCP flag anomaly reason code"
+         ::= { extremeIpSecurityAnomalyTraps  16 }
+
+     esAnomalyIcmpReason OBJECT-TYPE
+         SYNTAX       IcmpAnomalyReason 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "ICMP anomaly reason code"
+         ::= { extremeIpSecurityAnomalyTraps  17 }
+
+     esAnomalyVlanTag OBJECT-TYPE
+         SYNTAX       VlanTag 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "the vlan tag in the violating packet"
+         ::= { extremeIpSecurityAnomalyTraps  18 }
+
+
+     esAnomalyTcpFragmentReason OBJECT-TYPE
+         SYNTAX       TcpFragmentAnomalyReason 
+         MAX-ACCESS accessible-for-notify
+         STATUS current
+         DESCRIPTION
+         "TCP fragment anomaly reason code"
+         ::= { extremeIpSecurityAnomalyTraps  19 }
+
+END
+
+-- ################################################################################
+

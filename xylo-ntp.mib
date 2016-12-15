@@ -1,0 +1,327 @@
+-- File: ntp.mib
+--	Bay Networks Remote Annex Private Enterprise MIB
+--
+--  Copyright 1997 Bay Networks, Inc.  ALL RIGHTS RESERVED.
+--
+--  ALL RIGHTS RESERVED. Licensed Material - Property of Bay Networks, Inc.
+--  This software is made available solely pursuant to the terms of a
+--  software license agreement which governs its use.
+--  Unauthorized duplication, distribution or sale are strictly prohibited.
+--
+--  This information is subject to change without notice, and should
+--  not be construed as a commitment by Bay Networks, Inc.  Bay Networks, Inc.,
+--  assumes no responsibility for any errors that may appear in this
+--  document.
+--
+--  $Id: 
+--
+-- overview
+
+
+  XYLO-NTP-MIB DEFINITIONS ::= BEGIN
+
+  IMPORTS
+		IpAddress, Counter
+			FROM RFC1155-SMI
+		OBJECT-TYPE
+			FROM RFC-1212
+		ntp
+			FROM XYLO-MIB-SMI;
+
+
+--  xylogics		OBJECT IDENTIFIER ::= { enterprises 15 } 
+--  annex		OBJECT IDENTIFIER ::= { xylogics 2}
+--  ntp			OBJECT IDENTIFIER ::= { annex 110 }
+
+
+
+	ntpEnable	OBJECT-TYPE
+			SYNTAX INTEGER {
+				enabled(1),
+				disabled(2)
+				}
+			ACCESS	read-write
+			STATUS  mandatory
+			DESCRIPTION
+			"Enable/Disable NTP"
+			DEFVAL{disabled}
+			::= { ntp 1 }
+
+
+	ntpMode 	OBJECT-TYPE
+			SYNTAX INTEGER {
+				unicast(1),
+				broadcast(2),
+				multicast(3)
+			}
+			ACCESS read-write
+			STATUS mandatory
+			DESCRIPTION
+			"set the mode of NTP on annex. Only unicast client mode is supported in the current release"
+			DEFVAL{ unicast}
+			::= { ntp 2 }
+
+	ntpState OBJECT-TYPE
+			SYNTAX INTEGER {
+				up(1),
+				down(2)
+			}
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"The current state of NTP"
+			DEFVAL{ down }
+			::= { ntp 3 }
+
+	ntpVersion OBJECT-TYPE
+			SYNTAX INTEGER 
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"The NTP version on the RAC NTP client software"
+			::= { ntp 4 }
+
+	ntpStratum OBJECT-TYPE
+			SYNTAX INTEGER (0..15)
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"RAC NTP client software stratum"
+			::= { ntp 5 }
+
+	ntpRootDelay OBJECT-TYPE
+			SYNTAX INTEGER 
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"Delay from synchronization server"
+			::= { ntp 6 }
+
+	ntpReferenceId OBJECT-TYPE
+			SYNTAX IpAddress
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"Reference ID of time synchronization source"
+			::= { ntp 7 }
+
+	ntpLeapHappened OBJECT-TYPE
+			SYNTAX INTEGER {
+				yes(1),
+				no (2)
+			}
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"Flag indicating whether leap occurred or not
+			leap: a leap second is added / subtracted from the
+			last second of a particular day for e.g. the time of
+			a particular day will end with 23:59:60 instead of
+			23:59:59. This is done to conform with universal 
+			standard time conventions"
+			::= { ntp 8 }
+
+	ntpLeapTime OBJECT-TYPE
+			SYNTAX TimeTicks 
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"Next leap adjustment in 1/100 second"
+			::= { ntp 9 }
+
+	ntpPeerTable OBJECT-TYPE
+		SYNTAX SEQUENCE OF NtpPeerEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+		"The list of configured NTP Peers/Servers"
+	::= { ntp 10 }
+
+	ntpPeerEntry OBJECT-TYPE
+		SYNTAX NtpPeerEntry
+		ACCESS not-accessible
+		STATUS mandatory
+	DESCRIPTION
+		"An NTP peer description"
+		INDEX { ntpPeerIndexNumber }
+		::= {ntpPeerTable 1 }
+
+	NtpPeerEntry ::= SEQUENCE {
+		ntpPeerIndexNumber	INTEGER,
+		ntpPeerState		Gauge,
+		ntpConfigPeerMode	INTEGER,
+		ntpPeerMode		INTEGER,
+		ntpPeerHostMode		INTEGER,
+		ntpPeerIpAddress	IpAddress,
+		ntpSourceIpAddress	IpAddress,
+		ntpPeerPref		INTEGER,
+		ntpPeerRefId		IpAddress,
+		ntpPeerVersion		INTEGER,
+		ntpPeerPrecision	INTEGER,
+		ntpPeerStratum		INTEGER,
+		ntpPeerRootDelay	INTEGER,
+		ntpPeerDispersion	Gauge,
+		ntpPeerOffset		Gauge,
+		ntpPeerPolls		Counter,
+		ntpPeerFramesReceived	Counter
+	}
+
+
+	ntpPeerIndexNumber OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Index number"
+	::= { ntpPeerEntry 1 }
+
+	ntpPeerState OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only
+		STATUS mandatory
+	DESCRIPTION
+		"State of Peer"
+		::= { ntpPeerEntry 2 }
+
+	ntpConfigPeerMode OBJECT-TYPE
+		SYNTAX INTEGER {
+			server(1),
+			peer(2)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+		"Peer configured as peer or server"
+		DEFVAL{ server }
+	::= { ntpPeerEntry 3 }
+
+	ntpPeerMode OBJECT-TYPE
+		SYNTAX INTEGER {
+			symmetrica(1),
+			symmetricp(2),
+			client(3),
+			server(4),
+			broadcast(5),
+			ntpctrl(6)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"The peer mode of operation"
+		::= { ntpPeerEntry 4 }
+
+	ntpPeerHostMode OBJECT-TYPE
+		SYNTAX INTEGER {
+			symmetrica(1),
+			symmetricp(2),
+			client(3),
+			server(4),
+			broadcast(5),
+			ntpctrl(6)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+		"RAC NTP mode"
+		DEFVAL{ client}
+		::= { ntpPeerEntry 5 }
+
+	ntpPeerIpAddress OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"IP address of Peer"
+	::= { ntpPeerEntry 6 }
+
+	ntpSourceIpAddress OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+		"Source IP address of Peer"
+		::= { ntpPeerEntry 7 }
+
+	ntpPeerPref OBJECT-TYPE
+		SYNTAX INTEGER 
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+		"Peer preference:not used"
+		::= { ntpPeerEntry 8 }
+
+	ntpPeerRefId OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Peer Reference clock IP Address"
+		::= { ntpPeerEntry 9 }
+
+	ntpPeerVersion OBJECT-TYPE
+		SYNTAX INTEGER 
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Peer NTP version number"
+		DEFVAL{ 3 }
+		::= { ntpPeerEntry 10 }
+
+	ntpPeerPrecision OBJECT-TYPE
+		SYNTAX INTEGER 
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Peer Clock precision"
+		::= { ntpPeerEntry 11 }
+
+	ntpPeerStratum OBJECT-TYPE
+		SYNTAX INTEGER (0..15)
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Peer stratum"
+		::= { ntpPeerEntry 12 }
+
+	ntpPeerRootDelay OBJECT-TYPE
+		SYNTAX INTEGER 
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Delay from Synchronization clock in seconds"
+		::= { ntpPeerEntry 13 }
+
+	ntpPeerDispersion OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Peer clock dispersion"
+		::= { ntpPeerEntry 14 }
+
+	ntpPeerOffset OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Peer clock offset"
+		::= { ntpPeerEntry 15 }
+
+	ntpPeerPolls OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Number of times this peer has been polled"
+		::= { ntpPeerEntry 16 }
+
+	ntpPeerFramesReceived OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"Number of frames this peer has received"
+		::= { ntpPeerEntry 17 }
+
+
+END

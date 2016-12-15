@@ -1,0 +1,977 @@
+-- SECTION 1: Top Level Definitions
+
+S5-TOK-TOPOLOGY-MIB DEFINITIONS ::= BEGIN
+
+
+-- 5000 Token Ring Topology MIB Release 1.1.5
+-- Revision 10/14/98
+
+-- Copyright 1995 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	IpAddress, TimeTicks
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	SnpxChassisType, SnpxBackplaneType
+		FROM SYNOPTICS-ROOT-MIB
+	s5TrTop
+		FROM S5-ROOT-MIB
+	MacAddress
+		FROM S5-TCS-MIB;
+
+
+
+-- SECTION 2: MIB Objects
+
+
+-- Interface Topology table
+
+
+s5TrTopIfTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrTopIfEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table with topology status and control
+		for each token ring interface on the NMM. The
+		number of entries is determined by the number
+		of token ring interfaces on the NMM."
+	::= { s5TrTop 1 }
+
+s5TrTopIfEntry OBJECT-TYPE
+	SYNTAX	S5TrTopIfEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the table of topology status and
+		control for each token ring interface on the
+		NMM. Entries in the table can not be created
+		or deleted via SNMP."
+	INDEX	{ s5TrTopIfIpAddr }
+	::= { s5TrTopIfTable 1 }
+
+
+S5TrTopIfEntry ::= SEQUENCE {
+	s5TrTopIfIpAddr IpAddress,
+	s5TrTopIfNum INTEGER,
+	s5TrTopIfStatus INTEGER,
+	s5TrTopIfNmmLstChg TimeTicks,
+	s5TrTopIfBdgLstChg TimeTicks,
+	s5TrTopIfRingNmmLstChg TimeTicks,
+	s5TrTopIfNmmMaxNum INTEGER,
+	s5TrTopIfNmmCurNum INTEGER,
+	s5TrTopIfBdgMaxNum INTEGER,
+	s5TrTopIfBdgCurNum INTEGER,
+	s5TrTopIfRingNmmMaxNum INTEGER,
+	s5TrTopIfRingNmmCurNum INTEGER,
+	s5TrTopIfTopSpeed INTEGER
+	}
+
+
+s5TrTopIfIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The IP address of the interface."
+	::= { s5TrTopIfEntry 1 }
+
+s5TrTopIfNum OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of ifIndex for the interface."
+	::= { s5TrTopIfEntry 2 }
+
+s5TrTopIfStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		topOn(1),
+		topOff(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicates if the interface is participating
+		in topology. The values are:
+		  topOn(1)....topology is on
+		  topOff(2)...topology is off
+		When the value is topOff(2) the status
+		of entries associated with the interface
+		is undefined. However, the agent should
+		make its best attempt when the value is
+		changed to topOff(2) to remove all
+		existing instances of topology MIB objects
+		for the interface. The agent must save
+		the setting of this object in nonvolatile
+		memory (i.e., save across reboots)."
+	::= { s5TrTopIfEntry 3 }
+
+s5TrTopIfNmmLstChg OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime when the last
+		addition or deletion of an NMM topology
+		table entry associated with the interface
+		was done. If none have been done since
+		cold/warm start of the agent, then the
+		value is zero."
+	::= { s5TrTopIfEntry 4 }
+
+s5TrTopIfBdgLstChg OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime when the last
+		addition or deletion of a bridge
+		topology table entry associated with the
+		interface was done. If none have been
+		done since cold/warm start of the
+		agent, then the value is zero."
+	::= { s5TrTopIfEntry 5 }
+
+s5TrTopIfRingNmmLstChg OBJECT-TYPE
+	SYNTAX	TimeTicks
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of sysUpTime when the last
+		addition or deletion of a Ring NMM
+		topology table entry associated with
+		the interface was done. If none have
+		been done since cold/warm start
+		of the agent, then the value is zero."
+	::= { s5TrTopIfEntry 6 }
+
+s5TrTopIfNmmMaxNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..65535)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The maximum number of entries for the
+		interface in the NMM topology table."
+	::= { s5TrTopIfEntry 7 }
+
+s5TrTopIfNmmCurNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..65535)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current number of entries for the
+		interface in the NMM topology table."
+	::= { s5TrTopIfEntry 8 }
+
+s5TrTopIfBdgMaxNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..65535)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The maximum number of entries for the
+		interface in the bridge topology table."
+	::= { s5TrTopIfEntry 9 }
+
+s5TrTopIfBdgCurNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..65535)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current number of entries for the
+		interface in the bridge topology table."
+	::= { s5TrTopIfEntry 10 }
+
+s5TrTopIfRingNmmMaxNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The maximum number of entries for the
+		interface in the Ring NMM topology table."
+	::= { s5TrTopIfEntry 11 }
+
+s5TrTopIfRingNmmCurNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current number of entries for the
+		interface in the Ring NMM topology table."
+	::= { s5TrTopIfEntry 12 }
+
+s5TrTopIfTopSpeed OBJECT-TYPE
+	SYNTAX	INTEGER {
+		other(1),
+		topFast(2),
+		topSlow(3)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The Token Ring topology message (SONMP frame)
+		transmit speed. The values that are read/write are:
+		  topFast(2)...short interval between transmitting
+		  topSlow(3)...long interval between transmitting
+
+		The value that is readonly is:
+		  other(1)...speed unknown, or other value
+
+		In fast mode, the SONMP frame transmit interval
+		is 10 seconds for all SONMP frames except
+		for ring master which is 5 seconds.
+
+		In slow mode, the interval is 15 seconds for ring
+		master SONMP frames, 50 seconds for concentrator
+		profile SONMP frames, 60 seconds for master NMM
+		announcement SONMP frames, and 70 seconds for
+		adjacent SONMP frames."
+	::= { s5TrTopIfEntry 13 }
+
+
+
+-- Network Management Module (NMM) Topology Table
+
+
+s5TrTopNmmTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrTopNmmEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table of topology information for each
+		Network Management Module (NMM) with a Token
+		Ring interface on the same 'flat network'
+		as the reporting NMM. The number of entries
+		is determined by the number of detected
+		(and active) NMMs. Entries in the table are
+		created by reception of a topology message
+		with information about a 'new' NMM. An entry
+		is removed from the table when an NMM is
+		not present in the topology message from
+		a ring, or when no topology messages are
+		received from a ring in the required time
+		interval."
+	::= { s5TrTop 2 }
+
+s5TrTopNmmEntry OBJECT-TYPE
+	SYNTAX	S5TrTopNmmEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the table of topology information
+		about Network Management Modules (NMMs) with
+		a Token Ring interface on the same 'flat
+		network' as the reporting NMM. Entries in the
+		table can not be created or deleted via SNMP."
+	INDEX	{ s5TrTopNmmIfIpAddr,
+		  s5TrTopNmmIpAddr }
+	::= { s5TrTopNmmTable 1 }
+
+S5TrTopNmmEntry ::= SEQUENCE {
+	s5TrTopNmmIfIpAddr IpAddress,
+	s5TrTopNmmIpAddr IpAddress,
+	s5TrTopNmmRingNum INTEGER,
+	s5TrTopNmmRingMaster INTEGER,
+	s5TrTopNmmRingSpeed INTEGER,
+	s5TrTopNmmBridgeGroupIdentifier INTEGER,
+	s5TrTopNmmSlotNum INTEGER,
+	s5TrTopNmmPortNum INTEGER
+	}
+
+s5TrTopNmmIfIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The IP address of the interface on which
+		the topology message was received."
+	::= { s5TrTopNmmEntry 1 }
+
+s5TrTopNmmIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The IP address of an NMM contained in
+		a topology message."
+	::= { s5TrTopNmmEntry 2 }
+
+s5TrTopNmmRingNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..4095)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The ring number on which an NMM from a
+		topology message is located."
+	::= { s5TrTopNmmEntry 3 }
+
+s5TrTopNmmRingMaster OBJECT-TYPE
+	SYNTAX	INTEGER {
+		normal(1),
+		master(2)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The classification of an NMM from
+		a topology message. The values are:
+		  normal(1)...not a master NMM
+		  master(2)...a master NMM"
+	::= { s5TrTopNmmEntry 4 }
+
+s5TrTopNmmRingSpeed OBJECT-TYPE
+	SYNTAX	INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The speed of the ring (in units of Mbits)
+		on which an NMM from a topology message is
+		located. The expected values are:
+		   4....4 Mbps
+		  16...16 Mbps"
+	::= { s5TrTopNmmEntry 5 }
+
+s5TrTopNmmBridgeGroupIdentifier OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The forwarding domain identification -- 
+                VLAN ID, if applicable, of the port on 
+                which the SONMP message for this entry 
+                was heard. The value shall be zero if 
+                the entry is local, or if the port number 
+                cannot be resolved."
+       ::= {s5TrTopNmmEntry 6}
+ 
+s5TrTopNmmSlotNum OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The slot number of the port on which the SONMP
+                 message for this entry was heard.  The value shall
+                 be zero if the port number cannot be resolved."
+        ::= {s5TrTopNmmEntry 7}
+ 
+s5TrTopNmmPortNum OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The port number of the port on which the SONMP
+                 message for this entry was heard.  The value shall
+                 be zero if the port number cannot be resolved."
+       ::= {s5TrTopNmmEntry 8}
+ 
+
+-- Bridge Topology Table
+
+
+s5TrTopBdgTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrTopBdgEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table that lists each known bridge 
+		with a Token Ring interface on the same
+		'flat net' as the reporting NMM. The
+		number of entries is determined by
+		the number of detected (and active)
+		bridges. Entries are added by reception of
+		a topology message from a bridge or reception
+		of a topology message from an master NMM that
+		was forwarded by a source routing bridge.
+		An entry is removed from the table when
+		no topology messaged are received from
+		bridge in the required time interval."
+	::= { s5TrTop 3 }
+
+s5TrTopBdgEntry OBJECT-TYPE
+	SYNTAX	S5TrTopBdgEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the table of known bridges
+		with a Token Ring interface on the same
+		'flat net' as the reporting NMM. Entries
+		in the table can not be created or deleted
+		via SNMP."
+	INDEX	{ s5TrTopBdgIfIpAddr,
+		  s5TrTopBdgIndx }
+	::= {s5TrTopBdgTable 1 }
+
+S5TrTopBdgEntry ::= SEQUENCE {
+	s5TrTopBdgIfIpAddr IpAddress,
+	s5TrTopBdgIndx INTEGER,
+	s5TrTopBdgNum INTEGER,
+	s5TrTopBdgOwnRingNum INTEGER,
+	s5TrTopBdgAdjRingNum INTEGER,
+	s5TrTopBdgAdjMasterNmmIpAddr IpAddress,
+	s5TrTopBdgMacAddr MacAddress,
+	s5TrTopBdgIpAddr IpAddress,
+	s5TrTopBdgType INTEGER,
+	s5TrTopBdgSlotNum INTEGER,
+	s5TrTopBdgPortNum INTEGER,
+	s5TrTopBdgNumPort INTEGER,
+	s5TrTopBdgHelloPortNum INTEGER,
+	s5TrTopBdgHelloPortStatus INTEGER,
+	s5TrTopBdgMonPortStatus INTEGER,
+	s5TrTopBdgHelloType INTEGER
+	}
+
+s5TrTopBdgIfIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The IP address of the interface on which
+		the topology message was received."
+	::= { s5TrTopBdgEntry 1 }
+
+s5TrTopBdgIndx OBJECT-TYPE
+	SYNTAX	INTEGER (1..65535)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The index of the entry in the table
+		for the interface."
+	::= { s5TrTopBdgEntry 2 }
+
+s5TrTopBdgNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..15)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The IEEE 802.5 'bridge number' for
+		the bridge."
+	::= { s5TrTopBdgEntry 3 }
+
+s5TrTopBdgOwnRingNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..4095)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The ring number for the reporting NMM.
+		NOTE: this will be the same value for all
+		table entries for each interface."
+	::= { s5TrTopBdgEntry 4 }
+
+s5TrTopBdgAdjRingNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..4095)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The ring number of the adjacent ring
+		that is joined by the bridge. The value
+		is zero if this entry in the table was
+		created due to the receipt of a topology
+		message from another NMM on a different
+		ring and the bridge connecting the rings
+		was a transparent only bridge and it does
+		not generate topology messages."
+	::= { s5TrTopBdgEntry 5 }
+
+s5TrTopBdgAdjMasterNmmIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"If this entry was created (and/or validated)
+		by a topology message from a master NMM,
+		then the value is its IP address. If the
+		value of object s5TrTopBdgNum is non-zero,
+		then the master NMM is on an adjacent ring.
+		If the value of s5TrTopBdgNum is zero, then
+		the master NMM may be adjacent, or several
+		rings away, separated by one or more
+		transparent bridges.
+
+		The value for this object is 0.0.0.0 when the
+		bridge generates a topology message and
+		there is no master NMM on the adjacent ring
+		nor one connected to the adjacent ring through
+		one or more transparent bridges."
+	::= { s5TrTopBdgEntry 6 }
+
+s5TrTopBdgMacAddr OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The MAC address of the bridge port sending
+		the topology message. The value is
+		00:00:00:00:00:00 if the bridge does not
+		transmit topology messages."
+	::= { s5TrTopBdgEntry 7 }
+
+s5TrTopBdgIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"IP address of the bridge sending the topology
+		message. The value is 0.0.0.0 if the bridge
+		does not transmit topology messages."
+	::= { s5TrTopBdgEntry 8 }
+
+s5TrTopBdgType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		other(1),
+		t3522Syn2Port(2),
+		t2722Syn2Port(3),
+		tCenTillionTrSwitch(4)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The kind of bridge this entry represents.
+		The values come from the topology messages
+		generated by the bridge. The values are:
+		  other(1)...........bridge does not send topology
+		                       messages or is not a
+		                       defined type
+		  t3522Syn2Port(2)...SynOptics 2 port bridge in
+		                       a modular concentrator
+		  t2722Syn2Port(3)...SynOptics 2 port stand-alone
+		                       bridge
+		  tCenTillionTrSwitch(4)...Centillion multi-port
+		                             TR switch"
+	::= { s5TrTopBdgEntry 9 }
+
+s5TrTopBdgSlotNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The slot that the reporting NMM received the
+		topology message from the bridge. The value
+		zero is used to indicate that the bridge does
+		not transmit topology messages or the slot
+		from which the message was received can not be
+		determined."
+	::= { s5TrTopBdgEntry 10 }
+
+s5TrTopBdgPortNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The port that the reporting NMM received the
+		topology message from the bridge. The value
+		zero is used to indicate that the bridge does
+		not transmit topology messages or the port
+		from which the message was received can not
+		be determined."
+	::= { s5TrTopBdgEntry 11 }
+
+s5TrTopBdgNumPort OBJECT-TYPE
+	SYNTAX	INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The total number of ports installed on the
+		bridge. The value zero is used to indicate that
+		the bridge does not transmit topology messages."
+	::= { s5TrTopBdgEntry 12 }
+
+s5TrTopBdgHelloPortNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The port on the bridge from which the topology
+		message was sent. The value zero is used to
+		indicate that the bridge does not transmit
+		topology messages."
+	::= { s5TrTopBdgEntry 13 }
+
+s5TrTopBdgHelloPortStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		other(1),
+		tranAct(2),
+		tranStnBy(3),
+		srSrsOn(4),
+		srSrsOff(5),
+		srSrsOnTranAct(6),
+		srSrsOffTranAct(7),
+		srSrsOnStnBy(8),
+		srSrsOffStnBy(9)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of the port on Bridge from which
+		the topology message was sent. The values are:
+		  other(1).............bridge does not send topology
+		                         messages or port not in
+		                         defined status
+		  tranAct(2)...........Transparent active
+		  tranStnBy(3).........Transparent standby
+		  srSrsOn(4)...........Source routing single route
+		                         spanning is on
+		  srSrsOff(5)..........Source routing single route
+		                         spanning is off
+		  srSrsOnTranAct(6)....Source routing single route
+		                         spanning is on, and
+		                         transparent active
+		  srSrsOffTranAct(7)...Source routing single route
+		                         spanning is off, and
+		                         transparent active
+		  srSrsOnStnBy(8)......Source routing single route
+		                         spanning is on, and
+		                         transparent standby
+		  srSrsOffStnBy(9).....Source routing single route
+		                         spanning is off, and
+		                         transparent standby"
+	::= { s5TrTopBdgEntry 14 }
+
+s5TrTopBdgMonPortStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		other(1),
+		phantomOff(2),
+		phantomOn(3),
+		phantomOffWrapped(4),
+		phantomOnWrapped(5),
+		wrongSpeedWrap(6)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The status of the 'monitor' port on Bridge from
+		which the topology message was sent.
+		The values are:
+		  other(1)...............bridge does not send topology
+		                           messages or the status of
+		                           the monitor port is unknown
+		                           or the bridge does not have
+		                           a monitor port, or some other
+		                           condition.
+		  phantomOff(2)..........phantom status is off
+		  phantomOn(3)...........phantom status is on
+		  phantomOffWrapped(4)...phantom off and port wrapped
+		  phantomOnWrapped(5)....phantom on and port wrapped
+		  wrongSpeedWrap(6)......port wrapped for wrong speed"
+	::= { s5TrTopBdgEntry 15 }
+
+s5TrTopBdgHelloType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		other(1),
+		synoptics(2),
+		ibm(3)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of topology message received from the
+		bridge. The values are:
+		  other..........bridge does not send any of the
+		                   recognizable topology message
+		                   types
+		  synoptics(2)...bridge sends SynOptics' topology
+		                   message"
+	::= { s5TrTopBdgEntry 16 }
+
+
+
+-- Same Ring NMM Topology Table
+
+
+s5TrTopRingNmmTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrTopRingNmmEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table listing all the Network Management
+		Modules (NMMs) with a Token Ring interface
+		on the same ring as the reporting NMM. The
+		number of entries is determined by the number
+		of detected (and active) NMMs. Entries are
+		created by reception of a topology message from
+		a 'new' NMM. An entry is removed from the table
+		when no topology messages are received from the
+		NMM in the required time interval."
+	::= { s5TrTop 4 }
+
+s5TrTopRingNmmEntry OBJECT-TYPE
+	SYNTAX	S5TrTopRingNmmEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the table of Network Management
+		Modules (NMMs) with a Token Ring interface
+		on the same ring as the reporting NMM.
+		Entries in the table can not be created
+		or deleted via SNMP."
+	INDEX	{ s5TrTopRingNmmIfIpAddr,
+		  s5TrTopRingNmmIpAddr }
+	::= {s5TrTopRingNmmTable 1 }
+
+S5TrTopRingNmmEntry ::= SEQUENCE {
+	s5TrTopRingNmmIfIpAddr IpAddress,
+	s5TrTopRingNmmIpAddr IpAddress,
+	s5TrTopRingNmmMacAddr MacAddress,
+	s5TrTopRingNmmChassisType SnpxChassisType,
+	s5TrTopRingNmmBkplType SnpxBackplaneType,
+	s5TrTopRingNmmSlotNum INTEGER,
+	s5TrTopRingNmmUnaIpAddr IpAddress
+	}
+
+s5TrTopRingNmmIfIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The IP address of the interface on which
+		the topology message was received."
+	::= { s5TrTopRingNmmEntry 1 }
+
+s5TrTopRingNmmIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The IP address of the NMM that sent
+		the topology message."
+	::= { s5TrTopRingNmmEntry 2 }
+
+s5TrTopRingNmmMacAddr OBJECT-TYPE
+	SYNTAX	MacAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The MAC address of the NMM that sent
+		the topology message."
+	::= { s5TrTopRingNmmEntry 3 }
+
+s5TrTopRingNmmChassisType OBJECT-TYPE
+	SYNTAX	SnpxChassisType
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of chassis containing the NMM
+		that sent the topology message."
+	::= { s5TrTopRingNmmEntry 4 }
+
+s5TrTopRingNmmBkplType OBJECT-TYPE
+	SYNTAX	SnpxBackplaneType
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of backplane in the chassis
+		containing the NMM that sent the topology
+		message."
+	::= { s5TrTopRingNmmEntry 5 }
+
+s5TrTopRingNmmSlotNum OBJECT-TYPE
+	SYNTAX	INTEGER (0..255)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The slot containing the NMM that sent the
+		topology message."
+	::= { s5TrTopRingNmmEntry 6 }
+
+s5TrTopRingNmmUnaIpAddr OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The IP address of the next upstream NMM
+		of the NMM that sent the topology message."
+	::= { s5TrTopRingNmmEntry 7 }
+
+
+
+-- Encoded Octet Strings for NMM Topology Table
+
+
+s5TrTopNmmEosSize OBJECT-TYPE
+	SYNTAX	INTEGER (0..1400)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current size of a 'row' in the table
+		s5TrTopNmmEosTable. This allows applications
+		to be able to break apart 'rows' in the table."
+	::= { s5TrTop 5 }
+
+s5TrTopNmmEosTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrTopNmmEosEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table of encoded octet strings of
+		entries in table s5TrTopNmmTable.
+		The number of entries is determined by the
+		packing of 'rows' from s5TrTopNmmTable."
+	::= { s5TrTop 6 }
+
+s5TrTopNmmEosEntry OBJECT-TYPE
+	SYNTAX	S5TrTopNmmEosEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the table of encoded octet
+		strings for table s5TrTopNmmTable.
+		Instance returned in Response PDU:
+		  On GETs: instance specified is the
+		             instance returned.
+		  On GET-NEXTs: instance returned is the
+		                  instance of the last record
+		                  contained in the octet string.
+		Entries in the table can not be created
+		or deleted via SNMP."
+	INDEX	{ s5TrTopNmmIfIpAddr,
+		  s5TrTopNmmIpAddr }
+	::= { s5TrTopNmmEosTable 1 }
+
+S5TrTopNmmEosEntry ::= SEQUENCE {
+	s5TrTopNmmEos OCTET STRING
+	}
+
+s5TrTopNmmEos OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..1400))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An encoded octet string. On reads it contains
+		an integral number of 'rows' from table
+		s5TrTopNmmTable. All 'rows' are the same size
+		which is defined by object s5TrTopNmmEosSize."
+	::= { s5TrTopNmmEosEntry 1 }
+
+
+
+-- Encoded Octet Strings for Bridge Topology Table 
+
+
+s5TrTopBdgEosSize OBJECT-TYPE
+	SYNTAX	INTEGER (0..1400)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current size of a 'row' in the table
+		s5TrTopBdgEosTable. This allows applications
+		to be able to break apart 'rows' in the table."
+	::= { s5TrTop 7 }
+
+s5TrTopBdgEosTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrTopBdgEosEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table of encoded octet strings of
+		entries in table s5TrTopBdgTable.
+		The number of entries is determined by the
+		packing of 'rows' from s5TrTopBdgTable."
+	::= { s5TrTop 8 }
+
+s5TrTopBdgEosEntry OBJECT-TYPE
+	SYNTAX	S5TrTopBdgEosEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the table of encoded octet
+		strings for table s5TrTopBdgTable.
+		Instance returned in Response PDU:
+		  On GETs: instance specified is the
+		             instance returned.
+		  On GET-NEXTs: instance returned is the
+		                  instance of the last record
+		                  contained in the octet string.
+		Entries in the table can not be created
+		or deleted via SNMP."
+	INDEX	{ s5TrTopBdgIfIpAddr,
+		  s5TrTopBdgIndx }
+	::= { s5TrTopBdgEosTable 1 }
+
+S5TrTopBdgEosEntry ::= SEQUENCE {
+	s5TrTopBdgEos OCTET STRING
+	}
+
+s5TrTopBdgEos OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..1400))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An encoded octet string. On reads it contains
+		an integral number of 'rows' from table
+		s5TrTopBdgEntry. All 'rows' are the same size
+		which is defined by object s5TrTopBdgEosSize."
+	::= { s5TrTopBdgEosEntry 1 }
+
+
+
+-- Encoded Octet Strings for Same Ring NMM Topology Table
+
+s5TrTopRingNmmEosSize OBJECT-TYPE
+	SYNTAX	INTEGER (0..1400)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current size of a 'row' in the table
+		s5TrTopRingNmmEosTable. This allows applications
+		to be able to break apart 'rows' in the table."
+	::= { s5TrTop 9 }
+
+s5TrTopRingNmmEosTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF S5TrTopRingNmmEosEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table of encoded octet strings of
+		entries in table s5TrTopRingNmmTable.
+		The number of entries is determined by the
+		packing of 'rows' from s5TrTopRingNmmTable."
+	::= { s5TrTop 10 }
+
+s5TrTopRingNmmEosEntry OBJECT-TYPE
+	SYNTAX	S5TrTopRingNmmEosEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A row in the table of encoded octet
+		strings for table s5TrTopRingNmmTable.
+		Instance returned in Response PDU:
+		  On GETs: instance specified is the
+		             instance returned.
+		  On GET-NEXTs: instance returned is the
+		                  instance of the last record
+		                  contained in the octet string.
+		Entries in the table can not be created
+		or deleted via SNMP."
+	INDEX	{ s5TrTopRingNmmIfIpAddr,
+		  s5TrTopRingNmmIpAddr }
+	::= { s5TrTopRingNmmEosTable 1 }
+
+S5TrTopRingNmmEosEntry ::= SEQUENCE {
+	s5TrTopRingNmmEos OCTET STRING
+	}
+
+s5TrTopRingNmmEos OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..1400))
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An encoded octet string. On reads it contains
+		an integral number of 'rows' from table
+		s5TrTopRingNmmTable. All 'rows' are the same size
+		which is defined by object s5TrTopNmmEosSize."
+	::= { s5TrTopRingNmmEosEntry 1 }
+
+END

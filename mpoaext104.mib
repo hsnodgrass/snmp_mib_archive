@@ -1,0 +1,378 @@
+-- SECTION 1: Top Level Definitions
+ 
+MPOA-EXT-MIB DEFINITIONS ::= BEGIN
+ 
+-- Centillion MPOA Extensions MIB Release 1.0.4
+-- Revision 10/10/00
+ 
+-- Copyright 1998-2000 Nortel Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+ 
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+ 
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	TruthValue, RowStatus
+		FROM SNMPv2-TC-v1
+	IpAddress
+		FROM RFC1155-SMI
+	mpcIndex
+		FROM MPOA-MIB
+	extensions, Boolean, BitField, EnableIndicator
+		FROM CENTILLION-ROOT-MIB;
+
+
+
+cnMpoaExt	OBJECT IDENTIFIER ::= { extensions 7 }
+ 
+cnMpcConfigTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF CnMpcConfigEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "The MPOA Bay Networks proprietary Client Configuration Table.
+                 This table contains configuration information
+                 for all MPOA Clients which this agent manages."
+    ::= { cnMpoaExt  2 }
+
+cnMpcConfigEntry OBJECT-TYPE
+    SYNTAX  CnMpcConfigEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+           "MPOA Client Bay Networks Configuration Entry.
+                 Each entry contains configuration information
+                 for one MPOA Client."
+    INDEX   { mpcIndex }
+    ::= { cnMpcConfigTable  1 }
+
+CnMpcConfigEntry ::=
+    SEQUENCE {
+        cnMpcShareControlVccs          TruthValue,
+        cnMpcShareDataVccs             TruthValue,
+        cnMpcValidEntryCheckInterval   INTEGER,
+        cnMpcMinFlowPacketCount        INTEGER,
+		cnMpcCfgEnable                 EnableIndicator
+
+    }
+
+cnMpcShareControlVccs OBJECT-TYPE
+    SYNTAX  TruthValue
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+	"This Parameter enables VCC sharing for MPOA Control VCCs if set
+	to true.
+
+	LLC encapsulation is always signaled, regardless of sharing."
+    ::= {cnMpcConfigEntry 1}
+
+cnMpcShareDataVccs OBJECT-TYPE
+    SYNTAX  TruthValue
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+	"This parameter enables VCC sharing for MPOA Data VCCs if set to
+	true.
+	LLC encapsulation is always signaled, regardless of sharing."
+
+    ::= {cnMpcConfigEntry 2}
+
+cnMpcValidEntryCheckInterval OBJECT-TYPE
+    SYNTAX  INTEGER (1..2147483647)
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+	"This parameter specifies the interval in seconds, to check LOCAL
+	IP FDB entries in the Valid state for minimum activity."
+    ::= {cnMpcConfigEntry 3}
+
+cnMpcMinFlowPacketCount OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+	"This parameter specifies the minimum number of packets to be
+	forwarded by a Local FDB Entry in the Valid state in
+	cnMpcValidEntryCheckInterval to maintain minimum activity level.
+	If minimum activity is not maintained, the entry is deleted."
+    ::= {cnMpcConfigEntry 4}
+
+cnMpcCfgEnable OBJECT-TYPE
+    SYNTAX  EnableIndicator
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "This parameter specifies the user configured state of the MPOA
+        client.  1 equals Disabled, 2 equals Enabled. Default is Enabled."
+    ::= {cnMpcConfigEntry 5}
+ 
+--
+-- cnMpoaIpVerification Group
+--
+-- This group is implemented to provide security features that are
+-- inherently lacking in the MPOA specification.  The security
+-- is provided using a table of IP addresses that limits the 
+-- IP addresses serviced by the MPOA Client (MPC).  The table is
+-- either an inclusion or exclusion list that allows or dissallows
+-- MPOA shortcuts for the identified range of addresses.
+--
+
+cnMpoaIpVerification		OBJECT IDENTIFIER ::= { cnMpoaExt 3 }
+
+cnMpoaIpVerificationTableType	OBJECT-TYPE
+	SYNTAX	INTEGER {
+		unknown(1),
+		exclusion(2),
+		inclusion(3)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object controls the type of verification table that
+		is being used.  This object is used in combination with
+		the status and download object and the IP verification
+		table.  Any change made to this object must be downloaded to
+		the switch cards using the cnMpoaIpVerificationTableDownload
+		object before the settings actually take effect. 
+		
+		To enable a verification table, the table type must be set 
+		to exclusion or inclusion, enabled using the table status 
+		object and then downloaded to the cards using the download 
+		object.  
+		
+		To delete the IP verification information, you must set 
+		the table status object to clear and then downloaded to 
+		the cards using the download object.  When the information
+		is deleted, the table type is read as unknown.
+		
+		To change the table type between exclusion and inclusion,
+		you must first delete the IP verification information and
+		then recreate it."
+	::= { cnMpoaIpVerification 1 }
+
+cnMpoaIpVerificationTableStatus	OBJECT-TYPE
+	SYNTAX	INTEGER {
+		disable(1),
+		enable(2),
+		clear(3)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object is used to enable, disable or clear the IP
+		Verification information.  Any change to this object
+		information must be downloaded to the switch cards using
+		the cnMpoaIpVerificationTableDownload object.  An empty 
+		IP verification table will yield disable on a get."
+	::= { cnMpoaIpVerification 2 }
+
+cnMpoaIpVerificationTableDownload OBJECT-TYPE
+	SYNTAX  Boolean
+	ACCESS  read-write
+	STATUS  mandatory
+	DESCRIPTION
+		"Setting this object to true(1) causes the MPOA IP
+		Verification Table information to be downloaded to 
+		all of the cards in the switch that support MPOA
+		Clients (MPCs).  You must download the IP Verification 
+		Table information to the cards before it will become
+		effective when you are dynamically configuring this 
+		feature.  The IP Verification Table is automatically
+		downloaded to the MPC configured cards at card 
+		initialization.
+ 
+		When read, this object always returns false(2)."
+	::= { cnMpoaIpVerification 3 }
+
+cnMpoaIpVerificationTable	OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnMpoaIpVerificationEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The MPC IP Verification Table is either an
+		inclusion or exclusion list as indicated by the
+		cnMpoaIpVerificationTableType object.  Any change 
+		to this table must be downloaded to the switch 
+		cards using the cnMpoaIpVerificationTableDownload 
+		object."
+	::= { cnMpoaIpVerification 4 }
+
+cnMpoaIpVerificationEntry	OBJECT-TYPE
+	SYNTAX	CnMpoaIpVerificationEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Each row of the cnMpoaIpVerificationTable 
+		consists of an IP address and IP mask that 
+		is used to identify a range of addresses that
+		are included or excluded when creating MPOA
+		IP shortcuts.  This cnMpoaIpVerificationStatus
+		object is used to control adding or deleting
+		each row."
+	INDEX	{ cnMpoaIpVerificationAddress,
+	     	  cnMpoaIpVerificationMask }
+	::= { cnMpoaIpVerificationTable 1 }
+
+CnMpoaIpVerificationEntry ::=
+	SEQUENCE {
+		cnMpoaIpVerificationAddress	IpAddress,
+		cnMpoaIpVerificationMask	IpAddress,
+		cnMpoaIpVerificationStatus	RowStatus
+	}
+
+cnMpoaIpVerificationAddress	OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This object is one of the two keys used
+		to access the cnMpoaIpVerificationTable
+		entries.  This object contains an IP 
+		address used in conjunction with the 
+		cnMpoaIpVerificationMask to identify a
+		range of one or more IP addresses."
+	::= { cnMpoaIpVerificationEntry 1 }
+
+cnMpoaIpVerificationMask	OBJECT-TYPE
+	SYNTAX	IpAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This object is one of the two keys used
+		to access the cnMpoaIpVerificationTable
+		entries.  This object contains an IP 
+		mask used in conjunction with the 
+		cnMpoaIpVerificationAddress to identify a
+		range of one or more IP addresses."
+	::= { cnMpoaIpVerificationEntry 2 }
+
+cnMpoaIpVerificationStatus	OBJECT-TYPE
+	SYNTAX	RowStatus
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Use this object to add or delete rows in the
+		 cnMpoaIpVerificationTable.  To create new rows,
+		 use createAndGo(4) or createAndWait(5).  To
+		 delete entries use destroy(6).  A valid row
+		 will have the status of active(1) on a get."
+	::= { cnMpoaIpVerificationEntry 3 }
+
+cnMpoaQosDscpToPriorityGroup OBJECT IDENTIFIER ::= { cnMpoaExt 4 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--  A collection of objects to facilitate the default and the user
+--  configured download of Diffserv Code Point to 802.1p Priority 
+--  mapping table into the switch.
+--  Users will be able to see and modify this table only when the MPOA
+--  capable option is enabled for at least one LEC in the switch.
+-- Objects
+-- cnMpoaQosDscpToPriorityDefaults,
+-- cnMpoaQosDscpToPriorityDownload,
+-- cnMpoaQosDscpToPriorityTable
+
+
+cnMpoaQosDscpToPriorityDefaults OBJECT-TYPE
+        SYNTAX  BitField
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		"When this object is set to 1, it causes the 
+		 switch internal cnMpoaQosDscpToPriorityTable
+		 to be set to its factory default. Value will
+		 always be read as zero, when doing the SNMP
+		 get operation on the object.  Network Management
+                 System can use this object to restore the mapping
+		 table to its default values."
+	::= { cnMpoaQosDscpToPriorityGroup 1 }
+
+cnMpoaQosDscpToPriorityDownload OBJECT-TYPE
+        SYNTAX  BitField
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		"When this object is set to 1, it causes any
+		 changes that were made with the
+		 CnMpoaQosDscpToPriorityOutPriority object, to
+		 be activated. If no changes were made, setting
+		 this object has no effect. Value will always be
+		 read as zero, when doing the SNMP get operation
+		 on the object. The changes made by the user to
+		 the DSCP to 802.1p mapping table will not come
+		 into effect for the switching cards until this
+		 object is set to 1."
+        ::= { cnMpoaQosDscpToPriorityGroup 2 }
+
+cnMpoaQosDscpToPriorityTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF CnMpoaQosDscpToPriorityEntry
+        ACCESS          not-accessible
+        STATUS          mandatory
+        DESCRIPTION
+		"This table is used to specify the DS
+		 Code Point to 802.1p priority mapping on
+		 the egress MPC switch."
+        ::= { cnMpoaQosDscpToPriorityGroup 3 }
+
+cnMpoaQosDscpToPriorityEntry OBJECT-TYPE
+        SYNTAX       CnMpoaQosDscpToPriorityEntry
+        ACCESS        not-accessible
+        STATUS        mandatory
+        DESCRIPTION
+		"Entry containing an individual DS code point
+		 to 802.1p priority mapping."
+        INDEX           {cnMpoaQosDscpToPriorityIndex}
+        ::= { cnMpoaQosDscpToPriorityTable 1 } 
+
+ CnMpoaQosDscpToPriorityEntry ::= SEQUENCE {
+                cnMpoaQosDscpToPriorityIndex  INTEGER,
+                cnMpoaQosDscpToPriorityInDscp INTEGER,
+                cnMpoaQosDscpToPriorityOutPriority INTEGER
+        }
+
+cnMpoaQosDscpToPriorityIndex OBJECT-TYPE
+        SYNTAX        INTEGER (1..64)
+        ACCESS        read-only
+        STATUS        mandatory
+        DESCRIPTION
+		"Used to uniquely identify a row in DSCP to 802.1p
+		 table."
+        ::= { cnMpoaQosDscpToPriorityEntry 1 }
+
+cnMpoaQosDscpToPriorityInDscp OBJECT-TYPE
+        SYNTAX        INTEGER (0..63) 
+        ACCESS        read-only
+        STATUS        mandatory
+        DESCRIPTION
+		"Six-bit Diffserv code point supplied in IP packet
+		 header."
+        ::= { cnMpoaQosDscpToPriorityEntry 2 }
+
+cnMpoaQosDscpToPriorityOutPriority  OBJECT-TYPE
+        SYNTAX        INTEGER (0..7)
+        ACCESS        read-write
+        STATUS        mandatory
+        DESCRIPTION
+		"802.1p priority value which can be mapped from
+		 the DS code point supplied in the IP packet header.
+		 Default mappings are always provided. However, if
+		 the user would like to change the mappings, it is
+		 recommended to follow the rules specified in RFC 2474
+		 (Definition of the Differentiated Services Field in
+		 the IPv4 and IPv6 Headers)."
+        ::= { cnMpoaQosDscpToPriorityEntry 3 }
+
+END
+

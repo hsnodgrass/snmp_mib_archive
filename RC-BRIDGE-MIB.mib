@@ -1,0 +1,2009 @@
+RC-BRIDGE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, TimeTicks
+        FROM SNMPv2-SMI
+    BridgeId, Timeout
+        FROM BRIDGE-MIB
+    TruthValue, MacAddress, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcBridge, rcStg, PortSet, IdList, EnableValue
+        FROM RAPID-CITY;
+
+
+rcBridgeMib MODULE-IDENTITY
+
+       LAST-UPDATED     "200510210000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200510210000Z" -- 23 October 2005
+       DESCRIPTION "Version 16: Added an enum value pbt (3) to rcStgType"
+
+       REVISION "200505230000Z" -- 23 May 2005
+       DESCRIPTION "Version 15: Added an enum value to rcRateLimitIfTrafficType"
+
+       REVISION "200502220000Z" -- 22 Feb 2005
+       DESCRIPTION "Version 14: Changed syntax of rcStgPortMembers & description of rcBridgeNewFdbPort"
+
+       REVISION "200502040000Z" -- 04 Feb 2005
+       DESCRIPTION "Version 13: Added new table rcBridgeNewFdbTable & deprecated rcBridgeFdbTable"
+
+       REVISION "200502010000Z" -- 01 Feb 2005
+       DESCRIPTION "Version 12: Added 'discard' enum value for rcBridgeFdbStatus"
+
+       REVISION "200412080000Z" -- 08 Dec 2004
+       DESCRIPTION "Version 11: Add pvst(4) enumerations to
+                                rcStgProtocolSpecification."
+
+       REVISION "200408030000Z" -- 03 August 2004
+       DESCRIPTION "Version 9: Add rcRateLimitEgressRateLimit and
+                               rcRateLimitEgressRateLimitState to
+                               rcRateLimitEntry."
+
+       REVISION "200406110000Z" -- 11 June 2004
+       DESCRIPTION "Version 8:  Extended range of rcRateLimitIfAllowedRate
+                    from 1..25 to 0.25, added to DESRIPTION that a value of
+                    0 means no limit."
+       ::= { rcBridge 0 }
+
+-- Spanning Tree Group (STG)
+
+rcStgMaxStgs OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The maximum number of spanning tree groups this
+		      device can support concurrently."
+        ::= { rcStg 1 }
+
+rcStgNumStgs OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The number of spanning tree groups that are
+		      currently defined."
+        ::= { rcStg 2 }
+
+rcStgUnassignedPorts OBJECT-TYPE
+        SYNTAX        PortSet
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "A bitfield used to identify which ports in
+                      the system currently not assigned to any STG.
+
+                      The bitfield is 32 octets long representing 
+                      ports 0 to 255 (inclusive)."
+        ::= { rcStg 3 }
+
+
+-- STG Table
+
+rcStgTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcStgEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to store Spanning Tree Group (STG)
+		      information.  Each row in the table specifies
+		      a different STG in the device."
+        ::= { rcStg 4 } 
+ 
+rcStgEntry OBJECT-TYPE  
+        SYNTAX        RcStgEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "STG attributes"
+        INDEX  { rcStgId }
+        ::= { rcStgTable 1 }
+ 
+RcStgEntry ::= SEQUENCE {
+		rcStgId INTEGER,
+		rcStgTaggedBpduAddress MacAddress,
+		rcStgTaggedBpduVlanId Integer32,
+		rcStgBridgeAddress MacAddress,
+		rcStgNumPorts Integer32,
+		rcStgProtocolSpecification INTEGER,
+		rcStgPriority INTEGER,
+		rcStgTimeSinceTopologyChange TimeTicks,
+		rcStgTopChanges Counter32,
+		rcStgDesignatedRoot BridgeId,
+		rcStgRootCost Integer32,
+		rcStgRootPort Integer32,
+		rcStgMaxAge Timeout,
+		rcStgHelloTime Timeout,
+		rcStgHoldTime Integer32,
+		rcStgForwardDelay Timeout,
+		rcStgBridgeMaxAge Timeout,
+		rcStgBridgeHelloTime Timeout,
+		rcStgBridgeForwardDelay Timeout,
+		rcStgEnableStp TruthValue,
+		rcStgStpTrapEnable TruthValue,
+		rcStgPortMembers OCTET STRING,
+		rcStgRowStatus RowStatus,
+		rcStgPortStpState OCTET STRING,
+		rcStgType   INTEGER,
+                rcStgNtStgEnable   TruthValue
+        }
+
+rcStgId OBJECT-TYPE 
+        SYNTAX  	INTEGER (1..64)
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"An identifier used to identify a STG in the device."
+        ::= { rcStgEntry 1 }
+
+rcStgTaggedBpduAddress OBJECT-TYPE
+        SYNTAX  	MacAddress
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"The MAC address to be assigned to the destination
+      	       		mac address field in tagged BPDUs.  
+
+	       		The default address is the well known multicast 
+	       		group address 01-80-c2-00-00-00."
+        DEFVAL          { "01:80:c2:00:00:00" }
+  	::= { rcStgEntry 2 }
+
+rcStgTaggedBpduVlanId OBJECT-TYPE 
+        SYNTAX  	Integer32  
+        MAX-ACCESS  	read-write 
+        STATUS  	current  
+        DESCRIPTION 	"The VLAN ID to be used for tagging BPDUs." 
+        ::= { rcStgEntry 3 }
+
+rcStgBridgeAddress OBJECT-TYPE
+        SYNTAX  	MacAddress
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The MAC address used by this bridge when it must
+		       	be referred to in a unique fashion.   It is
+		       	recommended that this be the numerically smallest
+		       	MAC address of all ports that belong to this
+		       	bridge.  However it is only required to be unique.
+		       	When concatenated with rcStgPriority a unique
+		       	BridgeIdentifier is formed which is used in the
+		       	Spanning Tree Protocol."
+        REFERENCE 	"IEEE 802.1D-1990: Sections 6.4.1.1.3 and 3.12.5"
+        ::= { rcStgEntry 4 }
+
+rcStgNumPorts OBJECT-TYPE
+        SYNTAX  	Integer32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The number of ports controlled by this bridging entity."
+        REFERENCE 	"IEEE 802.1D-1990: Section 6.4.1.1.3"
+        ::= { rcStgEntry 5 }
+
+rcStgProtocolSpecification OBJECT-TYPE
+        SYNTAX  	INTEGER {
+			      unknown(1),
+			      decLb100(2),
+			      ieee8021d(3),
+                              pvst(4)
+		        }
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"An indication of what version of the Spanning
+                     	Tree Protocol is being run.  The value
+                     	'decLb100(2)' indicates the DEC LANbridge 100
+                     	Spanning Tree protocol.  IEEE 802.1d
+                     	implementations will return 'ieee8021d(3)'.  If
+                     	future versions of the IEEE Spanning Tree Protocol
+                     	are released that are incompatible with the
+                     	current version a new value will be defined."
+        ::= { rcStgEntry 6 }
+
+rcStgPriority OBJECT-TYPE
+        SYNTAX  	INTEGER (0..65535)
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"The value of the write-able portion of the Bridge
+	      	       	ID, i.e., the first two octets of the (8 octet
+      		       	long) Bridge ID.  The other (last) 6 octets of the
+      	       		Bridge ID are given by the value of rcStgBridgeAddress."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.7"
+        DEFVAL          { 32768 }
+        ::= { rcStgEntry 7 }
+
+rcStgTimeSinceTopologyChange OBJECT-TYPE
+        SYNTAX  	TimeTicks
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The time (in hundredths of a second) since the
+	       		last time a topology change was detected by the
+	       		bridge entity."
+        REFERENCE 	"IEEE 802.1D-1990: Section 6.8.1.1.3"
+        ::= { rcStgEntry 8 }
+
+rcStgTopChanges OBJECT-TYPE
+        SYNTAX  	Counter32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The total number of topology changes detected by
+	       		this bridge since the management entity was last
+	       		reset or initialized."
+        REFERENCE 	"IEEE 802.1D-1990: Section 6.8.1.1.3"
+        ::= { rcStgEntry 9 }
+
+rcStgDesignatedRoot OBJECT-TYPE
+        SYNTAX  	BridgeId
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The bridge identifier of the root of the spanning
+	       		tree as determined by the Spanning Tree Protocol
+	       		as executed by this node.  This value is used as
+                        the Root Identifier parameter in all Configuration
+                        Bridge PDUs originated by this node."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.1"
+        ::= { rcStgEntry 10 }
+
+rcStgRootCost OBJECT-TYPE
+        SYNTAX  	Integer32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The cost of the path to the root as seen from
+	       		this bridge."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.2"
+        ::= { rcStgEntry 11 }
+
+rcStgRootPort OBJECT-TYPE
+        SYNTAX  	Integer32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The port number of the port which offers the
+	  		lowest cost path from this bridge to the root
+               		bridge."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.3"
+        ::= { rcStgEntry 12 }
+
+rcStgMaxAge OBJECT-TYPE
+        SYNTAX  	Timeout
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The maximum age of Spanning Tree Protocol
+	       		information learned from the network on any port
+	       		before it is discarded, in units of hundredths of
+	       		a second.  This is the actual value that this
+	       		bridge is currently using."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.4"
+        ::= { rcStgEntry 13 }
+
+rcStgHelloTime OBJECT-TYPE
+        SYNTAX  	Timeout
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The amount of time between the transmission of
+	       		Configuration bridge PDUs by this node on any port
+	       		when it is the root of the spanning tree or trying
+	       		to become so, in units of hundredths of a second.
+	       		This is the actual value that this bridge is
+                        currently using."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.5"
+        ::= { rcStgEntry 14 }
+
+rcStgHoldTime OBJECT-TYPE
+        SYNTAX  	Integer32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION     "This time value determines the interval length
+	                during which no more than two Configuration bridge
+	                PDUs shall be transmitted by this node, in units
+	             	of hundredths of a second."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.14"
+        ::= { rcStgEntry 15 }
+
+rcStgForwardDelay OBJECT-TYPE
+        SYNTAX  	Timeout
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"This time value, measured in units of hundredths
+	             	of a second, controls how fast a port changes its
+	             	spanning state when moving towards the Forwarding
+	             	state.  The value determines how long the port
+	             	stays in each of the Listening and Learning
+	             	states, which precede the Forwarding state.  This
+	             	value is also used, when a topology change has
+	             	been detected and is underway, to age all dynamic
+	             	entries in the Forwarding Database.  [Note that
+	             	this value is the one that this bridge is
+	             	currently using, in contrast to
+	             	rcStgBridgeForwardDelay which is the value that
+	             	this bridge and all others would start using
+	             	if/when this bridge were to become the root.]"
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.6"
+        ::= { rcStgEntry 16 }
+
+rcStgBridgeMaxAge OBJECT-TYPE
+        SYNTAX  	Timeout (600..4000)
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"The value that all bridges use for MaxAge when
+	             	this bridge is acting as the root.  Note that
+	             	802.1D-1990 specifies that the range for this
+	             	parameter is related to the value of
+	             	rcStgBridgeHelloTime. The granularity of this
+	             	timer is specified by 802.1D-1990 to be 1 second.
+	             	An agent may return a badValue error if a set is
+	             	attempted to a value which is not a whole number
+	             	of seconds."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.8"
+        DEFVAL          { 2000 }
+        ::= { rcStgEntry 17 }
+
+rcStgBridgeHelloTime OBJECT-TYPE
+        SYNTAX  	Timeout (100..1000)
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"The value that all bridges use for HelloTime when
+	             	this bridge is acting as the root.  The
+	             	granularity of this timer is specified by 802.1D-
+	             	1990 to be 1 second.  An agent may return a
+	             	badValue error if a set is attempted to a value
+	             	which is not a whole number of seconds."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.9"
+        DEFVAL          { 200 }
+        ::= { rcStgEntry 18 }
+
+rcStgBridgeForwardDelay OBJECT-TYPE
+        SYNTAX  	Timeout (400..3000)
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"The value that all bridges use for ForwardDelay
+	             	when this bridge is acting as the root.  Note that
+	             	802.1D-1990 specifies that the range for this
+	             	parameter is related to the value of
+	             	rcStgBridgeMaxAge.  The granularity of this
+	             	timer is specified by 802.1D-1990 to be 1 second.
+	             	An agent may return a badValue error if a set is
+	             	attempted to a value which is not a whole number
+	             	of seconds."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.3.10"
+        DEFVAL          { 1500 }
+        ::= { rcStgEntry 19 }
+
+rcStgEnableStp OBJECT-TYPE
+        SYNTAX  	TruthValue
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"Indicate whether the spanning tree protocol 
+	       		should be active in this STG."
+        DEFVAL         { true }
+        ::= { rcStgEntry 20 }
+
+rcStgStpTrapEnable OBJECT-TYPE
+        SYNTAX 	 	TruthValue
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"Indicate whether traps relating to the spanning
+	       		tree protocol should be sent for this STG."
+        DEFVAL         { true }
+        ::= { rcStgEntry 21 }
+
+rcStgPortMembers OBJECT-TYPE
+        SYNTAX          OCTET STRING (SIZE(0..88))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "A bitfield used to identify which ports in
+		   	the system are members this STG.
+
+		   	The bitfield is 32 octets long representing
+		   	ports 0 to 255 (inclusive)."
+        ::= { rcStgEntry 22 }
+
+rcStgRowStatus OBJECT-TYPE
+        SYNTAX  	RowStatus
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"Row status."
+        ::= { rcStgEntry 23 }
+
+rcStgPortStpState OBJECT-TYPE
+        SYNTAX          OCTET STRING (SIZE(176))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Every 2 bitfields used to identify a port state
+                        in this STG. Port state is cataloged as non-stp(0),
+                        blocking(1), learning(2), and forwarding(3)."
+        ::= { rcStgEntry 24 }
+
+rcStgType OBJECT-TYPE
+        SYNTAX          INTEGER {
+                           normal(1), 
+                           svlan(2),
+	      pbt(3) 
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Type of Stg."
+        DEFVAL     { normal }
+        ::= { rcStgEntry 25 }
+
+rcStgNtStgEnable OBJECT-TYPE
+        SYNTAX       TruthValue
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION     "Indicates whether this STG is Operating in
+                         Nortel Mode or in Cisco Mode.
+                         true = Nortel Mode
+                         false = Cisco Mode."
+        DEFVAL         { true }
+        ::= { rcStgEntry 26 }
+
+
+-- STG Port Table
+
+rcStgPortTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcStgPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current    
+        DESCRIPTION   "A table used to store Spanning Tree Group (STG)
+                      port related information.  If a port is 
+                      associated with more than one STGs, the port  
+                      will have one entry in this table for each STG 
+                      it assigned to." 
+        ::= { rcStg 5 }
+ 
+rcStgPortEntry OBJECT-TYPE
+        SYNTAX        RcStgPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "STG Port attributes" 
+        INDEX         { rcStgPort, rcStgPortStgId }
+        ::= { rcStgPortTable 1 }
+ 
+RcStgPortEntry ::= SEQUENCE {
+                  rcStgPort InterfaceIndex,
+                  rcStgPortStgId INTEGER,
+                  rcStgPortPriority INTEGER,
+                  rcStgPortState INTEGER,
+                  rcStgPortEnableStp TruthValue,
+                  rcStgPortFastStart TruthValue,
+                  rcStgPortPathCost INTEGER,
+                  rcStgPortDesignatedRoot BridgeId,
+                  rcStgPortDesignatedCost Integer32,
+                  rcStgPortDesignatedBridge BridgeId,
+                  rcStgPortDesignatedPort OCTET STRING,
+                  rcStgPortForwardTransitions Counter32,
+                  rcStgPortInConfigBpdus Counter32,
+                  rcStgPortInTcnBpdus Counter32,
+                  rcStgPortInBadBpdus Counter32,
+                  rcStgPortOutConfigBpdus Counter32,
+                  rcStgPortOutTcnBpdus Counter32,
+                  rcStgPortRowStatus RowStatus,
+                  rcStgPortChangeDetection TruthValue,
+                  rcStgPortPathCost32 Integer32,
+                  rcStgPortAdminPathCost INTEGER,
+                  rcStgPortAdminPathCost32 Integer32
+              }
+
+rcStgPort OBJECT-TYPE
+        SYNTAX  	InterfaceIndex
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The port number of the port for which this entry
+                     	contains Spanning Tree Protocol management
+                     	information."
+        REFERENCE 	"IEEE 802.1D-1990: Section 6.8.2.1.2"
+        ::= { rcStgPortEntry 1 }
+
+rcStgPortStgId OBJECT-TYPE
+        SYNTAX  	INTEGER (1..128)
+        MAX-ACCESS  	read-only
+        STATUS  	current
+	DESCRIPTION 	"The STG identifier this port is assigned to."
+        ::= { rcStgPortEntry 2 }
+
+rcStgPortPriority OBJECT-TYPE
+        SYNTAX  	INTEGER (0..255)
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"The value of the priority field which is
+                     	contained in the first (in network byte order)
+                     	octet of the (2 octet long) Port ID.  The other
+                     	octet of the Port ID is given by the value of
+                     	rcStgPort."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.5.1"
+        DEFVAL          { 128 }
+        ::= { rcStgPortEntry 3 }
+
+rcStgPortState OBJECT-TYPE
+        SYNTAX  	INTEGER {
+	                	disabled(1),
+       		         	blocking(2),
+       	        		listening(3),
+		                learning(4),
+               		 	forwarding(5),
+                		broken(6)
+        		}
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The port's current state as defined by
+                     	application of the Spanning Tree Protocol.  This
+                     	state controls what action a port takes on
+                     	reception of a frame.  If the bridge has detected
+                     	a port that is malfunctioning it will place that
+                     	port into the broken(6) state.  For ports which
+                     	are disabled (see rcStgPortEnable), this object
+                     	will have a value of disabled(1)."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.5.2"
+        ::= { rcStgPortEntry 4 }
+
+
+rcStgPortEnableStp OBJECT-TYPE
+        SYNTAX  	TruthValue
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"The enabled/disabled status of the port."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.5.2"
+        DEFVAL           { true }
+        ::= { rcStgPortEntry 5 }
+
+rcStgPortFastStart OBJECT-TYPE
+        SYNTAX     	TruthValue
+        MAX-ACCESS     	read-write
+        STATUS     	current
+        DESCRIPTION 	"When this flag is set, the port is moved 
+                     	straight to the forwarding(5) state upon 
+                     	being enabled."
+        DEFVAL          { false }
+        ::= { rcStgPortEntry 6 }
+
+rcStgPortPathCost OBJECT-TYPE
+        SYNTAX  	INTEGER (1..65535)
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"The contribution of this port to the path cost of
+                     	paths towards the spanning tree root which include
+                     	this port.  802.1D-1990 recommends that the
+                     	default value of this parameter be in inverse
+                     	proportion to the speed of the attached LAN."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.5.3"
+        ::= { rcStgPortEntry 7 }
+
+rcStgPortDesignatedRoot OBJECT-TYPE
+        SYNTAX  	BridgeId
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The unique Bridge Identifier of the Bridge
+                     	recorded as the Root in the Configuration BPDUs
+                     	transmitted by the Designated Bridge for the
+                     	segment to which the port is attached."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.5.4"
+        ::= { rcStgPortEntry 8 }
+
+rcStgPortDesignatedCost OBJECT-TYPE
+        SYNTAX  	Integer32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The path cost of the Designated Port of the
+                     	segment connected to this port.  This value is
+                     	compared to the Root Path Cost field in received
+                     	bridge PDUs."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.5.5"
+        ::= { rcStgPortEntry 9 }
+
+rcStgPortDesignatedBridge OBJECT-TYPE
+        SYNTAX  	BridgeId
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The Bridge Identifier of the bridge which this
+                     	port considers to be the Designated Bridge for
+                     	this port's segment."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.5.6"
+        ::= { rcStgPortEntry 10 }
+
+rcStgPortDesignatedPort OBJECT-TYPE
+        SYNTAX  	OCTET STRING (SIZE (2))
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The Port Identifier of the port on the Designated
+                     	Bridge for this port's segment."
+        REFERENCE 	"IEEE 802.1D-1990: Section 4.5.5.7"
+        ::= { rcStgPortEntry 11 }
+
+rcStgPortForwardTransitions OBJECT-TYPE
+        SYNTAX  	Counter32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The number of times this port has transitioned
+                     	from the Learning state to the Forwarding state."
+        ::= { rcStgPortEntry 12 }
+
+rcStgPortInConfigBpdus OBJECT-TYPE
+        SYNTAX  	Counter32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The number of Config BPUDs received by
+                     	this port."
+        ::= { rcStgPortEntry 13 }
+
+rcStgPortInTcnBpdus OBJECT-TYPE
+        SYNTAX  	Counter32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The number of Topology Change Notification
+                     	BPUDs received by this port."
+        ::= { rcStgPortEntry 14 }
+
+rcStgPortInBadBpdus OBJECT-TYPE
+        SYNTAX  	Counter32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The number of Bad BPUDs received by this port."
+        ::= { rcStgPortEntry 15 }
+
+rcStgPortOutConfigBpdus OBJECT-TYPE
+        SYNTAX  	Counter32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The number of Config BPUDs transmitted by this port."
+        ::= { rcStgPortEntry 16 }
+
+
+rcStgPortOutTcnBpdus OBJECT-TYPE
+        SYNTAX  	Counter32
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"The number of Topology Change Notification
+                     	BPUDs transmitted by this port."
+        ::= { rcStgPortEntry 17 }
+
+rcStgPortRowStatus OBJECT-TYPE
+        SYNTAX  	RowStatus
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"Row status."
+        ::= { rcStgPortEntry 18 }
+
+rcStgPortChangeDetection OBJECT-TYPE
+        SYNTAX           TruthValue
+        MAX-ACCESS       read-write
+        STATUS           current
+        DESCRIPTION      "If disabled, topology change notifications 
+                          are not sent for the port."
+        DEFVAL           { true }
+        ::= { rcStgPortEntry 19 }
+
+rcStgPortPathCost32 OBJECT-TYPE
+    SYNTAX      Integer32 (1..200000000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The contribution of this port to the path cost of
+         paths towards the spanning tree root which include
+         this port.  802.1D-1998 recommends that the
+         default value of this parameter be in inverse
+         proportion to the speed of the attached LAN.
+         Replacement for deprecated object dot1dStpPortPathCost."
+    ::= { rcStgPortEntry 20 }
+
+rcStgPortAdminPathCost OBJECT-TYPE
+    SYNTAX  	INTEGER (0..65535)
+    MAX-ACCESS  	read-write
+    STATUS  	current
+    DESCRIPTION
+        "The administrative value of rcStgPortPathCost.  This is
+         the value that has been configured by the user, or 0 if
+         there is no user-configured value.  Note that a Set
+         request on rcStgPortPathCost will also modify the
+         corresponding value of this object."
+    DEFVAL { 0 }
+    ::= { rcStgPortEntry 21 }
+
+rcStgPortAdminPathCost32 OBJECT-TYPE
+    SYNTAX      Integer32 (0..200000000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The administrative value of rcStgPortPathCost32.  This
+         is the value that has been configured by the user, or 0
+         if there is no user-configured value.  Note that a Set
+         request on rcStgPortPathCost32 will also modify the
+         corresponding value of this object."
+    DEFVAL { 0 }
+    ::= { rcStgPortEntry 22 }
+
+
+rcStgNotAllowedPorts OBJECT-TYPE 
+        SYNTAX        PortSet
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "A bitfield used to identify which ports in 
+                      the system that cannot be assigned to any STG
+                      (i.e., which ports are single routable ports). 
+                      The bitfield is 32 octets long representing 
+                      ports 0 to 255 (inclusive)." 
+        ::= { rcStg 6 } 
+
+
+-- rcBridge Group
+-- Forwarding Database for Transparent Bridges
+
+rcBridgeFdbTable OBJECT-TYPE
+	SYNTAX  	SEQUENCE OF RcBridgeFdbEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	deprecated
+	DESCRIPTION 	"This table is an replacement to the standard 
+                     	dot1dTpFdbTable in rfc1493."
+	::= { rcBridge 1 }
+
+rcBridgeFdbEntry OBJECT-TYPE
+	SYNTAX  	RcBridgeFdbEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	deprecated
+        DESCRIPTION 	"Information about a specific unicast MAC address
+                     	for which the bridge has some forwarding information."
+	INDEX { rcBridgeFdbStatus, rcBridgeFdbAddress, rcBridgeFdbVlanId }
+	::= { rcBridgeFdbTable 1 }
+
+RcBridgeFdbEntry ::=
+	SEQUENCE {
+                  rcBridgeFdbStatus INTEGER,
+                  rcBridgeFdbAddress MacAddress,
+                  rcBridgeFdbPort InterfaceIndex,
+                  rcBridgeFdbMonitor TruthValue,
+                  rcBridgeFdbPriority INTEGER,	--excluded
+                  rcBridgeFdbQosLevel INTEGER,
+                  rcBridgeFdbSmltRemote TruthValue,
+                  rcBridgeFdbVlanId INTEGER
+                 }
+ 
+rcBridgeFdbStatus OBJECT-TYPE
+        SYNTAX  	INTEGER {
+			      other(1),
+			      invalid(2),
+			      learned(3),
+			      self(4),
+			      mgmt(5),
+			      discard(6)
+			}
+        MAX-ACCESS 	 	read-only
+        STATUS 	 	deprecated
+        DESCRIPTION 	"This object indicates the status of this entry."
+        ::= { rcBridgeFdbEntry 1 }
+
+rcBridgeFdbAddress OBJECT-TYPE
+        SYNTAX  	MacAddress
+        MAX-ACCESS  	read-only
+        STATUS  	deprecated
+        DESCRIPTION 	"A unicast MAC address for which the bridge 
+	             	has forwarding and/or filtering information."
+        REFERENCE "IEEE 802.1D-1990: Section 3.9.1, 3.9.2"
+        ::= { rcBridgeFdbEntry 2 }
+
+rcBridgeFdbPort OBJECT-TYPE
+        SYNTAX  	InterfaceIndex
+        MAX-ACCESS  	read-only
+        STATUS  	deprecated
+        DESCRIPTION 	"Either the value '0', or the port number of the
+      	             	port on which a frame having a source address
+		        equal to the value of the corresponding instance
+		        of rcBridgeFdbAddress has been seen.  A value of
+		        '0' indicates that the port number has not been
+		        learned but that the bridge does have some
+		        forwarding/filtering information about this
+		        address (e.g. in the dot1dStaticTable).
+		        Implementors are encouraged to assign the port
+		        value to this object whenever it is learned even
+		        for addresses for which the corresponding value of
+		        rcBridgeFdbStatus is not learned(3)."
+        ::= { rcBridgeFdbEntry 3 }
+
+rcBridgeFdbMonitor OBJECT-TYPE
+        SYNTAX  	TruthValue
+        MAX-ACCESS  	read-write
+        STATUS  	deprecated
+        DESCRIPTION 	"Used to indicate whether monitoring should be
+      	             	performed on this unicast MAC address.  If
+	             	monitoring is enabled, any packet received
+	             	with a matching destination MAC address
+	             	will be forwarded to the port configured to
+	             	receive monitor traffic."
+        ::= { rcBridgeFdbEntry 4 }
+
+rcBridgeFdbPriority OBJECT-TYPE
+        SYNTAX  	INTEGER {
+				low(0),
+		            	high(1)
+		        }
+        MAX-ACCESS  	read-write
+        STATUS  	deprecated
+        DESCRIPTION   	"Used to indicate the priority of the incoming
+                       	frames with this destination Mac Address."
+        DEFVAL         { low }
+        ::= { rcBridgeFdbEntry 5 }
+
+rcBridgeFdbQosLevel OBJECT-TYPE
+        SYNTAX  	INTEGER {
+                            level0(0),
+                            level1(1),
+                            level2(2),
+                            level3(3),
+                            level4(4),
+                            level5(5),
+                            level6(6),
+                            level7(7)
+                        }
+        MAX-ACCESS  	read-write
+        STATUS  	deprecated
+        DESCRIPTION   	"Used to indicate the qos level of the incoming
+                       	frames with this destination Mac Address."
+	DEFVAL		{ level1 }
+        ::= { rcBridgeFdbEntry 6 }
+
+rcBridgeFdbSmltRemote OBJECT-TYPE
+        SYNTAX      TruthValue 
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION  "A MAC address indicate for remote learnt,
+                       either local or remote."
+        ::= { rcBridgeFdbEntry 7 }
+
+rcBridgeFdbVlanId OBJECT-TYPE
+        SYNTAX      INTEGER (1..4094) 
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION  ""
+        ::= { rcBridgeFdbEntry 8 }
+
+rcBridgeFdbTblSize OBJECT-TYPE  
+        SYNTAX         	Integer32  
+        MAX-ACCESS     	read-only  
+        STATUS        	current  
+        DESCRIPTION   	"Used to indicate the number of entries in 
+                       	the bridge forwarding database table."    
+        ::= { rcBridge 2 }
+
+
+-- The Static (Destination-Address) Database
+ 
+rcBridgeStaticTable OBJECT-TYPE
+	      SYNTAX      SEQUENCE OF RcBridgeStaticEntry
+	      MAX-ACCESS  not-accessible
+	      STATUS      current
+	      DESCRIPTION "This table is a proprietary replacement to the 
+                    standard dot1dStaticTable in rfc1493."
+	      ::= { rcBridge 3 }
+ 
+rcBridgeStaticEntry OBJECT-TYPE
+       SYNTAX      RcBridgeStaticEntry
+	      MAX-ACCESS  not-accessible
+	      STATUS      current
+   	   DESCRIPTION "A table containing forwarding information about 
+                    unicast entries configured into the bridge by 
+                    management. This information is used by the 
+                    transparent bridging function in determining how 
+                    to propagate a received frame."
+	      INDEX   { rcBridgeStaticAddress, 
+                 rcBridgeStaticPort, 
+                 rcBridgeStaticVlanId }
+       ::= { rcBridgeStaticTable 1 }
+ 
+RcBridgeStaticEntry ::=
+SEQUENCE {
+	  rcBridgeStaticAddress  MacAddress,
+	  rcBridgeStaticPort     InterfaceIndex,
+	  rcBridgeStaticMonitor  TruthValue,
+	  rcBridgeStaticPriority INTEGER,	--excluded
+	  rcBridgeStaticStatus   INTEGER,
+	  rcBridgeStaticQosLevel INTEGER,
+	  rcBridgeStaticVlanId   INTEGER
+	 }
+
+rcBridgeStaticAddress OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The MAC address of this entry." 
+        ::= { rcBridgeStaticEntry 1 }
+
+rcBridgeStaticPort OBJECT-TYPE
+        SYNTAX      InterfaceIndex
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "Port on which the MAC address is found."
+        ::= { rcBridgeStaticEntry 2 }
+ 
+rcBridgeStaticMonitor OBJECT-TYPE
+        SYNTAX      TruthValue 
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Used to indicate whether monitoring should be
+		     	           performed on incoming packets that match this
+		     	           entry."
+        ::= { rcBridgeStaticEntry 3 }
+
+rcBridgeStaticPriority OBJECT-TYPE
+        SYNTAX      INTEGER {
+           			    low(0),
+			                high(1)
+		                }
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION "Used to indicate forwarding priority of incoming 
+        	     	     packets that match this entry." 
+        DEFVAL      { low }
+        ::= { rcBridgeStaticEntry 4 }
+
+rcBridgeStaticStatus OBJECT-TYPE
+       	SYNTAX  	INTEGER {
+			    other(1),
+			    invalid(2),
+			    permanent(3),
+			    deleteOnReset(4),
+			    deleteOnTimeout(5)
+       		        }
+        MAX-ACCESS	 read-write
+        STATUS      current
+        DESCRIPTION "This object indicates the status of this 
+                     entry. The default value is permanent(3)."
+        ::= { rcBridgeStaticEntry 5 }
+
+rcBridgeStaticQosLevel OBJECT-TYPE
+        SYNTAX  	INTEGER {
+                            level0(0),
+                            level1(1),
+                            level2(2),
+                            level3(3),
+                            level4(4),
+                            level5(5),
+                            level6(6),
+                            level7(7)
+                        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Used to indicate the qos level."
+        DEFVAL      { level1 }
+        ::= { rcBridgeStaticEntry 6 }
+
+rcBridgeStaticVlanId OBJECT-TYPE
+        SYNTAX      INTEGER (1..4094)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION ""
+        ::= { rcBridgeStaticEntry 7 }
+
+rcBridgeStaticTblSize OBJECT-TYPE  
+        SYNTAX      Integer32  
+        MAX-ACCESS  read-only  
+        STATUS      current  
+        DESCRIPTION "Used to indicate the number of entries in 
+                     the bridge static table."    
+        ::= { rcBridge 4 }
+
+-- The filtering (Destination-Address) Database
+
+rcBridgeFilterTable OBJECT-TYPE
+	       SYNTAX      SEQUENCE OF RcBridgeFilterEntry
+	       MAX-ACCESS  not-accessible
+	       STATUS      current
+	       DESCRIPTION "This table is a proprietary replacement to the 
+                     standard dot1dStaticTable (Filtering information) 
+                     in rfc1493."
+	       ::= { rcBridge 5 }
+ 
+rcBridgeFilterEntry OBJECT-TYPE
+	       SYNTAX      RcBridgeFilterEntry
+	       MAX-ACCESS  not-accessible
+	       STATUS      current
+	       DESCRIPTION "A table containing filtering information configured 
+                     into the bridge by management specifying a dest-
+                     ination address on a specific port and a set of 
+                     incoming ports. Frames received from one of the 
+                     incoming ports and containing the specific 
+                     destination addresses are not allowed to be
+		     	           forwarded."
+	       INDEX   { rcBridgeFilterAddress, 
+                  rcBridgeFilterPort, 
+                  rcBridgeFilterVlanId }
+        ::= { rcBridgeFilterTable 1 }
+ 
+RcBridgeFilterEntry ::=
+    SEQUENCE {
+	     rcBridgeFilterAddress        MacAddress,
+	     rcBridgeFilterPort           InterfaceIndex,
+	     rcBridgeFilterNotAllowedFrom OCTET STRING,
+	     rcBridgeFilterStatus         INTEGER,
+	     rcBridgeFilterVlanId         INTEGER,
+             rcBridgeFilterPcap           TruthValue,
+	     rcBridgeFilterDestDiscard    OCTET STRING,
+	     rcBridgeFilterSrcDiscard     OCTET STRING
+    }
+
+rcBridgeFilterAddress OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The MAC address of this entry.  This address is used
+		     	           to match the destination address of incoming packets."
+        ::= { rcBridgeFilterEntry 1 }
+ 
+rcBridgeFilterPort OBJECT-TYPE
+        SYNTAX      InterfaceIndex
+        MAX-ACCESS  read-only
+        STATUS  	 current
+        DESCRIPTION "Port on which this MAC address is found."
+        ::= { rcBridgeFilterEntry 2 }
+ 
+rcBridgeFilterNotAllowedFrom OBJECT-TYPE
+        SYNTAX  	OCTET STRING (SIZE(88))
+        MAX-ACCESS  	read-write
+        STATUS  	obsolete
+        DESCRIPTION 	"Used to indicate a set of ports.  Traffic arriving
+		     	on any of the specified ports is not forwarded to this 
+                     	MAC address."
+        ::= { rcBridgeFilterEntry 3 }
+
+rcBridgeFilterStatus OBJECT-TYPE
+        SYNTAX  	INTEGER {
+		               other(1),
+       		               invalid(2),
+       		               permanent(3),
+       		               deleteOnReset(4),
+       		               deleteOnTimeout(5)
+       	         	}
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"This object indicates the status of this 
+                     	entry. The default value is permanent(3)."
+        ::= { rcBridgeFilterEntry 4 }
+
+rcBridgeFilterVlanId OBJECT-TYPE
+        SYNTAX  	INTEGER (1..4094)
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	""
+        ::= { rcBridgeFilterEntry 5 }
+
+rcBridgeFilterPcap OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "To enable pcap for the fdb-filter"
+        DEFVAL          { false }
+        ::= { rcBridgeFilterEntry 6 }
+
+rcBridgeFilterDestDiscard OBJECT-TYPE
+        SYNTAX  	OCTET STRING (SIZE(88))
+        MAX-ACCESS  	read-write
+        STATUS     current
+        DESCRIPTION 	"Used to indicate a set of ports.  Traffic arriving
+		     	             on any of the specified ports from this MAC address."
+        ::= { rcBridgeFilterEntry 7 }
+
+rcBridgeFilterSrcDiscard OBJECT-TYPE
+        SYNTAX  	OCTET STRING (SIZE(88))
+        MAX-ACCESS  	read-write
+        STATUS     current
+        DESCRIPTION 	"Used to indicate a set of ports.  Traffic arriving
+		     	             on any of the specified ports is not forwarded to 
+                     	 this MAC address."
+        ::= { rcBridgeFilterEntry 8 }
+
+
+rcBridgeFilterTblSize OBJECT-TYPE  
+        SYNTAX        	Integer32  
+        MAX-ACCESS        	read-only  
+        STATUS        	current  
+        DESCRIPTION   	"Used to indicate the number of entries in 
+                       	the bridge filter table."    
+        ::= { rcBridge 6 }
+
+-- The unknown mac discard config table
+
+rcBridgeUnknownMacDiscardTable OBJECT-TYPE
+	SYNTAX  	SEQUENCE OF RcBridgeUnknownMacDiscardEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	current
+	DESCRIPTION 	"This table is used to configure the 'unknown mac discard' feature.
+                        This feature applies to layer 2 and layer 3 packets coming from 
+                        or going out to a specific physical port."
+	::= { rcBridge 7 }
+ 
+rcBridgeUnknownMacDiscardEntry OBJECT-TYPE
+	SYNTAX  	RcBridgeUnknownMacDiscardEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	current
+	DESCRIPTION 	"A table containing information configuring
+                        the 'unknown mac discard' feature."
+	INDEX   { rcBridgeUnknownMacDiscardIfIndex }
+        ::= { rcBridgeUnknownMacDiscardTable 1 }
+ 
+RcBridgeUnknownMacDiscardEntry ::=
+        SEQUENCE {
+	    rcBridgeUnknownMacDiscardIfIndex                  InterfaceIndex,
+	    rcBridgeUnknownMacDiscardAutoLearnEnable          TruthValue,
+	    rcBridgeUnknownMacDiscardAutoLearnMode            INTEGER,
+	    rcBridgeUnknownMacDiscardAutoLearnTableMode       INTEGER,
+	    rcBridgeUnknownMacDiscardLogViolations            INTEGER,
+	    rcBridgeUnknownMacDiscardSendTrap                 INTEGER,
+	    rcBridgeUnknownMacDiscardDisablePort              INTEGER,
+	    rcBridgeUnknownMacDiscardDefaultAutoLearnMonitor  INTEGER,
+	    rcBridgeUnknownMacDiscardDefaultAutoLearnPriority INTEGER,
+	    rcBridgeUnknownMacDiscardMacCountMax              INTEGER,
+	    rcBridgeUnknownMacDiscardMacCountCur              INTEGER
+        }
+
+rcBridgeUnknownMacDiscardIfIndex OBJECT-TYPE
+        SYNTAX  	InterfaceIndex
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"Port on which this 'unknown mac discard' configuration applied to."
+        ::= { rcBridgeUnknownMacDiscardEntry 1 }
+ 
+rcBridgeUnknownMacDiscardAutoLearnEnable OBJECT-TYPE  
+        SYNTAX        	TruthValue  
+        MAX-ACCESS        	read-write  
+        STATUS        	current  
+        DESCRIPTION   	"This variable is used to enable/disable the auto-learn capability 
+                         of a specific port. The default value is auto-learn disabled."
+        ::= { rcBridgeUnknownMacDiscardEntry 2 }
+
+rcBridgeUnknownMacDiscardAutoLearnMode OBJECT-TYPE  
+        SYNTAX        	INTEGER {
+                               oneShot(1),
+                               continuous(2)
+                        }
+        MAX-ACCESS        	read-write  
+        STATUS        	current  
+        DESCRIPTION   	"This variable is used to control the auot-learn mode to either 
+                         one-shot or continuous. In one-shot mode, the first n MAC addresses 
+                         will be learned. The number n is dependents on the system's 
+                         available resource. In continuous mode, MAC address is continuous 
+                         learned until the resource limit is reached. After that the 
+                         subsequent MAC will be disallowed until one of the original 
+                         learned MAC is aged out. The default value is one-shot mode."
+        ::= { rcBridgeUnknownMacDiscardEntry 3 }
+
+rcBridgeUnknownMacDiscardAutoLearnTableMode OBJECT-TYPE
+        SYNTAX  	INTEGER {
+		               unlock(1),
+       		               lock(2)
+       	         	}
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"This MIB variable is used to lock or unlock the auto-learn MAC 
+                         table. When the auto-learn table is lock neither new MAC will be 
+                         learned nor the original learned MAC will be aged out. User needs 
+                         to lock the auto-learn table before MAC addresses can be save to 
+                         the NVRAM. The whole auto-learn table will be flushed when the 
+                         setting change from lock to unlock mode. The default value is 
+                         unlock mode."
+        ::= { rcBridgeUnknownMacDiscardEntry 4 }
+
+rcBridgeUnknownMacDiscardLogViolations OBJECT-TYPE
+        SYNTAX  	INTEGER {
+		               disable(1),
+       		               enable(2)
+       	         	}
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"This variable controls the logging action that the system will 
+                         take when a MAC address violation event was detected. The 
+                         value 'enable' means a log record will be written to the system 
+                         log file when a violation event was detected. The default value 
+                         is enable."
+        ::= { rcBridgeUnknownMacDiscardEntry 5 }
+
+rcBridgeUnknownMacDiscardSendTrap OBJECT-TYPE
+        SYNTAX  	INTEGER {
+		               disable(1),
+       		               enable(2)
+       	         	}
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"This variable controls the send trap action that system will take 
+                         when a MAC address violation event was detected. The value 'enable' 
+                         means a SNMP trap packet will be send to the management station 
+                         when a violation event was detected. The default value is disable."
+        ::= { rcBridgeUnknownMacDiscardEntry 6 }
+
+rcBridgeUnknownMacDiscardDisablePort OBJECT-TYPE
+        SYNTAX  	INTEGER {
+		               disable(1),
+       		               enable(2)
+       	         	}
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"This variable controls the 'disable-port' action that system 
+                         will take when a MAC address violation event was detected. The 
+                         value 'enable' means the specific port will be disabled when the 
+                         violation event was detected. It needs user manually to bring 
+                         the port back once it was disabled. The default value is disable."
+        ::= { rcBridgeUnknownMacDiscardEntry 7 }
+
+rcBridgeUnknownMacDiscardDefaultAutoLearnMonitor OBJECT-TYPE
+        SYNTAX  	INTEGER {
+			 	none(1),
+			 	monitor(2)
+			}
+        MAX-ACCESS  	read-write
+        STATUS  	deprecated
+        DESCRIPTION 	"This variable controls the default monitor setting of an auto-learn 
+                         MAC address. The value 'monitor' means a copy of packet that send 
+                         from or to the auto-learned MAC address will be forwarded to the 
+                         designated monitoring port on the system. The default value is none."
+        ::= { rcBridgeUnknownMacDiscardEntry 8 }
+
+rcBridgeUnknownMacDiscardDefaultAutoLearnPriority OBJECT-TYPE
+        SYNTAX          INTEGER {
+                               low(1),
+                               high(2)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          deprecated
+        DESCRIPTION     "This variable controls the default priority setting of an
+                         auto-learn MAC address. The value 'low' means packets send from
+                         the MAC address is forwarded at low priority. The value 'high'
+                         means packets send from the MAC address is forwarded at high
+                         priority. The default value is low."
+        ::= { rcBridgeUnknownMacDiscardEntry 9 }
+
+rcBridgeUnknownMacDiscardMacCountMax OBJECT-TYPE
+        SYNTAX          INTEGER (0..2048)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "This variable represents the maxium number of MACc that
+                         can be added to some port."
+        DEFVAL          { 2048 }
+        ::= { rcBridgeUnknownMacDiscardEntry 10 }
+
+rcBridgeUnknownMacDiscardMacCountCur OBJECT-TYPE
+        SYNTAX          INTEGER (0..2048)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "This variable represents the current number of MACs that have
+                         been added to some port."
+        DEFVAL          { 0 }
+        ::= { rcBridgeUnknownMacDiscardEntry 11 }
+
+-- The Manual Edit table
+
+rcBridgeManualEditTable OBJECT-TYPE
+	SYNTAX  	SEQUENCE OF RcBridgeManualEditEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	current
+	DESCRIPTION 	"This table is used to specify what MAC addresses can be learned 
+                         on each port."
+	::= { rcBridge 8 }
+ 
+rcBridgeManualEditEntry OBJECT-TYPE
+	SYNTAX  	RcBridgeManualEditEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	current
+	DESCRIPTION 	"A table containing information of
+                        MAC addresses that can be learned."
+	INDEX   { rcBridgeManualEditAddress }
+        ::= { rcBridgeManualEditTable 1 }
+ 
+RcBridgeManualEditEntry ::=
+        SEQUENCE {
+	    rcBridgeManualEditAddress    MacAddress,
+	    rcBridgeManualEditPorts      PortSet,
+	    rcBridgeManualEditMonitor    TruthValue,
+	    rcBridgeManualEditPriority   INTEGER,
+	    rcBridgeManualEditStatus     INTEGER
+        }
+
+rcBridgeManualEditAddress OBJECT-TYPE
+        SYNTAX  	MacAddress
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"This variable contains the source MAC address of an entry."
+        ::= { rcBridgeManualEditEntry 1 }
+ 
+rcBridgeManualEditPorts OBJECT-TYPE  
+        SYNTAX        	PortSet  
+        MAX-ACCESS        	read-write  
+        STATUS        	current  
+        DESCRIPTION   	"This variable contains the allowed ports on which the MAC 
+                         address of this entry can be learned."
+        ::= { rcBridgeManualEditEntry 2 }
+
+rcBridgeManualEditMonitor OBJECT-TYPE  
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write  
+        STATUS        	current  
+        DESCRIPTION   	"This variable specifies the monitoring setting of the MAC 
+                         address. The value 'true' means a copy of packet frame that 
+                         send from or to the MAC address is forwarded to the designated 
+                         monitoring port on the system. The default value is false."
+        ::= { rcBridgeManualEditEntry 3 }
+
+rcBridgeManualEditPriority OBJECT-TYPE
+        SYNTAX  	INTEGER {
+		               low(1),
+       		               high(2)
+       	         	}
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"This variable specifies the priority setting of the MAC address. 
+                         The value 'low' means packet frames send from the MAC address 
+                         is forwarded at low priority. The default value is low."
+        ::= { rcBridgeManualEditEntry 4 }
+
+rcBridgeManualEditStatus OBJECT-TYPE
+        SYNTAX  	INTEGER {
+		               other(1),
+		               invalid(2),
+       		               active(3)
+       	         	}
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"The variable controls the status of a MAC address in the table. 
+                         The value 'active' is used to add the MAC address entry into the 
+                         table. The value 'invalid' is used to delete the MAC address from 
+                         the table."
+        ::= { rcBridgeManualEditEntry 5 }
+
+rcBridgeManualEditTblSize OBJECT-TYPE  
+        SYNTAX        	Integer32  
+        MAX-ACCESS        	read-only  
+        STATUS        	current  
+        DESCRIPTION   	"Used to indicate the number of entries in 
+                       	the manual edit table."    
+        ::= { rcBridge 9 }
+
+-- The Auto Learn table
+
+rcBridgeAutoLearnTable OBJECT-TYPE
+	SYNTAX  	SEQUENCE OF RcBridgeAutoLearnEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	current
+	DESCRIPTION 	"This table contains information of auto-learned MAC address when 
+                         the 'unknow MAC discard' table's auto-learn is enabled. User must 
+                         explicitly lock and save the table into NVRAM in order to have 
+                         this table has the same configuration cross the system reset."
+	::= { rcBridge 10 }
+ 
+rcBridgeAutoLearnEntry OBJECT-TYPE
+	SYNTAX  	RcBridgeAutoLearnEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	current
+	DESCRIPTION 	"Entries in this table are created automatically
+                        when the user explicitly does a lock operation on
+                        the auto-learn-table (i.e., when 'AutoLearnTableMode'
+                        is set to lock(2))."
+	INDEX   { rcBridgeAutoLearnAddress }
+        ::= { rcBridgeAutoLearnTable 1 }
+ 
+RcBridgeAutoLearnEntry ::=
+        SEQUENCE {
+	    rcBridgeAutoLearnAddress    MacAddress,
+	    rcBridgeAutoLearnPort       PortSet,
+	    rcBridgeAutoLearnMonitor    TruthValue,
+	    rcBridgeAutoLearnPriority   INTEGER,
+	    rcBridgeAutoLearnAction     INTEGER
+        }
+
+rcBridgeAutoLearnAddress OBJECT-TYPE
+        SYNTAX  	MacAddress
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"This variable contains the source MAC address of the entries."
+        ::= { rcBridgeAutoLearnEntry 1 }
+ 
+rcBridgeAutoLearnPort OBJECT-TYPE  
+        SYNTAX        	PortSet  
+        MAX-ACCESS        	read-only  
+        STATUS        	current  
+        DESCRIPTION   	"This variable contains the port where the MAC address was learned."
+        ::= { rcBridgeAutoLearnEntry 2 }
+
+rcBridgeAutoLearnMonitor OBJECT-TYPE  
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-only  
+        STATUS        	current  
+        DESCRIPTION   	"This variable contains the monitor setting of the MAC address. 
+                         The value 'true' means a copy of packet frame that send from or 
+                         to the MAC address is forwarded to the designated monitoring port 
+                         on the system. This value should be synchronized with the setting 
+                         of 'unknow MAC discard' table's 'Default AutoLearnMonitor' setting 
+                         when the MAC address was learned."
+        ::= { rcBridgeAutoLearnEntry 3 }
+
+rcBridgeAutoLearnPriority OBJECT-TYPE
+        SYNTAX  	INTEGER {
+		               low(1),
+       		               high(2)
+       	         	}
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"This variable contains the priority setting of the MAC address. 
+                         The value 'low' means packet frames send from the MAC address is 
+                         forwarded at low priority. The value 'high' means packet frames 
+                         send from the MAC address is forwarded at high priority. This 
+                         value should be synchronized with the setting of 'unknow MAC 
+                         discard' table's 'DefaultAutoLearnPriority' setting when the MAC
+                         address was learned."
+        ::= { rcBridgeAutoLearnEntry 4 }
+
+rcBridgeAutoLearnAction OBJECT-TYPE
+        SYNTAX  	INTEGER {
+		               none(0),
+		               convertToManualEdit(1)
+       	         	}
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"This variable is for converting an auto-learned MAC address entry 
+                         to a manual edit MAC address entry. This variable provides a mechanism
+                         for user to move a MAC address entry from auto-learn table to manual 
+                         edit table."
+        ::= { rcBridgeAutoLearnEntry 5 }
+
+
+rcBridgeAutoLearnTblSize OBJECT-TYPE  
+        SYNTAX        	Integer32  
+        MAX-ACCESS        	read-only  
+        STATUS        	current  
+        DESCRIPTION   	"Used to indicate the number of entries in 
+                       	the auto learn table."    
+        ::= { rcBridge 11 }
+
+
+-- The Statis Multicast table
+
+rcBridgeStaticMulticastTable OBJECT-TYPE	--excluded
+	SYNTAX  	SEQUENCE OF RcBridgeStaticMulticastEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	deprecated
+	DESCRIPTION 	""
+	::= { rcBridge 12 }
+ 
+rcBridgeStaticMulticastEntry OBJECT-TYPE
+	SYNTAX  	RcBridgeStaticMulticastEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	deprecated
+	DESCRIPTION 	""
+	INDEX   { rcBridgeStaticMulticastAddress, rcBridgeStaticMulticastVlanId }
+        ::= { rcBridgeStaticMulticastTable 1 }
+ 
+RcBridgeStaticMulticastEntry ::=
+        SEQUENCE {
+	    rcBridgeStaticMulticastAddress         MacAddress,
+	    rcBridgeStaticMulticastForwardingPorts PortSet,
+	    rcBridgeStaticMulticastMltIds          IdList,
+	    rcBridgeStaticMulticastRowStatus       RowStatus,
+	    rcBridgeStaticMulticastVlanId          INTEGER,
+	    rcBridgeStaticMulticastNumMltIds       Integer32
+        }
+
+rcBridgeStaticMulticastAddress OBJECT-TYPE
+        SYNTAX  	MacAddress
+        MAX-ACCESS  	read-only
+        STATUS  	deprecated
+        DESCRIPTION 	"src mac addr."
+        ::= { rcBridgeStaticMulticastEntry 1 }
+ 
+rcBridgeStaticMulticastForwardingPorts OBJECT-TYPE  
+        SYNTAX        	PortSet  
+        MAX-ACCESS        	read-write  
+        STATUS        	deprecated  
+        DESCRIPTION   	"ports for forward this mac"
+        ::= { rcBridgeStaticMulticastEntry 2 }
+
+rcBridgeStaticMulticastMltIds OBJECT-TYPE  
+        SYNTAX        	IdList
+        MAX-ACCESS        	read-write  
+        STATUS        	deprecated  
+        DESCRIPTION   	"list of mlts this mac will be forwarded on"
+        ::= { rcBridgeStaticMulticastEntry 3 }
+
+rcBridgeStaticMulticastRowStatus OBJECT-TYPE
+        SYNTAX  	RowStatus
+        MAX-ACCESS  	read-write
+        STATUS  	deprecated
+        DESCRIPTION 	"row status"
+        ::= { rcBridgeStaticMulticastEntry 4 }
+
+rcBridgeStaticMulticastVlanId OBJECT-TYPE  
+        SYNTAX           INTEGER (1..4095)	
+        MAX-ACCESS        	read-only  
+        STATUS        	deprecated  
+        DESCRIPTION   	"Vlan Id"
+        ::= { rcBridgeStaticMulticastEntry 5 } 
+
+rcBridgeStaticMulticastNumMltIds OBJECT-TYPE  
+        SYNTAX        	Integer32
+        MAX-ACCESS        	read-only  
+        STATUS        	deprecated  
+        DESCRIPTION   	"number of mlts Ids"
+        ::= { rcBridgeStaticMulticastEntry 6 }
+
+rcBridgeStaticMulticastTblSize OBJECT-TYPE  	--excluded
+        SYNTAX        	Integer32  
+        MAX-ACCESS        	read-only  
+        STATUS        	deprecated  
+        DESCRIPTION   	"Used to indicate the number of entries in 
+                       	the static multicast table."    
+        ::= { rcBridge 13 }
+
+rcRateLimitTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcRateLimitEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     ""
+        ::= { rcBridge 14 }
+
+rcRateLimitEntry OBJECT-TYPE
+        SYNTAX          RcRateLimitEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     ""
+        INDEX   { rcRateLimitIfIndex, rcRateLimitIfTrafficType }
+        ::= { rcRateLimitTable 1 }
+
+RcRateLimitEntry ::=
+        SEQUENCE {
+            rcRateLimitIfIndex          InterfaceIndex,
+            rcRateLimitIfTrafficType    INTEGER,
+            rcRateLimitIfAllowedRate    INTEGER,
+            rcRateLimitIfEnable         TruthValue,
+            rcRateLimitIfAllowedRatePps Integer32,
+            rcRateLimitIfAllowedRateKbps Integer32,
+            rcRateLimitEgressRateLimit   Integer32,
+            rcRateLimitEgressRateLimitState EnableValue
+        }
+
+rcRateLimitIfIndex OBJECT-TYPE
+        SYNTAX          InterfaceIndex
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Port ifindex."
+        ::= { rcRateLimitEntry 1 }
+
+rcRateLimitIfTrafficType OBJECT-TYPE
+        SYNTAX          INTEGER {
+                                multicast(1),
+                                broadcast(2),
+                                broadcast-multicast(3)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Type of traffic allowed."
+        DEFVAL          { broadcast }
+        ::= { rcRateLimitEntry 2 }
+
+rcRateLimitIfAllowedRate OBJECT-TYPE
+        SYNTAX          INTEGER (0..25)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Allowed traffic rate. If chassis type is 8100.
+            Also used by BayStack to indicate rate limit percent.  For
+            BayStack, a value of 0 indicates no limit."
+        DEFVAL          { 25 }
+        ::= { rcRateLimitEntry 3 }
+
+rcRateLimitIfEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Turn on/off rate limiting on this interface."
+        DEFVAL          { false }
+        ::= { rcRateLimitEntry 4 }
+
+rcRateLimitIfAllowedRatePps OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Allowed traffic rate packets per second. If chassis type is 8600."
+        ::= { rcRateLimitEntry 5 }
+
+rcRateLimitIfAllowedRateKbps OBJECT-TYPE
+        SYNTAX          Integer32 (250..2147483647)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Allowed traffic rate Kbits per second. If chassis type is R-module."
+        ::= { rcRateLimitEntry 6 }
+
+rcRateLimitEgressRateLimit OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Egress Rate Limit."
+        ::= { rcRateLimitEntry 7 }
+
+rcRateLimitEgressRateLimitState OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to enable/disable shape/egress-rate-limit 
+		       functionality."
+        ::= { rcRateLimitEntry 8 }
+
+-- The Static Multicast table
+
+rcBridgeStaticMcastTable OBJECT-TYPE	--excluded
+	SYNTAX  	SEQUENCE OF RcBridgeStaticMcastEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	current
+	DESCRIPTION 	""
+	::= { rcBridge 15 }
+ 
+rcBridgeStaticMcastEntry OBJECT-TYPE
+	SYNTAX  	RcBridgeStaticMcastEntry
+	MAX-ACCESS  	not-accessible
+	STATUS  	current
+	DESCRIPTION 	""
+	INDEX   { rcBridgeStaticMcastVlanId, rcBridgeStaticMcastAddress }
+        ::= { rcBridgeStaticMcastTable 1 }
+ 
+RcBridgeStaticMcastEntry ::=
+        SEQUENCE {
+	    rcBridgeStaticMcastVlanId          INTEGER,
+	    rcBridgeStaticMcastAddress         MacAddress,
+	    rcBridgeStaticMcastForwardingPorts PortSet,
+	    rcBridgeStaticMcastMltIds          IdList,
+	    rcBridgeStaticMcastNumMltIds       Integer32,
+	    rcBridgeStaticMcastRowStatus       RowStatus
+        }
+
+rcBridgeStaticMcastVlanId OBJECT-TYPE  
+        SYNTAX           INTEGER (1..4095)	
+        MAX-ACCESS        	read-only  
+        STATUS        	current  
+        DESCRIPTION   	"Vlan Id"
+        ::= { rcBridgeStaticMcastEntry 1 } 
+
+rcBridgeStaticMcastAddress OBJECT-TYPE
+        SYNTAX  	MacAddress
+        MAX-ACCESS  	read-only
+        STATUS  	current
+        DESCRIPTION 	"src mac addr."
+        ::= { rcBridgeStaticMcastEntry 2 }
+ 
+rcBridgeStaticMcastForwardingPorts OBJECT-TYPE  
+        SYNTAX        	PortSet  
+        MAX-ACCESS        	read-write  
+        STATUS        	current  
+        DESCRIPTION   	"ports for forward this mac"
+        ::= { rcBridgeStaticMcastEntry 3 }
+
+rcBridgeStaticMcastMltIds OBJECT-TYPE  
+        SYNTAX        	IdList
+        MAX-ACCESS        	read-write  
+        STATUS        	current  
+        DESCRIPTION   	"list of mlts this mac will be forwarded on"
+        ::= { rcBridgeStaticMcastEntry 4 }
+
+rcBridgeStaticMcastNumMltIds OBJECT-TYPE  
+        SYNTAX        	Integer32
+        MAX-ACCESS        	read-only  
+        STATUS        	current  
+        DESCRIPTION   	"number of mlts Ids"
+        ::= { rcBridgeStaticMcastEntry 5 }
+
+rcBridgeStaticMcastRowStatus OBJECT-TYPE
+        SYNTAX  	RowStatus
+        MAX-ACCESS  	read-write
+        STATUS  	current
+        DESCRIPTION 	"row status"
+        ::= { rcBridgeStaticMcastEntry 6 }
+
+
+-- The filtering (Destination-Address) Database for PP8300
+
+rcBridgePP8300FilterTable OBJECT-TYPE
+               SYNTAX      SEQUENCE OF RcBridgePP8300FilterEntry
+               MAX-ACCESS      not-accessible
+               STATUS      current
+               DESCRIPTION "This table is a proprietary replacement to the
+                     standard dot1dStaticTable (Filtering information)
+                     in rfc1493. This table is specific for PP8300."
+               ::= { rcBridge 16 }
+
+rcBridgePP8300FilterEntry OBJECT-TYPE
+               SYNTAX      RcBridgePP8300FilterEntry
+               MAX-ACCESS      not-accessible
+               STATUS      current
+               DESCRIPTION ""
+               INDEX   { rcBridgePP8300FilterAddress,
+                         rcBridgePP8300FilterVlanId }
+        ::= { rcBridgePP8300FilterTable 1 }
+
+RcBridgePP8300FilterEntry ::=
+    SEQUENCE {
+             rcBridgePP8300FilterAddress        MacAddress,
+             rcBridgePP8300FilterVlanId         INTEGER,
+             rcBridgePP8300FilterDropCommand    INTEGER,
+             rcBridgePP8300FilterQosLevel       INTEGER,
+             rcBridgePP8300FilterPort           Integer32,
+             rcBridgePP8300FilterStatus         INTEGER
+    }
+
+rcBridgePP8300FilterAddress OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION "The MAC address of this entry.  This address is used
+                     to match the destination address of incoming packets."
+        ::= { rcBridgePP8300FilterEntry 1 }
+
+rcBridgePP8300FilterVlanId OBJECT-TYPE
+        SYNTAX          INTEGER (1..4094)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     ""
+        ::= { rcBridgePP8300FilterEntry 2 }
+
+rcBridgePP8300FilterDropCommand OBJECT-TYPE
+        SYNTAX          INTEGER {
+                          none(1),
+                          srcDrop(2),
+                          dstDrop(3),
+                          bothDrop(4)
+                       }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     ""
+        ::= { rcBridgePP8300FilterEntry 3 }
+
+rcBridgePP8300FilterQosLevel OBJECT-TYPE
+        SYNTAX          INTEGER {
+                            level0(0),
+                            level1(1),
+                            level2(2),
+                            level3(3),
+                            level4(4),
+                            level5(5),
+                            level6(6),
+                            level7(7)
+                       }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate the qos level."
+        DEFVAL         { level1 }
+        ::= { rcBridgePP8300FilterEntry 4 }
+
+rcBridgePP8300FilterPort OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Mac filter needs the device Id and port Id programmed
+                         properly to make the SA drop working properly"
+        ::= { rcBridgePP8300FilterEntry 5 }
+
+rcBridgePP8300FilterStatus OBJECT-TYPE
+        SYNTAX          INTEGER {
+                               other(1),
+                               invalid(2),
+                               permanent(3),
+                               deleteOnReset(4),
+                               deleteOnTimeout(5)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "This object indicates the status of this
+                        entry. The default value is permanent(3)."
+        ::= { rcBridgePP8300FilterEntry 6 }
+
+
+-- rcBridge Fdb Protect Table
+
+rcBridgeFdbProtectTable OBJECT-TYPE
+     SYNTAX         SEQUENCE OF RcBridgeFdbProtectEntry
+     MAX-ACCESS     not-accessible
+     STATUS         current
+     DESCRIPTION    "This table gives information about the mac learning
+                     limits on a particular port."
+   ::= { rcBridge 17 }
+
+rcBridgeFdbProtectEntry OBJECT-TYPE
+     SYNTAX         RcBridgeFdbProtectEntry
+     MAX-ACCESS     not-accessible
+     STATUS         current
+     DESCRIPTION    "Information about a specific MAC address learning
+                     limits of a specific port."
+     INDEX { rcBridgeFdbProtectPortNum }
+     ::= { rcBridgeFdbProtectTable 1 }
+
+RcBridgeFdbProtectEntry ::=
+     SEQUENCE {
+                  rcBridgeFdbProtectPortNum           InterfaceIndex,
+                  rcBridgeFdbProtectMaxMacCount       INTEGER,
+                  rcBridgeFdbProtectMinMacCount       INTEGER,
+                  rcBridgeFdbProtectEnable            EnableValue,
+                  rcBridgeFdbProtectCurrentMacCount   Integer32,
+                  rcBridgeFdbProtectMacLearning       TruthValue,
+                  rcBridgeFdbProtectViolationLogTrap  EnableValue,
+                  rcBridgeFdbProtectViolationDownPort EnableValue
+              }
+
+rcBridgeFdbProtectPortNum OBJECT-TYPE
+        SYNTAX       InterfaceIndex
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  "This object is the interface on which MAC address
+                      learning limit is applied."
+        ::= { rcBridgeFdbProtectEntry 1 }
+
+rcBridgeFdbProtectMaxMacCount OBJECT-TYPE
+        SYNTAX       INTEGER (0..1000000)
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Used to indicate maximum number of MAC address
+                      that can be learnt on the port."
+        DEFVAL       { 1024 }
+        ::= { rcBridgeFdbProtectEntry 2 }
+
+rcBridgeFdbProtectMinMacCount OBJECT-TYPE
+        SYNTAX       INTEGER (0..1000000)
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Used to indicate minimum number of MAC address
+                      learnt which mac address learning will be re-enabled
+                      on the port."
+        DEFVAL       { 512 }
+        ::= { rcBridgeFdbProtectEntry 3 }
+
+rcBridgeFdbProtectEnable OBJECT-TYPE
+        SYNTAX       EnableValue
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Used to enable or disable MAC learning limit
+                      feature on the port."
+        ::= { rcBridgeFdbProtectEntry 4 }
+
+rcBridgeFdbProtectCurrentMacCount OBJECT-TYPE
+        SYNTAX       Integer32
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  "This object indicates the current number of
+                      MAC address learnt on the port."
+        ::= { rcBridgeFdbProtectEntry 5 }
+
+rcBridgeFdbProtectMacLearning OBJECT-TYPE
+        SYNTAX       TruthValue
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  "This object indicates whether the port can
+                      currrently learn new MAC addresses or not."
+        ::= { rcBridgeFdbProtectEntry 6 }
+
+rcBridgeFdbProtectViolationLogTrap OBJECT-TYPE
+        SYNTAX       EnableValue
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Used to enable or disable logging and sending
+                      of snmp trap, once MAC learning limit is reached
+                      for the port."
+        ::= { rcBridgeFdbProtectEntry 7 }
+
+rcBridgeFdbProtectViolationDownPort OBJECT-TYPE
+        SYNTAX       EnableValue
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Used to enable or disable the action of disabling
+                      the port, once MAC learning limit is reached
+                      for the port."
+        ::= { rcBridgeFdbProtectEntry 8 }
+
+-- Forwarding Database for Transparent Bridges
+
+rcBridgeNewFdbTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcBridgeNewFdbEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "This table is an replacement to the standard
+                        dot1dTpFdbTable in rfc1493."
+        ::= { rcBridge 18 }
+
+rcBridgeNewFdbEntry OBJECT-TYPE
+        SYNTAX          RcBridgeNewFdbEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Information about a specific unicast MAC address
+                        for which the bridge has some forwarding information."
+        INDEX { rcBridgeNewFdbAddress, rcBridgeNewFdbVlanId }
+        ::= { rcBridgeNewFdbTable 1 }
+
+RcBridgeNewFdbEntry ::=
+        SEQUENCE {
+                  rcBridgeNewFdbStatus INTEGER,
+                  rcBridgeNewFdbAddress MacAddress,
+                  rcBridgeNewFdbPort InterfaceIndex,
+                  rcBridgeNewFdbMonitor TruthValue,
+                  rcBridgeNewFdbQosLevel INTEGER,
+                  rcBridgeNewFdbSmltRemote TruthValue,
+                  rcBridgeNewFdbVlanId INTEGER
+                 }
+
+rcBridgeNewFdbStatus OBJECT-TYPE
+        SYNTAX          INTEGER {
+                              other(1),
+                              invalid(2),
+                              learned(3),
+                              self(4),
+                              mgmt(5)
+                        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "This object indicates the status of this entry."
+        ::= { rcBridgeNewFdbEntry 1 }
+
+rcBridgeNewFdbAddress OBJECT-TYPE
+        SYNTAX          MacAddress
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "A unicast MAC address for which the bridge
+                        has forwarding and/or filtering information."
+        REFERENCE       "IEEE 802.1D-1990: Section 3.9.1, 3.9.2"
+        ::= { rcBridgeNewFdbEntry 2 }
+
+rcBridgeNewFdbPort OBJECT-TYPE
+        SYNTAX          InterfaceIndex
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Either the value '0', or the port number of the
+                        port on which a frame having a source address
+                        equal to the value of the corresponding instance
+                        of rcBridgeNewFdbAddress has been seen.  A value of
+                        '0' indicates that the port number has not been
+                        learned but that the bridge does have some
+                        forwarding/filtering information about this
+                        address (e.g. in the dot1dStaticTable).
+                        Implementors are encouraged to assign the port
+                        value to this object whenever it is learned even
+                        for addresses for which the corresponding value of
+                        rcBridgeNewFdbStatus is not learned(3)."
+        ::= { rcBridgeNewFdbEntry 3 }
+
+rcBridgeNewFdbMonitor OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate whether monitoring should be
+                        performed on this unicast MAC address.  If
+                        monitoring is enabled, any packet received
+                        with a matching destination MAC address
+                        will be forwarded to the port configured to
+                        receive monitor traffic."
+        ::= { rcBridgeNewFdbEntry 4 }
+
+rcBridgeNewFdbQosLevel OBJECT-TYPE
+        SYNTAX          INTEGER {
+                            level0(0),
+                            level1(1),
+                            level2(2),
+                            level3(3),
+                            level4(4),
+                            level5(5),
+                            level6(6),
+                            level7(7)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate the qos level of the incoming
+                        frames with this destination Mac Address."
+        DEFVAL          { level1 }
+        ::= { rcBridgeNewFdbEntry 5 }
+
+rcBridgeNewFdbSmltRemote OBJECT-TYPE
+        SYNTAX       TruthValue
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  "A MAC address indicate for remote learnt,
+                     either local or remote."
+        ::= { rcBridgeNewFdbEntry 6 }
+
+rcBridgeNewFdbVlanId OBJECT-TYPE
+        SYNTAX       INTEGER (1..4094)
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  ""
+        ::= { rcBridgeNewFdbEntry 7 }
+
+END
+

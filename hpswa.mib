@@ -1,0 +1,724 @@
+-- ****************************************************************************
+--
+--                      HP Software Version Agent
+--      Management Information Base for SNMP Network Management
+--
+--      Version Q.01.00 (8/28/97)
+-- 
+--      Copyright 1997 Hewlett-Packard Company.
+--      All Rights Reserved.
+--
+--      The information in this document is subject to change without notice.
+--
+--      The HP Enterprise number is 11.
+--      The ASN.1 prefix to, and including the HP Enterprise is:
+--      1.3.6.1.4.1.11
+--
+-- ****************************************************************************
+-- Summary of HP Software Version Agent Information MIB
+-- ****************************************************************************
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpnsaSW Group	(hpnsa.24)
+--             hpnsaSWMibRev Group                            (hpnsa.24.1)             
+--                hpnsaSWAgentMibRevMajor                     (hpnsa.24.1.1)  
+--                hpnsaSWAgentMibRevMinor                     (hpnsa.24.1.2)
+--
+--             hpnsaSWManageability Group                     (hpnsa.24.2)
+--                hpnsaSWManageabilityTable                   (hpnsa.24.2.1)
+--                   hpnsaSWManageabilityEntry                (hpnsa.24.2.1.1)
+--                      hpnsaSWManageabilityIndex             (hpnsa.24.2.1.1.1)
+--                      hpnsaSWManageabilityFileName          (hpnsa.24.2.1.1.2)
+--                      hpnsaSWManageabilityFileSize          (hpnsa.24.2.1.1.3)
+--                      hpnsaSWManageabilityFileDate          (hpnsa.24.2.1.1.4)
+--                      hpnsaSWManageabilityState             (hpnsa.24.2.1.1.5)
+--                      hpnsaSWManageabilityType              (hpnsa.24.2.1.1.6)
+--                      hpnsaSWManageabilityVersion           (hpnsa.24.2.1.1.7)
+--                      hpnsaSWManageabilityDescription       (hpnsa.24.2.1.1.8)
+--
+--             hpnsaSWDrivers Group                           (hpnsa.24.3)
+--                hpnsaSWDriversTable                         (hpnsa.24.3.1)
+--                   hpnsaSWDriversEntry                      (hpnsa.24.3.1.1)
+--                      hpnsaSWDriversIndex                   (hpnsa.24.3.1.1.1)
+--                      hpnsaSWDriversFileName                (hpnsa.24.3.1.1.2)
+--                      hpnsaSWDriversFileSize                (hpnsa.24.3.1.1.3)
+--                      hpnsaSWDriversFileDate                (hpnsa.24.3.1.1.4)
+--                      hpnsaSWDriversState                   (hpnsa.24.3.1.1.5)
+--                      hpnsaSWDriversType                    (hpnsa.24.3.1.1.6)
+--                      hpnsaSWDriversVersion                 (hpnsa.24.3.1.1.7)
+--                      hpnsaSWDriversDescription             (hpnsa.24.3.1.1.8)
+--
+--             hpnsaSWBIOSFirmware Group	            (hpnsa.24.4)
+--                hpnsaSWBIOSFirmwareTable              (hpnsa.24.4.1)
+--                   hpnsaSWBIOSFirmwareEntry           (hpnsa.24.4.1.1)
+--                      hpnsaSWBIOSFirmwareIndex        (hpnsa.24.4.1.1.1)
+--                      hpnsaSWBIOSFirmwareName         (hpnsa.24.4.1.1.2)
+--                      hpnsaSWBIOSFirmwareType         (hpnsa.24.4.1.1.3)
+--                      hpnsaSWBIOSFirmwareVersion      (hpnsa.24.4.1.1.4)
+--                      hpnsaSWBIOSFirmwareDescription  (hpnsa.24.4.1.1.5)
+--
+--             hpnsaSWRevisionHistory Group		          (hpnsa.24.5)
+--                hpnsaSWRevisionHistoryTable             (hpnsa.24.5.1)
+--                   hpnsaSWRevisionHistoryEntry          (hpnsa.24.5.1.1)
+--                      hpnsaSWRevisionHistoryIndex       (hpnsa.24.5.1.1.1)
+--                      hpnsaSWRevisionHistoryName        (hpnsa.24.5.1.1.2)
+--                      hpnsaSWRevisionHistorySize	      (hpnsa.24.5.1.1.3)
+--						hpnsaSWRevisionHistoryFileDate	  (hpnsa.24.5.1.1.4)
+--						hpnsaSWRevisionHistoryState		  (hpnsa.24.5.1.1.5)
+--                      hpnsaSWRevisionHistoryCategory    (hpnsa.24.5.1.1.6)
+--                      hpnsaSWRevisionHistoryType        (hpnsa.24.5.1.1.7)
+--                      hpnsaSWRevisionHistoryVersion     (hpnsa.24.5.1.1.8)
+--                      hpnsaSWRevisionHistoryChangeDate  (hpnsa.24.5.1.1.9)
+--
+--             hpnsaSWAgentVersion                        (hpnsa.24.6)   
+--             hpnsaSWPollingState                        (hpnsa.24.7)   
+--             hpnsaSWPollingTime                         (hpnsa.24.8) 
+--             hpnsaSWManualPolling                       (hpnsa.24.9)     
+--             hpnsaSWRevisionHistoryReset                (hpnsa.24.10)   
+--
+-- *****************************************************************************
+HPNSASOFTWARESUBSYSTEM-MIB DEFINITIONS ::= BEGIN
+   IMPORTS
+      enterprises    FROM RFC1155-SMI
+      DisplayString  FROM RFC1213-MIB
+      OBJECT-TYPE    FROM RFC-1212;
+		
+   hp                      OBJECT IDENTIFIER ::= { enterprises 11 }
+   nm                      OBJECT IDENTIFIER ::= { hp 2 }
+   hpnsa                   OBJECT IDENTIFIER ::= { nm 23 }  
+   hpnsaSW                 OBJECT IDENTIFIER ::= { hpnsa 24 }
+   hpnsaSWMibRev           OBJECT IDENTIFIER ::= { hpnsaSW 1 }
+   hpnsaSWManageability    OBJECT IDENTIFIER ::= { hpnsaSW 2 }      
+   hpnsaSWDrivers          OBJECT IDENTIFIER ::= { hpnsaSW 3 }
+   hpnsaSWBIOSFirmware     OBJECT IDENTIFIER ::= { hpnsaSW 4 }
+   hpnsaSWRevisionHistory  OBJECT IDENTIFIER ::= { hpnsaSW 5 }
+
+-- ****************************************************************************
+--   HP Software Version Agent MIB 
+--   =====================================
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpnsaSW Group                        (hpnsa.24)
+--             hpnsaSWMibRev Group               (hpnsa.24.1)             
+--                hpnsaSWAgentMibRevMajor        (hpnsa.24.1.1)  
+--                hpnsaSWAgentMibRevMinor        (hpnsa.24.1.2)
+--
+--    Implementation of the MibRev group is mandatory for all HPNSA Agents
+--    supporting the HP NSA Software MIB.
+--
+--    An HPNSA Agent conforming to this document will return a
+--    hpnsaSWMibRevMajor of 1 and a hpnsaSWMibRevMinor of 0. 
+--
+-- ****************************************************************************
+
+    hpnsaSWMibRevMajor OBJECT-TYPE
+        SYNTAX  INTEGER (1..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The major revision level of the MIB."
+        ::= { hpnsaSWMibRev 1 }
+
+    hpnsaSWMibRevMinor OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The minor revision level of the MIB."
+        ::= { hpnsaSWMibRev 2 }
+
+-- ****************************************************************************
+--   HP Software Version Agent MIB 
+--   =====================================
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpnsaSW Group  (hpnsa.24)
+--             hpnsaSWManageability Group                     (hpnsa.24.2)
+--                hpnsaSWManageabilityTable                   (hpnsa.24.2.1)
+--                   hpnsaSWManageabilityEntry                (hpnsa.24.2.1.1)
+--                      hpnsaSWManageabilityIndex             (hpnsa.24.2.1.1.1)
+--                      hpnsaSWManageabilityFileName          (hpnsa.24.2.1.1.2)
+--                      hpnsaSWManageabilityFileSize          (hpnsa.24.2.1.1.3)
+--                      hpnsaSWManageabilityFileDate          (hpnsa.24.2.1.1.4)
+--                      hpnsaSWManageabilityState             (hpnsa.24.2.1.1.5)
+--                      hpnsaSWManageabilityType              (hpnsa.24.2.1.1.6)
+--                      hpnsaSWManageabilityVersion           (hpnsa.24.2.1.1.7)
+--                      hpnsaSWManageabilityDescription       (hpnsa.24.2.1.1.8)
+--
+-- ****************************************************************************
+
+    hpnsaSWManageabilityTable OBJECT-TYPE
+       SYNTAX  SEQUENCE OF HPnsaSWManageabilityEntry
+       ACCESS  not-accessible
+       STATUS  mandatory
+       DESCRIPTION
+           "A table of manageability components that satisfy requests for this MIB.
+		    These include executables and agents."
+       ::= { hpnsaSWManageability 1 }
+
+    hpnsaSWManageabilityEntry OBJECT-TYPE
+      SYNTAX  HPnsaSWManageabilityEntry
+      ACCESS  not-accessible
+      STATUS  mandatory
+      DESCRIPTION
+        "A group of information describing the manageability component."
+      INDEX   { hpnsaSWManageabilityIndex }
+      ::= { hpnsaSWManageabilityTable 1 }
+        
+    HPnsaSWManageabilityEntry ::= SEQUENCE {
+         hpnsaSWManageabilityIndex            INTEGER,
+         hpnsaSWManageabilityFileName         DisplayString,
+         hpnsaSWManageabilityFileSize         DisplayString,
+         hpnsaSWManageabilityFileDate         OCTET STRING,
+		 hpnsaSWManageabilityState            INTEGER,
+         hpnsaSWManageabilityType             INTEGER,
+         hpnsaSWManageabilityVersion          DisplayString,
+         hpnsaSWManageabilityDescription      DisplayString
+       }
+
+    hpnsaSWManageabilityIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The unique index for the manageability component."
+        ::= { hpnsaSWManageabilityEntry 1 }
+	
+	hpnsaSWManageabilityFileName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..256))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The name of the manageability component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWManageabilityEntry 2 }
+
+    hpnsaSWManageabilityFileSize OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..32))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The size in bytes the manageability component."
+        ::= { hpnsaSWManageabilityEntry 3 }
+
+    hpnsaSWManageabilityFileDate OBJECT-TYPE
+      SYNTAX  OCTET STRING (SIZE (6))
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+         "The date on which this software was created.
+
+         field  octets  contents                  range
+         _________________________________________________
+           1       1    years since 1900          0..138
+           2       2    month                     1..12
+           3       3    day                       1..31
+           4       4    hour                      0..23
+           5       5    minute                    0..59  
+           6       6    second                    0..59
+                   "
+        ::= { hpnsaSWManageabilityEntry 4 }
+
+    hpnsaSWManageabilityState OBJECT-TYPE
+        SYNTAX  INTEGER {
+						Unknown(0),
+						Stopped(1),
+						Start_Pending(2),
+						Stop_Pending(3),
+						Running(4),
+						Continue_Pending(5),
+						Pause_Pending(6),
+						Paused(7)
+                        }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The state of the manageability component."
+        ::= { hpnsaSWManageabilityEntry 5 }
+
+    hpnsaSWManageabilityType OBJECT-TYPE
+        SYNTAX  INTEGER {
+						Unknown(0),
+						Agent(1),
+						Service(2),
+						Driver(3),
+						Other(4)
+                        }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The type of the manageability component."
+        ::= { hpnsaSWManageabilityEntry 6 }
+
+	hpnsaSWManageabilityVersion OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..8))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The version of the manageability component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWManageabilityEntry 7 }
+
+	hpnsaSWManageabilityDescription OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..256))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The description of the manageability component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWManageabilityEntry 8 }
+
+
+-- ****************************************************************************
+--   HP Software Version Agent MIB 
+--   =====================================
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--             hpnsaSWDrivers Group                           (hpnsa.24.3)
+--                hpnsaSWDriversTable                         (hpnsa.24.3.1)
+--                   hpnsaSWDriversEntry                      (hpnsa.24.3.1.1)
+--                      hpnsaSWDriversIndex                   (hpnsa.24.3.1.1.1)
+--                      hpnsaSWDriversFileName                (hpnsa.24.3.1.1.2)
+--                      hpnsaSWDriversFileSize                (hpnsa.24.3.1.1.3)
+--                      hpnsaSWDriversFileDate                (hpnsa.24.3.1.1.4)
+--                      hpnsaSWDriversState                   (hpnsa.24.3.1.1.5)
+--                      hpnsaSWDriversType                    (hpnsa.24.3.1.1.6)
+--                      hpnsaSWDriversVersion                 (hpnsa.24.3.1.1.7)
+--                      hpnsaSWDriversDescription             (hpnsa.24.3.1.1.8)
+--
+-- ****************************************************************************
+
+    hpnsaSWDriversTable OBJECT-TYPE
+       SYNTAX  SEQUENCE OF HPnsaSWDriversEntry
+       ACCESS  not-accessible
+       STATUS  mandatory
+       DESCRIPTION
+           "A table of the driver components that satisfy requests for this MIB."
+       ::= { hpnsaSWDrivers 1 }
+
+   hpnsaSWDriversEntry OBJECT-TYPE
+      SYNTAX  HPnsaSWDriversEntry
+      ACCESS  not-accessible
+      STATUS  mandatory
+      DESCRIPTION
+        "A group of information describing the driver component."
+      INDEX   { hpnsaSWDriversIndex }
+      ::= { hpnsaSWDriversTable 1 }
+        
+      HPnsaSWDriversEntry ::= SEQUENCE {
+         hpnsaSWDriversIndex               INTEGER,
+         hpnsaSWDriversFileName            DisplayString,
+         hpnsaSWDriversFileSize            DisplayString,
+         hpnsaSWDriversFileDate            OCTET STRING,
+		 hpnsaSWDriversState               INTEGER,
+         hpnsaSWDriversType                INTEGER,
+         hpnsaSWDriversVersion             DisplayString,
+         hpnsaSWDriversDescription         DisplayString
+      }
+
+    hpnsaSWDriversIndex OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The unique index for the driver component."
+        ::= { hpnsaSWDriversEntry 1 }
+	
+	hpnsaSWDriversFileName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..256))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The name of the driver component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWDriversEntry 2 }
+
+   hpnsaSWDriversFileSize OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..32))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The size in bytes of the driver component."
+        ::= { hpnsaSWDriversEntry 3 }
+
+   hpnsaSWDriversFileDate OBJECT-TYPE
+      SYNTAX  OCTET STRING (SIZE (6))
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+         "The date on which this driver was created.
+
+         field  octets  contents                  range
+         _________________________________________________
+           1       1    years since 1900          0..138
+           2       2    month                     1..12
+           3       3    day                       1..31
+           4       4    hour                      0..23
+           5       5    minute                    0..59  
+           6       6    second                    0..59
+                   "
+        ::= { hpnsaSWDriversEntry 4 }
+
+    hpnsaSWDriversState OBJECT-TYPE
+        SYNTAX  INTEGER {
+						Unknown(0),
+						Stopped(1),
+						Start_Pending(2),
+						Stop_Pending(3),
+						Running(4),
+						Continue_Pending(5),
+						Pause_Pending(6),
+						Paused(7)
+                        }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The state of the driver component."
+        ::= { hpnsaSWDriversEntry 5 }
+
+    hpnsaSWDriversType OBJECT-TYPE
+        SYNTAX  INTEGER {
+						Unknown(0),
+						NetworkInterfaceCard(1),
+						SCSI(2),
+						DiskArrayController(3),
+						System(4)
+                        }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The type of the driver component."
+        ::= { hpnsaSWDriversEntry 6 }
+
+	hpnsaSWDriversVersion OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..8))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The version of the driver component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWDriversEntry 7 }
+
+	hpnsaSWDriversDescription OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..256))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The description of the driver component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWDriversEntry 8 }
+
+
+-- ****************************************************************************
+--   HP Software Version Agent MIB (BIOS/Firmware TABLE)
+--   ==============================================
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--             hpnsaSWBIOSFirmware Group	            (hpnsa.24.4)
+--                hpnsaSWBIOSFirmwareTable              (hpnsa.24.4.1)
+--                   hpnsaSWBIOSFirmwareEntry           (hpnsa.24.4.1.1)
+--                      hpnsaSWBIOSFirmwareIndex        (hpnsa.24.4.1.1.1)
+--                      hpnsaSWBIOSFirmwareName         (hpnsa.24.4.1.1.2)
+--                      hpnsaSWBIOSFirmwareType         (hpnsa.24.4.1.1.3)
+--                      hpnsaSWBIOSFirmwareVersion      (hpnsa.24.4.1.1.4)
+--                      hpnsaSWBIOSFirmwareDescription  (hpnsa.24.4.1.1.5)
+--
+-- ****************************************************************************
+
+    hpnsaSWBIOSFirmwareTable OBJECT-TYPE
+       SYNTAX  SEQUENCE OF HPnsaSWBIOSFirmwareEntry
+       ACCESS  not-accessible
+       STATUS  mandatory
+       DESCRIPTION
+           "A table of the BIOS/Firmware components that satisfy requests for this MIB."
+       ::= { hpnsaSWBIOSFirmware 1 }
+
+   hpnsaSWBIOSFirmwareEntry OBJECT-TYPE
+      SYNTAX  HPnsaSWBIOSFirmwareEntry
+      ACCESS  not-accessible
+      STATUS  mandatory
+      DESCRIPTION
+        "A group of information describing the BIOS/Firmware component."
+      INDEX   { hpnsaSWBIOSFirmwareIndex }
+      ::= { hpnsaSWBIOSFirmwareTable 1 }
+        
+      HPnsaSWBIOSFirmwareEntry ::= SEQUENCE {
+         hpnsaSWBIOSFirmwareIndex               INTEGER,
+         hpnsaSWBIOSFirmwareName				DisplayString,
+		 hpnsaSWBIOSFirmwareType				INTEGER,
+         hpnsaSWBIOSFirmwareVersion				DisplayString,
+         hpnsaSWBIOSFirmwareDescription         DisplayString
+      }
+
+    hpnsaSWBIOSFirmwareIndex OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The unique index for the BIOS/Firmware component."
+        ::= { hpnsaSWBIOSFirmwareEntry 1 }
+	
+	hpnsaSWBIOSFirmwareName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..256))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The name of the BIOS/Firmware component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWBIOSFirmwareEntry 2 }
+
+    hpnsaSWBIOSFirmwareType OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The type of the BIOS/Firmware component."
+        ::= { hpnsaSWBIOSFirmwareEntry 3 }
+
+	hpnsaSWBIOSFirmwareVersion OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..8))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The version of the BIOS/Firmware component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWBIOSFirmwareEntry 4 }
+
+	hpnsaSWBIOSFirmwareDescription OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..256))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The description of the BIOS/Firmware component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWBIOSFirmwareEntry 5 }
+
+
+-- ****************************************************************************
+--   HP Software Version Agent MIB (REVISION HISTORY TABLE)
+--   ===========================================================
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--             hpnsaSWRevisionHistory Group		          (hpnsa.24.5)
+--                hpnsaSWRevisionHistoryTable             (hpnsa.24.5.1)
+--                   hpnsaSWRevisionHistoryEntry          (hpnsa.24.5.1.1)
+--                      hpnsaSWRevisionHistoryIndex       (hpnsa.24.5.1.1.1)
+--                      hpnsaSWRevisionHistoryName        (hpnsa.24.5.1.1.2)
+--                      hpnsaSWRevisionHistorySize	      (hpnsa.24.5.1.1.3)
+--						hpnsaSWRevisionHistoryFileDate	  (hpnsa.24.5.1.1.4)
+--						hpnsaSWRevisionHistoryState		  (hpnsa.24.5.1.1.5)
+--                      hpnsaSWRevisionHistoryCategory    (hpnsa.24.5.1.1.6)
+--                      hpnsaSWRevisionHistoryType        (hpnsa.24.5.1.1.7)
+--                      hpnsaSWRevisionHistoryVersion     (hpnsa.24.5.1.1.8)
+--                      hpnsaSWRevisionHistoryChangeDate  (hpnsa.24.5.1.1.9)
+--
+-- ****************************************************************************
+
+    hpnsaSWRevisionHistoryTable OBJECT-TYPE
+       SYNTAX  SEQUENCE OF HPnsaSWRevisionHistoryEntry
+       ACCESS  not-accessible
+       STATUS  mandatory
+       DESCRIPTION
+           "A table of the Revision History entries that satisfy requests for this MIB."
+       ::= { hpnsaSWRevisionHistory 1 }
+
+   hpnsaSWRevisionHistoryEntry OBJECT-TYPE
+      SYNTAX  HPnsaSWRevisionHistoryEntry
+      ACCESS  not-accessible
+      STATUS  mandatory
+      DESCRIPTION
+        "A group of information describing the Revision History entries."
+      INDEX   { hpnsaSWRevisionHistoryEntry }
+      ::= { hpnsaSWRevisionHistoryTable 1 }
+        
+    HPnsaSWRevisionHistoryEntry ::= SEQUENCE {
+         hpnsaSWRevisionHistoryIndex			INTEGER,
+         hpnsaSWRevisionHistoryName				DisplayString,
+         hpnsaSWRevisionHistorySize				DisplayString,
+         hpnsaSWRevisionHistoryDate				OCTET STRING,
+		 hpnsaSWRevisionHistoryState			INTEGER,
+		 hpnsaSWRevisionHistoryCategory			INTEGER,
+         hpnsaSWRevisionHistoryType             INTEGER,
+         hpnsaSWRevisionHistoryVersion          DisplayString,
+         hpnsaSWRevisionHistoryChangeDate       OCTET STRING
+       }
+
+    hpnsaSWRevisionHistoryIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The unique index for the Revision History entries."
+        ::= { hpnsaSWRevisionHistoryEntry 1 }
+	
+	hpnsaSWRevisionHistoryName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..256))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The name of the Revision History entry component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWRevisionHistoryEntry 2 }
+
+    hpnsaSWRevisionHistorySize OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..32))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The size in bytes of the Revision History component."
+        ::= { hpnsaSWRevisionHistoryEntry 3 }
+
+    hpnsaSWRevisionHistoryDate OBJECT-TYPE
+      SYNTAX  OCTET STRING (SIZE (6))
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+         "The date on which this software was created.
+
+         field  octets  contents                  range
+         _________________________________________________
+           1       1    years since 1900          0..138
+           2       2    month                     1..12
+           3       3    day                       1..31
+           4       4    hour                      0..23
+           5       5    minute                    0..59  
+           6       6    second                    0..59
+                   "
+        ::= { hpnsaSWRevisionHistoryEntry 4 }
+
+    hpnsaSWRevisionHistoryState OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The state of the Revision History manageability component."
+        ::= { hpnsaSWRevisionHistoryEntry 5 }
+
+    hpnsaSWRevisionHistoryCategory OBJECT-TYPE
+        SYNTAX  INTEGER {
+						Unknown(0),
+						Agent(1),
+						Service(2),
+						Driver(3),
+						BIOSFirmware(4)
+                        }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The category of the manageability component."
+        ::= { hpnsaSWRevisionHistoryEntry 6 }
+
+    hpnsaSWRevisionHistoryType OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The category of the manageability component."
+        ::= { hpnsaSWRevisionHistoryEntry 7 }
+
+	hpnsaSWRevisionHistoryVersion OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..8))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The version of the manageability component that can be examined to
+             identify this software component."
+        ::= { hpnsaSWRevisionHistoryEntry 8 }
+
+    hpnsaSWRevisionHistoryChangeDate OBJECT-TYPE
+      SYNTAX  OCTET STRING (SIZE (6))
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+         "The date on which this software was recognized as being changed.
+
+         field  octets  contents                  range
+         _________________________________________________
+           1       1    years since 1900          0..138
+           2       2    month                     1..12
+           3       3    day                       1..31
+           4       4    hour                      0..23
+           5       5    minute                    0..59  
+           6       6    second                    0..59
+                   "
+        ::= { hpnsaSWRevisionHistoryEntry 9 }
+
+
+-- ****************************************************************************
+--   HP Software Version Agent MIB
+--   ==============================================
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--             hpnsaSWAgentVersion              (hpnsa.24.6)   
+--             hpnsaSWPollingState              (hpnsa.24.7)   
+--             hpnsaSWPollingTime               (hpnsa.24.8)   
+--             hpnsaSWManualPolling             (hpnsa.24.9)     
+--             hpnsaSWRevisionHistoryReset      (hpnsa.24.10)
+--
+-- ****************************************************************************
+
+	hpnsaSWAgentVersion OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..8))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The version of the NetServer Agents that can be examined to
+             identify this software component."
+        ::= { hpnsaSW 6 }
+
+    hpnsaSWPollingState OBJECT-TYPE
+        SYNTAX  INTEGER (0..1)
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Toggles Revision History polling."
+        ::= { hpnsaSW 7 }
+
+    hpnsaSWPollingTime OBJECT-TYPE
+      SYNTAX  INTEGER
+      ACCESS  read-write
+      STATUS  mandatory
+      DESCRIPTION
+         "The time which Revision History polling will occur, default is 5:00 pm.
+		  Only time on the hour are allowed."
+        ::= { hpnsaSW 8 }
+
+  hpnsaSWManualPolling  OBJECT-TYPE
+      SYNTAX  INTEGER { CheckRevisionHistory (1234) }
+      ACCESS  read-write
+      STATUS  mandatory
+      DESCRIPTION
+         "Setting this variable to the decimal value 1234 will 
+          trigger the agent immediately check for Revision History 
+		  changes. Getting the value will always
+          return a 0.
+         "
+      ::= {hpnsaSW 9}
+
+  hpnsaSWRevisionHistoryReset  OBJECT-TYPE
+      SYNTAX  INTEGER { ClearHistory (1234) }
+      ACCESS  read-write
+      STATUS  mandatory
+      DESCRIPTION
+         "Setting this variable to the decimal value 1234 will 
+          trigger the agent to immediately delete the Revision History
+          log. Getting the value will always
+          return a 0.
+         "
+      ::= {hpnsaSW 10}
+
+END

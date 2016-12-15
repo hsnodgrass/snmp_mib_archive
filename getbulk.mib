@@ -1,0 +1,122 @@
+-- SECTION 1: Top Level Definitions
+
+SYNOPTICS-RMON-EXT-MIB DEFINITIONS ::= BEGIN
+
+
+-- SynOptics RMON Extensions MIB Release 1.0.7
+-- Revision 09/05/97
+
+-- Copyright 1995 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+---------------------------------------------------
+-- This MIB was originally part of the rmonx107.mib
+---------------------------------------------------
+
+
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	products
+		FROM SYNOPTICS-ROOT-MIB;
+
+-- Textual Conventions
+
+-- A textual convention for TimeFilter index used in the
+-- snpxMatrixSDBulkTable.
+
+
+-- RMON Extensions  Groups
+snpxRmonExt		OBJECT IDENTIFIER ::= { products 8 }
+
+snpxRmonGetTabExt       OBJECT IDENTIFIER ::= { snpxRmonExt 6 }
+
+
+-- Get Table Definition
+ 
+ 
+getTable    OBJECT IDENTIFIER ::= { snpxRmonGetTabExt 1 }
+ 
+getTableTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF GetTableEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "A table of bulk GetTable entries. These entries consist of a
+        header followed by several rows from the SNMP table being
+        requested."
+    ::= { getTable 1 }
+ 
+getTableEntry OBJECT-TYPE
+    SYNTAX  GetTableEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "A row in the table of bulk entries for getTableTable."
+    INDEX { getTableSource, getTableIndex }
+    ::= { getTableTable 1 }
+ 
+GetTableEntry ::= SEQUENCE {
+        getTableSource OBJECT IDENTIFIER,
+        getTableIndex  OBJECT IDENTIFIER,
+        getTableData   OCTET STRING
+    }
+ 
+getTableSource OBJECT-TYPE
+    SYNTAX  OBJECT IDENTIFIER
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "A length encoded object identifier for the SNMP table to
+        retrieve. For example, the RMON2 alMatrixSD table is identified
+        as the OID number 9.1.3.6.1.2.1.16.17.1, where the first 9 is
+        the length of the OID."
+    ::= { getTableEntry 1 }
+ 
+getTableIndex OBJECT-TYPE
+    SYNTAX  OBJECT IDENTIFIER
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "A length encoded object identifier consisting of the source
+        table's normal index values as they are specified in the MIB
+        definition for the table. Each index value is preceded by a flag
+        that indicates whether the index is fixed(1) or dynamic(2).
+ 
+        When returning table rows, the agent only increments index
+        values that are dynamic(2). Any index that is fixed(1) remains
+        constant for the entire set of rows returned.
+ 
+        For the initial get request, dynamic index values are set to
+        zero. It is up to the agent to determine the first value to use.
+        On all subsequent requests, the request OID is the one returned
+        in the response."
+    ::= { getTableEntry 2 }
+ 
+getTableData OBJECT-TYPE
+    SYNTAX  OCTET STRING (SIZE(0..1200))
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The OCTET STRING consists of a header followed by a set of data
+        records. The header consists of the information:
+            response packet version number (1) [Integer16]
+            data record encoding -- BER (1), BigEndian(2) [Integer16]
+            agent sysUpTime value [TimeTicks]
+            number of records in this response [Integer32]
+        The data records consist of each dynamic index for this row plus
+        each row entry defined in the source table's MIB definition."
+    ::= { getTableEntry 3 }
+ 
+END

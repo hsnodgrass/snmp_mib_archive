@@ -1,0 +1,5412 @@
+--
+-- Copyright (c) 2004 by FortiNet, Inc.
+-- All rights reserved.
+-- 
+-- MODULE-IDENTITY
+--  OrgName
+--    FortiNet, Inc.
+--  ContactInfo
+--     Technical Support
+--     
+--     900 Stewart Drive
+--     Sunnyvale, CA  94085 
+--     USA
+--    
+--     Tel: 1.408.235.7700
+--     E-mail: support@fortinet.com
+--     Http://www.fortinet.com
+--
+
+FORTINET-MIB	DEFINITIONS ::= BEGIN
+	IMPORTS
+		DisplayString
+			FROM RFC1213-MIB
+-- $ap	OBJECT-TYPE
+-- $ap		FROM RFC-1212
+		enterprises, OBJECT-TYPE, IpAddress, TimeTicks
+			FROM RFC1155-SMI;
+-- $ap	coldStart, warmStart
+-- $ap		FROM RFC1215;
+
+-- TEXTUAL-CONVENTIONS --
+	AuthAlgorithm ::= 		INTEGER  { null ( 1 ) , md5 ( 2 ) , sha1 ( 3 ) , aes128 ( 4 ) , aes192 ( 5 ) , aes256 ( 6 ) } 
+
+	EncrytionAlgorithm ::= 		INTEGER  { null ( 1 ) , des ( 2 ) , tripleDes ( 3 ) , aes128 ( 4 ) , aes192 ( 5 ) , aes256 ( 6 ) } 
+
+	LanguageCode ::= 		INTEGER  { western ( 1 ) , simplifiedChinese ( 2 ) , traditionalChinese ( 3 ) , japanese ( 4 ) , kerean ( 5 ) , default ( 6 ) } 
+
+	ItemState ::= 		INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+
+-- $ap	org	OBJECT IDENTIFIER
+-- $ap		::=  {  iso  3  }
+
+-- $ap	dod	OBJECT IDENTIFIER
+-- $ap		::=  {  org  6  }
+
+-- $ap	internet	OBJECT IDENTIFIER
+-- $ap		::=  {  dod  1  }
+
+-- $ap	private	OBJECT IDENTIFIER
+-- $ap		::=  {  internet  4  }
+
+-- $ap	enterprises	OBJECT IDENTIFIER
+-- $ap		::=  {  private  1  }
+
+	fortinet	OBJECT IDENTIFIER
+		::=  {  enterprises  12356  }
+
+	fnSystem	OBJECT IDENTIFIER
+		::=  {  fortinet  1  }
+
+	fnFirewall	OBJECT IDENTIFIER
+		::=  {  fortinet  2  }
+
+	fnUser	OBJECT IDENTIFIER
+		::=  {  fortinet  3  }
+
+	fnVpn	OBJECT IDENTIFIER
+		::=  {  fortinet  4  }
+
+	fnNIDS	OBJECT IDENTIFIER
+		::=  {  fortinet  5  }
+
+	fnAntiVirus	OBJECT IDENTIFIER
+		::=  {  fortinet  6  }
+
+	fnWebFilter	OBJECT IDENTIFIER
+		::=  {  fortinet  7  }
+
+	fnAntiSpam	OBJECT IDENTIFIER
+		::=  {  fortinet  8  }
+
+	fnLogAndRpt	OBJECT IDENTIFIER
+		::=  {  fortinet  9  }
+
+	fortinetTrap	OBJECT IDENTIFIER
+		::=  {  fortinet  10  }
+		
+	fortinetProducts	OBJECT IDENTIFIER
+		::=  {  fortinet  15  }
+		
+	fortigateGeneric	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  1  }
+
+	fortigate50	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  50  }
+
+	fortigate60	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  60  }
+
+	fortigate100	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  100  }
+
+	fortigate200	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  200  }
+
+	fortigate300	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  300  }
+
+	fortigate400	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  400  }
+
+	fortigate420	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  420  }
+
+	fortigate500	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  500  }
+
+	fortigate1000	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  1000  }
+
+	fortigate2000	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  2000  }
+
+	fortigate3000	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  3000  }
+
+	fortigate3600	OBJECT IDENTIFIER
+		::=  {  fortinetProducts  3600  }
+
+	fnSysStatus	OBJECT IDENTIFIER
+		::=  {  fnSystem  1  }
+
+	fnSysUpdate	OBJECT IDENTIFIER
+		::=  {  fnSystem  2  }
+
+	fnSysNetwork	OBJECT IDENTIFIER
+		::=  {  fnSystem  3  }
+
+	fnSysConfig	OBJECT IDENTIFIER
+		::=  {  fnSystem  4  }
+
+	fnSysSnmp	OBJECT IDENTIFIER
+		::=  {  fnSystem  5  }
+
+	fnFirewallPolicy	OBJECT IDENTIFIER
+		::=  {  fnFirewall  1  }
+
+	fnFirewallAddress	OBJECT IDENTIFIER
+		::=  {  fnFirewall  2  }
+
+	fnFirewallService	OBJECT IDENTIFIER
+		::=  {  fnFirewall  3  }
+
+	fnFirewallSchedule	OBJECT IDENTIFIER
+		::=  {  fnFirewall  4  }
+
+	fnFirewallVirtualIP	OBJECT IDENTIFIER
+		::=  {  fnFirewall  5  }
+
+	fnFirewallIpPool	OBJECT IDENTIFIER
+		::=  {  fnFirewall  6  }
+
+	fnFirewallIPMACBinding	OBJECT IDENTIFIER
+		::=  {  fnFirewall  7  }
+
+	fnFirewallContProfiles	OBJECT IDENTIFIER
+		::=  {  fnFirewall  8  }
+
+	fnUserLocalTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnUserLocalEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Admin user account table."
+		::=  { fnUser  1 }
+
+	fnUserLocalEntry	OBJECT-TYPE
+		SYNTAX		FnUserLocalEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Admin user information"
+		INDEX		{  fnUserLocalIndex  }
+		::=  { fnUserLocalTable 1 }
+
+	FnUserLocalEntry  ::=  SEQUENCE {
+		fnUserLocalIndex  INTEGER,
+		fnUserLocalName  DisplayString,
+		fnUserLocalPasswd  OCTET STRING,
+		fnUserLocalState  ItemState,
+		fnUserLocalType  INTEGER,
+		fnUserLocalRadiusSrv  DisplayString,
+		fnUserLocalRadiusOther  ItemState
+		}
+
+
+	fnUserLocalIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Local firewall user index"
+		::=  {  fnUserLocalEntry  1  }
+
+
+	fnUserLocalName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Local firewall user name"
+		::=  {  fnUserLocalEntry  2  }
+
+
+	fnUserLocalPasswd	OBJECT-TYPE	
+		SYNTAX			OCTET STRING  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Local user password"
+		::=  {  fnUserLocalEntry  3  }
+
+
+	fnUserLocalState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"User state: enable/disable"
+		::=  {  fnUserLocalEntry  4  }
+
+
+	fnUserLocalType	OBJECT-TYPE	
+		SYNTAX			INTEGER  { local ( 1 ) , radius ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The user type: local user or a user on radius server"
+		::=  {  fnUserLocalEntry  5  }
+
+
+	fnUserLocalRadiusSrv	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"If the local user is a user on Radius server, this entry is the name of the Radius server that has been created in the radius server table"
+		::=  {  fnUserLocalEntry  6  }
+
+
+	fnUserLocalRadiusOther	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"If the specified radius user fails to connect to the specified radius user, enalbing of this flag will allow the system to try other radius servers."
+		::=  {  fnUserLocalEntry  7  }
+
+	fnUserRadiusSrvTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnUserRadiusSrvEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Radius servers table"
+		::=  { fnUser  2 }
+
+	fnUserRadiusSrvEntry	OBJECT-TYPE
+		SYNTAX		FnUserRadiusSrvEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnUserRadIndex  }
+		::=  { fnUserRadiusSrvTable 1 }
+
+	FnUserRadiusSrvEntry  ::=  SEQUENCE {
+		fnUserRadIndex  INTEGER,
+		fnUserRadName  DisplayString,
+		fnUserRadAddr  DisplayString,
+		fnUserRadSecret  OCTET STRING
+		}
+
+
+	fnUserRadIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnUserRadiusSrvEntry  1  }
+
+
+	fnUserRadName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Radius server name"
+		::=  {  fnUserRadiusSrvEntry  2  }
+
+
+	fnUserRadAddr	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Host name or IP addr of the radius server"
+		::=  {  fnUserRadiusSrvEntry  3  }
+
+
+	fnUserRadSecret	OBJECT-TYPE	
+		SYNTAX			OCTET STRING
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The secret of the radius server"
+		::=  {  fnUserRadiusSrvEntry  4  }
+
+	fnUserGrpTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnUserGrpEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"User group table"
+		::=  { fnUser  3 }
+
+	fnUserGrpEntry	OBJECT-TYPE
+		SYNTAX		FnUserGrpEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnUserGrpIndex  }
+		::=  { fnUserGrpTable 1 }
+
+	FnUserGrpEntry  ::=  SEQUENCE {
+		fnUserGrpIndex  INTEGER,
+		fnUserGrpName  DisplayString,
+		fnUserGrpMembers  DisplayString
+		}
+
+
+	fnUserGrpIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnUserGrpEntry  1  }
+
+
+	fnUserGrpName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"User group name"
+		::=  {  fnUserGrpEntry  2  }
+
+
+	fnUserGrpMembers	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 7000  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Names of users in the group. The user names need to be separated by a separator, such as a ,."
+		::=  {  fnUserGrpEntry  3  }
+
+	fnVpnIPSEC	OBJECT IDENTIFIER
+		::=  {  fnVpn  1  }
+
+	fnVpnPPTP	OBJECT IDENTIFIER
+		::=  {  fnVpn  2  }
+
+	fnVpnL2TP	OBJECT IDENTIFIER
+		::=  {  fnVpn  3  }
+
+	fnVpnCert	OBJECT IDENTIFIER
+		::=  {  fnVpn  4  }
+
+	fnNidsDetection	OBJECT IDENTIFIER
+		::=  {  fnNIDS  1  }
+
+	fnNidsPrevention	OBJECT IDENTIFIER
+		::=  {  fnNIDS  2  }
+
+	fnNidsResponse	OBJECT IDENTIFIER
+		::=  {  fnNIDS  3  }
+
+	fnAvFileBlock	OBJECT IDENTIFIER
+		::=  {  fnAntiVirus  1  }
+
+	fnAvQuatantine	OBJECT IDENTIFIER
+		::=  {  fnAntiVirus  2  }
+
+	fnAVConfig	OBJECT IDENTIFIER
+		::=  {  fnAntiVirus  3  }
+
+	fnWebFilterBWords	OBJECT IDENTIFIER
+		::=  {  fnWebFilter  1  }
+
+	fnWebFilterUrlBlk	OBJECT IDENTIFIER
+		::=  {  fnWebFilter  2  }
+
+	fnWebFilterScripts	OBJECT IDENTIFIER
+		::=  {  fnWebFilter  3  }
+
+	fnWebFilterExemptUrl	OBJECT IDENTIFIER
+		::=  {  fnWebFilter  4  }
+
+	fnWebFilterCfg	OBJECT IDENTIFIER
+		::=  {  fnWebFilter  5  }
+
+	fnWfCfgMsgTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnWfCfgMsgEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Description"
+		::=  { fnWebFilterCfg  1 }
+
+	fnWfCfgMsgEntry	OBJECT-TYPE
+		SYNTAX		FnWfCfgMsgEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnWfCfgMsgIndex  }
+		::=  { fnWfCfgMsgTable 1 }
+
+	FnWfCfgMsgEntry  ::=  SEQUENCE {
+		fnWfCfgMsgIndex  INTEGER,
+		fnWfCfgMsgName  DisplayString,
+		fnWfCfgMsgService  DisplayString,
+		fnWfCfgMsgDescription  DisplayString
+		}
+
+
+	fnWfCfgMsgIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnWfCfgMsgEntry  1  }
+
+	fnWfCfgMsgName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnWfCfgMsgEntry  2  }
+
+
+	fnWfCfgMsgService	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnWfCfgMsgEntry  3  }
+
+
+	fnWfCfgMsgDescription	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnWfCfgMsgEntry  4  }
+
+
+	fnAntiSpamBlkTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnAntiSpamBlkEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Blocked url/pattern list for anti spam"
+		::=  { fnAntiSpam  1 }
+
+	fnAntiSpamBlkEntry	OBJECT-TYPE
+		SYNTAX		FnAntiSpamBlkEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnAntiSpamBlkIndex  }
+		::=  { fnAntiSpamBlkTable 1 }
+
+	FnAntiSpamBlkEntry  ::=  SEQUENCE {
+		fnAntiSpamBlkIndex  INTEGER,
+		fnAntiSpamBlkPat  DisplayString,
+		fnAntiSpamBlkImapState  ItemState,
+		fnAntiSpamBlkPop3State  ItemState
+		}
+
+
+	fnAntiSpamBlkIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnAntiSpamBlkEntry  1  }
+
+
+	fnAntiSpamBlkPat	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Url/Pattern"
+		::=  {  fnAntiSpamBlkEntry  2  }
+
+
+	fnAntiSpamBlkImapState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off anti spam IMAP block for the entry"
+		::=  {  fnAntiSpamBlkEntry  3  }
+
+
+	fnAntiSpamBlkPop3State	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off anti spam POP3 block for the entry"
+		::=  {  fnAntiSpamBlkEntry  4  }
+
+	fnAntiSpamExemptTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnAntiSpamExemptEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Exempt url/pattern list for anti spam"
+		::=  { fnAntiSpam  2 }
+
+	fnAntiSpamExemptEntry	OBJECT-TYPE
+		SYNTAX		FnAntiSpamExemptEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnAntiSpamExemptIndex  }
+		::=  { fnAntiSpamExemptTable 1 }
+
+	FnAntiSpamExemptEntry  ::=  SEQUENCE {
+		fnAntiSpamExemptIndex  INTEGER,
+		fnAntiSpamBanWordPat  DisplayString,
+		fnAntiSpamExemptImapState  ItemState,
+		fnAntiSpamExemptPop3State  ItemState
+		}
+
+
+	fnAntiSpamExemptIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnAntiSpamExemptEntry  1  }
+
+
+	fnAntiSpamBanWordPat	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Banned word"
+		::=  {  fnAntiSpamExemptEntry  2  }
+
+
+	fnAntiSpamExemptImapState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off anti spam IMAP block for the entry"
+		::=  {  fnAntiSpamExemptEntry  3  }
+
+
+	fnAntiSpamExemptPop3State	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off anti spam POP3 block for the entry"
+		::=  {  fnAntiSpamExemptEntry  4  }
+
+	fnAntiSpamBanWordTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnAntiSpamBanWordEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Banned words list for anti spam"
+		::=  { fnAntiSpam  3 }
+
+	fnAntiSpamBanWordEntry	OBJECT-TYPE
+		SYNTAX		FnAntiSpamBanWordEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnAntiSpamBanWordIndex  }
+		::=  { fnAntiSpamBanWordTable 1 }
+
+	FnAntiSpamBanWordEntry  ::=  SEQUENCE {
+		fnAntiSpamBanWordIndex  INTEGER,
+		fnAntiSpamBanWordImapState  ItemState,
+		fnAntiSpamBanWordPop3State  ItemState
+		}
+
+
+	fnAntiSpamBanWordIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnAntiSpamBanWordEntry  1  }
+
+
+	fnAntiSpamBanWordImapState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off anti spam IMAP block for the entry"
+		::=  {  fnAntiSpamBanWordEntry  3  }
+
+
+	fnAntiSpamBanWordPop3State	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off anti spam POP3 block for the entry"
+		::=  {  fnAntiSpamBanWordEntry  4  }
+
+	fnAntiSpamCfgSubTag	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Anti spam subject tag"
+		::=  {  fnAntiSpam  4  }
+
+	fnLogSetting	OBJECT IDENTIFIER
+		::=  {  fnLogAndRpt  1  }
+
+	fnLog	OBJECT IDENTIFIER
+		::=  {  fnLogAndRpt  2  }
+
+	fnAlertEmai	OBJECT IDENTIFIER
+		::=  {  fnLogAndRpt  3  }
+
+	fnSysStatusOpMode	OBJECT-TYPE	
+		SYNTAX			INTEGER  { nat ( 1 ) , transparent ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"FortiNet product can have two operation modes: NAT and transparent"
+		::=  {  fnSysStatus  1  }
+
+	fnSysStatusVersion	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 128  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"FortiNet Software version."
+		::=  {  fnSysStatus  2  }
+
+	fnSysStatusAVDBVersion	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 128  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"FortiNet Antivirus DB version."
+		::=  {  fnSysStatus  3  }
+
+	fnSysStatusNIDSDBVersion	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 128  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"FortiNet NIDS DB version."
+		::=  {  fnSysStatus  4  }
+
+	fnSysStatusSN	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"FortiNet product serial number."
+		::=  {  fnSysStatus  5  }
+
+	fnSysMonitor	OBJECT IDENTIFIER
+		::=  {  fnSysStatus  6  }
+
+	fnSysUpdateConnStatus1	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The availability of FortiResponse distribution network."
+		::=  {  fnSysUpdate  1  }
+
+	fnSysUpdateConnStatus2	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The availability of push update center"
+		::=  {  fnSysUpdate  2  }
+
+	fnSysUpdatePushUpState	OBJECT-TYPE	
+		SYNTAX			INTEGER  { allow ( 1 ) , disallow ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Allow or disallow push update"
+		::=  {  fnSysUpdate  3  }
+
+	fnSysUpdatePeriodicUpState	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Periodic update: enalbe/disable"
+		::=  {  fnSysUpdate  4  }
+
+	fnSysUpdatePeriodicUpFreq	OBJECT-TYPE	
+		SYNTAX			INTEGER  { daily ( 1 ) , weekly ( 2 ) , other ( 3 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The frequency of periodic update"
+		::=  {  fnSysUpdate  5  }
+
+	fnSysUpdatePeriodicUpDay	OBJECT-TYPE	
+		SYNTAX			INTEGER  { sunday ( 1 ) , monday ( 2 ) , tuesday ( 3 ) , wednesday ( 4 ) , thursday ( 5 ) , friday ( 6 ) , saturday ( 7 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The weekday of the weekly update scheme"
+		::=  {  fnSysUpdate  6  }
+
+	fnSysUpdatePeriodicUpTime	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The time of day to update: hhmm"
+		::=  {  fnSysUpdate  7  }
+
+	fnSysUpdateVirusDefUpStatus	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Virus Definitions Update status, such as upToDate"
+		::=  {  fnSysUpdate  8  }
+
+	fnSysUpdateVirusDefUpLast	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Last update date"
+		::=  {  fnSysUpdate  9  }
+
+	fnSysUpdateIdsUpStatus	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"IDS update status"
+		::=  {  fnSysUpdate  10  }
+
+	fnSysUpdateIdsUpLast	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Last IDS update date"
+		::=  {  fnSysUpdate  11  }
+
+	fnSysUpdateSpamDefUpStatus	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Spam Definitions Update status, such as upToDate"
+		::=  {  fnSysUpdate  12  }
+
+	fnSysUpdateSpamDefUpLast	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Last update date"
+		::=  {  fnSysUpdate  13  }
+
+	fnSysNetworkIfTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysNetworkIfEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"All FortiNet devices have a trusted interface and an untrusted interface.
+            FortiGate-300 and -500 also have a DMZ interface.%%%"
+		::=  { fnSysNetwork  1 }
+
+	fnSysNetworkIfEntry	OBJECT-TYPE
+		SYNTAX		FnSysNetworkIfEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"fnSysNetworkIfEntry collects attributes about FortiNet interface."
+		INDEX		{  fnSysNetworkIfIndex  }
+		::=  { fnSysNetworkIfTable 1 }
+
+	FnSysNetworkIfEntry  ::=  SEQUENCE {
+		fnSysNetworkIfIndex  INTEGER,
+		fnSysNetworkIfName  DisplayString,
+		fnSysNetworkIfIp  IpAddress,
+		fnSysNetworkIfNetmask  IpAddress,
+		fnSysNetworkIfMAC  DisplayString,
+		fnSysNetworkIfSpeed  DisplayString,
+		fnSysNetworkIfOutFrag  ItemState,
+		fnSysNetworkIfStatus  INTEGER,
+		fnSysNetworkIfAddrMode  INTEGER,
+		fnSysNetworkIfAccHttps  ItemState,
+		fnSysNetworkIfAccPing  ItemState,
+		fnSysNetworkIfAccSsh  ItemState,
+		fnSysNetworkIfAccSnmp  ItemState,
+		fnSysNetworkIfAccHttp  ItemState,
+		fnSysNetworkIfAccTelnet  ItemState,
+		fnSysNetworkIfPingSrvState  ItemState,
+		fnSysNetworkIfPingSrvAddr  IpAddress,
+		fnSysNetworkIfIp2  IpAddress,
+		fnSysNetworkIfNetmask2  IpAddress,
+		fnSysNetworkIfPingSrvState2  ItemState,
+		fnSysNetworkIfPingSrvAddr2  IpAddress
+		}
+
+
+	fnSysNetworkIfIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Interface number which uniquely identifies an interface."
+		::=  {  fnSysNetworkIfEntry  1  }
+
+
+	fnSysNetworkIfName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Each interface has a readable name such as %%%."
+		::=  {  fnSysNetworkIfEntry  2  }
+
+
+	fnSysNetworkIfIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Each interface must be assigned an IP address."
+		::=  {  fnSysNetworkIfEntry  3  }
+
+
+	fnSysNetworkIfNetmask	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Each interface must belong to a subnet represented by netmask."
+		::=  {  fnSysNetworkIfEntry  4  }
+
+
+	fnSysNetworkIfMAC	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Each interface must have a MAC address."
+		::=  {  fnSysNetworkIfEntry  5  }
+
+
+	fnSysNetworkIfSpeed	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Each interface must have speed ."
+		::=  {  fnSysNetworkIfEntry  6  }
+
+
+	fnSysNetworkIfOutFrag	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off fragment outgoing packets greater than MTU"
+		::=  {  fnSysNetworkIfEntry  7  }
+
+
+	fnSysNetworkIfStatus	OBJECT-TYPE	
+		SYNTAX			INTEGER  { up ( 1 ) , down ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkIfEntry  8  }
+
+
+	fnSysNetworkIfAddrMode	OBJECT-TYPE	
+		SYNTAX			INTEGER  { manual ( 1 ) , dhcp ( 2 ) , pppoe ( 3 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The means that how the interface get the IP address"
+		::=  {  fnSysNetworkIfEntry  9  }
+
+
+	fnSysNetworkIfAccHttps	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkIfEntry  10  }
+
+
+	fnSysNetworkIfAccPing	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkIfEntry  11  }
+
+
+	fnSysNetworkIfAccSsh	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkIfEntry  12  }
+
+
+	fnSysNetworkIfAccSnmp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkIfEntry  13  }
+
+
+	fnSysNetworkIfAccHttp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkIfEntry  14  }
+
+
+	fnSysNetworkIfAccTelnet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkIfEntry  15  }
+
+
+	fnSysNetworkIfPingSrvState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkIfEntry  16  }
+
+
+	fnSysNetworkIfPingSrvAddr	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Ping server address"
+		::=  {  fnSysNetworkIfEntry  17  }
+
+
+	fnSysNetworkIfIp2	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Each interface must be assigned an IP address."
+		::=  {  fnSysNetworkIfEntry  18  }
+
+
+	fnSysNetworkIfNetmask2	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Each interface must belong to a subnet represented by netmask."
+		::=  {  fnSysNetworkIfEntry  19  }
+
+
+	fnSysNetworkIfPingSrvState2	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkIfEntry  20  }
+
+
+	fnSysNetworkIfPingSrvAddr2	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Ping server address"
+		::=  {  fnSysNetworkIfEntry  21  }
+
+	fnSysNetworkVlanTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysNetworkVlanEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Vlan table"
+		::=  { fnSysNetwork  2 }
+
+	fnSysNetworkVlanEntry	OBJECT-TYPE
+		SYNTAX		FnSysNetworkVlanEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnSysNetworkVlanIndex, fnSysNetworkVlanName  }
+		::=  { fnSysNetworkVlanTable 1 }
+
+	FnSysNetworkVlanEntry  ::=  SEQUENCE {
+		fnSysNetworkVlanIndex  INTEGER,
+		fnSysNetworkVlanName  DisplayString,
+		fnSysNetworkVlanIf  DisplayString,
+		fnSysNetworkVlanId  INTEGER,
+		fnSysNetworkVlanIp  IpAddress,
+		fnSysNetworkVlanNetmask  IpAddress,
+		fnSysNetworkVlanAccHttps  ItemState,
+		fnSysNetworkVlanAccPing  ItemState,
+		fnSysNetworkVlanAccSsh  ItemState,
+		fnSysNetworkVlanAccSnmp  ItemState,
+		fnSysNetworkVlanAccHttp  ItemState,
+		fnSysNetworkVlanAccTelnet  ItemState
+		}
+
+
+	fnSysNetworkVlanIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysNetworkVlanEntry  1  }
+
+
+	fnSysNetworkVlanName	OBJECT-TYPE	
+		SYNTAX			DisplayString ( SIZE ( 0 .. 255 ) )
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Vlan name"
+		::=  {  fnSysNetworkVlanEntry  2  }
+
+
+	fnSysNetworkVlanIf	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The interface that receives the VLAN packets intended for this VLAN subinterface."
+		::=  {  fnSysNetworkVlanEntry  3  }
+
+
+	fnSysNetworkVlanId	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"the VLAN ID that matches the VLAN ID of the packets to be received by this
+VLAN subinterface"
+		::=  {  fnSysNetworkVlanEntry  4  }
+
+
+	fnSysNetworkVlanIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"IP address for the subinterface"
+		::=  {  fnSysNetworkVlanEntry  5  }
+
+
+	fnSysNetworkVlanNetmask	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Netmask of the subinterface"
+		::=  {  fnSysNetworkVlanEntry  6  }
+
+
+	fnSysNetworkVlanAccHttps	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkVlanEntry  7  }
+
+
+	fnSysNetworkVlanAccPing	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkVlanEntry  8  }
+
+
+	fnSysNetworkVlanAccSsh	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkVlanEntry  9  }
+
+
+	fnSysNetworkVlanAccSnmp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkVlanEntry  10  }
+
+
+	fnSysNetworkVlanAccHttp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkVlanEntry  11  }
+
+
+	fnSysNetworkVlanAccTelnet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkVlanEntry  12  }
+
+	fnSysNetworkAccessTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysNetworkAccessEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"FortiNet admin access entries."
+		::=  { fnSysNetwork  3 }
+
+	fnSysNetworkAccessEntry	OBJECT-TYPE
+		SYNTAX		FnSysNetworkAccessEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"fnSysNetworkAccessEntry includes information about admin access."
+		INDEX		{  fnSysNetworkAccessIfName  }
+		::=  { fnSysNetworkAccessTable 1 }
+
+	FnSysNetworkAccessEntry  ::=  SEQUENCE {
+		fnSysNetworkAccessIfName  INTEGER,
+		fnSysNetworkAccessHttps  ItemState,
+		fnSysNetworkAccessPing  ItemState,
+		fnSysNetworkAccessSsh  ItemState,
+		fnSysNetworkAccessSnmp  ItemState,
+		fnSysNetworkAccessHttp  ItemState,
+		fnSysNetworkAccessTelnet  ItemState
+		}
+
+
+	fnSysNetworkAccessIfName	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Interface name"
+		::=  {  fnSysNetworkAccessEntry  1  }
+
+
+	fnSysNetworkAccessHttps	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnSysNetworkAccessEntry  2  }
+
+
+	fnSysNetworkAccessPing	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnSysNetworkAccessEntry  3  }
+
+
+	fnSysNetworkAccessSsh	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnSysNetworkAccessEntry  4  }
+
+
+	fnSysNetworkAccessSnmp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnSysNetworkAccessEntry  5  }
+
+
+	fnSysNetworkAccessHttp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkAccessEntry  6  }
+
+
+	fnSysNetworkAccessTelnet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkAccessEntry  7  }
+
+	fnSysNetworkRouting	OBJECT IDENTIFIER
+		::=  {  fnSysNetwork  4  }
+
+	fnSysNetworkDhcp	OBJECT IDENTIFIER
+		::=  {  fnSysNetwork  5  }
+
+	fnSysZoneTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysZoneEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Zone table"
+		::=  { fnSysNetwork  6 }
+
+	fnSysZoneEntry	OBJECT-TYPE
+		SYNTAX		FnSysZoneEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Zone"
+		INDEX		{  fnSysZoneId  }
+		::=  { fnSysZoneTable 1 }
+
+	FnSysZoneEntry  ::=  SEQUENCE {
+		fnSysZoneId  INTEGER,
+		fnSysZoneName  DisplayString,
+		fnSysZoneSecLevel  INTEGER,
+		fnSysZoneBlkTraffic  ItemState,
+		fnSysZoneLogTraffic  ItemState
+		}
+
+
+	fnSysZoneId	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysZoneEntry  1  }
+
+
+	fnSysZoneName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysZoneEntry  2  }
+
+
+	fnSysZoneSecLevel	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The security level of the zone"
+		::=  {  fnSysZoneEntry  3  }
+
+
+	fnSysZoneBlkTraffic	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Block intro-zone traffic"
+		::=  {  fnSysZoneEntry  4  }
+
+
+	fnSysZoneLogTraffic	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Log traffic to firewall"
+		::=  {  fnSysZoneEntry  5  }
+
+	fnSysNetworkDNS	OBJECT IDENTIFIER
+		::=  {  fnSysNetwork  7  }
+
+	fnSysConfigTime	OBJECT IDENTIFIER
+		::=  {  fnSysConfig  1  }
+
+	fnSysConfigOpts	OBJECT IDENTIFIER
+		::=  {  fnSysConfig  2  }
+
+	fnSysConfigAdmin	OBJECT IDENTIFIER
+		::=  {  fnSysConfig  3  }
+
+	fnSysConfigHA	OBJECT IDENTIFIER
+		::=  {  fnSysConfig  4  }
+
+	fnSysSnmpGen	OBJECT IDENTIFIER
+		::=  {  fnSysSnmp  1  }
+
+	fnSysSnmpv3AccCtrl	OBJECT IDENTIFIER
+		::=  {  fnSysSnmp  2  }
+
+	fnSysSnmpSecurity	OBJECT IDENTIFIER
+		::=  {  fnSysSnmp  3  }
+
+	fnSysSnmpViewTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysSnmpViewEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Description"
+		::=  { fnSysSnmp  4 }
+
+	fnSysSnmpViewEntry	OBJECT-TYPE
+		SYNTAX		FnSysSnmpViewEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnSysSnmpViewName  }
+		::=  { fnSysSnmpViewTable 1 }
+
+	FnSysSnmpViewEntry  ::=  SEQUENCE {
+		fnSysSnmpViewName  INTEGER,
+		fnSysSnmpViewSubtreeOid  DisplayString,
+		fnSysSnmpViewMask  INTEGER,
+		fnSysSnmpViewType  INTEGER
+		}
+
+
+	fnSysSnmpViewName	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysSnmpViewEntry  1  }
+
+
+	fnSysSnmpViewSubtreeOid	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysSnmpViewEntry  2  }
+
+
+	fnSysSnmpViewMask	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysSnmpViewEntry  3  }
+
+
+	fnSysSnmpViewType	OBJECT-TYPE	
+		SYNTAX			INTEGER  { included ( 1 ) , excluded ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysSnmpViewEntry  4  }
+
+	fnFirewallPolicyTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallPolicyEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"A firewall provides a network boundary with a single point of entry and
+            exit.Firewall policies allow user to
+            permit, deny, encrypt, authenticate, prioritize, schedule, and monitor the
+            traffic attemption to cross your firewall. This table collects all the policy
+            configuration information."
+		::=  { fnFirewallPolicy  1 }
+
+	fnFirewallPolicyEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallPolicyEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Each entry in the fnFirewallPolicyTable holds a set of configuration parameters associatied
+                      with an instance of policy."
+		INDEX		{  fnFirewallPolicyIndex  }
+		::=  { fnFirewallPolicyTable 1 }
+
+	FnFirewallPolicyEntry  ::=  SEQUENCE {
+		fnFirewallPolicyIndex  INTEGER,
+		fnFirewallPolicySrcZone  DisplayString,
+		fnFirewallPolicyDestZone  DisplayString,
+		fnFirewallPolicySrcAddr  DisplayString,
+		fnFirewallPolicyDestAddr  DisplayString,
+		fnFirewallPolicySchedule  DisplayString,
+		fnFirewallPolicyService  DisplayString,
+		fnFirewallPolicyAction  DisplayString,
+		fnFirewallPolicyNAT  INTEGER,
+		fnFirewallPolicyDipPool  INTEGER,
+		fnFirewallPolicyFixPort  INTEGER,
+		fnFirewallPolicyAuth  INTEGER,
+		fnFirewallPolicyVpnTunName  DisplayString,
+		fnFirewallPolicyVpnAllowIn  INTEGER,
+		fnFirewallPolicyVpnAllowOut  INTEGER,
+		fnFirewallPolicyVpnInNat  INTEGER,
+		fnFirewallPolicyVpnOutNat  INTEGER,
+		fnFirewallPolicyLog  INTEGER,
+		fnFirewallPolicyAV  INTEGER,
+		fnFirewallPolicyGBand  INTEGER,
+		fnFirewallPolicyMBand  INTEGER,
+		fnFirewallPolicyTrafficPri  INTEGER,
+		fnFirewallPolicyProf  DisplayString
+		}
+
+
+	fnFirewallPolicyIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Index for policy."
+		::=  {  fnFirewallPolicyEntry  1  }
+
+
+	fnFirewallPolicySrcZone	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Source zone name this policy applied to."
+		::=  {  fnFirewallPolicyEntry  2  }
+
+
+	fnFirewallPolicyDestZone	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Destination zone name address this policy applied to."
+		::=  {  fnFirewallPolicyEntry  3  }
+
+
+	fnFirewallPolicySrcAddr	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Source address name this policy applied to."
+		::=  {  fnFirewallPolicyEntry  4  }
+
+
+	fnFirewallPolicyDestAddr	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Destination address name address this policy applied to."
+		::=  {  fnFirewallPolicyEntry  5  }
+
+
+	fnFirewallPolicySchedule	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Schedule name for a pllicy."
+		::=  {  fnFirewallPolicyEntry  6  }
+
+
+	fnFirewallPolicyService	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Service name this policy applied to."
+		::=  {  fnFirewallPolicyEntry  7  }
+
+
+	fnFirewallPolicyAction	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Action for a policy."
+		::=  {  fnFirewallPolicyEntry  8  }
+
+
+	fnFirewallPolicyNAT	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Enable NAT"
+		::=  {  fnFirewallPolicyEntry  9  }
+
+
+	fnFirewallPolicyDipPool	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Enable DIP pool"
+		::=  {  fnFirewallPolicyEntry  10  }
+
+
+	fnFirewallPolicyFixPort	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Enable Fixed port"
+		::=  {  fnFirewallPolicyEntry  11  }
+
+
+	fnFirewallPolicyAuth	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Authorization"
+		::=  {  fnFirewallPolicyEntry  12  }
+
+
+	fnFirewallPolicyVpnTunName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Tunnel name for a policy."
+		::=  {  fnFirewallPolicyEntry  13  }
+
+
+	fnFirewallPolicyVpnAllowIn	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Allow inbound traffic"
+		::=  {  fnFirewallPolicyEntry  14  }
+
+
+	fnFirewallPolicyVpnAllowOut	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Allow outbound traffic"
+		::=  {  fnFirewallPolicyEntry  15  }
+
+
+	fnFirewallPolicyVpnInNat	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"In bound NAT"
+		::=  {  fnFirewallPolicyEntry  16  }
+
+
+	fnFirewallPolicyVpnOutNat	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Outbound NAT"
+		::=  {  fnFirewallPolicyEntry  17  }
+
+
+	fnFirewallPolicyLog	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"enable log"
+		::=  {  fnFirewallPolicyEntry  18  }
+
+
+	fnFirewallPolicyAV	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Anti virus and web filter"
+		::=  {  fnFirewallPolicyEntry  19  }
+
+
+	fnFirewallPolicyGBand	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Guaranteed bandwidth for traffic shaping"
+		::=  {  fnFirewallPolicyEntry  20  }
+
+
+	fnFirewallPolicyMBand	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Maximum bandwidth for traffic shaping"
+		::=  {  fnFirewallPolicyEntry  21  }
+
+
+	fnFirewallPolicyTrafficPri	OBJECT-TYPE	
+		SYNTAX			INTEGER  { high ( 1 ) , medium ( 2 ) , low ( 3 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Traffic priority for traffic shaping"
+		::=  {  fnFirewallPolicyEntry  22  }
+
+
+	fnFirewallPolicyProf	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Content profile name"
+		::=  {  fnFirewallPolicyEntry  23  }
+
+	fnFirewallAddrTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallAddrEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"This table contains the firewall addresses that have been created by system
+					and users"
+		::=  { fnFirewallAddress  1 }
+
+	fnFirewallAddrEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallAddrEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		INDEX		{  fnFirewallAddrName  }
+		::=  { fnFirewallAddrTable 1 }
+
+	FnFirewallAddrEntry  ::=  SEQUENCE {
+		fnFirewallAddrName  DisplayString,
+		fnFirewallAddrIp  IpAddress,
+		fnFirewallAddressNetmask  IpAddress,
+		fnFirewallAddrZone  DisplayString,
+		fnFirewallAddrVlanId  INTEGER
+		}
+
+
+	fnFirewallAddrName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Address name"
+		::=  {  fnFirewallAddrEntry  1  }
+
+
+	fnFirewallAddrIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Ip address of the address"
+		::=  {  fnFirewallAddrEntry  2  }
+
+
+	fnFirewallAddressNetmask	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Netmask of the address"
+		::=  {  fnFirewallAddrEntry  3  }
+
+
+	fnFirewallAddrZone	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Zone or interface that the address belongs to"
+		::=  {  fnFirewallAddrEntry  4  }
+
+
+	fnFirewallAddrVlanId	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 65535  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The VLAN ID that the address belongs to"
+		::=  {  fnFirewallAddrEntry  5  }
+
+	fnFirewallAddrGrpTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallAddrGrpEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Description"
+		::=  { fnFirewallAddress  2 }
+
+	fnFirewallAddrGrpEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallAddrGrpEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnFirewallAddrGrpIndex, fnFirewallAddrGrpZone, fnFirewallAddrGrpName  }
+		::=  { fnFirewallAddrGrpTable 1 }
+
+	FnFirewallAddrGrpEntry  ::=  SEQUENCE {
+		fnFirewallAddrGrpIndex  INTEGER,
+		fnFirewallAddrGrpZone  DisplayString,
+		fnFirewallAddrGrpName  DisplayString,
+		fnFirewallAddrGrpMems  DisplayString
+		}
+
+
+	fnFirewallAddrGrpIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnFirewallAddrGrpEntry  1  }
+
+
+	fnFirewallAddrGrpZone	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Zone or interface name that the address group belongs to"
+		::=  {  fnFirewallAddrGrpEntry  2  }
+
+
+	fnFirewallAddrGrpName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Firewall address group name"
+		::=  {  fnFirewallAddrGrpEntry  3  }
+
+
+	fnFirewallAddrGrpMems	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 25555  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The addresse names that belong to the address group.  The names need to be separated with a separator, such as ,"
+		::=  {  fnFirewallAddrGrpEntry  4  }
+
+	fnFirewallServiceTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallServiceEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		::=  { fnFirewallService  1 }
+
+	fnFirewallServiceEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallServiceEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		INDEX		{  fnFirewallServiceIndex  }
+		::=  { fnFirewallServiceTable 1 }
+
+	FnFirewallServiceEntry  ::=  SEQUENCE {
+		fnFirewallServiceIndex  INTEGER,
+		fnFirewallServiceName  DisplayString,
+		fnFirewallServiceProto  INTEGER,
+		fnFirewallServiceUsed  INTEGER,
+		fnFirewallServiceSrcPortLow  INTEGER,
+		fnFirewallServiceSrcPortHigh  INTEGER,
+		fnFirewallServiceDstPortLow  INTEGER,
+		fnFirewallServiceDstPortHigh  INTEGER,
+		fnFirewallServiceType  INTEGER
+		}
+
+
+	fnFirewallServiceIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceEntry  1  }
+
+
+	fnFirewallServiceName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceEntry  2  }
+
+
+	fnFirewallServiceProto	OBJECT-TYPE	
+		SYNTAX			INTEGER  { tcp ( 1 ) , udp ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The protocol the the service uses"
+		::=  {  fnFirewallServiceEntry  3  }
+
+
+	fnFirewallServiceUsed	OBJECT-TYPE	
+		SYNTAX			INTEGER  { used ( 1 ) , unused ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceEntry  4  }
+
+
+	fnFirewallServiceSrcPortLow	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 1 .. 65535  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceEntry  5  }
+
+
+	fnFirewallServiceSrcPortHigh	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 1 .. 65535  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceEntry  6  }
+
+
+	fnFirewallServiceDstPortLow	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 1 .. 65535  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceEntry  7  }
+
+
+	fnFirewallServiceDstPortHigh	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 1 .. 65535  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceEntry  8  }
+
+
+	fnFirewallServiceType	OBJECT-TYPE	
+		SYNTAX			INTEGER  { predefined ( 1 ) , custom ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceEntry  9  }
+
+	fnFirewallServiceGroupTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallServiceGroupEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		::=  { fnFirewallService  2 }
+
+	fnFirewallServiceGroupEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallServiceGroupEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		INDEX		{  fnFirewallServiceGroupIndex  }
+		::=  { fnFirewallServiceGroupTable 1 }
+
+	FnFirewallServiceGroupEntry  ::=  SEQUENCE {
+		fnFirewallServiceGroupIndex  INTEGER,
+		fnFirewallServiceGroupName  DisplayString,
+		fnFirewallServiceGroupValue  DisplayString,
+		fnFirewallServiceGroupUsed  INTEGER
+		}
+
+
+	fnFirewallServiceGroupIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceGroupEntry  1  }
+
+
+	fnFirewallServiceGroupName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceGroupEntry  2  }
+
+
+	fnFirewallServiceGroupValue	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 128  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceGroupEntry  3  }
+
+
+	fnFirewallServiceGroupUsed	OBJECT-TYPE	
+		SYNTAX			INTEGER  { used ( 1 ) , unused ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallServiceGroupEntry  4  }
+
+	fnFirewallSchOneTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallSchOneEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		::=  { fnFirewallSchedule  1 }
+
+	fnFirewallSchOneEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallSchOneEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		INDEX		{  fnFirewallSchOneIndex  }
+		::=  { fnFirewallSchOneTable 1 }
+
+	FnFirewallSchOneEntry  ::=  SEQUENCE {
+		fnFirewallSchOneIndex  INTEGER,
+		fnFirewallSchOneName  DisplayString,
+		fnFirewallSchOneStartDay  DisplayString,
+		fnFirewallSchOneStartTime  DisplayString,
+		fnFirewallSchOneEndDay  DisplayString,
+		fnFirewallSchOneEndTime  DisplayString,
+		fnFirewallSchOneUsed  INTEGER
+		}
+
+
+	fnFirewallSchOneIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchOneEntry  1  }
+
+
+	fnFirewallSchOneName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchOneEntry  2  }
+
+
+	fnFirewallSchOneStartDay	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchOneEntry  3  }
+
+
+	fnFirewallSchOneStartTime	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchOneEntry  4  }
+
+
+	fnFirewallSchOneEndDay	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchOneEntry  5  }
+
+
+	fnFirewallSchOneEndTime	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchOneEntry  6  }
+
+
+	fnFirewallSchOneUsed	OBJECT-TYPE	
+		SYNTAX			INTEGER  { used ( 1 ) , unused ( 0 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		::=  {  fnFirewallSchOneEntry  7  }
+
+	fnFirewallSchRecurTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallSchRecurEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		::=  { fnFirewallSchedule  2 }
+
+	fnFirewallSchRecurEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallSchRecurEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		INDEX		{  fnFirewallSchRecurIndex  }
+		::=  { fnFirewallSchRecurTable 1 }
+
+	FnFirewallSchRecurEntry  ::=  SEQUENCE {
+		fnFirewallSchRecurIndex  INTEGER,
+		fnFirewallSchRecurName  DisplayString,
+		fnFirewallSchRecurWeekdays  DisplayString,
+		fnFirewallSchRecurStartTime  DisplayString,
+		fnFirewallSchRecurEndTime  DisplayString,
+		fnFirewallSchRecurUsed  INTEGER
+		}
+
+
+	fnFirewallSchRecurIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchRecurEntry  1  }
+
+
+	fnFirewallSchRecurName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchRecurEntry  2  }
+
+
+	fnFirewallSchRecurWeekdays	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchRecurEntry  3  }
+
+
+	fnFirewallSchRecurStartTime	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchRecurEntry  4  }
+
+
+	fnFirewallSchRecurEndTime	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallSchRecurEntry  5  }
+
+
+	fnFirewallSchRecurUsed	OBJECT-TYPE	
+		SYNTAX			INTEGER  { used ( 1 ) , unused ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		::=  {  fnFirewallSchRecurEntry  6  }
+
+	fnFirewallVIPTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallVIPEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		::=  { fnFirewallVirtualIP  1 }
+
+	fnFirewallVIPEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallVIPEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		INDEX		{  fnFirewallVIPIndex  }
+		::=  { fnFirewallVIPTable 1 }
+
+	FnFirewallVIPEntry  ::=  SEQUENCE {
+		fnFirewallVIPIndex  INTEGER,
+		fnFirewallVIPName  DisplayString,
+		fnFirewallVIPExtIf  DisplayString,
+		fnFirewallVIPType  INTEGER,
+		fnFirewallVIPExtIP  IpAddress,
+		fnFirewallVIPExtPort  INTEGER,
+		fnFirewallVIPMapIP  IpAddress,
+		fnFirewallVIPMapPort  INTEGER,
+		fnFirewallVIPProto  INTEGER
+		}
+
+
+	fnFirewallVIPIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallVIPEntry  1  }
+
+
+	fnFirewallVIPName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallVIPEntry  2  }
+
+
+	fnFirewallVIPExtIf	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"External inerface of the VIP"
+		::=  {  fnFirewallVIPEntry  3  }
+
+
+	fnFirewallVIPType	OBJECT-TYPE	
+		SYNTAX			INTEGER  { staticNat ( 1 ) , portForwarding ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallVIPEntry  4  }
+
+
+	fnFirewallVIPExtIP	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallVIPEntry  5  }
+
+
+	fnFirewallVIPExtPort	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 1 .. 65535  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFirewallVIPEntry  6  }
+
+
+	fnFirewallVIPMapIP	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFirewallVIPEntry  7  }
+
+
+	fnFirewallVIPMapPort	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 1 .. 65535  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFirewallVIPEntry  8  }
+
+
+	fnFirewallVIPProto	OBJECT-TYPE	
+		SYNTAX			INTEGER  { tcp ( 1 ) , udp ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFirewallVIPEntry  9  }
+
+	fnFirewallIpPoolTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallIpPoolEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Description"
+		::=  { fnFirewallIpPool  1 }
+
+	fnFirewallIpPoolEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallIpPoolEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnFirewallIpPoolIndex  }
+		::=  { fnFirewallIpPoolTable 1 }
+
+	FnFirewallIpPoolEntry  ::=  SEQUENCE {
+		fnFirewallIpPoolIndex  INTEGER,
+		fnFirewallIpPoolIf  DisplayString,
+		fnFirewallIpPoolStartIp  IpAddress,
+		fnFirewallIpPoolEndIp  IpAddress
+		}
+
+
+	fnFirewallIpPoolIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnFirewallIpPoolEntry  1  }
+
+
+	fnFirewallIpPoolIf	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The interface to which the pool belongs"
+		::=  {  fnFirewallIpPoolEntry  2  }
+
+
+	fnFirewallIpPoolStartIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Start IP address of the pool"
+		::=  {  fnFirewallIpPoolEntry  3  }
+
+
+	fnFirewallIpPoolEndIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"End IP address of the pool"
+		::=  {  fnFirewallIpPoolEntry  4  }
+
+	fnFirewallIPMACBindingTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFirewallIPMACBindingEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		::=  { fnFirewallIPMACBinding  1 }
+
+	fnFirewallIPMACBindingEntry	OBJECT-TYPE
+		SYNTAX		FnFirewallIPMACBindingEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		INDEX		{  fnFirewallIPMACIndex  }
+		::=  { fnFirewallIPMACBindingTable 1 }
+
+	FnFirewallIPMACBindingEntry  ::=  SEQUENCE {
+		fnFirewallIPMACIndex  INTEGER,
+		fnFirewallIPMACName  DisplayString,
+		fnFirewallIPMACIp  IpAddress,
+		fnFirewallIPMACMac  DisplayString,
+		fnFirewallIPMACState  INTEGER
+		}
+
+
+	fnFirewallIPMACIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallIPMACBindingEntry  1  }
+
+
+	fnFirewallIPMACName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFirewallIPMACBindingEntry  2  }
+
+
+	fnFirewallIPMACIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallIPMACBindingEntry  3  }
+
+
+	fnFirewallIPMACMac	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallIPMACBindingEntry  4  }
+
+
+	fnFirewallIPMACState	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The state of the the IPMAC binding entry"
+		::=  {  fnFirewallIPMACBindingEntry  5  }
+
+	fnFirewallIPMACStatus	OBJECT-TYPE	
+		SYNTAX			INTEGER  { disable ( 0 ) , enable ( 1 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallIPMACBinding  2  }
+
+	fnFirewallIPMACAction	OBJECT-TYPE	
+		SYNTAX			INTEGER  { block ( 0 ) , pass ( 1 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnFirewallIPMACBinding  3  }
+
+	fnFirewallIPMACToFw	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) , disable ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Enable or disable IP/MAC binding going to the firewall"
+		::=  {  fnFirewallIPMACBinding  4  }
+
+	fnFirewallIPMACThruFw	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enable ( 1 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Enable or disable IP/MAC binding going through the firewall"
+		::=  {  fnFirewallIPMACBinding  5  }
+
+	fnFirewallIPMACTraffic	OBJECT-TYPE	
+		SYNTAX			INTEGER  { allow ( 1 ) , block ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"For hosts not defined in IPMAC binding table, allow or block the traffic"
+		::=  {  fnFirewallIPMACBinding  6  }
+
+	fnFwContProfTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnFwContProfEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Content profile table"
+		::=  { fnFirewallContProfiles  1 }
+
+	fnFwContProfEntry	OBJECT-TYPE
+		SYNTAX		FnFwContProfEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnFwContProfName  }
+		::=  { fnFwContProfTable 1 }
+
+	FnFwContProfEntry  ::=  SEQUENCE {
+		fnFwContProfName  DisplayString,
+		fnFwContProfAvScan  DisplayString,
+		fnFwContProfFileBlk  DisplayString,
+		fnFwContProfQuarantine  DisplayString,
+		fnFwContProfUrlBlkState  ItemState,
+		fnFwContProfBannedWordState  ItemState,
+		fnFwContProfRemvScriptState  ItemState,
+		fnFwContProfExptListState  ItemState,
+		fnFwContProfSpamFilter  DisplayString,
+		fnFwContProfSpamBlkList  DisplayString,
+		fnFwContProfSpamExptList  DisplayString,
+		fnFwContProfSpamBanWord  DisplayString,
+		fnFwContProfBigFileBlk  DisplayString,
+		fnFwContProfPassFragEmail  DisplayString
+		}
+
+
+	fnFwContProfName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255 ) )
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnFwContProfEntry  1  }
+
+
+	fnFwContProfAvScan	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnFwContProfEntry  2  }
+
+
+	fnFwContProfFileBlk	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnFwContProfEntry  3  }
+
+
+	fnFwContProfQuarantine	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFwContProfEntry  4  }
+
+
+	fnFwContProfUrlBlkState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFwContProfEntry  5  }
+
+
+	fnFwContProfBannedWordState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFwContProfEntry  6  }
+
+
+	fnFwContProfRemvScriptState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Remove script"
+		::=  {  fnFwContProfEntry  7  }
+
+
+	fnFwContProfExptListState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Exempt list"
+		::=  {  fnFwContProfEntry  8  }
+
+
+	fnFwContProfSpamFilter	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFwContProfEntry  9  }
+
+
+	fnFwContProfSpamBlkList	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFwContProfEntry  10  }
+
+
+	fnFwContProfSpamExptList	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFwContProfEntry  11  }
+
+
+	fnFwContProfSpamBanWord	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFwContProfEntry  12  }
+
+
+	fnFwContProfBigFileBlk	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFwContProfEntry  13  }
+
+
+	fnFwContProfPassFragEmail	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnFwContProfEntry  14  }
+
+	fnVpnIKETable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnVpnIKEEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		::=  { fnVpnIPSEC  2 }
+
+	fnVpnIKEEntry	OBJECT-TYPE
+		SYNTAX		FnVpnIKEEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		INDEX		{  fnVpnIKEIndex  }
+		::=  { fnVpnIKETable 1 }
+
+	FnVpnIKEEntry  ::=  SEQUENCE {
+		fnVpnIKEIndex  INTEGER,
+		fnVpnIKEName  DisplayString,
+		fnVpnIKEGW1  DisplayString,
+		fnVpnIKEPh2Encrp1  EncrytionAlgorithm,
+		fnVpnIKEPh2Auth1  AuthAlgorithm,
+		fnVpnIKEPh2Encrp2  EncrytionAlgorithm,
+		fnVpnIKEPh2Auth2  AuthAlgorithm,
+		fnVpnIKEPh2Encrp3  EncrytionAlgorithm,
+		fnVpnIKEPh2Auth3  AuthAlgorithm,
+		fnVpnIKEReplayDet  ItemState,
+		fnVpnIKEPFSState  ItemState,
+		fnVpnIKEDHGrp  INTEGER,
+		fnVpnIKEKeylifeType  INTEGER,
+		fnVpnIKEKLifeSec  INTEGER,
+		fnVpnIKEKeylifeKb  INTEGER,
+		fnVpnIKEKeepAlive  ItemState,
+		fnVpnIKEGW2  DisplayString,
+		fnVpnIKEGW3  DisplayString,
+		fnVpnIKEConcentrator  DisplayString,
+		fnVpnIKEStatus  INTEGER,
+		fnVpnIKETimeout  INTEGER
+		}
+
+
+	fnVpnIKEIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnIKEEntry  1  }
+
+
+	fnVpnIKEName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnIKEEntry  2  }
+
+
+	fnVpnIKEGW1	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Remote gateway 1"
+		::=  {  fnVpnIKEEntry  4  }
+
+
+	fnVpnIKEPh2Encrp1	OBJECT-TYPE	
+		SYNTAX			EncrytionAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Phase 2 encryption 1"
+		::=  {  fnVpnIKEEntry  5  }
+
+
+	fnVpnIKEPh2Auth1	OBJECT-TYPE	
+		SYNTAX			AuthAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Phase 2 authentication 1"
+		::=  {  fnVpnIKEEntry  6  }
+
+
+	fnVpnIKEPh2Encrp2	OBJECT-TYPE	
+		SYNTAX			EncrytionAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Phase 2 encryption 2"
+		::=  {  fnVpnIKEEntry  7  }
+
+
+	fnVpnIKEPh2Auth2	OBJECT-TYPE	
+		SYNTAX			AuthAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Phase 2 authentication 2"
+		::=  {  fnVpnIKEEntry  8  }
+
+
+	fnVpnIKEPh2Encrp3	OBJECT-TYPE	
+		SYNTAX			EncrytionAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Phase 2 encryption 3"
+		::=  {  fnVpnIKEEntry  9  }
+
+
+	fnVpnIKEPh2Auth3	OBJECT-TYPE	
+		SYNTAX			AuthAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Phase 2 authentication 3"
+		::=  {  fnVpnIKEEntry  10  }
+
+
+	fnVpnIKEReplayDet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Replay detection"
+		::=  {  fnVpnIKEEntry  11  }
+
+
+	fnVpnIKEPFSState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"PFS state"
+		::=  {  fnVpnIKEEntry  12  }
+
+
+	fnVpnIKEDHGrp	OBJECT-TYPE	
+		SYNTAX			INTEGER  { group1 ( 1 ) , group2 ( 2 ) , group5 ( 5 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"DH group"
+		::=  {  fnVpnIKEEntry  13  }
+
+
+	fnVpnIKEKeylifeType	OBJECT-TYPE	
+		SYNTAX			INTEGER  { seconds ( 1 ) , kbs ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Keylife type"
+		::=  {  fnVpnIKEEntry  14  }
+
+
+	fnVpnIKEKLifeSec	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 180 .. 700000  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnIKEEntry  15  }
+
+
+	fnVpnIKEKeylifeKb	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 300 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnIKEEntry  16  }
+
+
+	fnVpnIKEKeepAlive	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Auto key keep alive"
+		::=  {  fnVpnIKEEntry  17  }
+
+
+	fnVpnIKEGW2	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Remote gateway 2"
+		::=  {  fnVpnIKEEntry  18  }
+
+
+	fnVpnIKEGW3	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Remote gateway 3"
+		::=  {  fnVpnIKEEntry  19  }
+
+
+	fnVpnIKEConcentrator	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnIKEEntry  20  }
+
+
+	fnVpnIKEStatus	OBJECT-TYPE	
+		SYNTAX			INTEGER  { up ( 1 ) , down ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The status of the tunnel"
+		::=  {  fnVpnIKEEntry  21  }
+
+
+	fnVpnIKETimeout	OBJECT-TYPE	
+		SYNTAX			INTEGER  { up ( 1 ) , down ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"the time before the next key exchange in seconds"
+		::=  {  fnVpnIKEEntry  22  }
+
+	fnVpnManualKeyTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnVpnManualKeyEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		::=  { fnVpnIPSEC  3 }
+
+	fnVpnManualKeyEntry	OBJECT-TYPE
+		SYNTAX		FnVpnManualKeyEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"%%%"
+		INDEX		{  fnVpnManualKeyIndex  }
+		::=  { fnVpnManualKeyTable 1 }
+
+	FnVpnManualKeyEntry  ::=  SEQUENCE {
+		fnVpnManualKeyIndex  INTEGER,
+		fnVpnManualKeyName  DisplayString,
+		fnVpnManualKeyEngage  INTEGER,
+		fnVpnManualKeyLocalSPI  DisplayString,
+		fnVpnManualKeyRemoteSPI  DisplayString,
+		fnVpnManualKeyRgw  DisplayString,
+		fnVpnManualKeyReplayDet  ItemState,
+		fnVpnManualKeyEncrpAlgorithm  DisplayString,
+		fnVpnManualKeyConcentrator  DisplayString
+		}
+
+
+	fnVpnManualKeyIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnManualKeyEntry  1  }
+
+
+	fnVpnManualKeyName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnManualKeyEntry  2  }
+
+
+	fnVpnManualKeyEngage	OBJECT-TYPE	
+		SYNTAX			INTEGER  { disable ( 0 ) , enable ( 1 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnManualKeyEntry  3  }
+
+
+	fnVpnManualKeyLocalSPI	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnManualKeyEntry  4  }
+
+
+	fnVpnManualKeyRemoteSPI	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnManualKeyEntry  5  }
+
+
+	fnVpnManualKeyRgw	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnManualKeyEntry  6  }
+
+
+	fnVpnManualKeyReplayDet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Replay detection"
+		::=  {  fnVpnManualKeyEntry  7  }
+
+
+	fnVpnManualKeyEncrpAlgorithm	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Encryption Algorithm"
+		::=  {  fnVpnManualKeyEntry  8  }
+
+
+	fnVpnManualKeyConcentrator	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnManualKeyEntry  9  }
+
+	fnVpnRemoteGWTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnVpnRemoteGWEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Description"
+		::=  { fnVpnIPSEC  4 }
+
+	fnVpnRemoteGWEntry	OBJECT-TYPE
+		SYNTAX		FnVpnRemoteGWEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnVpnRemoteGWIndex  }
+		::=  { fnVpnRemoteGWTable 1 }
+
+	FnVpnRemoteGWEntry  ::=  SEQUENCE {
+		fnVpnRemoteGWIndex  INTEGER,
+		fnVpnRemoteGWName  DisplayString,
+		fnVpnRemoteGWIp  IpAddress,
+		fnVpnRemoteGWMode  INTEGER,
+		fnVpnRemoteGWPh1Encrp1  EncrytionAlgorithm,
+		fnVpnRemoteGWPh1Auth1  AuthAlgorithm,
+		fnVpnRemoteGWPh1Encrp2  EncrytionAlgorithm,
+		fnVpnRemoteGWPh1Auth2  AuthAlgorithm,
+		fnVpnRemoteGWPh1Encrp3  EncrytionAlgorithm,
+		fnVpnRemoteGWPh1Auth3  AuthAlgorithm,
+		fnVpnRemoteGWDhGrp  INTEGER,
+		fnVpnRemoteGWKeylife  INTEGER,
+		fnVpnRemoteGWPreKey  OCTET STRING,
+		fnVpnRemoteGWLocalID  DisplayString,
+		fnVpnRemoteGWNatT  ItemState,
+		fnVpnRemoteGWKAFreq  INTEGER,
+		fnVpnRemoteGWType  INTEGER,
+		fnVpnRemoteGWUserGrp  DisplayString,
+		fnVpnRemoteGWAuthMethod  INTEGER,
+		fnVpnRemoteGWCertName  INTEGER,
+		fnVpnRemoteGWPeerOpt  INTEGER,
+		fnVpnRemoteGWPeerGrpName  INTEGER,
+		fnVpnRemoteGWPeerId  DisplayString,
+		fnVpnRemoteGWXAuth  INTEGER,
+		fnVpnRemoteGWXAuthUserName  DisplayString,
+		fnVpnRemoteGWXAuthPasswd  OCTET STRING,
+		fnVpnRemoteGWXAuthPap  INTEGER,
+		fnVpnRemoteGWDeadPeerDet  ItemState,
+		fnVpnRemoteGWDpdIdleWorry  INTEGER,
+		fnVpnRemoteGWDpdRetryCound  INTEGER,
+		fnVpnRemoteGWDpdRetryInt  INTEGER,
+		fnVpnRemoteGWDpdIdleCleanup  INTEGER
+		}
+
+
+	fnVpnRemoteGWIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnVpnRemoteGWEntry  1  }
+
+
+	fnVpnRemoteGWName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnVpnRemoteGWEntry  2  }
+
+
+	fnVpnRemoteGWIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"This entry is valid only when remote gateway type is set to staticIP"
+		::=  {  fnVpnRemoteGWEntry  3  }
+
+
+	fnVpnRemoteGWMode	OBJECT-TYPE	
+		SYNTAX			INTEGER  { main ( 1 ) , aggressive ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  4  }
+
+
+	fnVpnRemoteGWPh1Encrp1	OBJECT-TYPE	
+		SYNTAX			EncrytionAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  5  }
+
+
+	fnVpnRemoteGWPh1Auth1	OBJECT-TYPE	
+		SYNTAX			AuthAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  6  }
+
+
+	fnVpnRemoteGWPh1Encrp2	OBJECT-TYPE	
+		SYNTAX			EncrytionAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  7  }
+
+
+	fnVpnRemoteGWPh1Auth2	OBJECT-TYPE	
+		SYNTAX			AuthAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  8  }
+
+
+	fnVpnRemoteGWPh1Encrp3	OBJECT-TYPE	
+		SYNTAX			EncrytionAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  9  }
+
+
+	fnVpnRemoteGWPh1Auth3	OBJECT-TYPE	
+		SYNTAX			AuthAlgorithm
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  10  }
+
+
+	fnVpnRemoteGWDhGrp	OBJECT-TYPE	
+		SYNTAX			INTEGER  { group1 ( 1 ) , group2 ( 2 ) , group5 ( 5 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  11  }
+
+
+	fnVpnRemoteGWKeylife	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 180 .. 180000  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Keylife in seconds"
+		::=  {  fnVpnRemoteGWEntry  12  }
+
+
+	fnVpnRemoteGWPreKey	OBJECT-TYPE	
+		SYNTAX			OCTET STRING
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Pre-shared key value.  The entry is valid when the authentication method is selected as Preshared-Key"
+		::=  {  fnVpnRemoteGWEntry  13  }
+
+
+	fnVpnRemoteGWLocalID	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			optional
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  14  }
+
+
+	fnVpnRemoteGWNatT	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off Nat traversal"
+		::=  {  fnVpnRemoteGWEntry  15  }
+
+
+	fnVpnRemoteGWKAFreq	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Keep alive frequency in seconds"
+		::=  {  fnVpnRemoteGWEntry  16  }
+
+
+	fnVpnRemoteGWType	OBJECT-TYPE	
+		SYNTAX			INTEGER  { staticIP ( 1 ) , dialupUser ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The remote gateway type."
+		::=  {  fnVpnRemoteGWEntry  17  }
+
+
+	fnVpnRemoteGWUserGrp	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"This entry is valid only when remote gateway type is dialUpUser"
+		::=  {  fnVpnRemoteGWEntry  18  }
+
+
+	fnVpnRemoteGWAuthMethod	OBJECT-TYPE	
+		SYNTAX			INTEGER  { preshared-key ( 1 ) , rsa ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Authentication method"
+		::=  {  fnVpnRemoteGWEntry  19  }
+
+
+	fnVpnRemoteGWCertName	OBJECT-TYPE	
+		SYNTAX			INTEGER  { preshared-key ( 1 ) , rsa ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Certificate name. This entry is valid when authentication method is selected as RSA-Signature"
+		::=  {  fnVpnRemoteGWEntry  20  }
+
+
+	fnVpnRemoteGWPeerOpt	OBJECT-TYPE	
+		SYNTAX			INTEGER  { acceptAnyPeerId ( 1 ) , acceptThisPeerId ( 2 ) , acceptPeerIdInGrp ( 3 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Peer option"
+		::=  {  fnVpnRemoteGWEntry  21  }
+
+
+	fnVpnRemoteGWPeerGrpName	OBJECT-TYPE	
+		SYNTAX			INTEGER  { acceptAnyPeerId ( 1 ) , acceptThisPeerId ( 2 ) , acceptPeerIdInGrp ( 3 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"When peer option is chosen as acceptPeerIdInDialupGroup, this entry is the dialup group name."
+		::=  {  fnVpnRemoteGWEntry  22  }
+
+
+	fnVpnRemoteGWPeerId	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"When peer option is chosen as acceptThisPeerID, this is the peer ID that is to be accepted."
+		::=  {  fnVpnRemoteGWEntry  23  }
+
+
+	fnVpnRemoteGWXAuth	OBJECT-TYPE	
+		SYNTAX			INTEGER  { enableAsClient ( 1 ) , enableAsServer ( 2 ) , diable ( 3 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"When Remote Gateway is static IP, user can select either Disable, Enable as Client or Enable as Server in XAuth. In Enable as Client, user will have to enter the username and the passwords. In Enable as Server, user will have to select from PAP or CHAP.
+When Remote Gateway is Dialup user, user can select either Disable or Enable as Server (Enable as Client will be disabled). In Enable as Server, user will have to enter the username and the passwords."
+		::=  {  fnVpnRemoteGWEntry  24  }
+
+
+	fnVpnRemoteGWXAuthUserName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  25  }
+
+
+	fnVpnRemoteGWXAuthPasswd	OBJECT-TYPE	
+		SYNTAX			OCTET STRING
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  26  }
+
+
+	fnVpnRemoteGWXAuthPap	OBJECT-TYPE	
+		SYNTAX			INTEGER  { pap ( 1 ) , chap ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnRemoteGWEntry  27  }
+
+
+	fnVpnRemoteGWDeadPeerDet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off dead peer detection"
+		::=  {  fnVpnRemoteGWEntry  28  }
+
+
+	fnVpnRemoteGWDpdIdleWorry	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"There are four options in Dead Peer Detection: Idle Worry, Retry Count, Retry Interval and Idle Cleanup"
+		::=  {  fnVpnRemoteGWEntry  29  }
+
+
+	fnVpnRemoteGWDpdRetryCound	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"There are four options in Dead Peer Detection: Idle Worry, Retry Count, Retry Interval and Idle Cleanup"
+		::=  {  fnVpnRemoteGWEntry  30  }
+
+
+	fnVpnRemoteGWDpdRetryInt	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"There are four options in Dead Peer Detection: Idle Worry, Retry Count, Retry Interval and Idle Cleanup"
+		::=  {  fnVpnRemoteGWEntry  31  }
+
+
+	fnVpnRemoteGWDpdIdleCleanup	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"There are four options in Dead Peer Detection: Idle Worry, Retry Count, Retry Interval and Idle Cleanup"
+		::=  {  fnVpnRemoteGWEntry  32  }
+
+	fnVpnConTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnVpnConEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"VPN Concentrator table"
+		::=  { fnVpnIPSEC  5 }
+
+	fnVpnConEntry	OBJECT-TYPE
+		SYNTAX		FnVpnConEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"VPN concentrator entry"
+		INDEX		{  fnVpnConIndex  }
+		::=  { fnVpnConTable 1 }
+
+	FnVpnConEntry  ::=  SEQUENCE {
+		fnVpnConIndex  INTEGER,
+		fnVpnConName  DisplayString,
+		fnVpnConMembers  DisplayString
+		}
+
+
+	fnVpnConIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnVpnConEntry  1  }
+
+
+	fnVpnConName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Concentrator name"
+		::=  {  fnVpnConEntry  2  }
+
+
+	fnVpnConMembers	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 7000  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"VPN concentrator members. The names need to be separated by a separator, such as a ,."
+		::=  {  fnVpnConEntry  3  }
+
+	fnVpnDialupMonTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnVpnDialupMonEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Dialup monitor table"
+		::=  { fnVpnIPSEC  6 }
+
+	fnVpnDialupMonEntry	OBJECT-TYPE
+		SYNTAX		FnVpnDialupMonEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnVpnDialupMonIndex  }
+		::=  { fnVpnDialupMonTable 1 }
+
+	FnVpnDialupMonEntry  ::=  SEQUENCE {
+		fnVpnDialupMonIndex  INTEGER,
+		fnVpnDialupMonRGwName  DisplayString,
+		fnVpnDialupMonLifetime  INTEGER,
+		fnVpnDialupMonTimeout  INTEGER,
+		fnVpnDialupMonProxyIdSrc  DisplayString,
+		fnVpnDialupMonProxyIdDst  DisplayString
+		}
+
+
+	fnVpnDialupMonIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnVpnDialupMonEntry  1  }
+
+
+	fnVpnDialupMonRGwName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Remote gateway name"
+		::=  {  fnVpnDialupMonEntry  2  }
+
+
+	fnVpnDialupMonLifetime	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Dialup VPN life time in seconds"
+		::=  {  fnVpnDialupMonEntry  3  }
+
+
+	fnVpnDialupMonTimeout	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"time before the next key exchange in seconds"
+		::=  {  fnVpnDialupMonEntry  4  }
+
+
+	fnVpnDialupMonProxyIdSrc	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"actual IP address or subnet address of the remote peer"
+		::=  {  fnVpnDialupMonEntry  5  }
+
+
+	fnVpnDialupMonProxyIdDst	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"the actual IP address or subnet address of the local peer."
+		::=  {  fnVpnDialupMonEntry  6  }
+
+	fnVpnPPTPStatus	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnVpnPPTP  1  }
+
+	fnVpnPPTPUserGrp	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"PPTP user group"
+		::=  {  fnVpnPPTP  2  }
+
+	fnVpnPPTPStartIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Starting IP of the PPTP range"
+		::=  {  fnVpnPPTP  3  }
+
+	fnVpnPPTPEndIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Ending IP of the PPTP range"
+		::=  {  fnVpnPPTP  4  }
+
+	fnVpnL2TPStatus	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"L2TP status"
+		::=  {  fnVpnL2TP  1  }
+
+	fnVpnL2TPUserGrp	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"L2TP user group"
+		::=  {  fnVpnL2TP  2  }
+
+	fnVpnL2TPStartIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Starting IP of L2TP range"
+		::=  {  fnVpnL2TP  3  }
+
+	fnVpnL2TPEndIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Ending IP of L2TP range"
+		::=  {  fnVpnL2TP  4  }
+
+	fnVpnCertTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnVpnCertEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Local certificates table"
+		::=  { fnVpnCert  1 }
+
+	fnVpnCertEntry	OBJECT-TYPE
+		SYNTAX		FnVpnCertEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnVpnCertName  }
+		::=  { fnVpnCertTable 1 }
+
+	FnVpnCertEntry  ::=  SEQUENCE {
+		fnVpnCertName  INTEGER,
+		fnVpnCertIssuer  DisplayString,
+		fnVpnCertCommonName  DisplayString,
+		fnVpnCertType  DisplayString,
+		fnVpnCertSerialNo  INTEGER,
+		fnVpnCertExpDate  DisplayString,
+		fnVpnCertStatus  INTEGER
+		}
+
+
+	fnVpnCertName	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Local certificate name"
+		::=  {  fnVpnCertEntry  1  }
+
+
+	fnVpnCertIssuer	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnVpnCertEntry  2  }
+
+
+	fnVpnCertCommonName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnVpnCertEntry  3  }
+
+
+	fnVpnCertType	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnCertEntry  4  }
+
+
+	fnVpnCertSerialNo	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnCertEntry  5  }
+
+
+	fnVpnCertExpDate	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Expiry date"
+		::=  {  fnVpnCertEntry  6  }
+
+
+	fnVpnCertStatus	OBJECT-TYPE	
+		SYNTAX			INTEGER  { ok ( 1 ) , pending ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnVpnCertEntry  7  }
+
+	fnNidsGen	OBJECT IDENTIFIER
+		::=  {  fnNidsDetection  1  }
+
+	fnNidsSigTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnNidsSigEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Attack signature table"
+		::=  { fnNidsDetection  2 }
+
+	fnNidsSigEntry	OBJECT-TYPE
+		SYNTAX		FnNidsSigEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnNidsSigGrpName, fnNidsSigAttackId  }
+		::=  { fnNidsSigTable 1 }
+
+	FnNidsSigEntry  ::=  SEQUENCE {
+		fnNidsSigGrpName  DisplayString,
+		fnNidsSigAttackId  INTEGER,
+		fnNidsSigAttackName  INTEGER,
+		fnNidsSigAttackRuleState  ItemState
+		}
+
+
+	fnNidsSigGrpName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255 ) )
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Sinature group name"
+		::=  {  fnNidsSigEntry  1  }
+
+
+	fnNidsSigAttackId	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Attack ID"
+		::=  {  fnNidsSigEntry  2  }
+
+
+	fnNidsSigAttackName	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Attack name"
+		::=  {  fnNidsSigEntry  3  }
+
+
+	fnNidsSigAttackRuleState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off this type of attack checking"
+		::=  {  fnNidsSigEntry  4  }
+
+	fnNidsSigUserDefTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnNidsSigUserDefEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"User defined signature table"
+		::=  { fnNidsDetection  3 }
+
+	fnNidsSigUserDefEntry	OBJECT-TYPE
+		SYNTAX		FnNidsSigUserDefEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnNidsSigUserDefName  }
+		::=  { fnNidsSigUserDefTable 1 }
+
+	FnNidsSigUserDefEntry  ::=  SEQUENCE {
+		fnNidsSigUserDefName  INTEGER,
+		fnNidsSigUserDefSum  DisplayString,
+		fnNidsSigUserDefProto  DisplayString
+		}
+
+
+	fnNidsSigUserDefName	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"User defined signature name or abbreviation"
+		::=  {  fnNidsSigUserDefEntry  1  }
+
+
+	fnNidsSigUserDefSum	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"User defined signature summary"
+		::=  {  fnNidsSigUserDefEntry  2  }
+
+
+	fnNidsSigUserDefProto	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"User defined signature protocol: tcp/udp"
+		::=  {  fnNidsSigUserDefEntry  3  }
+
+	fnNidsIdpState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off IDP"
+		::=  {  fnNidsPrevention  1  }
+
+	fnNidsIdpTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnNidsIdpEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Description"
+		::=  { fnNidsPrevention  2 }
+
+	fnNidsIdpEntry	OBJECT-TYPE
+		SYNTAX		FnNidsIdpEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnNidsIdpSigName  }
+		::=  { fnNidsIdpTable 1 }
+
+	FnNidsIdpEntry  ::=  SEQUENCE {
+		fnNidsIdpSigName  INTEGER,
+		fnNidsIdpSigSum  DisplayString,
+		fnNidsIdpSigProto  DisplayString,
+		fnNidsIdpSigState  ItemState,
+		fnNidsIdpSigThreshold  INTEGER,
+		fnNidsIdpSigQSize  INTEGER,
+		fnNidsIdpSigKeepAlive  INTEGER
+		}
+
+
+	fnNidsIdpSigName	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"IDP signature name"
+		::=  {  fnNidsIdpEntry  1  }
+
+
+	fnNidsIdpSigSum	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"IDP signature summary"
+		::=  {  fnNidsIdpEntry  2  }
+
+
+	fnNidsIdpSigProto	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"IDP signature protocol"
+		::=  {  fnNidsIdpEntry  3  }
+
+
+	fnNidsIdpSigState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnNidsIdpEntry  4  }
+
+
+	fnNidsIdpSigThreshold	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnNidsIdpEntry  5  }
+
+
+	fnNidsIdpSigQSize	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnNidsIdpEntry  6  }
+
+
+	fnNidsIdpSigKeepAlive	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Keepalive seconds"
+		::=  {  fnNidsIdpEntry  7  }
+
+	fnNidsRespCfg	OBJECT-TYPE	
+		SYNTAX			INTEGER  { all ( 1 ) , tcp ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Configure Packets Assurance to control whether the NIDS monitors all network traffic
+received by the monitored interface or just the TCP traffic received by the monitored
+interface and accepted by firewall policies."
+		::=  {  fnNidsResponse  1  }
+
+	fnNidsRespAlertMsg	OBJECT-TYPE	
+		SYNTAX			INTEGER  { summary ( 1 ) , full ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Set  to Summary or Full to control the amount of information recorded in NIDS messages."
+		::=  {  fnNidsResponse  2  }
+
+	fnNidsRespAlertSrcAddrState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"For Address Obfuscation, select source IP to hide source  addresses in NIDS messages."
+		::=  {  fnNidsResponse  3  }
+
+	fnNidsRespAlertDstAddrState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"For Address Obfuscation, select destination IP to hide destination  addresses in NIDS messages."
+		::=  {  fnNidsResponse  4  }
+
+	fnNidsRespLogMsg	OBJECT-TYPE	
+		SYNTAX			INTEGER  { summary ( 1 ) , full ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Set  to Summary or Full to control the amount of information recorded in NIDS messages."
+		::=  {  fnNidsResponse  5  }
+
+	fnNidsRespLogSrcAddrState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"For Address Obfuscation, select source IP to hide source  addresses in NIDS messages."
+		::=  {  fnNidsResponse  6  }
+
+	fnNidsRespLogDstAddrState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"For Address Obfuscation, select source IP to hide destination addresses in NIDS messages."
+		::=  {  fnNidsResponse  7  }
+
+	fnAvFileBlkRuleTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnAvFileBlkRuleEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"The antivirus rule table. The antivirus rule should correspond to the firewall policies that have antivirus protection enabled."
+		::=  { fnAvFileBlock  1 }
+
+	fnAvFileBlkRuleEntry	OBJECT-TYPE
+		SYNTAX		FnAvFileBlkRuleEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnAvFbRuleIndex  }
+		::=  { fnAvFileBlkRuleTable 1 }
+
+	FnAvFileBlkRuleEntry  ::=  SEQUENCE {
+		fnAvFbRuleIndex  INTEGER,
+		fnAvFbRuleFilePat  DisplayString,
+		fnAvFbRuleHttpBlk  ItemState,
+		fnAvFbRuleFtpBlk  ItemState,
+		fnAvFbRuleSmtpBlk  ItemState,
+		fnAvFbRulePop3Blk  ItemState,
+		fnAvFbRuleImapBlk  ItemState
+		}
+
+
+	fnAvFbRuleIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Protection rule index"
+		::=  {  fnAvFileBlkRuleEntry  1  }
+
+
+	fnAvFbRuleFilePat	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"File pattern"
+		::=  {  fnAvFileBlkRuleEntry  2  }
+
+
+	fnAvFbRuleHttpBlk	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvFileBlkRuleEntry  4  }
+
+
+	fnAvFbRuleFtpBlk	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvFileBlkRuleEntry  5  }
+
+
+	fnAvFbRuleSmtpBlk	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvFileBlkRuleEntry  6  }
+
+
+	fnAvFbRulePop3Blk	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvFileBlkRuleEntry  9  }
+
+
+	fnAvFbRuleImapBlk	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvFileBlkRuleEntry  12  }
+
+	fnAvQuarantineTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnAvQuarantineEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Description"
+		::=  { fnAvQuatantine  1 }
+
+	fnAvQuarantineEntry	OBJECT-TYPE
+		SYNTAX		FnAvQuarantineEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnAvQuarIndex  }
+		::=  { fnAvQuarantineTable 1 }
+
+	FnAvQuarantineEntry  ::=  SEQUENCE {
+		fnAvQuarIndex  INTEGER,
+		fnAvQuarFileName  DisplayString,
+		fnAvQuarTime  DisplayString,
+		fnAvQuarService  DisplayString,
+		fnAvQuarStatus  DisplayString,
+		fnAvQuarStatusDetail  INTEGER,
+		fnAvQuarDc  DisplayString,
+		fnAvQuarTtl  INTEGER
+		}
+
+
+	fnAvQuarIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnAvQuarantineEntry  1  }
+
+
+	fnAvQuarFileName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"quarantined file name"
+		::=  {  fnAvQuarantineEntry  2  }
+
+
+	fnAvQuarTime	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The date and time the file got quarantined"
+		::=  {  fnAvQuarantineEntry  3  }
+
+
+	fnAvQuarService	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineEntry  4  }
+
+
+	fnAvQuarStatus	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineEntry  5  }
+
+
+	fnAvQuarStatusDetail	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineEntry  6  }
+
+
+	fnAvQuarDc	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineEntry  7  }
+
+
+	fnAvQuarTtl	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineEntry  8  }
+
+	fnAvQuarantineCfg	OBJECT IDENTIFIER
+		::=  {  fnAvQuatantine  2  }
+
+	fnAVVirusListTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnAVVirusListEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Virus list"
+		::=  { fnAVConfig  1 }
+
+	fnAVVirusListEntry	OBJECT-TYPE
+		SYNTAX		FnAVVirusListEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnAvVirusIndex  }
+		::=  { fnAVVirusListTable 1 }
+
+	FnAVVirusListEntry  ::=  SEQUENCE {
+		fnAvVirusIndex  INTEGER,
+		fnAvVirusName  INTEGER
+		}
+
+
+	fnAvVirusIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnAVVirusListEntry  1  }
+
+
+	fnAvVirusName	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Virus name"
+		::=  {  fnAVVirusListEntry  2  }
+
+	fnAvCfgMsgTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnAvCfgMsgEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Description"
+		::=  { fnAVConfig  2 }
+
+	fnAvCfgMsgEntry	OBJECT-TYPE
+		SYNTAX		FnAvCfgMsgEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnAvCfgMsgIndex  }
+		::=  { fnAvCfgMsgTable 1 }
+
+	FnAvCfgMsgEntry  ::=  SEQUENCE {
+		fnAvCfgMsgIndex  INTEGER,
+		fnAvCfgMsgName  DisplayString,
+		fnAvCfgMsgService  DisplayString,
+		fnAvCfgMsgDescription  DisplayString
+		}
+
+
+	fnAvCfgMsgIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnAvCfgMsgEntry  1  }
+
+
+	fnAvCfgMsgName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnAvCfgMsgEntry  2  }
+
+
+	fnAvCfgMsgService	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvCfgMsgEntry  3  }
+
+
+	fnAvCfgMsgDescription	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvCfgMsgEntry  4  }
+
+	fnAvCfgBlkFileHttp	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 100  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The file will be blocked if the file size over the limit, which is in terms of the percentage of the memory size (10M)."
+		::=  {  fnAVConfig  5  }
+
+	fnAvCfgBlkFileFtp	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 100  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The file will be blocked if the file size over the limit, which is in terms of the percentage of the memory size (10M)."
+		::=  {  fnAVConfig  6  }
+
+	fnAvCfgBlkEmailImap	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 100  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The email will be blocked if the email size over the limit, which is in terms of the percentage of the memory size (2M)."
+		::=  {  fnAVConfig  7  }
+
+	fnAvCfgBlkEmailPop3	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 100  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The email will be blocked if the email size over the limit, which is in terms of the percentage of the memory size (2M)."
+		::=  {  fnAVConfig  8  }
+
+	fnAvCfgBlkEmailSmtp	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 100  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The email will be blocked if the email size over the limit, which is in terms of the percentage of the memory size (2M)."
+		::=  {  fnAVConfig  9  }
+
+	fnWebFilterBannedWordsTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnWebFilterBannedWordsEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Banned words list for content block"
+		::=  { fnWebFilterBWords  1 }
+
+	fnWebfilterBannedWordsEntry	OBJECT-TYPE
+		SYNTAX		FnWebFilterBannedWordsEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnWebFilterBannedWordIndex  }
+		::=  { fnWebFilterBannedWordsTable 1 }
+
+	FnWebFilterBannedWordsEntry  ::=  SEQUENCE {
+		fnWebFilterBannedWordIndex  INTEGER,
+		fnWebFilterBannedWords  DisplayString,
+		fnWebFilterBannedWordLan  LanguageCode,
+		fnWebFilterBannedWordState  ItemState
+		}
+
+
+	fnWebFilterBannedWordIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnWebfilterBannedWordsEntry  1  }
+
+
+	fnWebFilterBannedWords	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Banned words"
+		::=  {  fnWebfilterBannedWordsEntry  2  }
+
+
+	fnWebFilterBannedWordLan	OBJECT-TYPE	
+		SYNTAX			LanguageCode
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Language of the banned words"
+		::=  {  fnWebfilterBannedWordsEntry  3  }
+
+
+	fnWebFilterBannedWordState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off the banned word"
+		::=  {  fnWebfilterBannedWordsEntry  4  }
+
+	fnWebFilterUrlBlkState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"turn on/off URL blocking."
+		::=  {  fnWebFilterUrlBlk  1  }
+
+	fnWebFilterUrlBlkTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnWebFilterUrlBlkEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Banned url list for content block"
+		::=  { fnWebFilterUrlBlk  2 }
+
+	fnWebFilterUrlBlkEntry	OBJECT-TYPE
+		SYNTAX		FnWebFilterUrlBlkEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnWebFilterUrlBlkIndex  }
+		::=  { fnWebFilterUrlBlkTable 1 }
+
+	FnWebFilterUrlBlkEntry  ::=  SEQUENCE {
+		fnWebFilterUrlBlkIndex  INTEGER,
+		fnWebFilterUrlPat  DisplayString,
+		fnWebFilterUrlState  ItemState
+		}
+
+
+	fnWebFilterUrlBlkIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnWebFilterUrlBlkEntry  1  }
+
+
+	fnWebFilterUrlPat	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Url/Pattern"
+		::=  {  fnWebFilterUrlBlkEntry  2  }
+
+
+	fnWebFilterUrlState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off url block for the entry"
+		::=  {  fnWebFilterUrlBlkEntry  3  }
+
+	fnWebFilterApplet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off java applet filtering"
+		::=  {  fnWebFilterScripts  1  }
+
+	fnWebFilterCookie	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off cookie filtering"
+		::=  {  fnWebFilterScripts  2  }
+
+	fnWebFilterActiveX	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off activeX filtering"
+		::=  {  fnWebFilterScripts  3  }
+
+	fnWebFilterExemptUrlTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnWebFilterExemptUrlEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Exempt url list for url block"
+		::=  { fnWebFilterExemptUrl  1 }
+
+	fnWebFilterExemptUrlEntry	OBJECT-TYPE
+		SYNTAX		FnWebFilterExemptUrlEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnWebFilterExemptUrlIndex  }
+		::=  { fnWebFilterExemptUrlTable 1 }
+
+	FnWebFilterExemptUrlEntry  ::=  SEQUENCE {
+		fnWebFilterExemptUrlIndex  INTEGER,
+		fnWebFilterExemptUrlPat  DisplayString,
+		fnWebFilterExemptUrlState  ItemState
+		}
+
+
+	fnWebFilterExemptUrlIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnWebFilterExemptUrlEntry  1  }
+
+	fnWebFilterExemptUrlPat	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Url/Pattern"
+		::=  {  fnWebFilterExemptUrlEntry  2  }
+
+
+	fnWebFilterExemptUrlState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off url block for the entry"
+		::=  {  fnWebFilterExemptUrlEntry  3  }
+
+	fnLogToRemHostState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off sending the logs to a remote syslog server"
+		::=  {  fnLogSetting  1  }
+
+	fnLogToRemHostAddr	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The ip address of the remote syslog server"
+		::=  {  fnLogSetting  2  }
+
+	fnLogToWebtrendsSrvState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off sending log to remote Webtrends log server"
+		::=  {  fnLogSetting  3  }
+
+	fnLogToWebtrendsSrvAddr	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The ip address of the remote Webtrends server"
+		::=  {  fnLogSetting  4  }
+
+	fnLogToLocalState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off sending log to local memory or hard disk"
+		::=  {  fnLogSetting  5  }
+
+	fnLogTrafficIntToFw	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off logging All Internal Traffic To Firewall"
+		::=  {  fnLogSetting  6  }
+
+	fnLogTrafficExtToFw	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off logging external  traffic to firewall"
+		::=  {  fnLogSetting  7  }
+
+	fnLogAllEvents	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off logging all events"
+		::=  {  fnLogSetting  8  }
+
+	fnLogVirusEvents	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off logging virus incidents"
+		::=  {  fnLogSetting  9  }
+
+	fnLogIntrusions	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off logging intrusion events"
+		::=  {  fnLogSetting  10  }
+
+	fnLogToLocalFileSize	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2000  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The maximum size of the log file in terms of MBytes.  Default value is 10 Mbytes
+This entry applies only to FGTs with hard disk."
+		DEFVAL			{ 10 }
+		::=  {  fnLogSetting  11  }
+
+	fnLogToLocalTime	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Log time interval. After the specified time interval, the current log file is closed and saved and a new one is started. The default log time interval is 10 days.
+This entry applies only to FGTs with hard disk."
+		DEFVAL			{ 10 }
+		::=  {  fnLogSetting  12  }
+
+	fnLogToLocalOpt	OBJECT-TYPE	
+		SYNTAX			INTEGER  { overWrite ( 1 ) , blockTraffic ( 2 ) , doNotLog ( 3 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Log options when disk is full.  Default option is Overwrite"
+		DEFVAL			{ overWrite }
+		::=  {  fnLogSetting  13  }
+
+	fnLogSettingFilter	OBJECT IDENTIFIER
+		::=  {  fnLogSetting  14  }
+
+	fnLSTrafficAddrTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnLSTrafficAddrEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Description"
+		::=  { fnLogSetting  15 }
+
+	fnLSTrafficAddrEntry	OBJECT-TYPE
+		SYNTAX		FnLSTrafficAddrEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnLSTrafficEntryIndex  }
+		::=  { fnLSTrafficAddrTable 1 }
+
+	FnLSTrafficAddrEntry  ::=  SEQUENCE {
+		fnLSTrafficEntryIndex  INTEGER,
+		fnLSTrafficSrcAddr  IpAddress,
+		fnLSTrafficSrcNetmask  IpAddress,
+		fnLSTrafficSrcPort  INTEGER,
+		fnLSTrafficDstAddr  IpAddress,
+		fnLSTrafficDstNetmask  IpAddress,
+		fnLSTrafficDstPort  INTEGER,
+		fnLSTrafficProto  INTEGER
+		}
+
+
+	fnLSTrafficEntryIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnLSTrafficAddrEntry  1  }
+
+
+	fnLSTrafficSrcAddr	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnLSTrafficAddrEntry  2  }
+
+
+	fnLSTrafficSrcNetmask	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnLSTrafficAddrEntry  3  }
+
+
+	fnLSTrafficSrcPort	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 65536  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnLSTrafficAddrEntry  4  }
+
+
+	fnLSTrafficDstAddr	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnLSTrafficAddrEntry  5  }
+
+
+	fnLSTrafficDstNetmask	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnLSTrafficAddrEntry  6  }
+
+
+	fnLSTrafficDstPort	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 65536  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnLSTrafficAddrEntry  7  }
+
+
+	fnLSTrafficProto	OBJECT-TYPE	
+		SYNTAX			INTEGER  { tcp ( 1 ) , udp ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnLSTrafficAddrEntry  8  }
+
+	fnLogHDTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnLogHDEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"This table is valid for those FortiGates that contain a hard disk for recording logs, such FGT-200"
+		::=  { fnLog  1 }
+
+	fnLogHDEntry	OBJECT-TYPE
+		SYNTAX		FnLogHDEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"This row contains the log file information on hard disk"
+		INDEX		{  fnLogHDEntryIndex  }
+		::=  { fnLogHDTable 1 }
+
+	FnLogHDEntry  ::=  SEQUENCE {
+		fnLogHDEntryIndex  INTEGER,
+		fnLogHDLastAccTime  DisplayString,
+		fnLogHDFileSize  INTEGER,
+		fnLogHDFileName  DisplayString
+		}
+
+
+	fnLogHDEntryIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnLogHDEntry  1  }
+
+
+	fnLogHDLastAccTime	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The last access time of the log file on the hard disk"
+		::=  {  fnLogHDEntry  2  }
+
+
+	fnLogHDFileSize	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The size of the log file on hard disk"
+		::=  {  fnLogHDEntry  3  }
+
+
+	fnLogHDFileName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The log file name on hard disk"
+		::=  {  fnLogHDEntry  4  }
+
+	fnLogMemTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnLogMemEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"This table is valid for those FortiGates that support log to memory, such as FGT-300"
+		::=  { fnLog  2 }
+
+	fnLogMemEntry	OBJECT-TYPE
+		SYNTAX		FnLogMemEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"This row contains log event that is stored in memory"
+		INDEX		{  fnLogMemEntryIndex  }
+		::=  { fnLogMemTable 1 }
+
+	FnLogMemEntry  ::=  SEQUENCE {
+		fnLogMemEntryIndex  INTEGER,
+		fnLogMemDetail  DisplayString
+		}
+
+
+	fnLogMemEntryIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnLogMemEntry  1  }
+
+
+	fnLogMemDetail	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The detailed log info of the entry"
+		::=  {  fnLogMemEntry  2  }
+
+	fnAlertEmaiCfg	OBJECT IDENTIFIER
+		::=  {  fnAlertEmai  1  }
+
+	fnAlertEmailCat	OBJECT IDENTIFIER
+		::=  {  fnAlertEmai  2  }
+
+	fnSysMonCPUUsage	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 1000  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The current CPU usage statistics in percentage"
+		::=  {  fnSysMonitor  1  }
+
+	fnSysMonCPUIdle	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The current CPU idle statistics in percentage"
+		::=  {  fnSysMonitor  2  }
+
+	fnSysMonCPUInt	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The current CPU interupt statistics in percentage"
+		::=  {  fnSysMonitor  3  }
+
+	fnSysMonMemUsage	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The current memory usage statistics"
+		::=  {  fnSysMonitor  4  }
+
+	fnSysMonUpTime	OBJECT-TYPE	
+		SYNTAX			TimeTicks
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"System up time since last start"
+		::=  {  fnSysMonitor  5  }
+
+	fnSysMonSessionNum	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The total number of sessions"
+		::=  {  fnSysMonitor  6  }
+
+	fnSysMonConnTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysMonConnEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Connection table"
+		::=  { fnSysMonitor  7 }
+
+	fnSysMonConnEntry	OBJECT-TYPE
+		SYNTAX		FnSysMonConnEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnSysMonConnIndex  }
+		::=  { fnSysMonConnTable 1 }
+
+	FnSysMonConnEntry  ::=  SEQUENCE {
+		fnSysMonConnIndex  INTEGER,
+		fnSysMonConnProto  INTEGER,
+		fnSysMonConnFromAddr  IpAddress,
+		fnSysMonConnFromPort  INTEGER,
+		fnSysMonConnToAddr  IpAddress,
+		fnSysMonConnToPort  INTEGER,
+		fnSysMonConnExp  INTEGER
+		}
+
+
+	fnSysMonConnIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysMonConnEntry  1  }
+
+
+	fnSysMonConnProto	OBJECT-TYPE	
+		SYNTAX			INTEGER  { tcp ( 1 ) , udp ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The protocol of the connection"
+		::=  {  fnSysMonConnEntry  2  }
+
+
+	fnSysMonConnFromAddr	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"From IP address"
+		::=  {  fnSysMonConnEntry  3  }
+
+
+	fnSysMonConnFromPort	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 65535  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"From Port"
+		::=  {  fnSysMonConnEntry  4  }
+
+
+	fnSysMonConnToAddr	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"To IP address"
+		::=  {  fnSysMonConnEntry  5  }
+
+
+	fnSysMonConnToPort	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 65535  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"To port"
+		::=  {  fnSysMonConnEntry  6  }
+
+
+	fnSysMonConnExp	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The time,  seconds, before the connection expires."
+		::=  {  fnSysMonConnEntry  7  }
+
+	fnSysNetworkRoutingTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysNetworkRoutingEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Routing table."
+		::=  { fnSysNetworkRouting  1 }
+
+	fnSysNetworkRoutingEntry	OBJECT-TYPE
+		SYNTAX		FnSysNetworkRoutingEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Routing information"
+		INDEX		{  fnSysNetworkRoutingIndex  }
+		::=  { fnSysNetworkRoutingTable 1 }
+
+	FnSysNetworkRoutingEntry  ::=  SEQUENCE {
+		fnSysNetworkRoutingIndex  INTEGER,
+		fnSysNetworkRoutingSrcIP  IpAddress,
+		fnSysNetworkRoutingSrcNetmask  IpAddress,
+		fnSysNetworkRoutingDstIP  IpAddress,
+		fnSysNetworkRoutingDstNetmask  IpAddress,
+		fnSysNetworkRoutingGW1  IpAddress,
+		fnSysNetworkRoutingGW2  IpAddress,
+		fnSysNetworkRoutingDev1  DisplayString,
+		fnSysNetworkRoutingDev2  DisplayString
+		}
+
+
+	fnSysNetworkRoutingIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Interface number which uniquely identifies an routing entry."
+		::=  {  fnSysNetworkRoutingEntry  1  }
+
+
+	fnSysNetworkRoutingSrcIP	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnSysNetworkRoutingEntry  2  }
+
+
+	fnSysNetworkRoutingSrcNetmask	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnSysNetworkRoutingEntry  3  }
+
+
+	fnSysNetworkRoutingDstIP	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkRoutingEntry  4  }
+
+
+	fnSysNetworkRoutingDstNetmask	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkRoutingEntry  5  }
+
+
+	fnSysNetworkRoutingGW1	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkRoutingEntry  6  }
+
+
+	fnSysNetworkRoutingGW2	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkRoutingEntry  7  }
+
+
+	fnSysNetworkRoutingDev1	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkRoutingEntry  8  }
+
+
+	fnSysNetworkRoutingDev2	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkRoutingEntry  9  }
+
+	fnSysNetworkRoutingRIPSrv	OBJECT-TYPE	
+		SYNTAX			INTEGER  { disable ( 2 ) , enable ( 1 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Rip server: enable/disable"
+		::=  {  fnSysNetworkRouting  3  }
+
+	fnSysNetworkRoutingGWTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysNetworkRoutingGWEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Routing gateway table"
+		::=  { fnSysNetworkRouting  4 }
+
+	fnSysNetworkRoutingGWEntry	OBJECT-TYPE
+		SYNTAX		FnSysNetworkRoutingGWEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnSysNetworkRoutingGWIndex  }
+		::=  { fnSysNetworkRoutingGWTable 1 }
+
+	FnSysNetworkRoutingGWEntry  ::=  SEQUENCE {
+		fnSysNetworkRoutingGWIndex  INTEGER,
+		fnSysNetworkRoutingGWIP  IpAddress,
+		fnSysNetworkRoutingGWDeadDet  ItemState
+		}
+
+
+	fnSysNetworkRoutingGWIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysNetworkRoutingGWEntry  1  }
+
+
+	fnSysNetworkRoutingGWIP	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysNetworkRoutingGWEntry  2  }
+
+
+	fnSysNetworkRoutingGWDeadDet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Dead gateway detection"
+		::=  {  fnSysNetworkRoutingGWEntry  3  }
+
+	fnSysNetworkDhcpStatus	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnSysNetworkDhcp  1  }
+
+	fnSysNetworkDhcpSip	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnSysNetworkDhcp  2  }
+
+	fnSysNetworkDhcpEip	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"%%%"
+		::=  {  fnSysNetworkDhcp  3  }
+
+	fnSysNetworkDhcpLeaseDur	OBJECT-TYPE	
+		SYNTAX			TimeTicks
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Lease duration"
+		::=  {  fnSysNetworkDhcp  4  }
+
+	fnSysNetworkDhcpDomain	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Domain name"
+		::=  {  fnSysNetworkDhcp  5  }
+
+	fnSysNetworkDhcpDNS1	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkDhcp  6  }
+
+	fnSysNetworkDhcpDNS2	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkDhcp  7  }
+
+	fnSysNetworkDhcpDNS3	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysNetworkDhcp  8  }
+
+	fnSysNetworkDhcpDefRoute	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Default route"
+		::=  {  fnSysNetworkDhcp  9  }
+
+	fnSysNetworkDhcpExclRange1S	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Exclusion range1 starting IP"
+		::=  {  fnSysNetworkDhcp  10  }
+
+	fnSysNetworkDhcpExclRange1E	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Exclusion range1 ending IP"
+		::=  {  fnSysNetworkDhcp  11  }
+
+	fnSysNetworkDhcpExclRange2S	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Exclusion range 2 starting IP"
+		::=  {  fnSysNetworkDhcp  12  }
+
+	fnSysNetworkDhcpExclRange2E	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Exclusion range 2 ending IP"
+		::=  {  fnSysNetworkDhcp  13  }
+
+	fnSysNetworkDhcpExclRange3S	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Exclusion range 3 starting IP"
+		::=  {  fnSysNetworkDhcp  14  }
+
+	fnSysNetworkDhcpExclRange3E	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Exclusion range 3 ending IP"
+		::=  {  fnSysNetworkDhcp  15  }
+
+	fnSysNetworkDNSPri	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"primary DNS server IP address."
+		::=  {  fnSysNetworkDNS  1  }
+
+	fnSysNetworkDNSSecPri	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Secondary DNS server IP address."
+		::=  {  fnSysNetworkDNS  2  }
+
+	fnSysConfigTimeVal	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 128  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"System time"
+		::=  {  fnSysConfigTime  1  }
+
+	fnSysConfigTimezone	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"System time zone"
+		::=  {  fnSysConfigTime  2  }
+
+	fnSysConfigTimeDST	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Daylight saving time"
+		::=  {  fnSysConfigTime  3  }
+
+	fnSysConfigTimeNTPSrv	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"NTP server IP addr"
+		::=  {  fnSysConfigTime  4  }
+
+	fnSysConfigTimeNTPInt	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"NTP update interval"
+		::=  {  fnSysConfigTime  5  }
+
+	fnSysConfigNTPState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Synchronize with NTP Server"
+		::=  {  fnSysConfigTime  6  }
+
+	fnSysConfigOptsIdleTimeout	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Admin idle timeout value"
+		::=  {  fnSysConfigOpts  1  }
+
+	fnSysConfigOptsAuthTimeout	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Authentication idle timeout value"
+		::=  {  fnSysConfigOpts  2  }
+
+	fnSysConfigOptsLan	OBJECT-TYPE	
+		SYNTAX			LanguageCode
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Web administration language"
+		::=  {  fnSysConfigOpts  3  }
+
+	fnSysConfigOptsLcdProt	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Enable or disable LCD control buttons protection"
+		::=  {  fnSysConfigOpts  4  }
+
+	fnSysConfigOptsLcdProtPin	OBJECT-TYPE	
+		SYNTAX			OCTET STRING
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"LCD control buttons protection PIN"
+		::=  {  fnSysConfigOpts  5  }
+
+	fnSysConfigAdminUserTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysConfigAdminUserEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Admin user account table."
+		::=  { fnSysConfigAdmin  1 }
+
+	fnSysConfigAdminUserEntry	OBJECT-TYPE
+		SYNTAX		FnSysConfigAdminUserEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Admin user information"
+		INDEX		{  fnSysConfigAdminUserIndex  }
+		::=  { fnSysConfigAdminUserTable 1 }
+
+	FnSysConfigAdminUserEntry  ::=  SEQUENCE {
+		fnSysConfigAdminUserIndex  INTEGER,
+		fnSysConfigAdminUserName  DisplayString,
+		fnSysConfigAdminUserIp  IpAddress,
+		fnSysConfigAdminUserNetmask  IpAddress,
+		fnSysConfigAdminUserPermission  INTEGER
+		}
+
+
+	fnSysConfigAdminUserIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Admin user index"
+		::=  {  fnSysConfigAdminUserEntry  1  }
+
+
+	fnSysConfigAdminUserName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Admin user name"
+		::=  {  fnSysConfigAdminUserEntry  2  }
+
+
+	fnSysConfigAdminUserIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Trusted Host IP addr"
+		::=  {  fnSysConfigAdminUserEntry  3  }
+
+
+	fnSysConfigAdminUserNetmask	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Admin user  netmask"
+		::=  {  fnSysConfigAdminUserEntry  4  }
+
+
+	fnSysConfigAdminUserPermission	OBJECT-TYPE	
+		SYNTAX			INTEGER  { read ( 1 ) , all ( 3 ) , readWrite ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Admin user permission"
+		::=  {  fnSysConfigAdminUserEntry  5  }
+
+	fnSysConfigHAMode	OBJECT-TYPE	
+		SYNTAX			INTEGER  { standalone ( 0 ) , activeActive ( 2 ) , activePassive ( 3 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"HA(High availability) type"
+		::=  {  fnSysConfigHA  1  }
+
+	fnSysConfigHAGrpId	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"HA group ID"
+		::=  {  fnSysConfigHA  2  }
+
+	fnSysConfigHAPasswd	OBJECT-TYPE	
+		SYNTAX			OCTET STRING
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"password for HA"
+		::=  {  fnSysConfigHA  3  }
+
+	fnSysConfigHAMonIf	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The interface name that HA is monitoring"
+		::=  {  fnSysConfigHA  4  }
+
+	fnSysConfigHASchedule	OBJECT-TYPE	
+		SYNTAX			INTEGER  { none ( 1 ) , hub ( 2 ) , leastConn ( 3 ) , roundRobin ( 4 ) , weightRoundRobin ( 5 ) , random ( 6 ) , ip ( 7 ) , ipPort ( 8 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"HA schedule"
+		::=  {  fnSysConfigHA  5  }
+
+	fnSysSnmpState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnSysSnmpGen  1  }
+
+	fnSysSnmpSysName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"System name"
+		::=  {  fnSysSnmpGen  2  }
+
+	fnSysSnmpSysLoc	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"System location"
+		::=  {  fnSysSnmpGen  3  }
+
+	fnSysSnmpInfo	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Contact info"
+		::=  {  fnSysSnmpGen  4  }
+
+	fnSysSnmpGetCom	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Get community"
+		::=  {  fnSysSnmpGen  5  }
+
+	fnSysSnmpTrapCom	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Trap community"
+		::=  {  fnSysSnmpGen  6  }
+
+	fnSysSnmp1stTrapIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"First Trap Receiver IP Address"
+		::=  {  fnSysSnmpGen  7  }
+
+	fnSysSnmp2ndTrapIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Second Trap Receiver IP Address"
+		::=  {  fnSysSnmpGen  8  }
+
+	fnSysSnmp3rdTrapIp	OBJECT-TYPE	
+		SYNTAX			IpAddress
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Third Trap Receiver IP Address"
+		::=  {  fnSysSnmpGen  9  }
+
+	fnSysSnmpv3ACState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off the SNMP v3 feature"
+		::=  {  fnSysSnmpv3AccCtrl  1  }
+
+	fnSysSnmpv3ACTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysSnmpv3ACEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"SNMPv3 access control table"
+		::=  { fnSysSnmpv3AccCtrl  2 }
+
+	fnSysSnmpv3ACEntry	OBJECT-TYPE
+		SYNTAX		FnSysSnmpv3ACEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnSysSnmpACIndex  }
+		::=  { fnSysSnmpv3ACTable 1 }
+
+	FnSysSnmpv3ACEntry  ::=  SEQUENCE {
+		fnSysSnmpACIndex  INTEGER,
+		fnSysSnmpACGrpName  DisplayString,
+		fnSysSnmpACSecLevelAuth  ItemState,
+		fnSysSnmpACSecLevelPriv  ItemState,
+		fnSysSnmpACContexPre  DisplayString,
+		fnSysSnmpACContextMatch  INTEGER,
+		fnSysSnmpACRv  DisplayString,
+		fnSysSnmpACWv  DisplayString,
+		fnSysSnmpACNv  DisplayString
+		}
+
+
+	fnSysSnmpACIndex	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( 0 .. 2147483647  ) 
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Column Description"
+		::=  {  fnSysSnmpv3ACEntry  1  }
+
+
+	fnSysSnmpACGrpName	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Access control group name"
+		::=  {  fnSysSnmpv3ACEntry  2  }
+
+
+	fnSysSnmpACSecLevelAuth	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Security level: auth"
+		::=  {  fnSysSnmpv3ACEntry  3  }
+
+
+	fnSysSnmpACSecLevelPriv	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Security level: privacy"
+		::=  {  fnSysSnmpv3ACEntry  4  }
+
+
+	fnSysSnmpACContexPre	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Context prefix"
+		::=  {  fnSysSnmpv3ACEntry  5  }
+
+
+	fnSysSnmpACContextMatch	OBJECT-TYPE	
+		SYNTAX			INTEGER  { exact ( 1 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Context match mode"
+		::=  {  fnSysSnmpv3ACEntry  6  }
+
+
+	fnSysSnmpACRv	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Read view"
+		::=  {  fnSysSnmpv3ACEntry  7  }
+
+
+	fnSysSnmpACWv	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Write view"
+		::=  {  fnSysSnmpv3ACEntry  8  }
+
+
+	fnSysSnmpACNv	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Notification view"
+		::=  {  fnSysSnmpv3ACEntry  9  }
+
+	fnSysSnmpSecUserTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysSnmpSecUserEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"SNMP security user table"
+		::=  { fnSysSnmpSecurity  1 }
+
+	fnSysSnmpSecUserEntry	OBJECT-TYPE
+		SYNTAX		FnSysSnmpSecUserEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnSysSnmpSecUserName  }
+		::=  { fnSysSnmpSecUserTable 1 }
+
+	FnSysSnmpSecUserEntry  ::=  SEQUENCE {
+		fnSysSnmpSecUserName  DisplayString,
+		fnSysSnmpSecUserSecLevelAuth  ItemState,
+		fnSysSnmpSecUserSecLevelPriv  ItemState,
+		fnSysSnmpSecUserAuthPasswd  OCTET STRING,
+		fnSysSnmpSecUserAuthProto  INTEGER,
+		fnSysSnmpSecUserPrivPasswd  OCTET STRING
+		}
+
+
+	fnSysSnmpSecUserName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255 ) )
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Security user name.  This attribute is the index of the table"
+		::=  {  fnSysSnmpSecUserEntry  1  }
+
+
+	fnSysSnmpSecUserSecLevelAuth	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"User security level: auth"
+		::=  {  fnSysSnmpSecUserEntry  2  }
+
+
+	fnSysSnmpSecUserSecLevelPriv	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"User security level: privacy"
+		::=  {  fnSysSnmpSecUserEntry  3  }
+
+
+	fnSysSnmpSecUserAuthPasswd	OBJECT-TYPE	
+		SYNTAX			OCTET STRING
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"User authentication password"
+		::=  {  fnSysSnmpSecUserEntry  4  }
+
+
+	fnSysSnmpSecUserAuthProto	OBJECT-TYPE	
+		SYNTAX			INTEGER  { hmac-md5-96 ( 1 ) , hmac-sha-96 ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"User authentication protocol"
+		::=  {  fnSysSnmpSecUserEntry  5  }
+
+
+	fnSysSnmpSecUserPrivPasswd	OBJECT-TYPE	
+		SYNTAX			OCTET STRING
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"User privacy password"
+		::=  {  fnSysSnmpSecUserEntry  6  }
+
+	fnSysSnmpSecGrpTable	OBJECT-TYPE
+		SYNTAX		SEQUENCE  OF  FnSysSnmpSecGrpEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Security group table"
+		::=  { fnSysSnmpSecurity  2 }
+
+	fnSysSnmpSecGrpEntry	OBJECT-TYPE
+		SYNTAX		FnSysSnmpSecGrpEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION	"Row Description"
+		INDEX		{  fnSysSnmpSecGrpName  }
+		::=  { fnSysSnmpSecGrpTable 1 }
+
+	FnSysSnmpSecGrpEntry  ::=  SEQUENCE {
+		fnSysSnmpSecGrpName  DisplayString,
+		fnSysSnmpSecGrpMembers  INTEGER
+		}
+
+
+	fnSysSnmpSecGrpName	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255 ) )
+		ACCESS			not-accessible
+		STATUS			mandatory
+		DESCRIPTION		"Security group name.  It's the index of the table"
+		::=  {  fnSysSnmpSecGrpEntry  1  }
+
+
+	fnSysSnmpSecGrpMembers	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Security users that belong to the security group.   The member names should be separated by a separator, such as a , or a space."
+		::=  {  fnSysSnmpSecGrpEntry  2  }
+
+	fnNidsMonIfs	OBJECT-TYPE	
+		SYNTAX			DisplayString
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The monitored interface names.  The namesof the interfaces are separated by ,"
+		::=  {  fnNidsGen  1  }
+
+	fnNidsTypeIP	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The IP type of traffic on which to run Checksum Verifications"
+		::=  {  fnNidsGen  2  }
+
+	fnNidsTypeTcp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The TCP type of traffic on which to run Checksum Verifications"
+		::=  {  fnNidsGen  3  }
+
+	fnNidsTypeUdp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The UDP type of traffic on which to run Checksum Verifications"
+		::=  {  fnNidsGen  4  }
+
+	fnNidsTypeIcmp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The Icmp type of traffic on which to run Checksum Verifications"
+		::=  {  fnNidsGen  5  }
+
+	fnAvQuarCfgInfecFileHttp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  1  }
+
+	fnAvQuarCfgInfecFileFtp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  2  }
+
+	fnAvQuarCfgInfecFileImap	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  3  }
+
+	fnAvQuarCfgInfecFilePop3	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  4  }
+
+	fnAvQuarCfgInfecFileSmtp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  5  }
+
+	fnAvQuarCfgBlkFileHttp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  6  }
+
+	fnAvQuarCfgBlkFileFtp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  7  }
+
+	fnAvQuarCfgBlkFileImap	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  8  }
+
+	fnAvQuarCfgBlkFilePop3	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  9  }
+
+	fnAvQuarCfgBlkFileSmtp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnAvQuarantineCfg  10  }
+
+	fnAvQuarCfgAgeLimit	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"In terms of hours"
+		::=  {  fnAvQuarantineCfg  11  }
+
+	fnAvQuarCfgMaxFileSize	OBJECT-TYPE	
+		SYNTAX			INTEGER  ( -2147483648 .. 2147483647  ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Max file size in terms of MBytes to be quarantined"
+		::=  {  fnAvQuarantineCfg  12  }
+
+	fnAvQuarCfgLowDiskOpt	OBJECT-TYPE	
+		SYNTAX			INTEGER  { overwriteOldestFile ( 1 ) , dropNewFile ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"The action to take when disk space is low."
+		::=  {  fnAvQuarantineCfg  13  }
+
+	fnLogSettingTrafficFilter	OBJECT IDENTIFIER
+		::=  {  fnLogSettingFilter  1  }
+
+	fnLogSettingEventFilter	OBJECT IDENTIFIER
+		::=  {  fnLogSettingFilter  2  }
+
+	fnLogSettingVirusFilter	OBJECT IDENTIFIER
+		::=  {  fnLogSettingFilter  3  }
+
+	fnLogSettingWebFilter	OBJECT IDENTIFIER
+		::=  {  fnLogSettingFilter  4  }
+
+	fnLSIdsFilterState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnLogSettingFilter  5  }
+
+	fnLSFilterSeverity	OBJECT-TYPE	
+		SYNTAX			INTEGER  { none ( 1 ) , emergency ( 2 ) , alert ( 3 ) , critical ( 4 ) , error ( 5 ) , warning ( 6 ) , notification ( 7 ) , infomation ( 8 ) , debugging ( 9 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnLogSettingFilter  6  }
+
+	fnAlertEmaiCfgSmtpSrv	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"SMTP server ip address for alert."
+		::=  {  fnAlertEmaiCfg  1  }
+
+	fnAlertEmaiCfgSmtpUser	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 32  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"SMTP server user name."
+		::=  {  fnAlertEmaiCfg  2  }
+
+	fnAlertEmaiCfgSmtpPasswd	OBJECT-TYPE	
+		SYNTAX			OCTET STRING
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"SMTP server user password"
+		::=  {  fnAlertEmaiCfg  3  }
+
+	fnAlertEmaiCfgEmai1	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 128  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Alert email address no. 1"
+		::=  {  fnAlertEmaiCfg  4  }
+
+	fnAlertEmaiCfgEmail2	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Alert email address no. 2"
+		::=  {  fnAlertEmaiCfg  5  }
+
+	fnAlertEmaiCfgEmail3	OBJECT-TYPE	
+		SYNTAX			DisplayString  ( SIZE ( 0 .. 255  ) ) 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Alert email address no. 3"
+		::=  {  fnAlertEmaiCfg  6  }
+
+	fnAlearEmaiCatVirus	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off FortiGate sending an alert email when antivirus scanning detects a virus."
+		::=  {  fnAlertEmailCat  1  }
+
+	fnAlertEmailCatNids	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off FortiGate sending an alert email to notify the system administrator of attacks detected by the NIDS."
+		::=  {  fnAlertEmailCat  2  }
+
+	fnAlearEmailCatCrit	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Turn on/off FortiGate sending an alert email when a critical firewall or VPN event occurs."
+		::=  {  fnAlertEmailCat  3  }
+
+	fnLSTrafficFilterState	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnLogSettingTrafficFilter  1  }
+
+	fnLSTrafficFilterType	OBJECT-TYPE	
+		SYNTAX			INTEGER
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnLogSettingTrafficFilter  2  }
+
+	fnLSTrafficFilterDisplay	OBJECT-TYPE	
+		SYNTAX			INTEGER  { portNumber ( 1 ) , serviceName ( 2 ) } 
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnLogSettingTrafficFilter  3  }
+
+	fnLSTrafficFilterResolveIp	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Description"
+		::=  {  fnLogSettingTrafficFilter  4  }
+
+	fnLSEventFilterCfgChg	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"When configuration has been changed"
+		::=  {  fnLogSettingEventFilter  1  }
+
+	fnLSEventFilterIpsecNeg	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Ipsec negotiation event"
+		::=  {  fnLogSettingEventFilter  2  }
+
+	fnLSEventFilterDhcpService	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"DHCP service event"
+		::=  {  fnLogSettingEventFilter  3  }
+
+	fnLSEventFilterPppoeService	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"PPPOE service event"
+		::=  {  fnLogSettingEventFilter  4  }
+
+	fnLSEventFilterAdminLogin	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Admin login/out status event"
+		::=  {  fnLogSettingEventFilter  5  }
+
+	fnLSEventFilterIpmacStatus	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"IPMAC binding violation status event"
+		::=  {  fnLogSettingEventFilter  6  }
+
+	fnLSEventFilterSysAct	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"System activity event"
+		::=  {  fnLogSettingEventFilter  7  }
+
+	fnLSEventFilterHaAct	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"HA activity event"
+		::=  {  fnLogSettingEventFilter  8  }
+
+	fnLSEventFilterFwAuth	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Firewall auth log event"
+		::=  {  fnLogSettingEventFilter  9  }
+
+	fnLSEventFilterGwConn	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"Routing gateway connection event"
+		::=  {  fnLogSettingEventFilter  10  }
+
+	fnLSVirusFilterDet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"When virus is detected"
+		::=  {  fnLogSettingVirusFilter  1  }
+
+	fnLSVirusFilterSigUpdate	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"When virus signature is updated"
+		::=  {  fnLogSettingVirusFilter  2  }
+
+	fnLSWebFilterBanDet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"When banned word is detected"
+		::=  {  fnLogSettingWebFilter  1  }
+
+	fnLSWebFilterScriptDet	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"When script is detected"
+		::=  {  fnLogSettingWebFilter  2  }
+
+	fnLSWebFilterPageBlk	OBJECT-TYPE	
+		SYNTAX			ItemState
+		ACCESS			read-only
+		STATUS			mandatory
+		DESCRIPTION		"When page is blocked"
+		::=  {  fnLogSettingWebFilter  3  }
+
+END

@@ -1,0 +1,535 @@
+-- ****************************************************************************
+--                HP NetServer RAID CAGE LED Information
+--        Management Information Base for SNMP Network Management
+--
+--      Copyright 1998 Hewlett Packard Company.
+--      All Rights Reserved.
+--
+--      The information in this document is subject to change without notice.
+--
+--      The hp Enterprise number is 11.
+--      The ASN.1 prefix to, and including the hp Enterprise is:
+--              1.3.6.1.4.1.11
+--
+-- hp   (1.3.6.1.4.1.11)
+--    nm   (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpCageAgt Group  (1.3.6.1.4.1.11.2.23.28)
+--             hpCageAgtVersion  (1.3.6.1.4.1.11.2.23.28.1)
+--             hpCageAgtRevision  (1.3.6.1.4.1.11.2.23.28.2)
+--             hpCageAgtMibVersion  (1.3.6.1.4.1.11.2.23.28.3)
+--             hpCageAgtMibRevision  (1.3.6.1.4.1.11.2.23.28.4)
+--             hpCageAgtnDriveCages  (1.3.6.1.4.1.11.2.23.28.5)
+--             hpCageAgtcbDriveCageInfo  (1.3.6.1.4.1.11.2.23.28.6)
+--             hpCageAgtDriveCageInfo  (1.3.6.1.4.1.11.2.23.28.7)
+--             hpCageAgtDriveCageStatus  (1.3.6.1.4.1.11.2.23.28.8)
+--             hpCageAgtFlashAdptrType  (1.3.6.1.4.1.11.2.23.28.9)
+--             hpCageAgtFlashAdptrNum  (1.3.6.1.4.1.11.2.23.28.10)
+--             hpCageAgtFlashChannelNum  (1.3.6.1.4.1.11.2.23.28.11)
+--             hpCageAgtnFlashCount  (1.3.6.1.4.1.11.2.23.28.12)
+--             hpCageAgtFlashStatus  (1.3.6.1.4.1.11.2.23.28.13)
+--             hpCageAgtnDrives  (1.3.6.1.4.1.11.2.23.28.14)
+--             hpCageAgtDriveTable  (1.3.6.1.4.1.11.2.23.28.15)
+--                hpCageAgtDriveEntry  (1.3.6.1.4.1.11.2.23.28.15.1)
+--                   hpCageAgtDriveIndex  (1.3.6.1.4.1.11.2.23.28.15.1.1)
+--                   hpCageAgtDriveI2cAddr  (1.3.6.1.4.1.11.2.23.28.15.1.2)
+--                   hpCageAgtDriveScsiID  (1.3.6.1.4.1.11.2.23.28.15.1.3)
+--                   hpCageAgtDriveLEDState  (1.3.6.1.4.1.11.2.23.28.15.1.4)
+--                   hpCageAgtDriveLEDSetStatus  (1.3.6.1.4.1.11.2.23.28.15.1.5)
+--                   hpCageAgtDrivePresent  (1.3.6.1.4.1.11.2.23.28.15.1.6)
+--                   hpCageAgtCageChannel  (1.3.6.1.4.1.11.2.23.28.15.1.7)
+--                   hpCageAgtCageAdapter  (1.3.6.1.4.1.11.2.23.28.15.1.8)
+--                   hpCageAgtCageType  (1.3.6.1.4.1.11.2.23.28.15.1.9)
+--             hpCageAgtFlashTargetID  (1.3.6.1.4.1.11.2.23.28.16)
+--             hpCageAgtnFlashOneCount  (1.3.6.1.4.1.11.2.23.28.17)
+--             hpCageAgtFWStatus  (1.3.6.1.4.1.11.2.23.28.18)
+--             hpCageAgtUpdateDriveFW  (1.3.6.1.4.1.11.2.23.28.19)
+--             hpCageAgtDriveReadiness  (1.3.6.1.4.1.11.2.23.28.20)
+--             hpCageAgtDownloadWwwUrl  (1.3.6.1.4.1.11.2.23.28.21)
+--             hpCageAgtDownloadSize  (1.3.6.1.4.1.11.2.23.28.22)
+--             hpCageAgtDownloadStatus  (1.3.6.1.4.1.11.2.23.28.23)
+--             hpCageAgtDownloadProxy  (1.3.6.1.4.1.11.2.23.28.24)
+--             hpCageAgtFormatDrive  (1.3.6.1.4.1.11.2.23.28.25)
+--             hpCageAgtFormatStatus  (1.3.6.1.4.1.11.2.23.28.26)
+--
+--      The Cage Agent provides an interface to toggling the drive bay LEDs 
+--      on the Startfish drive cages.  It also provides an interface to the 
+--      configuration information (eg: SCSI ID and Cage Addr.) for the drives.
+--
+-- ****************************************************************************
+
+HPNSACAGE-MIB DEFINITIONS ::= BEGIN
+    IMPORTS
+        enterprises     FROM RFC1155-SMI
+		  DisplayString   FROM RFC1213-MIB
+		  OBJECT-TYPE     FROM RFC-1212;
+
+	 hp                   OBJECT IDENTIFIER ::= {enterprises 11}
+	 nm                   OBJECT IDENTIFIER ::= {hp 2}
+     hpnsa                OBJECT IDENTIFIER ::= {nm 23}
+	 hpCageAgt            OBJECT IDENTIFIER ::= {hpnsa 28}
+
+
+-- ****************************************************************************
+--   HP RAID Cage Agent MIB Revision
+--   ===============================
+--
+-- hp   (1.3.6.1.4.1.11)
+--    nm   (1.3.6.1.4.1.11.2)
+--        hpnsa   (1.3.6.1.4.1.11.2.23)
+--            hpCageAgt Group  (1.3.6.1.4.1.11.2.23.28)
+--                hpCageAgtMibRev Group  (1.3.6.1.4.1.11.2.23.28.1)
+--                    hpCageAgtMibRevMajor  (1.3.6.1.4.1.11.2.23.28.1.1)  
+--                    hpCageAgtMibRevMinor  (1.3.6.1.4.1.11.2.23.28.1.2) 
+--
+--    Implementation of the MibRev group is mandatory for all HPNSA Agents
+--    supporting the HP Cage Agent LED MIB.
+--
+--    An HPNSA Agent conforming to this document will return a
+--    hpCageAgtMibRevMajor of 1 and a hpCageAgtMibRevMinor of 0. 
+--
+--
+-- ****************************************************************************
+
+-- ***
+-- *** NOTE: The object definitions below DO NOT correspond to the list above
+-- ***
+
+    hpCageAgtVersion OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The current version (major) number of the SNMP agent."
+        ::= { hpCageAgt 1 }
+
+    hpCageAgtRevision OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The current revision (minor) number of the SNMP agent."
+        ::= { hpCageAgt 2 }
+
+    hpCageAgtMibVersion OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The current version (major) number of the SNMP agent's MIB."
+        ::= { hpCageAgt 3 }
+
+    hpCageAgtMibRevision OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The current revision (minor) number of the SNMP agent's MIB."
+        ::= { hpCageAgt 4 }
+
+
+-- ****************************************************************************
+--   HP RAID Cage Agent Drive Cage Info
+--   ==================================
+--
+-- hp   (1.3.6.1.4.1.11)
+--    nm   (1.3.6.1.4.1.11.2)
+--        hpnsa   (1.3.6.1.4.1.11.2.23)
+--            hpCageAgt Group  (1.3.6.1.4.1.11.2.23.28)
+--                hpCageAgtCageInfo Group  (1.3.6.1.4.1.11.2.23.28.2)
+--                    hpCageAgtnDriveCages  (1.3.6.1.4.1.11.2.23.28.2.1)
+--                    hpCageAgtcbDriveCageInfo  (1.3.6.1.4.1.11.2.23.28.2.2)
+--                    hpCageAgtDriveCageInfo  (1.3.6.1.4.1.11.2.23.28.2.3)
+--                    hpCageAgtDriveCageStatus  (1.3.6.1.4.1.11.2.23.28.2.4)
+--
+--    Implementation of the CageInfo group is mandatory for all HPNSA Agents
+--    supporting the HP Cage Agent LED MIB.
+--
+-- ****************************************************************************
+
+-- ***
+-- *** NOTE: The object definitions below DO NOT correspond to the list above
+-- ***
+
+    hpCageAgtnDrieCages OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The number of Starfish drive cages present on the system."
+        ::= { hpCageAgt 5 }
+
+    hpCageAgtcbDriveCageInfo OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The number of bytes required to represent the drive cage information struucture."
+        ::= { hpCageAgt 6 }
+
+    hpCageAgtDriveCageInfo OBJECT-TYPE
+        SYNTAX  Opaque
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The drive cage information structure, defining the state and addresses of each drive bay."
+        ::= { hpCageAgt 7 }
+
+    hpCageAgtDriveCageStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The result of the last query operation for drive cage data.  This value is set by querying the hpCageAgtDriveCageInfo object."
+        ::= { hpCageAgt 8 }
+
+
+-- ****************************************************************************
+--   HP RAID Flash Adapter Lights Info
+--   =================================
+--
+-- hp   (1.3.6.1.4.1.11)
+--    nm   (1.3.6.1.4.1.11.2)
+--        hpnsa   (1.3.6.1.4.1.11.2.23)
+--            hpCageAgt Group  (1.3.6.1.4.1.11.2.23.28)
+--                hpCageAgtFlashInfo Group  (1.3.6.1.4.1.11.2.23.28.3)
+--                    hpCageAgtFlashAdptrType  (1.3.6.1.4.1.11.2.23.28.3.1)
+--                    hpCageAgtFlashAdptrNum  (1.3.6.1.4.1.11.2.23.28.3.2)
+--                    hpCageAgtFlashChannelNum  (1.3.6.1.4.1.11.2.23.28.3.3)
+--                    hpCageAgtFlashCount  (1.3.6.1.4.1.11.2.23.28.3.4)
+--                    hpCageAgtFlashStatus  (1.3.6.1.4.1.11.2.23.28.3.5)
+--                    hpCageAgtFlashTargetID  (1.3.6.1.4.1.11.2.23.28.3.6)
+--                    hpCageAgtFlashOneCount  (1.3.6.1.4.1.11.2.23.28.3.7)
+--                    hpCageAgtFWStatus  (1.3.6.1.4.1.11.2.23.28.3.8)
+--                    hpCageAgtUpdateDriveFW  (1.3.6.1.4.1.11.2.23.28.3.9)
+--                    hpCageAgtDriveReadiness  (1.3.6.1.4.1.11.2.23.28.3.10)
+--
+--    Implementation of the FlashInfo group is mandatory for all HPNSA Agents
+--    supporting the HP Cage Agent LED MIB.
+--
+-- ****************************************************************************
+
+-- ***
+-- *** NOTE: The object definitions below DO NOT correspond to the list above
+-- ***
+
+    hpCageAgtFlashAdptrType OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		    "The type of adapter to be flashed.  This must be set prior to setting the flash count."
+        ::= { hpCageAgt 9 }
+
+    hpCageAgtFlashAdptrNum OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		    "The adapter number to be flashed.  This must be set prior to setting the flash count."
+        ::= { hpCageAgt 10 }
+
+    hpCageAgtChannelNum OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		    "The channel number to be flashed.  This must be set prior to setting the flash count."
+        ::= { hpCageAgt 11 }
+
+    hpCageAgtFlashCount OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  write-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The number of times to activate the flashing of the LEDs.  (See members 9, 10, and 11.)"
+        ::= { hpCageAgt 12 }
+
+    hpCageAgtFlashStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The resulting status of the last setting of the flash count operation.  If this value is 99999999, then the operation is still pending."
+        ::= { hpCageAgt 13 }
+
+    hpCageAgtTargetID OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		    "The channel number to be flashed.  This must be set prior to setting the flash count."
+        ::= { hpCageAgt 16 }
+
+    hpCageAgtFlashOneCount OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  write-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The number of times to activate the flashing of one LED.  (See members 9, 10, 11, and 16.)"
+        ::= { hpCageAgt 17 }
+
+    hpCageAgtFWStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The resulting status of the last firmware update operation.  If this value is 99999999, then the operation is still pending."
+        ::= { hpCageAgt 18 }
+
+    hpCageAgtUpdateDriveFW OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  write-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "Set this value to the key 746E654Bh to begin updating firmware on drive indicated in SCSI ID.  (See members 9, 10, 11, and 16.)"
+        ::= { hpCageAgt 19 }
+
+    hpCageAgtDriveReadiness OBJECT-TYPE
+        SYNTAX  INTEGER { not-present(0), present(1), unit-ready(2), readable(3), configured(4), accessible(5) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "Determine the state of readiness for the drive.  (See members 9, 10, 11, and 16.)"
+        ::= { hpCageAgt 20 }
+
+
+
+-- ****************************************************************************
+--   HP RAID Cage Agent Hot-Swap Drive Info
+--   ======================================
+--
+-- hp   (1.3.6.1.4.1.11)
+--    nm   (1.3.6.1.4.1.11.2)
+--        hpnsa   (1.3.6.1.4.1.11.2.23)
+--            hpCageAgt Group  (1.3.6.1.4.1.11.2.23.28)
+--                hpCageAgtDriveInfo Group  (1.3.6.1.4.1.11.2.23.28.4)
+--                    hpCageAgtnDrives  (1.3.6.1.4.1.11.2.23.28.4.1)
+--                    hpCageAgtDriveTable Table  (1.3.6.1.4.1.11.2.23.28.4.2)
+--                        hpCageAgtDriveEntry  (1.3.6.1.4.1.11.2.23.28.4.2.1)
+--                            hpCageAgtDriveIndex  (1.3.6.1.4.1.11.2.23.28.4.2.1.1)
+--                            hpCageAgtDriveI2cAddr  (1.3.6.1.4.1.11.2.23.28.4.2.1.2)
+--                            hpCageAgtDriveScsiID  (1.3.6.1.4.1.11.2.23.28.4.2.1.3)
+--                            hpCageAgtDriveLEDState  (1.3.6.1.4.1.11.2.23.28.4.2.1.4)
+--                            hpCageAgtDriveLEDSetStatus  (1.3.6.1.4.1.11.2.23.28.4.2.1.5)
+--                            hpCageAgtDrivePresent  (1.3.6.1.4.1.11.2.23.28.4.2.1.6)
+--                            hpCageAgtCageChannel  (1.3.6.1.4.1.11.2.23.28.4.2.1.7)
+--                            hpCageAgtCageAdapter  (1.3.6.1.4.1.11.2.23.28.4.2.1.8)
+--                            hpCageAgtCageType  (1.3.6.1.4.1.11.2.23.28.4.2.1.9)
+--
+--    Implementation of the DriveInfo group is mandatory for all HPNSA Agents
+--    supporting the HP Cage Agent LED MIB.
+--
+-- ****************************************************************************
+
+-- ***
+-- *** NOTE: The object definitions below DO NOT correspond to the list above
+-- ***
+
+    hpCageAgtnDrives OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The number of hot-swap drives present on the system.  Requery the nDriveCages field to recalculate this field."
+        ::= { hpCageAgt 14 }
+
+    hpCageAgtDriveTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF HpCageAgtDriveEntryDef
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+		    "A list of the hot-swap drives present on the system."
+        ::= { hpCageAgt 15 }
+
+    hpCageAgtDriveEntry OBJECT-TYPE
+        SYNTAX  HpCageAgtDriveEntryDef
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+		    ""
+		INDEX   { hpCageAgtDriveIndex }
+        ::= { hpCageAgtDriveTable 1 }
+
+    HpCageAgtDriveEntryDef ::= SEQUENCE 
+	{
+		hpCageAgtDriveIndex          INTEGER,  
+		hpCageAgtDriveI2cAddr        INTEGER (0..65535),
+		hpCageAgtDriveScsiID         INTEGER (0..7),
+		hpCageAgtDriveLEDState       INTEGER (0..1),
+		hpCageAgtDriveLEDSetStatus   INTEGER,
+		hpCageAgtDrivePresent        INTEGER (0..1),
+		hpCageAgtCageChannel         INTEGER (0..255),
+		hpCageAgtCageAdapter         INTEGER (0..255),
+		hpCageAgtCageType            INTEGER (0..255)
+	}
+
+    hpCageAgtDriveIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The index number of the drive."
+        ::= { hpCageAgtDriveEntry 1 }
+
+    hpCageAgtDriveI2cAddr OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The IIC (I-square-C) bus address of the drive."
+        ::= { hpCageAgtDriveEntry 2 }
+
+    hpCageAgtDriveScsiID OBJECT-TYPE
+        SYNTAX  INTEGER (0..15)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The SCSI target ID of the drive (unique to the IIC bus)."
+        ::= { hpCageAgtDriveEntry 3 }
+
+    hpCageAgtDriveLEDState OBJECT-TYPE
+        SYNTAX  INTEGER { off(0), on(1) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		    "The state of the drive LED, which can be set to amber (on)."
+        ::= { hpCageAgtDriveEntry 4 }
+
+    hpCageAgtDriveLEDSetStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The result of the last LED state change operation for this drive."
+        ::= { hpCageAgtDriveEntry 5 }
+
+    hpCageAgtDrivePresent OBJECT-TYPE
+        SYNTAX  INTEGER { no(0), yes(1) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "Is a drive present in this drive cage bay?"
+        ::= { hpCageAgtDriveEntry 6 }
+
+    hpCageAgtCageChannel OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The channel number on the SCSI adapter to which this cage is connected."
+        ::= { hpCageAgtDriveEntry 7 }
+
+    hpCageAgtCageAdapter OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The port number of the SCSI adapter to which this cage is connected."
+        ::= { hpCageAgtDriveEntry 8 }
+
+    hpCageAgtCageType OBJECT-TYPE
+        SYNTAX  INTEGER { unknown(0), SF1(1), SF2(2), SAFte(16), SF3(19), CheapSAFte(48) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The type of the hot-swap cage."
+        ::= { hpCageAgtDriveEntry 9 }
+
+
+
+-- ****************************************************************************
+--   HP RAID Cage Agent WWW Image Download Info
+--   ==========================================
+--
+-- hp   (1.3.6.1.4.1.11)
+--    nm   (1.3.6.1.4.1.11.2)
+--        hpnsa   (1.3.6.1.4.1.11.2.23)
+--            hpCageAgt Group  (1.3.6.1.4.1.11.2.23.28)
+--                hpCageAgtWWWInfo Group  (1.3.6.1.4.1.11.2.23.28.5)
+--                   hpCageAgtDownloadWwwUrl  (1.3.6.1.4.1.11.2.23.28.5.1)
+--                   hpCageAgtDownloadSize  (1.3.6.1.4.1.11.2.23.28.5.2)
+--                   hpCageAgtDownloadStatus  (1.3.6.1.4.1.11.2.23.28.5.3)
+--                   hpCageAgtDownloadProxy  (1.3.6.1.4.1.11.2.23.28.5.4)
+--
+--    Implementation of the WWW Image Download group is mandatory for all HPNSA
+--    Agents supporting the HP Cage Agent LED MIB.
+--
+-- ****************************************************************************
+
+-- ***
+-- *** NOTE: The object definitions below DO NOT correspond to the list above
+-- ***
+
+    hpCageAgtDownloadWwwUrl OBJECT-TYPE
+        SYNTAX  DisplayString
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		    "Set this value to the URL to begin downloading.  Check member 21 for progress and 22 for status."
+        ::= { hpCageAgt 21 }
+
+    hpCageAgtDownloadSize OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "Current size (in bytes) of the amount of data downloaded for this file.  If less than 10 bytes reported, size is actually state info: (0 = no download, 1 = download in progress, 2 = download complete, 3 = download failed)."
+        ::= { hpCageAgt 22 }
+
+    hpCageAgtDownloadStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "The resulting status of the most recent (or current) WWW download operation.  If this value is 99999999, then the operation is still pending."
+        ::= { hpCageAgt 23 }
+
+    hpCageAgtDownloadProxy OBJECT-TYPE
+        SYNTAX  DisplayString
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		    "Set this value to the WWW proxy server spec (eg: WWW_PROXY.XXX.COM:8088)."
+        ::= { hpCageAgt 24 }
+
+
+-- ****************************************************************************
+--   HP RAID Cage Agent WWW Format Info
+--   ==========================================
+--
+-- hp   (1.3.6.1.4.1.11)
+--    nm   (1.3.6.1.4.1.11.2)
+--        hpnsa   (1.3.6.1.4.1.11.2.23)
+--            hpCageAgt Group  (1.3.6.1.4.1.11.2.23.28)
+--                hpCageAgtEmpty  (1.3.6.1.4.1.11.2.23.28.6)  place holder
+--                hpCageAgtFormatInfo  (1.3.6.1.4.1.11.2.23.28.7)
+--                    hpCageAgtFormatDrive  (1.3.6.1.4.1.11.2.23.28.7.1)
+--                    hpCageAgtFormatStatus  (1.3.6.1.4.1.11.2.23.28.7.2)
+--
+--    Implementation of the Format Info group is mandatory for all HPNSA
+--    Agents supporting the HP Cage Agent LED MIB.
+--
+-- ****************************************************************************
+
+-- ***
+-- *** NOTE: The object definitions below DO NOT correspond to the list above
+-- ***
+
+    hpCageAgtFormatDrive OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  write-only
+        STATUS  mandatory
+        DESCRIPTION
+		    "Set this value to the key 6B72614Dh to begin formatting drive indicated in SCSI ID.  (See members 9, 10, 11, and 16.)"
+        ::= { hpCageAgt 25 }
+
+    hpCageAgtFormatStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		    "The resulting status of the last formatoperation.  If this value is 99999999, then the operation is still pending.  If 99999990, then user input is pending allowing the operation locally."
+        ::= { hpCageAgt 26 }
+
+END

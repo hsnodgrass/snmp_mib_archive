@@ -1,0 +1,264 @@
+--
+-- Copyright (c) 2004-2007, Infoblox, Inc
+-- All rights reserved.
+                                                                                                
+IB-TRAPONE-MIB DEFINITIONS ::= BEGIN
+
+--
+-- Imports
+--
+
+IMPORTS MODULE-IDENTITY, NOTIFICATION-TYPE, OBJECT-TYPE, Unsigned32, IpAddress
+		  FROM SNMPv2-SMI
+        DisplayString
+	  	  FROM SNMPv2-TC
+        ibTrapOne, IbString, IbNode FROM IB-SMI-MIB;
+	   
+--
+-- Module Identity
+--
+
+ibTrapOneModule MODULE-IDENTITY
+         LAST-UPDATED "200504170000Z"  -- APR. 17, 2005
+         ORGANIZATION "Infoblox."
+         CONTACT-INFO "See IB-SMI-MIB for information."
+         DESCRIPTION
+           "This is the MIB module for trap definitions for Infoblox
+            one products."
+
+         REVISION     "200504170000Z"  -- APR. 17, 2005
+         DESCRIPTION  "Added enet link states and replication
+                       states"
+
+         REVISION     "200501100000Z"  -- Jan. 10, 2005
+         DESCRIPTION  "Modified comments to the mib,
+                       Added copyright, and defined 
+                       ibProcStartStopTrap for noraml
+                       software process start/stop. "
+
+         REVISION     "200405100000Z"  -- May 10, 2004
+         DESCRIPTION  "Initial creation of the module."
+
+         ::= {  ibTrapOne  1  }
+
+ibNotificationVarBind  OBJECT IDENTIFIER  ::= { ibTrapOne 2 }
+
+IbState ::= TEXTUAL-CONVENTION
+   STATUS        current
+   DESCRIPTION   "It defines the state for infoblox One products."
+   SYNTAX        INTEGER {
+                   ha-active     (1), -- high availability ACTIVE
+                   ha-passive    (2), -- high availability PASSIVE
+                   ha-initial    (3), -- high availability INITIAL
+                   grid-connected (4), -- connected to grid
+                   grid-disconnected (5), -- not connected to grid
+                   enet-link-up        (6), -- enet port link active
+                   enet-link-down        (7), -- enet port link inactive
+                   replication-online    (8), -- REPLICATION ONLINE
+                   replication-offline   (9), -- REPLICATION OFFLINE
+                   replication-snapshotting (10), -- REPLICATION SNAPSHOTTING
+                   service-up            (11), -- service is up
+                   service-down          (12),  -- service is down
+                   ha-replication-online (13), -- ha replication is online
+                   ha-replication-offline (14) -- ha replication is offline
+                 }
+
+IbProbableCause ::= TEXTUAL-CONVENTION
+   STATUS        current
+   DESCRIPTION   "It defines the probable cause for infoblox One products."
+   SYNTAX        INTEGER {
+                   ibClear                  (0),
+                   ibUnknown                (1),
+                   ibPrimaryDiskFailure     (2), 
+                   ibFanFailure-old         (3),
+                   ibPowerSupplyFailure     (4),
+                   ibDBFailure              (5),
+                   ibApacheSoftwareFailure  (6),
+                   ibSerialConsoleFailure   (7),
+                   ibControldSoftwareFailure(11),
+                   ibUpgradeFailure         (12),
+                   ibSNMPDFailure           (13),
+                   ibSSHDSoftwareFailure    (15),
+                   ibNTPDSoftwareFailure    (16),
+                   ibClusterdSoftwarFailure (17),
+                   ibLCDSoftwareFailure     (18),
+                   ibDHCPdSoftwareFailure   (19),
+                   ibNamedSoftwareFailure   (20), 
+                   ibUNUSED21  (21),
+                   ibUNUSED22  (22),
+                   ibRadiusdSoftwareFailure (23),
+                   ibNTLMSoftwareFailure    (24),
+                   ibNetBIOSDaemonFailure   (25),
+                   ibWindowBindDaemonFailure (26),
+                   ibTFTPDSoftwareFailure    (27),
+                   ibQIPRemoteServerSoftwareFailure (28),
+                   ibBackupSoftwareFailure   (29),
+                   ibBackupDatabaseSoftwareFailure   (30),
+                   ibBackupModuleSoftwareFailure   (31),
+                   ibBackupSizeSoftwareFailure   (32),
+                   ibBackupLockSoftwareFailure   (33),
+                   ibHTTPFileDistSoftwareFailure   (34),
+                   ibOSPFSoftwareFailure   (35),
+                   ibAuthDHCPNamedSoftwareFailure   (36),
+                   ibFan1Failure         (37),
+                   ibFan2Failure         (38),
+                   ibFan3Failure         (39),
+                   ibFan1OK         (40),
+                   ibFan2OK         (41),
+                   ibFan3OK         (42),
+		   ibRAIDIsOptimal (3001),
+		   ibRAIDIsDegraded (3002),
+		   ibRAIDIsRebuilding (3003),
+		   ibRAIDStatusUnknown (3004),
+		   ibRAIDBatteryIsOK (3005),
+		   ibRAIDBatteryFailed (3006)
+                 }
+
+--
+-- Trap Definitions
+--
+  
+ibEquipmentFailureTrap  NOTIFICATION-TYPE
+	OBJECTS         { ibNodeName,
+                          ibTrapSeverity,
+                          ibObjectName,     -- equipment name
+			  ibProbableCause,
+                          ibTrapDesc   }
+	STATUS          current
+	DESCRIPTION     "This event is generated for any equipment failure. 
+                         "
+	::= {  ibTrapOneModule 1 }
+
+ibProcessingFailureTrap NOTIFICATION-TYPE
+        OBJECTS         { ibNodeName,
+                          ibTrapSeverity,
+                          ibSubsystemName,
+                          ibProbableCause,     -- ibClear is used to clear a trap
+                          ibTrapDesc   }
+	STATUS          current
+	DESCRIPTION     "This trap is generated whenever a software failure is detected."
+	::= { ibTrapOneModule 2 }
+
+ibThresholdCrossingEvent  NOTIFICATION-TYPE
+        OBJECTS         { ibNodeName,
+                          ibObjectName,         -- threshold name
+                          ibCurThresholdValue,
+                          ibThresholdHigh,
+                          ibThresholdLow,
+                          ibTrapDesc   }
+	STATUS          current
+	DESCRIPTION     "This event is generated whenever a threshold crossing has             
+			 occurred for the first time."
+	::= { ibTrapOneModule 3 }
+
+ibStateChangeEvent   NOTIFICATION-TYPE
+        OBJECTS         { ibNodeName,
+                          ibObjectName,        -- the object changes state
+                          ibPreviousState,
+                          ibCurrentState,
+                          ibTrapDesc   }
+	STATUS          current
+	DESCRIPTION     "This event is generated whenever an object state change
+			 has occurred."
+	::= { ibTrapOneModule 4}
+
+ibProcStartStopTrap NOTIFICATION-TYPE
+        OBJECTS         { ibNodeName,
+                          ibSubsystemName,
+                          ibTrapDesc   }
+        STATUS          current
+        DESCRIPTION     "This trap is generated when a process is started or 
+                         stopped normally."
+        ::= { ibTrapOneModule 5 }
+
+--
+-- Types
+--
+
+ibNodeName  OBJECT-TYPE
+	SYNTAX          IbNode
+	MAX-ACCESS      not-accessible
+	STATUS          current
+	DESCRIPTION     "It is the node name (node ip address) the trap occurred. 
+                         This node name may or may not the same as the node sending 
+                         out the trap."
+	::= {ibNotificationVarBind 1} 
+
+ibTrapSeverity OBJECT-TYPE
+	SYNTAX          INTEGER {
+                         critical (5),   -- service impact problem
+                         major    (4),   -- problem requiring user intervension 
+                         minor    (3),   -- problem not requiring user interv.
+                         info     (2),   -- informational only
+                         indetermined (1)
+                        }
+	MAX-ACCESS      not-accessible
+	STATUS          current
+	DESCRIPTION     "It contains the serverity of the trap."
+	::= { ibNotificationVarBind 2}
+
+ibObjectName OBJECT-TYPE
+	SYNTAX          DisplayString (SIZE (0..20) )
+	MAX-ACCESS      not-accessible
+	STATUS          current
+	DESCRIPTION     "It describes the object for which the trap is generated."
+	::= { ibNotificationVarBind 3}
+
+ibProbableCause OBJECT-TYPE
+	SYNTAX          IbProbableCause 
+	MAX-ACCESS      not-accessible
+	STATUS          current
+	DESCRIPTION     "It describes the probable cause of a problem ."
+	::= { ibNotificationVarBind 4}
+
+ibSubsystemName OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE (0..20) )
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "It describes the subsystem for which the trap is generated."
+        ::= { ibNotificationVarBind 5}
+
+ibCurThresholdValue OBJECT-TYPE
+        SYNTAX          INTEGER
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "It contains the current value of a threshold counter."
+        ::= { ibNotificationVarBind 6}
+
+ibThresholdHigh OBJECT-TYPE
+        SYNTAX          INTEGER
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "It contains the value for threshold high"
+        ::= { ibNotificationVarBind 7}
+
+ibThresholdLow  OBJECT-TYPE
+        SYNTAX          INTEGER
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "It contains the value for threshold low"
+        ::= { ibNotificationVarBind 8}
+
+ibPreviousState OBJECT-TYPE
+        SYNTAX          IbState
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "It contains the value for previous state"
+        ::= { ibNotificationVarBind 9}
+
+ibCurrentState OBJECT-TYPE
+        SYNTAX          IbState
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "It contains the value for current state"
+        ::= { ibNotificationVarBind 10}
+
+ibTrapDesc OBJECT-TYPE
+        SYNTAX          IbString
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "It contains the description of the trap."
+        ::= { ibNotificationVarBind 11}
+ 
+END
+

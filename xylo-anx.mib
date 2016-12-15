@@ -1,0 +1,4450 @@
+-- File: xylo-anx.mib
+--	Bay Networks Private Enterprise Remote Annex MIB
+--
+--  Copyright 1991, 1993, 1994, 1995, 1996, 1997 Bay Networks, Inc.  
+--  ALL RIGHTS RESERVED.
+--
+--  ALL RIGHTS RESERVED. Licensed Material - Property of Bay Networks, Inc.
+--  This software is made available solely pursuant to the terms of a
+--  software license agreement which governs its use.
+--  Unauthorized duplication, distribution or sale are strictly prohibited.
+--
+--  This information is subject to change without notice, and should
+--  not be construed as a commitment by Bay Networks, Inc.  Bay Networks, Inc.,
+--  assumes no responsibility for any errors that may appear in this
+--  document.
+--
+--  $Id: 
+--
+-- overview
+
+-- This module defines Annex related MIB groups for the Bay Networks
+-- Remote Annex product line.
+
+  XYLO-ANNEX-MIB DEFINITIONS ::= BEGIN
+
+  IMPORTS
+		IpAddress, Counter, Gauge, TimeTicks
+			FROM RFC1155-SMI
+		DisplayString, PhysAddress
+			FROM RFC1213-MIB
+		OBJECT-TYPE
+			FROM RFC-1212
+		hw, sw, annexconfig, annexcmds,
+                anxchascommon, anxchas, anxgrestats, radiusConfig,
+                radiusStats, radiusAuthClient, radiusAccClient, igmp, 
+		anxccpstats, anxgsystats, l2tp, anxPPPStats, ippool
+			FROM XYLO-MIB-SMI;
+
+
+--  xylogics		OBJECT IDENTIFIER ::= { enterprises 15 } 
+--  annex		OBJECT IDENTIFIER ::= { xylogics 2 }
+--  hw		  	OBJECT IDENTIFIER ::= { annex 1 }
+--  sw		  	OBJECT IDENTIFIER ::= { annex 2 }
+--  annexconfig	  	OBJECT IDENTIFIER ::= { annex 5 }
+--  annexcmds	  	OBJECT IDENTIFIER ::= { annex 6 }
+--  anxgrestats		OBJECT IDENTIFIER ::= { annex 15 }
+--  anxchascommon   	OBJECT IDENTIFIER ::= { annex 101 }
+--  anxchas	  	OBJECT IDENTIFIER ::= { annex 102 }
+--  ippool         OBJECT IDENTIFIER ::= { annex 112 }
+
+-- the hw group
+
+  hwType	OBJECT-TYPE
+		SYNTAX INTEGER {
+			err(1),
+			annexII(16),
+			annex3(42),
+			microannex(52),
+			microels(55),
+			csmim1(257),
+			ods(258),
+			bay5390(259),
+			csmim2(260),
+			ra2000(262),
+			microcs(263),
+			ra4000(264),
+			annex084(265),
+			a3Com(266),
+			csmim-t1(267),
+			ra6100(268),
+			ra6300(269),
+			bay5391(270),
+			bay5393(271),
+			bay5399(272),
+			rac8000(273)
+		}
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"An identifier for the Annex hardware type."
+		::= { hw 1 }
+
+  hwRev		OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..128))
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The revision level of the hardware platform."
+		::= { hw 2 }
+
+  romRev	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..128))
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The revision number of the ROM Monitor software."
+		::= { hw 3 }
+
+  serialNumber	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS deprecated
+		DESCRIPTION
+			"The serial number assigned to the unit.  This
+			object is deprecated in the R9.0 software and
+			is replaced by the macAddress object below."
+		::= { hw 4 }
+
+  memorySize	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The amount of memory present in the unit."
+		::= { hw 5 }
+
+  e2Size	OBJECT-TYPE
+                SYNTAX INTEGER
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The size of EEPROM present in the unit, 
+			reported in KB.  EEPROM is used to store 
+			configuration parameters and filter definitions 
+			for all platforms.  Self boot units also store 
+			other configuration files that define information 
+			such as default routes, snmp community strings, 
+			etc. in EEPROM."
+		::= { hw 6 }
+
+  flashSize	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The size of the FLASH memory in the unit,
+			reported in MB.  If the ROM revision in the 
+			unit is less than 0750, the size is not available
+			and is reported as zero.  FLASH memory is used 
+			to store an operation image in self boot units."
+		::= { hw 7 }
+
+  netHwType	OBJECT-TYPE
+		SYNTAX INTEGER {
+			unknown(1),
+			ethernet(2),
+			pronet4(3),
+			pronet10(4)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The type of LAN interface hardware in the unit."
+		::= { hw 8 }
+
+  macAddress	OBJECT-TYPE
+		SYNTAX PhysAddress
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The serial number assigned to the unit is now
+			the MAC address."
+		::= { hw 9 }
+
+  totalmodems     OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		  "The total number of internal modems on the board.
+		   Incase of having more than 1 T1 engines this will
+		   be the sum of all the internal modems per T1 engines.
+		   Note: This object is valid for Remote Annex products
+		   with internal modems such as the RA6300, 5393, 5399, 
+		   and rac8000."
+		::= { hw 10 }
+
+-- The 5399 and 8000 platforms can have optional compression cards installed.
+-- The following objects are defined for those platfoms
+
+compressionCardHwRev		OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..40))
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The compression card hardware revision for 5399
+			and ra8000 platforms. If the card is not present
+			the string -not present- will be returned."
+		::= { hw 11 }
+
+-- the sw group
+
+  swType	OBJECT-TYPE
+		SYNTAX INTEGER {
+			err(1),
+			annexIImx(16),
+			annexIIux(17),
+			annex3ux(42),
+			annex3mx(43),
+			annex4000(46),
+			microannexux(52),
+			microannexmx(53),
+			microels(55),
+			annex2000(56),
+			annex6300(63),
+			bay5399(64)
+		}
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The software version currently running on
+			the Annex."
+		::= { sw 1 }
+
+  swRevMajor	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The major software release number."
+		::= { sw 2 }
+
+  swRevMinor	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The minor software release number."
+		::= { sw 3 }
+
+  swBuild	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..128))
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The full name of the software build, including
+			the software version, major and minor version
+			numbers and the date and time of the build."
+		::= { sw 4 }
+
+  imageName	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..100))
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The name of the most recently booted image."
+		::= { sw 5 }
+
+  bootHost	OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the host from which
+			the Annex booted."
+		::= { sw 6 }
+
+  defaultDomain	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..128))
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The default domain name provided by the DNS
+			nameserver."
+		::= { sw 7 }
+
+  currentDate	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..64))
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The current date and time provided by the time
+			server."
+		::= { sw 8 }
+
+  usableMemory	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The amount of available for data buffers and
+			other structures after the Annex has booted."
+		::= { sw 9 }
+
+  freeMemory	OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The amount of currently available memory."
+		::= { sw 10 }
+
+  minFreeMemory	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The minimum amount of free memory since booting
+			the Annex."
+		::= { sw 11 }
+
+  cpuUtilization	OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"Percent of CPU time currently being used."
+		::= { sw 12 }
+
+  maxProcs	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The total number of process structures 
+			allocated for use."
+		::= { sw 13 }
+
+  mostProcs	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The maximum number of active processes since
+			the Annex was booted."
+		::= { sw 14 }
+
+  activeProcs	OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The number of currently active processes."
+		::= { sw 15 }
+
+  cpuIRescheds	OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The number of processes whose time slice has
+			expired in the last minute."
+		::= { sw 16 }
+
+  cpuTRescheds	OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The total number of processes whose time slice
+			has expired since booting the Annex."
+		::= { sw 17 }
+
+  contextISwtchs	OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The number of context switches in the last 
+			minute."
+		::= { sw 18 }
+
+  contextTSwtchs	OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The total number of context switches since
+			booting the Annex."
+		::= { sw 19 }
+
+  cpuIActivates	OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The number of processes that were activated
+			in the last minute."
+		::= { sw 20 }
+
+  cpuTActivates	OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The number of processes that were activated
+			since booting the Annex."
+		::= { sw 21 }
+	
+  maxCallouts	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The number of allocated Callout structures 
+			for timed events in the Annex."
+		::= { sw 22 }
+
+  leastCallouts	OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The minimum number of Callout structures 
+			available since last booting the Annex."
+		::= { sw 23 }
+
+  freeCallouts	OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The current number of free Callout structures."
+		::= { sw 24 }
+
+  totalMbufs    OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+                DESCRIPTION
+			"The total number of mbufs allocated by the
+			Annex kernel."
+		::= { sw 25 }
+										 
+  freeMbufs     OBJECT-TYPE
+		SYNTAX Gauge
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+                        "The number of currently available mbufs."
+		::= { sw 26 }
+					 
+  leastMbufs    OBJECT-TYPE
+                SYNTAX Gauge
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+                        "The least number of mbufs available at any
+			time since the last reboot of the Annex."
+		::= { sw 27 }
+						 
+  deniedMbufs   OBJECT-TYPE
+                SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+                        "The number of times that a process requested
+			an mbuf and was denied since there were none
+			available."
+		::= { sw 28 }
+
+  --		{ sw 29 } is reserved
+
+  --		{ sw 30 } is reserved
+
+swAFDStatus     OBJECT-TYPE
+		SYNTAX INTEGER {
+			notStarted(1),
+			executing(2),
+			loading(3),
+			none(4),
+			aborted(5),
+			success(6)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"An indication of the current status of the Automated
+			FIrmware Download (AFD) facility. Please
+			refer to the syslog for detailed status or
+			error information. The normal value when reading
+			this object is success(6)
+
+			notStarted - AFD was not invoked
+			executing - AFD is running but not downloading
+					at present
+			loading - a module is being downloaded
+			none - nothing was downloaded, AFD is complete
+			aborted - an error occurred during download
+			success - all downloads completed normally"
+		::= { sw 31 }
+
+
+  -- the Annex configuration parameters
+
+  anxInetAddr	OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the Annex.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'inet_addr'."
+		::= { annexconfig 1 }
+
+  anxPrefLoadAddr OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The preferred load address for the Annex.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'pref_load_addr'."
+		::= { annexconfig 2 }
+
+  anxPrefDumpAddr OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The preferred dump address for the Annex.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'pref_dump_addr'."
+		::= { annexconfig 3 }
+
+  anxLoadDumpGateway	OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of a gateway used when
+			the preferred load or dump host is on a 
+			different network or subnet.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'load_dump_gateway'."
+		::= { annexconfig 4 }
+
+  anxLoadDumpSeq  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Lists the available network interfaces and the
+			order that the Annex uses them when doing a
+			down-line load or up-line dump.
+			
+			The list may consist of one or more interfaces
+			separated by commas.  For example, the following
+			is allowed and directs the Annex to first try
+			to boot over the ethernet interface, then using
+			port 1 which is configured as a slip port
+			
+			  net,sl01
+			  
+			If the Annex is a self-boot model, a dump can
+			only be created if you specify an alternate
+			interface as the dump destination.  For example
+			
+			  self,net
+			  
+			  This MIB object corresponds to the NA/admin 
+			  Annex parameter 'load_dump_sequence'."
+		::= { annexconfig 5 }
+
+  anxLoadBcast	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),	-- load broadcast enabled
+			disabled(2)	-- disabled
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines whether the Annex
+			broadcasts for the config or the motd
+			files if they were not found on the
+			preferred load host.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'load_broadcast'."
+		::= { annexconfig 6 }
+
+  anxServerCap	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..32))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines whether the Annex can act as a file
+			server host for another Annex.  The 
+			allowable values are 'all', 'none' (the
+			default), or one or more of the following 
+			names separated by commas:
+			
+			'config', 'motd', 'image'.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'server_capability'."
+		::= { annexconfig 7 }
+
+  anxTimeBcast	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines whether the Annex 
+			broadcasts for the time if the preferred load 
+			host does not provide a time server.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'time_broadcast'."
+		::= { annexconfig 8 }
+
+  anxBcastAddr	OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address used by the Annex when
+			sending broadcasts.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'broadcast_addr'."
+		::= { annexconfig 9 }
+
+  anxSubnetMask	OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet subnet mask for the Annex.  Setting
+			this object to 0.0.0.0 results in the default
+			of 255.0.0.0 actually being set.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'subnet_mask'."
+		::= { annexconfig 10 }
+
+  anxAuthAgent	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex can
+			send an ICMP Address Mask Reply to a received
+			ICMP Address Mask Request.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'authoritative_agent'."
+		::= { annexconfig 11 }
+
+  anxMaxVcli	OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The maximum number of virtual CLI connections
+			allowed by the Annex at any one time.  0 means
+			the Annex does not allow VCLI connections.  255
+			allows the Annex to maintain an unlimited number
+			of VCLI connections.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'max_vcli'."
+		::= { annexconfig 12 }
+
+  anxIpEncapType  OBJECT-TYPE
+		SYNTAX INTEGER {
+			ethernet(1),
+			ieee802(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter specifies whether the Annex
+			encapsulates IP packets in the Ethernet format
+			or the IEEE 802.2/802.3 Data Link Layer format.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'ipencap_type'."
+		::= { annexconfig 13 }
+			
+  anxNameServer1Type	OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			ien116(2),
+			dns(3)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The name service type used by the primary
+			nameserver host.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'name_server_1'."
+		::= { annexconfig 14 }
+
+  anxNameServer1Addr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the primary nameserver 
+			host.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'pref_name1_addr'."
+		::= { annexconfig 15 }
+
+  anxNameServer2Type	OBJECT-TYPE
+		SYNTAX INTEGER {
+			none(1),
+			ien116(2),
+			dns(3)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The name service type used by the secondary
+			nameserver host.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'name_server_2'."
+		::= { annexconfig 16 }
+
+  anxNameServer2Addr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the secondary 
+			nameserver host.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'pref_name2_addr'."
+		::= { annexconfig 17 }
+
+  anxNameServerBcast  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			broadcasts a name server request if the 
+			preferred name servers do not respond.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'nameserver_broadcast'."
+		::= { annexconfig 18 }
+
+  anxRwhod	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines whether the Annex listens for RWHO
+			broadcasts when building its host table.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rwhod'."
+		::= { annexconfig 19 }
+
+  anxMinUniqueHostNames  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines whether the Annex minimum uniqueness
+			feature is available.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'min_unique_hostnames'."
+		::= { annexconfig 20 }
+
+  anxHostTableSize  OBJECT-TYPE
+		SYNTAX INTEGER (1..255)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the number of entries in the Annex
+			host table.  A value of 254 indicates no host 
+			table.  A value of 255 sets no limit on the 
+			size of the table.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'host_table_size'."
+		::= { annexconfig 21 }
+
+  anxRouted	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines whether the RIP routing daemon 
+			on the Annex is enabled.  Enabling the routing
+			daemon activates both passive and active RIP
+			if the anxOptionKey parameter includes active
+			RIP.  Otherwise, only passive routing is 
+			activated.  After changing this parameter,
+			the Annex must be rebooted for the new value
+			to take affect.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'routed'."
+		::= { annexconfig 22 }
+
+  anxEnableSecurity  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			security system is enabled.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'enable_security'."
+		::= { annexconfig 23 }
+
+  anxPassword	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Setting this parameter changes the Annex's
+			administration password.  Reading this parameter
+			will return either <set> if the password is
+			defined or <unset> if the password is not
+			defined.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'password'."
+		::= { annexconfig 24 }
+
+  anxSecurServer1Addr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the primary host where
+			the Annex sends its security requests.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'pref_secure1_host'."
+		::= { annexconfig 25 }
+
+  anxSecurServer2Addr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the secondary host 
+			where the Annex sends its security requests.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'pref_secure2_host'."
+		::= { annexconfig 26 }
+
+  anxNetTurnAround  OBJECT-TYPE
+		SYNTAX INTEGER (1..10)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The amount of time (in seconds) that the Annex
+			waits for a response from a security server.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'network_turnaround'."
+		::= { annexconfig 27 }
+
+  anxSecurBcast OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			will broadcast its security requests when 
+			neither of the preferred security servers are 
+			available.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'security_broadcast'."
+		::= { annexconfig 28 }
+
+  anxVcliSecurity  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex 
+			performs user validation on the virtual CLI 
+			connections.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'vcli_security'."
+		::= { annexconfig 29 }
+
+  anxVcliPassword  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines a password used by the 
+			Annex when setting up a virtual CLI connection.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'vcli_password'."
+		::= { annexconfig 30 }
+
+  anxAcpKey	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the Annex's
+			encryption key used when exchanging messages 
+			between the Annex and the security server.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'acp_key'."
+		::= { annexconfig 31 }
+
+  anxSysLogMask	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..64))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the priority levels of events logged
+			in the Annex syslog file.
+
+        		The allowable values are 'all', 'none', or
+			one or more of the following level names
+			separated by commas:
+			
+			'emergency', 'alert', 'critical', 'error', 
+			'warning', 'notice', 'info', 'debug' 
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'syslog_mask'."
+		::= { annexconfig 32 }
+
+  anxSysLogFacility  OBJECT-TYPE
+		SYNTAX INTEGER {
+			loglocal0(17),
+			loglocal1(18),
+			loglocal2(19),
+			loglocal3(20),
+			loglocal4(21),
+			loglocal5(22),
+			loglocal6(23),
+			loglocal7(24)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the 4.3BSD syslog 
+			facility used in logging the Annex messages.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'syslog_facility'."
+		::= { annexconfig 33 }
+
+  anxSysLogHost OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the host configured to
+			log Annex messages.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'syslog_host'."
+		::= { annexconfig 34 }
+
+  anxCliPrompt	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..32))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter defines the prompt string for all
+			CLI users.  The prompt string consists of displayable
+			characters and embedded formatting codes.  Each
+			formatting code is stored in a single character 
+			in nonvolatile memory.  The maximum number of 
+			characters stored for the prompt string 
+			is 16.  Since the formatting codes consist of
+			a '%' prepended to a single character, the maximum
+			length string that may be entered for this object
+			is 32 characters.  Strings less than 32
+			characters in length will be rejected as bad values
+			if they cannot be stored into 16 characters in 
+			nonvolatile memory after the formatting codes are
+			compressed into single characters.
+			
+			The valid formatting codes are:
+
+		          %a  the string 'annex'     
+			  %c  the string ': '
+			  %d  the date and time      
+			  %i  the Annex's IP address
+			  %j  a newline character    
+			  %l  port location, or 'port n'
+			  %n  the Annex's name       
+			  %p  the port number
+			  %r  the string 'port'      
+			  %s  a space
+			  %t  the time hh:mm:ss      
+			  %u  the user name for port
+			  %%  the string '%'
+
+			
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'cli_prompt'."
+		::= { annexconfig 35 }
+
+  anxMotdFile	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The host file name that contains the 
+			message-of-the-day for the Annex.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'motd_file'."
+		::= { annexconfig 36 }
+
+  anxTftpDirName	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..100))
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Specifies the directory name to be prepended
+			to all files (boot image, motd, macros, etc.)
+			when booting via TFTP.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'tftp_load_dir'."
+		::= { annexconfig 37 }
+
+  anxTftpDumpName	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..100))
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The full pathname of the TFTP dump file, if any.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'tftp_dump_name'."
+		::= { annexconfig 38 }
+
+  anxTimeZone	OBJECT-TYPE
+ 		SYNTAX INTEGER (-720..720)
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the timezone where the Annex resides in
+			minutes west of GMT.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'timezone_minuteswest'."
+		::= { annexconfig 39 }
+
+  anxDaylightSavings  OBJECT-TYPE
+		SYNTAX INTEGER {
+			us(1),
+			australian(2),
+			westeuropean(3),
+			mideuropean(4),
+			easteuropean(5),
+			canadian(6),
+			british(7),
+			none(8)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the daylight savings time for the geographic
+			location of the Annex.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'daylight_savings'."
+		::= { annexconfig 40 }
+
+  -- the LAT protocol parameters
+
+  anxLatKey	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The Annex specific LAT key used to enable
+			or disable the LAT protocol.  If this value is
+			not correct, and the LAT protocol is disabled,
+			none of the other LAT related parameters can
+			be set.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'lat_key'."
+		::= { annexconfig 41 }
+
+  anxCircuitTimer  OBJECT-TYPE
+		SYNTAX INTEGER (1..100)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The time interval in tens of milliseconds 
+			between the transmission of LAT packets.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'circuit_timer'."
+		::= { annexconfig 42 }
+
+  anxFacilityNum  OBJECT-TYPE
+		SYNTAX INTEGER (0..32767)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The LAT facility number.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'facility_num'."
+		::= { annexconfig 43 }
+
+  anxLatGroupVal	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..610))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The Annex LAT group code for permitting access 
+			to LAT services.  To access a specific LAT 
+			service, the Annex must have at least one
+			enabled group code match the service's set 
+			group codes.  The Annex will not maintain any 
+			information about unauthorized services.  The
+			syntax is a series of numbers between 0 and 255,
+			separated by commas and dashes, such as 1,5,100-255.
+			The keywords 'all' and 'none' are also accepted
+			and will enable all or disable all groups,
+			respectively.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'group_value'.
+
+			Note: You may use either this object or 
+			anxLatAuthMap object to read or set the 
+			'group_value' parameter.anxLatAuthMap is 
+			preferred."
+		::= { annexconfig 44 }
+
+  anxKeepAliveTimer  OBJECT-TYPE
+		SYNTAX INTEGER (10..255)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The time interval, in seconds, between the 
+			transmission of identification packets during
+			times of network inactivity.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'keep_alive_timer'."
+		::= { annexconfig 45 }
+
+  anxReXmitLimit  OBJECT-TYPE
+		SYNTAX INTEGER (4..120)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"The number of times to retransmit a packet
+			before notifying the user of a network failure.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'retrans_limit'."
+		::= { annexconfig 46 }
+
+  anxServerName OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"A string of up to 16 characters used to name
+			the Annex in the LAT protocol.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'server_name'."
+		::= { annexconfig 47 }
+
+  anxServiceLimit  OBJECT-TYPE
+		SYNTAX INTEGER (16..2048)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter defines the upper bound on the
+			number of services that the Annex can maintain
+			in its local service table.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'service_limit'."
+		::= { annexconfig 48 }
+
+  anxConfigFile  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The name of the host file that contains the alias
+			 and menu entries.
+			 
+			 This MIB object corresponds to the NA/admin 
+			 Annex parameter 'config_file'."
+		::= { annexconfig 49 }
+
+  anxLatVcliGroupVal  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..610))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This Annex parameter specifies which remote 
+			group codes are accessible to virtual cli users.
+			All virtual cli users have the same group code.
+			The syntax is a series of numbers between 0 and 255,
+			separated by commas and dashes, such as 1,5,100-255.
+			The keywords 'all' and 'none' are also accepted
+			and will enable all or disable all groups,
+			respectively.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'vcli_groups'.
+			Note: You may use either this object or 
+			anxLatAuthMap object to read or set the 
+			'group_value' parameter.anxLatAuthMap is 
+			preferred."
+		::= { annexconfig 50 }
+
+  anxLatQueueMax OBJECT-TYPE
+                SYNTAX INTEGER (1..255)
+                ACCESS read-write
+                STATUS deprecated
+                DESCRIPTION
+			"Defines the maximum number of host requests 
+			(HIC's) that the Annex will save in its internal 
+			queue when the requested resource is not 
+			available (port busy).  The default value is 4.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'lat_queue_max'."
+		::= { annexconfig 51 }
+
+  anxLatLocation OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..32))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"A string of up to 32 characters used to 
+			identify the location of the Annex for
+			the LAT protocol.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'sys_location'."
+		::= { annexconfig 52 }
+
+  anxDisabledModules	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..180))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Defines which selectable modules are
+			currently disabled.  The allowable values 
+			are 'all', 'none' or one or more of the 
+			following names separated by commas:
+
+			'admin', 'atalk', 'dialout', 'edit', 'fingerd',
+			'ftpd', 'httpd', 'ipx', 'lat', 'nameserver',
+			'ppp', 'slip', 'snmp', 'tn3270', 'tstty',
+			'udas', 'vci'.
+
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'disabled_modules'."
+		::= { annexconfig 53 }
+
+  anxSysLogPort OBJECT-TYPE
+                SYNTAX INTEGER (0..256)
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+			"Specifies the Annex serial port number where 
+			syslog messages are sent.  If set to 0, syslog 
+			messages are not sent to an Annex port.  This
+			is independent of any host-based syslogging
+			that may be enabled.  The largest port 
+			number allowed depends on the highest 
+			numbered serial port on the specific Annex.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'syslog_port'."
+		::= { annexconfig 54 }
+
+  anxOptionKey  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+		STATUS deprecated
+                DESCRIPTION
+			"The Annex specific software option key used to 
+			enable or disable the AppleTalk, dynamic routing
+			and TN3270 support.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'option_key'."
+		::= { annexconfig 55 }
+ 
+  anxIpFwdBcast  OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+                        disabled(2)
+		}
+		ACCESS read-write
+		STATUS mandatory
+                DESCRIPTION
+			"When enabled, all broadcasted IP packets are
+			forwarded to all interfaces.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'ip_forward_broadcast'."
+		::= { annexconfig 56 }
+										 
+  anxLooseSrcRoute      OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+                }
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+                        "When enabled, the Annex allows internet loose
+			source routing.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'loose_source_route'."
+		::= { annexconfig 57 }
+								 
+  -- the Annex AppleTalk configuration parameters
+   
+  anxAppleTalkRouter    OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (11..17))
+		ACCESS read-write
+                STATUS deprecated
+		DESCRIPTION
+			"The Ethernet address of the AppleTalk router.
+			The default value is 0-0-0-0-0-0.  Each part
+			of the address must be a hex value separated by 
+			a dash.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'a_router'."
+		::= { annexconfig 58 }
+									 
+  anxAppleTalkDefZones  OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..100))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+                        "The comma separated list of AppleTalk zone names
+			used as a default when ACP cannot supply the actual
+			set of zone names.  Commas, spaces and double quotes
+			can be used in a zone name by preceding these
+			characters with a backslash ('\') character.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'default_zone_list'."
+		::= { annexconfig 59 }
+
+  anxAppleTalkNodeId    OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (3..11))
+		ACCESS read-write
+                STATUS mandatory
+		DESCRIPTION
+			"The AppleTalk node ID that the Annex first tries 
+			to use at startup.  The address consists of two
+			parts separated by a dot.  The address may be in 
+			either hex or decimal format.  The first part is 
+			the network address and ranges from 0 to 65534 
+			(0x0000 to 0xFFFE).  The second part is the node 
+			address and ranges from 0 to 254 (0x00 to 0xFE).  
+
+			Example:
+			
+			  0x00BF.0xFD  191.253  0x00BF.253  191.0xFD
+			  
+			are all the same address.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'node_id'."
+		::= { annexconfig 60 }
+ 
+  anxAppleTalkZone      OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..32))
+                ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The zone name that the Annex first tries to
+			use at startup.  Spaces and double quotes can
+			be used in the zone name by preceding these
+			characters with a backslash ('\').
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'zone'."
+                ::= { annexconfig 61 }
+		 
+		  
+  -- the Annex routing configuration parameters
+   
+  anxRipRouteList      OBJECT-TYPE
+		SYNTAX DisplayString (SIZE(0..128))
+		ACCESS read-write
+                STATUS mandatory
+		DESCRIPTION
+			"A list of one to eight IP addresses in 
+			dotted address format (ddd.ddd.ddd.ddd) with comma
+			separators between the addresses.  This list defines
+			where RIP responses are sent when the broadcast of 
+			RIP responses is disabled.  The value 'all' causes
+			the Annex to broadcast RIP updates.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_routers'."
+		::= { annexconfig 62 }
+  
+  anxRipAuth    OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+		STATUS mandatory
+                DESCRIPTION
+			"This is a clear text password that is used to
+			authenticate the RIP packets.  If the NULL
+			string is specified, RIP packet authentication
+			is turned off and all RIP packets are accepted.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_auth'."
+		::= { annexconfig 63 }
+							 
+  anxTcpKeepAlive OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The default keep-alive value in minutes for 
+			connections to this Annex.  If this is zero, use 
+			the default value of 120 minutes.  If set to 255, 
+			then the keep-alive function is disabled.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'tcp_keepalive'."
+		::= { annexconfig 64 }
+
+  anxMaxModemCalls OBJECT-TYPE
+		SYNTAX INTEGER (0..1000)
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The number of calls for which modem call accounting
+			information is kept.  The default value is 20."
+		::= { annexconfig 65 }
+						
+  anxOutputTtl  OBJECT-TYPE
+		SYNTAX INTEGER (1..255)
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The value that is placed in the ttl field of all
+			locally generated IP packets.  The default value
+			is 64.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'output_ttl'."
+		::= { annexconfig 66 }
+
+  anxSessionLimit OBJECT-TYPE
+		SYNTAX INTEGER (0..32767)
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The maximum number of sessions allowed on the 
+			Annex.  The default is 1152.  The maximum value that
+			can be set is actually 16 times the maximun number of
+			ports on the Annex.  This maximum is 1152.  Setting
+			this object to a value of 0 places no limit on the
+			number of sessions.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'session_limit'."
+		::= { annexconfig 67 }
+
+  anxLockEnable OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"When enabled, allows any port user to use
+			the LOCK DECServer command.  The default
+			value is enabled.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'lock_enable'."
+		::= { annexconfig 68 }
+		 
+  anxPasswdLimit OBJECT-TYPE
+		SYNTAX INTEGER (0..10)
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Defines the maximum number of times a user
+			on a port can attempt to enter a password
+			before the Annex resets the port.  Setting this
+			object to 0 results in a default value of 3.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'passwd_limit'."
+		::= { annexconfig 69 }
+
+  anxLatMulticastTimer OBJECT-TYPE
+		SYNTAX INTEGER (10..180)
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The elapsed time in seconds between
+			transmission of service announcements.
+			The default value is 30 seconds.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'multicast_timer'."
+		::= { annexconfig 70 }
+
+  anxChapAuthname OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The name associated with the Annex that
+			is used to fill the Name field in the PPP
+			CHAP challenge message.  If this value
+			is a zero length string, the Annex will
+			use 'chap' as the default.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'chap_auth_name'."
+		::= { annexconfig 71 }
+
+  anxTimeServerAddr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the time server host.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'time_server'."
+		::= { annexconfig 72 }
+
+  -- { annexconfig 73 through 77 } are reserved
+
+
+  --the MOP protocol group
+
+  anxMopPrefHost OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (11..17))
+		ACCESS read-write
+                STATUS deprecated
+		DESCRIPTION
+			"The Ethernet address of the preferred MOP
+			load/dump host.  The default value is 0-0-0-0-0-0.  
+			Each part of the address must be a hex value 
+			separated by a dash.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'pref_mop_host'."
+		::= { annexconfig 78 }
+
+  anxMopPassword OBJECT-TYPE
+                SYNTAX DisplayString (SIZE (1..16))
+                ACCESS read-write
+                STATUS deprecated
+                DESCRIPTION
+                        "The 8 byte hexadecimal MOP maintenance
+                        password.  Each byte is represented by two
+                        hex digits in the string.
+ 
+                        This MIB object corresponds to the NA/admin
+                        Annex parameter 'mop_password'."
+                ::= { annexconfig 79 }
+ 
+  anxMopLoginPassword OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The password for all ports where anxpCliInterface
+			parameter is set to vci and anxpVciLoginPortPassword
+			is enabled.  The default value is 'ACCESS'.
+			Reading this parameter will return either '<set>'
+			if the password is defined or '<default>' if the
+			password has not been set.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'login_password'."
+		::= { annexconfig 80 }
+
+  anxMopLoginPrompt OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..16))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The password prompt for all ports whose
+ 			anxpCliInterface parameter is set to vci.
+ 			The default is '#'. 
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'login_prompt'."
+		::= { annexconfig 81 }
+
+  anxMopLoginTimer OBJECT-TYPE
+		SYNTAX INTEGER (0..60)
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The inactivity timer for all ports whose
+			anxpCliInterface parameter is set to vci.
+			Setting this object to 0 results in a default 
+			value of 30 minutes.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'login_timer'."
+		::= { annexconfig 82 }
+
+  --the IPX protocol group
+
+  anxIpxFrameType OBJECT-TYPE
+		SYNTAX INTEGER {
+			raw802(1),
+			ethernetII(2),
+			ccitt802(3),
+			ccitt802snap(4)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The framing used for IPX protocol
+			packets.  The default value is raw802.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'ipx_frame_type'."
+		::= { annexconfig 83 }
+
+  -- annexconfig 84 through annexconfig 88 are no longer supported.
+
+  --the TMux protocol group
+
+  anxTmuxEnable OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"Controls whether the Annex uses TMux
+			to multiplex small TCP or UDP packets
+			into a single IP packet.  The host must also
+			support TMux, otherwise the Annex will
+			drop back to no multiplexing, even when
+			this parameter is enabled.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'tmux_enable'."
+		::= { annexconfig 89 }
+
+  anxTmuxMaxHost OBJECT-TYPE
+		SYNTAX INTEGER (10..255)
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The maximum size of the Tmux address table.
+			If the number of host addresses exceeds this limit,
+			the oldest entry is flushed.  The default value is 64.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'tmux_max_host'."
+		::= { annexconfig 90 }
+
+  anxTmuxMaxMpx OBJECT-TYPE
+		SYNTAX INTEGER (5..65535)
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The largest packet that can be placed in a TMux
+			packet.  Larger packets are not multiplexed but are
+			directly passed to the IP layer.  The default
+			value is 700.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'tmux_max_mpx'."
+		::= { annexconfig 91 }
+
+  anxTmuxDelay OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"The maximum amount of time used to accumulate
+			smaller packets into a larger packet.  When the time
+			expires, the multiplexed packet is sent, regardless how
+			large it is.  Setting this object to 0 results
+			in a default value of 20.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'tmux_delay'."
+		::= { annexconfig 92 }
+
+  anxAllowSets OBJECT-TYPE
+		SYNTAX INTEGER {
+			read-write(1),
+			read-only(2)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"This object will return whether SNMP manager(client)
+			has access to read or read-write the MIB objects. 
+			The access is determined by NA/admin parameter 
+			allow_snmp_sets and access rights given in the 
+			config file for a given community string and the 
+			client's IP address. The object will return 
+			read-only(1), or read-write(2) value. 
+			If the agent cannot authenticate the request
+			based on the community string and the SNMP
+			client's IP address, the agent will not respond
+			and will drop the request."
+		::= { annexconfig 93 }
+
+  anxDefaultImageName	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..100))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The name of the image file that is loaded by
+			default when booting the Annex.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'image_name'."
+		::= { annexconfig 94 }
+
+  anxLatGroupMap        OBJECT-TYPE
+		SYNTAX OCTET STRING (SIZE (1..32))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter is functionally identical to 
+			anxLatGroupVal and corresponds to the NA/admin 
+			Annex parameter 'group_value'.
+
+			The syntax of this object is an octet string
+			32 bytes long, with the first byte 
+			representing groups 0 through 7 and the last 
+			byte representing groups 248 through 255. 
+
+			For example, 0x40 0x25 ... means the groups 
+			1,10,13,15 are valid for this port. 
+			A returned value with all bits set to zero is
+			the same as setting 'group_value' to 'none'.
+			The object always returns a string 32 bytes long.
+
+			Note: You may use either this object or 
+			anxLatGroupVal object to read or set the 
+			'group_value' parameter.anxLatGroupMap is 
+			preferred."		
+		::= { annexconfig 95 }
+
+  anxLatVcliGroupMap	OBJECT-TYPE
+		SYNTAX OCTET STRING (SIZE (1..32))
+		ACCESS read-write
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter is functionally identical to
+			anxLatVcliGroupVal and corresponds to the 
+			NA/admin Annex parameter 'vcli_groups'.
+
+			The syntax of this object is an octet string
+			32 bytes long, with the first byte 
+			representing groups 0 through 7 and the last 
+			byte representing groups 248 through 255. 
+
+			For example, 0x40 0x25 ... means the groups 
+			1,10,13,15 are valid for this port. 
+			A returned value with all bits set to zero is
+			the same as setting 'group_value' to 'none'.
+			The object always returns a string 32 bytes long.
+
+			Note: You may use either this object or 
+			anxLatVcliGroupVal object to read or set the 
+			'group_value' parameter.anxLatVcliGroupMap is 
+			preferred."		
+		::= { annexconfig 96 }
+
+    anxMultiSession     OBJECT-TYPE
+        	SYNTAX  INTEGER {
+                	enable(1),
+             		disable(2)
+        		}
+	        ACCESS read-write
+        	STATUS deprecated
+	        DESCRIPTION
+        	        "This parameter allows multisession operation to be 
+	                managed on a terminal server basis. It tells that the 
+			server is configured for multisession operation. Once 
+			multisession is enabled the only way to turn it off is 
+			to reboot the terminal server software. Enabling this
+			object enables the service at the Annex level. It is 
+			necessary to enable the service on a port by using
+			the object anxpMultiSession to take effect. This MIB
+			object corresponds to the NA/admin Annex parameter
+			'multisessions'.
+
+	                Note: The value of this object is written in the 
+			non-volatile memory. Thus the value takes in effect
+			after reboot."
+
+        	::= { annexconfig 97 }
+
+  anxVcliInactivity OBJECT-TYPE
+		SYNTAX INTEGER (0..255)
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter will specify the amount of time in
+			minutes that a vcli session can remain inactive. If
+			the timer expires, the annex will terminate the 
+			virtual session. 
+			The default value is 0 indicating that the timer
+			is currently inactive. The maximum value is 255
+			minutes.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'vcli_inactivity'."
+		::= { annexconfig 98 }
+
+	anxDHCPServer1Addr OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the primary DHCP 
+			 server host. This MIB object corresponds 
+			 to the NA/admin Annex parameter
+			`pref_DHCP1_addr'."
+		::= {annexconfig 99 }
+
+	anxDHCPServer2Addr OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the secondary DHCP
+			 server host. This MIB object corresponds 
+			 to the NA/admin Annex parameter
+			`pref_DHCP2_addr'."
+		::= {annexconfig 100 }
+
+	anxDHCPServerBcast OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),	
+			disabled(2)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter controls whether the Annex
+			 broadcasts a DHCPDISCOVER request if the 
+			 preferred DHCP servers do not respond.	
+			 This MIB object corresponds to the NA/admin
+			 Annex parameter `DHCP_broadcast'."
+		::= {annexconfig 101 }
+
+  anxConfigServer  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The IP address of the host from where
+			the config file was downloaded."
+		::= { annexconfig 102 }
+
+  anxMaxChapChallInt  OBJECT-TYPE
+		SYNTAX INTEGER (0..65535)
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Specifies maximum value for the random CHAP
+                         re-challenge interval.  Valid values are in
+                         range of 0 to 65535 seconds.  Value of 0 for
+                         this parameter will turn off random chap
+                         re-challenges.  As default, random rechallenges
+                         have been turn off by having default value for
+                         this parameter is set to 0.
+			 This MIB object corresponds to the NA/admin
+			 Annex parameter `max_chap_chall_int'."
+		::= { annexconfig 103 }
+
+-- New configuration parameter for MMP support
+
+anxMMPEnable 	OBJECT-TYPE
+	SYNTAX INTEGER {
+		enabled(1),
+		disabled(2)
+	}
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Enables or disables MMP in the Remote Annex. 
+
+	This MIB object corresponds to the NA/admin 
+	parameter mmp_enabled."
+	::= { annexconfig 104 }
+
+--	::= { annexconfig 105 } is reserved
+
+
+anxModulesDisabled	OBJECT-TYPE
+	SYNTAX		INTEGER (1..'ffffffff'h)
+	ACCESS		read-write
+	STATUS		mandatory
+	DESCRIPTION
+		"A bit array that contains the setting
+		of selectable modules that are currently disabled.
+		The allowable values are:
+
+		0x00000001 - admin 
+		0x00000002 - tstty
+		0x00000004 - lat
+		0x00000008 - ppp
+		0x00000010 - slip
+		0x00000020 - snmp
+		0x00000040 - nameserver
+		0x00000080 - fingerd
+		0x00000100 - edit
+		0x00000200 - atalk
+		0x00000400 - tn3270
+		0x00000800 - dialout
+		0x00001000 - ftpd
+		0x00002000 - ipx
+		0x00004000 - vci
+		0x00008000 - none
+		0x00010000 - udas
+		0x00020000 - httpd
+		0x00040000 - l2tp
+		"
+	::= { annexconfig 106 }
+
+-- Authentication
+
+securityProtocol OBJECT-TYPE
+	SYNTAX INTEGER {
+               acp(1),
+               radius(2)
+               }
+	ACCESS read-write
+        STATUS mandatory
+        DESCRIPTION
+               "Values of this object can either be set to acp or radius to 
+                indicate which protocol this annex will use. Change of this
+                parameter will not be effective, even with a security reset
+                until reboot. This object corresponds to the NA/Admin parameter
+		auth_protocol"
+        ::= { annexconfig 107 }
+
+  anxRipForceNewrt OBJECT-TYPE
+        SYNTAX INTEGER (0..255)
+        ACCESS read-write
+        STATUS mandatory
+        DESCRIPTION
+             "When enabled, this parameter specifies the timeout value in
+             seconds that the Annex waits for a router to send periodic RIP
+             updates. If the Annex does not hear from the primary router
+             within this timeout period and a secondary router broadcasts a
+             valid replacement route, the replacement route takes precedence
+             regardless of the metric. The default and recommended value is
+             0 or \'off\' which disables this feature. The maximum value is
+             255 seconds. This MIB object corresponds to the NA/admin Annex
+             parameter 'rip_force_newrt'."
+        ::= { annexconfig 108 }
+ 
+  anxNbnServer1Addr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the primary NetBIOS
+			nameserver host.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'pref_nbns1_addr'."
+		::= { annexconfig 109 }
+
+  anxNbnServer2Addr  OBJECT-TYPE
+		SYNTAX IpAddress
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The Internet address of the secondary NetBIOS
+			nameserver host.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'pref_nbns2_addr'."
+		::= { annexconfig 110 }
+
+ anxNameserverOverride  OBJECT-TYPE
+                SYNTAX INTEGER {
+                        enable(1),
+                        disable(2)
+                        }
+                ACCESS read-write 
+                STATUS mandatory
+                DESCRIPTION
+                        "Indicates whether or not to override the PPP
+                        Client's nameserver address during IPCP negotiations.
+                        Set this to `enable' for server override, to `disable'
+                        for client override.  The default is `disable'.
+                        
+                        This MIB object corresponds to the NA/admin 
+                        parameter 'nameserver_override'."
+                ::= { annexconfig 111 }
+
+ anxBootpEnable OBJECT-TYPE
+                SYNTAX INTEGER {
+                        enable(1),
+                        disable(2)
+                        }
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter turns on and off the BOOTP relay
+			functionality.
+			
+			This MIB object corresponds to the na/admin
+			parameter 'bootp_enable'."
+		::= { annexconfig 112 }
+
+ anxRoutePref   OBJECT-TYPE
+                SYNTAX INTEGER {
+                        rip(1),
+                        ospf(2)
+                        }
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter determines which routing protocol 
+			will take precedence in the routing table.  The
+			default value is 'rip'.
+			
+			This MIB object corresponds to the na/admin
+			parameter 'route_pref'."
+		::= { annexconfig 113 }
+
+ anxRtableSize   OBJECT-TYPE
+                SYNTAX INTEGER
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter sets the maximun number of different
+			routes (address and mask) allowed in the routing
+			table.  The allowable values are: 1 (1024 routes),
+			2 (2048 routes), 4 (4096 routes) and 8 (8192 routes).
+			
+			This MIB object corresponds to the na/admin
+			parameter 'rtable_size'."
+		::= { annexconfig 114 }
+
+  anxOppasswd   OBJECT-TYPE
+                SYNTAX DisplayString (SIZE (0..15))
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "Setting this parameter changes the Annex's
+                        operator level password.  Reading this parameter
+                        will return either <set> if the password is
+                        defined or <unset> if the password is not
+                        defined.
+ 
+                        This MIB object corresponds to the NA/admin
+                        Annex parameter 'oppasswd'."
+                ::= { annexconfig 115 }
+
+--
+-- OSPF proprietary box-level parameters
+--
+
+anxOspf OBJECT IDENTIFIER ::= { annexconfig 201 }
+
+anxOspfHolddown OBJECT-TYPE
+        SYNTAX INTEGER (0..255)
+        ACCESS  read-write
+        STATUS mandatory
+	DESCRIPTION
+		"Defines how often OSPF calculates a route
+		(the minimum number of seconds between OSPF
+		runs).  Setting this object to 0 results
+		in a default value of 10.  This parameter
+		corresponds to the na/admin parameter ospf_holddown."
+        ::= { anxOspf 1 }
+
+anxOspfCompat1583 OBJECT-TYPE
+        SYNTAX INTEGER {
+                enabled(1),
+                disabled(2)
+                }
+        ACCESS read-write
+        STATUS mandatory
+	DESCRIPTION
+		"Dontrols the preference rules used when choosing among
+		multiple AS-external-LSAs advertising the same destination.
+		When enabled, the preference rules remain those specified
+		by RFC 1583.  When disabled, the preference rules are those
+		stated in section 16.4.1 of RFC 2178, which prevent routing
+		loops when AS-external-LSAs for the same destination have
+		been originated from different areas.  The default value
+		is 'enabled'.  This parameter corresponds to the na/admin
+		parameter ospf_compat1583."
+        ::= { anxOspf 2 }
+
+anxOspfAreaType OBJECT-TYPE
+        SYNTAX INTEGER {
+                stub(1),
+                nssa(2)
+        }
+        ACCESS read-write
+        STATUS mandatory
+	DESCRIPTION
+		"This defines the area type.  The default value is
+		'stub'.  This parameter corresponds to the na/admin
+		parameter ospf_areatype."
+::= { anxOspf 3 }
+
+
+
+-- the annex commands
+
+  anxcBoot	OBJECT-TYPE
+		SYNTAX INTEGER {
+			immediate(1),
+			delayed(2),
+			dumpboot(3),
+			diagnosticboot(4),
+			abortschedule(5),
+			quiet(6),
+			saveinflash(7)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The type of boot to be performed.  
+			To initiate a dump, this parameter needs to
+			be set by the management station.  The values
+			stored in anxcBootImage, anxcBootTime, and 
+			anxcBootMsg are used as needed, depending on
+			the boot type.  If the unit has no flash
+			memory, any attempt to set this object to
+			the value 'saveinflash' is rejected."
+		::= { annexcmds 1 }
+
+  anxcBootImage	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..100))
+		ACCESS read-write
+		STATUS mandatory	
+		DESCRIPTION
+			"The name of the image file to be used with
+			the boot command."
+		::= { annexcmds 2 }
+
+  anxcBootTime	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..10))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The time at which the next boot is scheduled
+			in either offset +MM or +HH:MM, or a clock
+			time HH:MM format."
+		::= { annexcmds 3 }
+
+  anxcBootMsg	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..128))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The broadcast message to be displayed when the
+			next boot is performed."
+		::= { annexcmds 4 }
+
+  anxcReset	OBJECT-TYPE
+		SYNTAX INTEGER {
+			all(1),  -- Reset all ports on all Devices
+			macros(2),
+			motd(3),
+			nameserver(4),
+			security(5),
+			printerports(6),
+			serialports(7),
+			virtualports(8),
+			syncports(9),
+ --			modem(10),     	please use mdmCtlReset, 
+ --					mdmCtlResetAll, mdmCtlReadConfig
+ --					in xylo-modem.mib instead
+			dialout(11),
+			lat(12),
+			interfaces(13),
+			annex-all(14),
+			t1-esf(15),
+			t1-soft(16),
+			t1-hard(17),
+ --			intmodems(18),  please use mdmCtlReset, 
+ --					mdmCtlResetAll, mdmCtlReadConfig
+ --					in xylo-modem.mib instead
+			pri-session(19),
+			vpnport(20),
+			ippool(21),
+			ntp(22),
+			ippoolsystem(23)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Writing a value to this object causes the
+			annex to reset the appropriate subsystem.  If
+			the value of this object is 'serialports', 
+			'syncports', 'printerports', 'virtualports', 
+			'vpnport' or 
+			'interfaces', all objects 
+			of the specified type are reset.
+			For T1 boards only, setting
+			t1_esf will reset all of the ESF counters in the 
+			       engine
+			t1-soft will reconfigure only the software 
+			       parameters which were changed.
+			t1-hard will reset the T1 engine affecting the 
+			       service.
+			pri_session(19) resets PRI session parameters
+			blocks. The RA6300 will re-read the Session
+			Parameter blocks from config.annex. Existing
+			calls will not be reset. No calls will be
+			answered while the PRImate is performing
+			the reset. The time to reset will depend
+			on the number of sessions which have to be 
+			loaded from the host; it will typically 
+			be less than one second.
+			The ippool object causes a reset of the pool
+			configuration which is equivalent to issuing a
+			reset command on the ippool command prompt."
+		::= { annexcmds 5 }
+
+  anxcBcast	OBJECT-TYPE
+		SYNTAX INTEGER {
+			all(1),
+			serial(2),
+			virtual(3)
+		}
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"Writing a value to this object causes the 
+			annex to send the message in anxcBcastMsg to the
+			specified port set."
+		::= { annexcmds 6 }
+
+  anxcBcastMsg	OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..128))
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+			"The message to be broadcast to the Annex
+			ports."
+		::= { annexcmds 7 }
+
+  anxcResetSession	OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+			}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This command resets PRI session parameters
+			blocks. The RA6300 will re-read the Session
+			Parameter blocks from config.annex. Existing
+			calls will not be reset. No calls will be
+			answered while the PRImate is performing
+			the reset. The time to reset will depend
+			on the number of sessions which have to be 
+			loaded from the host; it will typically 
+			be less than one second."
+		::= { annexcmds 8 }
+
+  anxcResetDialout	OBJECT-TYPE
+		SYNTAX DisplayString 
+		ACCESS read-write 
+		STATUS mandatory
+		DESCRIPTION
+		" Reset specific dialout routes using a range string.
+		example: 1,3-5,8 will reset dialout routes 1,3,4,5,8.
+		While 1,3-5,g,8 (g is bogus and anything beyond it won't 
+		be parsed) will reset dialout routes 1,3,4,5.
+		Reading this object will always return a READY string."
+		::= { annexcmds 9 }
+
+anxcResetWan1Chan  OBJECT-TYPE
+           SYNTAX INTEGER 
+           ACCESS read-write
+           STATUS mandatory
+           DESCRIPTION
+           "Resetting a particular channel on WAN 1."
+            ::= { annexcmds 10 }
+
+anxcResetWan2Chan  OBJECT-TYPE
+           SYNTAX INTEGER 
+           ACCESS read-write
+           STATUS mandatory
+           DESCRIPTION
+           "Resetting a particular channel on WAN 2."
+            ::= { annexcmds 11 }
+
+
+--  anxchascommon MIB group for annex chassis for 5390
+
+  anxChasSegment OBJECT-TYPE
+          SYNTAX    INTEGER 
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "The current hub backplane segment to which the
+               module is attached.  If this is unknown or not
+ 	       applicable (eg. for a standalone unit), a value of
+ 	       zero is returned."
+          ::= { anxchascommon 1 }
+
+  anxChasAttChanges   OBJECT-TYPE
+	  SYNTAX    Counter
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "The total number of attachment changes
+               for the module since the last cold/warm start
+               of the module.  If this is unknown or not 
+	       applicable (eg. for a standalone unit), a value of
+	       zero is returned."
+          ::= { anxchascommon 2 }
+
+  anxChasSlotId  OBJECT-TYPE
+          SYNTAX    INTEGER   
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "The current slot number for the module in the chassis.  
+	       If this is unknown or not applicable (eg. for a standalone 
+	       unit), a value of zero is returned."
+          ::= { anxchascommon 3 }
+
+ 
+--  The following group is optional depending on the hardware 
+--  configuration of the Annex.  These objects apply only to certain
+--  hardware versions of the Annex.  All other Annex versions will
+--  respond with noSuchObject if these objects are read or written.
+
+
+  anxModuleLeds	OBJECT-TYPE
+          SYNTAX    OCTET STRING
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "A bit array that contains the current setting 
+	       of the front panel LED's. The exact format of this
+	       information is dependent on the module type and
+	       may not be available for all types.
+	       For csmim-t1(261) as the 'hwType' the bit array is mapped as:
+                      octet 1: maps leds for port 1
+                              bit 0: CD (1=on, 0=off)
+                              bits 1-7: unused
+                      octet 2: maps leds for port 2
+                              .
+                              .
+                      octet 23: maps leds for port 23
+                      octet 24: maps leds for port 24
+                      octet 25: maps status leds
+                              bit 0: LOS     (1=on, 0=off)
+                              bit 1: SYNC    (1=on, 0=off)
+                              bit 2: TEST    (1=on, 0=off)
+                              bit 3: RED     (1=on, 0=off)
+                              bit 4: YEL     (1=on, 0=off)
+                              bit 5: BLU     (1=on, 0=off)
+                              bit 6: DI_SYNC (1=on, 0=off)
+                              bit 7: ON_LINE (1=on, 0=off)
+                      octet 26: maps status leds
+                              bit 1-0: mod_1_8   (00:off,10:green,01:amber)
+                              bit 3-2: mod_9_16  (00:off,10:green,01:amber)
+                              bit 5-4: mod_17_24 (00:off,10:green,01:amber)
+                              bit 6: unused
+                              bit 7: unused
+		      octets 27 unused
+		      octets 28: maps online led
+			      bit 0: unused
+			      bit 1: ONLINE (1=on, 0=off)
+			      bit 2-7:unused 
+                     octets 29 to 63: unused
+
+	In the following diagrams, each LED occupies a nibble 
+	(2 LEDS per OCTET). 0 = off, 1 = green, 2 = amber. The 
+	OCTET String is one based (start counting from 1).
+					
+	Example:
+		OCTETS 5 and 6:  20 10
+			 	 || ||
+		S1 = amber_______|| ||
+		S2 = off__________| ||
+		S3 = green__________||
+		S4 = off_____________|
+
+	Common mappings for 5390, 5391, 5393, 5399 LEDS:
+	-----------------------------------------------		
+		SEGMENT CONNECTION           	MAPS TO
+		------------------		-------
+		S1	S2	S3	S4	OCTETS 5 AND 6
+		S5	S6	S7	S8	OCTETS 7 AND 8
+		S9	S10	S11	S12	OCTETS 9 AND 10
+
+		MODULE STATUS
+		-------------
+		UNIT	LED	LOAD	INIT	OCTETS 13 AND 14
+		ATTN				OCTET  15
+	
+	Mapping for 5399 WAN Module LEDS:
+	--------------------------------
+		WAN 1
+		-----
+		RED	YEL	BLUE		OCTETS 19 AND 20
+		LOS	SYNC	TEST		OCTETS 21 AND 22
+		25%	50%	75%	100%	OCTETS 23 AND 24
+
+
+		WAN 2
+		-----
+		RED	YEL	BLUE		OCTETS 27 AND 28
+		LOS	SYNC	TEST		OCTETS 29 AND 30
+		25%	50%	75%	100%	OCTETS 31 AND 32
+
+					
+	Mapping for 5393 Channel LEDS:
+	-----------------------------
+		CHANNEL STATUS
+		--------------
+		1	2	3	4	OCTETS 19 AND 20
+		5	6	7	8	OCTETS 21 AND 22
+		9	10	11	12	OCTETS 23 AND 24
+		13	14	15	16	OCTETS 25 AND 26
+		17	18	19	20	OCTETS 27 AND 28
+		21	22	23	24	OCTETS 29 AND 30
+		25	26	27	28	OCTETS 31 AND 32
+		29	30	31	32	OCTETS 33 AND 34
+	
+	Mapping for 5390, 5391 port LEDS:
+	--------------------------------
+		PORT STATUS
+		-----------
+		1	2	3	4	OCTETS 19 AND 20
+		5	6	7	8	OCTETS 21 AND 22
+		9	10	11	12	OCTETS 23 AND 24
+		13	14	15	16	OCTETS 25 AND 26
+		17	18	19	20	OCTETS 27 AND 28
+		21	22	23	24	OCTETS 29 AND 30
+		"
+          ::= { anxchas 1 }
+
+  anxChasCfgChanges   OBJECT-TYPE
+          SYNTAX    Counter
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "The total number of configuration changes
+               for the module since the last cold/warm
+               start of the module."
+          ::= { anxchas 2 }
+
+  anxChasSerNum   OBJECT-TYPE
+          SYNTAX    DisplayString (SIZE (0..32))
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "The serial number of the chassis where the module 
+	       is installed.  If unknown, the value is a zero 
+	       length string."
+          ::= { anxchas 3 }
+
+  anxChasType OBJECT-TYPE
+	  SYNTAX    OBJECT IDENTIFIER
+	  ACCESS   read-only
+	  STATUS   mandatory
+	  DESCRIPTION
+		"The chassis type where the module is installed.
+		If this information is not available, the value is 
+		returned as an OID value '0.0'."
+	  ::= { anxchas 4 }
+
+  anxChasVer	OBJECT-TYPE
+	  SYNTAX   DisplayString (SIZE (0..32))
+	  ACCESS   read-only
+	  STATUS   mandatory
+	  DESCRIPTION
+	       "The version of the chassis where the module is
+	       installed.  If this information is not available, a
+	       the returned value is a zero length string."
+	  ::= { anxchas 5 }
+
+  anx6300LEDs	OBJECT-TYPE
+          SYNTAX    OCTET STRING (SIZE (8))
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "A bit array that contains the current setting 
+	       of the front panel LED's. 
+		This object is valid for RA6300 platforms only.
+	       For ra6300(269) as the 'hwType' the bit array is mapped as:
+		   Octet 1-4 represent LEDs for b channel 1-32
+		  	Bit 0 represents LED for B-channel 1
+			.......
+			Bit 31 represents LED for B-channel 32.
+
+		   Octet 5-8 represents Alarm LED's mapped as:
+		   	    0x0100   Red Alarm Indicator 
+		            0x0200   Yellow Alarm Indicator 
+		            0x0400   Blue Alarm Indicator 
+		            0x0800   Sync Indicator 
+		            0x1000   LOS Indicator 
+		            0x2000   Test Indicator 
+			where   1=on, 0=off
+		"
+          ::= { anxchas 6 }
+
+  anxChasLeds	OBJECT-TYPE
+          SYNTAX    OCTET STRING (SIZE (8))
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "A bit array that contains the current setting 
+	        of the front panel LED's. They are displayed 
+		in little endian. This object is valid 
+		for RA6300, 8000RAC platforms only.
+	       ___________________________________________________________
+	       For ra6300(269) as the 'hwType' the bit array is mapped as:
+		   Octets 1-4 represent LEDs for b channel 1-32
+		  	Bit 0 represents LED for B-channel 1
+			.......
+			Bit 31 represents LED for B-channel 32.
+
+		   Octet 5-8 represents Alarm LED's mapped as:
+		   	    0x0100   Red Alarm Indicator 
+		            0x0200   Yellow Alarm Indicator 
+		            0x0400   Blue Alarm Indicator 
+		            0x0800   Sync Indicator 
+		            0x1000   LOS Indicator 
+		            0x2000   Test Indicator 
+			where   1=on, 0=off
+ 	       ___________________________________________________________
+	       For rac8000(273) the bit array is mapped as:
+
+		   Octets 1-4 represent channel usage LEDs for wan 1 in %:
+                            0x00000001  20%
+                            0x00000003  40%
+                            0x00000007  60%
+                            0x0000000F  80%
+                            0x0000001F  100%
+                            0x0000003F  FULL
+			where   1=on, 0=off
+
+		   Octet 5-8 represents Alarm LED's for wan 1 mapped as:
+		   	    0x0100   Red Alarm Indicator 
+		            0x0200   Yellow Alarm Indicator 
+		            0x0400   Blue Alarm Indicator 
+		            0x0800   Sync Indicator 
+		            0x1000   LOS Indicator 
+		            0x2000   Test Indicator 
+			where   1=on, 0=off
+
+		   Octets 9-13 represent channel usage LEDs for wan 2 in %:
+                            0x00000001  20%
+                            0x00000003  40%
+                            0x00000007  60%
+                            0x0000000F  80%
+                            0x0000001F  100%
+                            0x0000003F  FULL
+			where   1=on, 0=off
+
+		   Octet 14-18 represents Alarm LED's for wan 2 mapped as:
+		   	    0x0100   Red Alarm Indicator 
+		            0x0200   Yellow Alarm Indicator 
+		            0x0400   Blue Alarm Indicator 
+		            0x0800   Sync Indicator 
+		            0x1000   LOS Indicator 
+		            0x2000   Test Indicator 
+			where   1=on, 0=off
+	       ___________________________________________________________"
+
+          ::= { anxchas 7 }
+
+-- Embedded radius client configuration
+enableRadiusAcct OBJECT-TYPE
+	 SYNTAX INTEGER {
+                 enable(1),
+                 disable(2)
+  	         }
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+               "If this object is set to yes(1), radius accounting is enabled
+                Setting this parameter to Y also forces that the accounting 
+                server run on the same host as the authentication server. 
+                Change of this parameter will not be effective, even with a 
+                security reset, until reboot. This object corresponds to the
+		NA/Admin parameter enable_radius_acct"
+          ::= { radiusConfig 2 } 
+
+radiusAuth1Port OBJECT-TYPE
+          SYNTAX INTEGER (1..65535)
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+                "This parameter sets the UDP port # that the primary radius  
+                server is listening on. The default is port 1645.
+
+                This MIB object corresponds to the NA/admin parameter
+                'radius_auth1_port'."   
+          ::= { radiusConfig 3 }
+
+radiusAcct1Port OBJECT-TYPE
+          SYNTAX INTEGER (1..65535)
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+              "This parameter sets the UDP port # that the primary radius 
+                accounting server is listening on. The default is port 1646.
+
+                This MIB object corresponds to the NA/admin parameter
+                'radius_acct1_port'."   
+          ::= { radiusConfig 4 }
+
+radiusSecret OBJECT-TYPE
+           SYNTAX DisplayString (SIZE(0..98)) 
+           ACCESS read-write
+           STATUS mandatory
+           DESCRIPTION
+            "This value contains the radius shared secret for this RAS and
+            the primary Radius server. We recommend this value be at least 
+            16 characters long and should contain at least two non-alphanumeric 
+            characters. If preceded by 0x then the radius shared secret is 
+            interpreted as hexadecimal binary. This parameter is sensitive and
+            the clear text form of this parameter should not be exposed on the
+            network.  Methods of setting this parameter that are protected 
+            from network exposure include the following - NA, admin from a
+            a console or directly connected terminal server & methods of 
+            setting this parameter that are not protected from network 
+            exposure are as follows - admin from a telnet session to the annex,
+            annex manager and any SNMP client.  This parameter is never
+            displayed as clear text; it is displayed as '<set>' or '<unset>'.
+
+            This MIB object corresponds to the NA/admin parameter 'radius_auth1_secret'."   
+            ::= { radiusConfig 5 }
+    
+radiusRetries OBJECT-TYPE
+            SYNTAX INTEGER (0..65535)
+            ACCESS  read-write
+            STATUS mandatory 
+            DESCRIPTION
+            "This is the number of times to retry the access-request/
+            accounting request packets before falling over to the 
+	    secondary host. This parameter cannot be set to 0.  When set 
+	    to 0 the default value will be substituted. The default value 
+	    for this is 10. This object correponds to the NA.Admin
+	     parameter 'radius_retries'."
+            ::= { radiusConfig 7 }
+
+radiusAcctLevel OBJECT-TYPE
+             SYNTAX INTEGER {
+                      standard(1),
+                      advanced(2),
+	              basic(3)
+                      }
+             ACCESS read-write
+             STATUS mandatory
+             DESCRIPTION
+             "This sets the level of radius accounting. Standard 
+	      restricts the annex to logs of start(1), stop(2), accounting
+              on (7) and accounting off(8). Advanced permits the annex to 
+              log all other events such as those relating to tunnel 
+	      management and MP. This MIB object corresponds to the NA/admin 
+	      parameter 'radius_acct_level'."
+             ::= { radiusConfig 8 }
+
+radiusPortEncoding OBJECT-TYPE
+	     SYNTAX INTEGER {
+		      device(1),
+		      channel(2)
+		      }
+	     ACCESS read-write
+	     STATUS mandatory
+             DESCRIPTION
+             "This parameter communicates the NAS port identification
+              to the RADIUS server. The default for this parameter is device.
+              In the default mode the NAS port is encoded as a unit number. 
+              When set to channel the format is twwcc where -
+
+              t    - the type of device (1 for digital and 2 for 
+                     analog devices)
+              ww   - the wan number
+              cc   - the channel number
+
+              This parameter may also be used in conjunction with 
+              NAS-Port-Type to identify the port resource the user is using. 
+              To illustrate -
+
+              When NAS-Port-Type is set to 'virtual' the NAS-port encodes the
+              type of virtual port as follows -
+
+              values (2000 + port index) ­ Annex virtual
+              values (3000 + port index) ­ Annex dialout
+              values (4000 + port index) ­ Annex ethernet
+              values (5000 + port index) - Annex VPN
+              values (6000 + port index) - Annex MP
+
+       	      In the case of channel, it encodes it as follows -
+              values (200 + port index) ­ Annex virtual
+              values (300 + port index) ­ Annex dialout
+              values (400 + port index) ­ Annex ethernet
+              values (500 + port index) - Annex VPN
+              values (600 + port index) - Annex MP
+
+		This object correponds to the NA.Admin
+	     parameter 'radius_port_encoding'."
+              ::= { radiusConfig 9 }
+
+radiusUserPrompt  OBJECT-TYPE
+                SYNTAX DisplayString (SIZE (0..32))
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "This parameter defines the prompt string for 
+                        requesting user name.  The prompt string consists of 
+                        displayable characters and embedded formatting codes.
+                        Each formatting code is stored in a single character
+                        in nonvolatile memory.  The maximum number of
+                        characters stored for the prompt string
+                        is 32.  Since the formatting codes consist of
+                        a `%' prepended to a single character, the maximum
+                        length string that may be entered for this object
+                        is 64characters.  Even though the entered string may be
+                        less than 64 characters in length, it may be rejected 
+                        as bad value if it cannot be stored into 32 characters
+                        in nonvolatile memory after the formatting codes are
+                        compressed into single characters.
+ 
+                        The valid formatting codes are:
+ 
+                          %a  the string `annex'
+                          %c  the string `: `
+                          %d  the date and time     
+                          %i  the Annex's IP address
+                          %j  a newline character   
+                          %l  port location, or `port n'
+                          %n  the Annex's name
+                          %p  the port number
+                          %r  the string `port'     
+                          %s  a space
+                          %t  the time hh:mm:ss
+                          %%  the string `%'
+
+                        This MIB object corresponds to the NA/admin
+                        Annex parameter `radius_user_prompt'."
+                ::= { radiusConfig 10 }
+
+radiusPassPrompt  OBJECT-TYPE
+                SYNTAX DisplayString (SIZE (0..32))
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "This parameter defines the prompt string for 
+                        requesting passwords.  The prompt string consists of 
+                        displayable characters and embedded formatting codes.
+                        Each formatting code is stored in a single character
+                        in nonvolatile memory.  The maximum number of
+                        characters stored for the prompt string
+                        is 32.  Since the formatting codes consist of
+                        a `%' prepended to a single character, the maximum
+                        length string that may be entered for this object
+                        is 64 characters.  Even though the entered string may 
+                        be less than 64 characters in length, it may be 
+                        rejected as bad value if it cannot be stored into 32 
+                        characters in nonvolatile memory after the formatting 
+                        codes are compressed into single characters.
+
+                        The valid formatting codes are:
+ 
+                          %a  the string `annex'
+                          %c  the string `: `
+                          %d  the date and time     
+                          %i  the Annex's IP address
+                          %j  a newline character   
+                          %l  port location, or `port n'
+                          %n  the Annex's name
+                          %p  the port number
+                          %r  the string `port'     
+                          %s  a space
+                          %t  the time hh:mm:ss
+                          %%  the string `%'
+
+                        This MIB object corresponds to the NA/admin
+                        Annex parameter `radius_pass_prompt'."
+                ::= { radiusConfig 11 }
+
+radiusPrefAcct1Host  OBJECT-TYPE
+                SYNTAX IpAddress
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "The Internet address of the primary host where
+                        the Annex sends its accounting requests.
+                        This MIB object corresponds to the NA/admin
+                        Annex parameter `radius_acct1_host'."
+                ::= { radiusConfig 12 }
+ 
+radiusPrefAcct2Host  OBJECT-TYPE
+                SYNTAX IpAddress
+                ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+                        "The Internet address of the radius accounting host
+                        where the Annex sends its accounting requests.
+                        This MIB object corresponds to the NA/admin
+                        parameter `radius_acct2_host'."
+        ::= { radiusConfig 13 }
+
+radiusAcct1Secret OBJECT-TYPE
+           SYNTAX DisplayString (SIZE(0..98))
+           ACCESS read-write
+           STATUS mandatory
+           DESCRIPTION
+           "This value contains the shared secret for this RAS and the
+            primary accounting server. We recommend this value be at least
+            16 characters long and should contain at least two non-alphanumeric
+            characters. If preceded by 0x then the radius shared secret is
+            interpreted as hexadecimal binary. This parameter is sensitive and
+            the clear text form of this parameter should not be exposed on the
+            network.  Methods of setting this parameter that are protected
+            from network exposure include the following - NA, admin from a
+            a console or directly connected terminal server & methods of
+            setting this parameter that are not protected from network
+            exposure are as follows - admin from a telnet session to the annex,
+            annex manager and any SNMP client.  This parameter is never
+            displayed as clear text; it is displayed as '<set>' or '<unset>'.
+
+            This MIB object corresponds to the NA/admin
+            parameter `radius_acct1_secret'."
+            ::= { radiusConfig 14 }
+
+radiusAcct2Secret OBJECT-TYPE
+           SYNTAX DisplayString (SIZE(0..98))
+           ACCESS read-write
+           STATUS mandatory
+           DESCRIPTION
+           "This value contains the shared secret for this RAS and the
+            secondary accounting server. We recommend this value be at least
+            16 characters long and should contain at least two non-alphanumeric
+            characters. If preceded by 0x then the radius shared secret is
+            interpreted as hexadecimal binary. This parameter is sensitive and
+            the clear text form of this parameter should not be exposed on the
+            network.  Methods of setting this parameter that are protected
+            from network exposure include the following - NA, admin from a
+            a console or directly connected terminal server & methods of
+            setting this parameter that are not protected from network
+            exposure are as follows - admin from a telnet session to the annex,
+            annex manager and any SNMP client.  This parameter is never
+            displayed as clear text; it is displayed as '<set>' or '<unset>'.
+
+            This MIB object corresponds to the NA/admin
+            parameter `radius_acct2_secret'."
+            ::= { radiusConfig 15 }
+
+radiusAuth2Secret OBJECT-TYPE
+           SYNTAX DisplayString (SIZE(0..98))
+           ACCESS read-write
+           STATUS mandatory
+           DESCRIPTION
+           "This value contains the shared secret for this RAS and the
+            secondary Radius server. We recommend this value be at least
+            16 characters long and should contain at least two non-alphanumeric
+            characters. If preceded by 0x then the radius shared secret is
+            interpreted as hexadecimal binary. This parameter is sensitive and
+            the clear text form of this parameter should not be exposed on the
+            network.  Methods of setting this parameter that are protected
+            from network exposure include the following - NA, admin from a
+            a console or directly connected terminal server & methods of
+            setting this parameter that are not protected from network
+            exposure are as follows - admin from a telnet session to the annex,
+            annex manager and any SNMP client.  This parameter is never
+            displayed as clear text; it is displayed as '<set>' or '<unset>'.
+
+            This MIB object corresponds to the NA/admin
+            parameter `radius_auth2_secret'."
+            ::= { radiusConfig 16 }
+
+radiusAuth2Port OBJECT-TYPE
+          SYNTAX INTEGER (1..65535)
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+               "This parameter sets the UDP port number that the secondary radius  
+                server is listening on. The default is port 1645.
+
+                This MIB object corresponds to the NA/admin parameter
+                'radius_auth2_port'."   
+          ::= { radiusConfig 17 }
+
+radiusAcct2Port OBJECT-TYPE
+          SYNTAX INTEGER (1..65535)
+          ACCESS read-write
+          STATUS mandatory
+          DESCRIPTION
+               "This parameter sets the UDP port # that the secondary radius 
+                accounting server is listening on. The default is port 1646.
+
+                This MIB object corresponds to the NA/admin parameter
+                'radius_acct2_port'."   
+          ::= { radiusConfig 18 }
+
+radiusCompatibility OBJECT-TYPE
+        SYNTAX INTEGER {
+               baynetworks(1),
+               usr(2),
+	       ascend(3)
+               }
+        ACCESS read-write
+        STATUS mandatory
+        DESCRIPTION
+               "Values of this object can either be set to BayNetworks or 
+                USR to indicate how to handle RADIUS attributes. Change of this
+                parameter will not be effective, even with a reset, until 
+                reboot. The default for this parameter is BayNetworks.
+                This MIB object corresponds to the NA/admin
+                parameter `compatibility_mode'."
+                ::= { radiusConfig 19 }
+          
+radiusAuthTimeout OBJECT-TYPE
+            SYNTAX INTEGER (0..65535)
+            ACCESS  read-write
+            STATUS mandatory 
+            DESCRIPTION
+	    "This is the maximum time to wait for a packet to be received from
+	     the radius authentication servers. This value is in seconds. 
+	     The default value is 4secs. This object correponds to the NA.Admin
+	     parameter 'radius_auth_timeout'."
+            ::= { radiusConfig 20 }
+
+radiusAcctTimeout OBJECT-TYPE
+            SYNTAX INTEGER (0..65535)
+            ACCESS  read-write
+            STATUS mandatory 
+            DESCRIPTION
+            "This value is used in determining the maximum time to wait for 
+	     the packet (from radius accounting servers) and is multiplied by 
+	     the tries for the total wait time. This value is in seconds. 
+	     The default value is 4secs. This object correponds to the NA.Admin
+	     parameter 'radius_acct_timeout'."
+            ::= { radiusConfig 21 }
+
+radiusAcctDestination OBJECT-TYPE
+ 	    SYNTAX INTEGER {
+		   acctserver(1),
+		   both(2)
+		   }
+	    ACCESS read-write
+	    STATUS mandatory
+	    DESCRIPTION
+	    "If this object is set to acctserver(1), radius accounting is sent to
+	    the accounting server only. Setting it to both(2) causes accounting to
+	    be sent to the authentication server as well. Accounting to the
+	    authentication server uses the port defined for the
+	    accounting server, and the radius secret defined for the
+	    authentication server.  Change of this parameter will be effective
+	    after a security reset. This object corresponds to the NA/Admin
+	    parameter radius_acct_dest"
+            ::= { radiusConfig 22 } 
+
+	  
+-- Radius IETF working group have drafted a radius client MIB as under 
+-- These are to be deleted in the next release
+
+radiusClientInvalidServerAddresses OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+               "The total number of RADIUS Access-Response messages received
+                from unknown addresses since client start-up"
+            ::= { radiusStats 1 }
+ 
+radiusClientIdentifier OBJECT-TYPE
+            SYNTAX DisplayString
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+               "The NAS-Identifier of the RADIUS client."
+            ::= { radiusStats 2 }
+ 
+radiusServerTable OBJECT-TYPE
+         SYNTAX SEQUENCE OF RadiusServerEntry
+         ACCESS not-accessible
+         STATUS deprecated
+         DESCRIPTION
+                 "The (conceptual) table listing the RADIUS servers with
+                  which the client shares a secret."
+         ::= { radiusStats 3 }
+ 
+radiusServerEntry OBJECT-TYPE
+         SYNTAX     RadiusServerEntry
+         ACCESS not-accessible
+         STATUS deprecated
+         DESCRIPTION
+                 "An entry (conceptual row) representing a RADIUS server
+                 with which the client shares a secret."
+         INDEX      { radiusServerIndex }
+         ::= { radiusServerTable 1 }
+
+RadiusServerEntry ::= SEQUENCE {
+         radiusServerIndex                           INTEGER,
+         radiusServerAddress                         IpAddress,
+         radiusClientRoundTripTime                   TimeTicks,
+         radiusClientAccessRequests                  Counter,
+         radiusClientAccessRetransmissions           Counter,
+         radiusClientAccessAccepts                   Counter,
+         radiusClientAccessRejects                   Counter,
+         radiusClientAccessChallenges                Counter,
+         radiusClientMalformedAccessResponses        Counter,
+         radiusClientAuthenticationBadAuthenticators Counter,
+         radiusClientAuthenticationPendingRequests   Counter,
+         radiusClientAuthenticationTimeouts          Counter,
+         radiusClientAccountingRequests              Counter,
+         radiusClientAccountingRetransmissions       Counter,
+         radiusClientAccountingResponses             Counter,
+         radiusClientMalformedAccountingResponses    Counter,
+         radiusClientAccountingBadAuthenticators     Counter,
+         radiusClientAccountingPendingRequests       Counter,
+         radiusClientAccountingTimeouts              Counter,
+         radiusClientUnknownType                     Counter
+     }
+ 
+radiusServerIndex OBJECT-TYPE
+         SYNTAX     INTEGER
+         ACCESS read-only
+         STATUS deprecated
+         DESCRIPTION
+                 "The RADIUS server with which the client interacts"
+         ::= { radiusServerEntry 1 }
+ 
+radiusServerAddress OBJECT-TYPE
+         SYNTAX     IpAddress
+         ACCESS read-only
+         STATUS deprecated
+         DESCRIPTION
+                 "The IP address of the RADIUS server
+                 referred to in this table entry"
+         ::= { radiusServerEntry 2 }
+
+radiusClientRoundTripTime  OBJECT-TYPE
+            SYNTAX TimeTicks
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total roundtrip time of the last packet sent
+     between the client and the RADIUS server referred
+     to in this table entry"
+            ::= { radiusServerEntry 3 }
+ 
+radiusClientAccessRequests OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Access-Request messages sent
+     since client start-up"
+            ::= { radiusServerEntry 4 }
+ 
+radiusClientAccessRetransmissions OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Access-Request messages retransmitted
+     since client start-up"
+            ::= { radiusServerEntry 5 }
+ 
+radiusClientAccessAccepts OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Access-Accept messages received
+     since client start-up"
+            ::= { radiusServerEntry 6 }
+
+radiusClientAccessRejects OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS deprecated
+          DESCRIPTION
+     "The total number of RADIUS Access-Reject messages received since 
+      client start-up"
+            ::= { radiusServerEntry  7 }
+ 
+radiusClientAccessChallenges OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Access-Challenge messages received
+     since client start-up"
+            ::= { radiusServerEntry 8 }
+ 
+-- "Access-Response" includes an Access-Accept, Access-Challenge or 
+--  Access-Reject
+ 
+
+radiusClientMalformedAccessResponses OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of malformed RADIUS Access-Response messages 
+      received since client start-up"
+            ::= { radiusServerEntry 9 }
+ 
+radiusClientAuthenticationBadAuthenticators OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Access-Response messages containing 
+      invalid authenticators received since client start-up"
+            ::= { radiusServerEntry 10 }
+ 
+radiusClientAuthenticationPendingRequests OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Access-Request messages that have not 
+      yet timed out or received a response"
+            ::= { radiusServerEntry 11 }
+ 
+radiusClientAuthenticationTimeouts OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS deprecated
+          DESCRIPTION
+     "The total number of authentication timeouts since client startup"
+            ::= { radiusServerEntry  12 }
+ 
+radiusClientAccountingRequests OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Accounting-Request messages sent
+     since client start-up"
+            ::= { radiusServerEntry 13 }
+ 
+
+radiusClientAccountingRetransmissions OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Accounting-Request messages 
+      retransmitted since client start-up"
+            ::= { radiusServerEntry 14 }
+ 
+radiusClientAccountingResponses OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Accounting-Response messages received
+     since client start-up"
+            ::= { radiusServerEntry 15 }
+ 
+radiusClientMalformedAccountingResponses OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of malformed RADIUS Accounting-Response messages 
+      received since client start-up"
+            ::= { radiusServerEntry 16 }
+ 
+radiusClientAccountingBadAuthenticators OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Accounting-Response messages which
+     contained invalid authenticators received since client start-up"
+            ::= { radiusServerEntry 17 }
+ 
+radiusClientAccountingPendingRequests OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS Accounting-Request messages that have 
+      not yet timed out or received a response"
+            ::= { radiusServerEntry 18 }
+
+radiusClientAccountingTimeouts OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS deprecated
+          DESCRIPTION
+     "The total number of accounting timeouts since client startup"
+            ::= { radiusServerEntry  19 }
+ 
+radiusClientUnknownType OBJECT-TYPE
+            SYNTAX Counter
+            ACCESS read-only
+            STATUS deprecated
+            DESCRIPTION
+     "The total number of RADIUS messages of unknown type which
+     were received since client start-up"
+            ::= { radiusServerEntry  20 }
+
+
+-- Here is the new radius draft MIB
+-- AUTHENTICATION DRAFT MIB
+
+-- The MIB module for entities implementing the client side of
+-- the Remote Access Dialin User Service (RADIUS) authentication
+-- protocol.
+
+
+     radiusAuthClientInvalidServerAddresses OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Access-Response packets
+                  received from unknown addresses since client start-up."
+           ::= { radiusAuthClient 1 }
+
+     radiusAuthClientIdentifier OBJECT-TYPE
+           SYNTAX DisplayString
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The NAS-Identifier of the RADIUS authentication client."
+           ::= { radiusAuthClient 2 }
+
+     radiusAuthServerTable OBJECT-TYPE
+           SYNTAX     SEQUENCE OF RadiusAuthServerEntry
+           ACCESS not-accessible
+           STATUS mandatory
+           DESCRIPTION
+                 "The (conceptual) table listing the RADIUS authentication
+                  servers with which the client shares a secret."
+           ::= { radiusAuthClient 3 }
+
+     radiusAuthServerEntry OBJECT-TYPE
+           SYNTAX     RadiusAuthServerEntry
+           ACCESS not-accessible
+           STATUS mandatory
+           DESCRIPTION
+                 "An entry (conceptual row) representing a RADIUS
+                  authentication server with which the client shares a secret."
+           INDEX      { radiusAuthServerIndex }
+           ::= { radiusAuthServerTable 1 }
+
+     RadiusAuthServerEntry ::= SEQUENCE {
+           radiusAuthServerIndex                           INTEGER,
+           radiusAuthServerAddress                         IpAddress,
+           radiusAuthClientServerPortNumber                INTEGER,
+           radiusAuthClientRoundTripTime                   TimeTicks,
+           radiusAuthClientAccessRequests                  Counter,
+           radiusAuthClientAccessRetransmissions           Counter,
+           radiusAuthClientAccessAccepts                   Counter,
+           radiusAuthClientAccessRejects                   Counter,
+           radiusAuthClientAccessChallenges                Counter,
+           radiusAuthClientMalformedAccessResponses        Counter,
+           radiusAuthClientAuthenticationBadAuthenticators Counter,
+           radiusAuthClientAuthenticationPendingRequests   Counter,
+           radiusAuthClientAuthenticationTimeouts          Counter,
+           radiusAuthClientUnknownType                     Counter
+     }
+
+     radiusAuthServerIndex OBJECT-TYPE
+           SYNTAX INTEGER
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The RADIUS authentication server with which
+                  the client interacts."
+           ::= { radiusAuthServerEntry 1 }
+
+     radiusAuthServerAddress OBJECT-TYPE
+           SYNTAX     IpAddress
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The IP address of the RADIUS authentication server
+                 referred to in this table entry."
+           ::= { radiusAuthServerEntry 2 }
+
+      radiusAuthClientServerPortNumber  OBJECT-TYPE
+           SYNTAX INTEGER
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+              "The UDP port the client is using to send requests to
+               this server."
+           ::= { radiusAuthServerEntry 3 }
+
+     radiusAuthClientRoundTripTime  OBJECT-TYPE
+           SYNTAX TimeTicks
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total roundtrip time of the last packet sent
+                 between the authentication client and the RADIUS server
+                 referred to in this table entry."
+           ::= { radiusAuthServerEntry 4 }
+
+     radiusAuthClientAccessRequests OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Access-Request packets sent
+                 to this server since client start-up. This does not
+                 include retransmissions."
+           ::= { radiusAuthServerEntry 5 }
+
+     radiusAuthClientAccessRetransmissions OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Access-Request packets
+                  retransmitted to the same server since client start-up."
+           ::= { radiusAuthServerEntry 6 }
+
+     radiusAuthClientAccessAccepts OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Access-Accept packets
+                  received from this server since client start-up."
+           ::= { radiusAuthServerEntry 7 }
+
+     radiusAuthClientAccessRejects OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+                 "The total number of RADIUS Access-Reject packets
+                  received from this server since client start-up."
+           ::= { radiusAuthServerEntry  8 }
+
+     radiusAuthClientAccessChallenges OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Access-Challenge packets
+                  received from this server since client start-up."
+           ::= { radiusAuthServerEntry 9 }
+
+     -- "Access-Response" includes an Access-Accept, Access-Challenge
+     -- or Access-Reject
+
+     radiusAuthClientMalformedAccessResponses OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of malformed RADIUS Access-Response
+                  packets received from this server since client
+                  start-up. Bad authenticators are not included as
+                  malformed access responses."
+           ::= { radiusAuthServerEntry 10 }
+
+     radiusAuthClientAuthenticationBadAuthenticators OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Access-Response packets
+                 containing invalid authenticators received from this server
+                 since client start-up."
+           ::= { radiusAuthServerEntry 11 }
+
+     radiusAuthClientAuthenticationPendingRequests OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Access-Request packets
+                 destined for this server that have not yet timed out
+                 or received a response. This variable is incremented
+                 when an Access-Request is sent and decremented due to
+                 a timeout or retransmission."
+           ::= { radiusAuthServerEntry 12 }
+
+     radiusAuthClientAuthenticationTimeouts OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+                 "The total number of authentication timeouts to this server
+                  since client startup. After a timeout the client may
+                  retry to the same server, send to a different server, or
+                  give up. A retry to the same server is counted as a
+                  retransmit as well as a timeout. A send to a different
+                  server is counted as a Request as well as a timeout."
+           ::= { radiusAuthServerEntry  13 }
+
+     radiusAuthClientUnknownType OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS packets of unknown type which
+                  were received from this server on the authentication port
+                  since client start-up."
+           ::= { radiusAuthServerEntry  14 }
+
+
+-- ACCOUNTING DRAFT MIB
+
+-- The MIB module for entities implementing the client side of
+-- the Remote Access Dialin User Service (RADIUS) accounting
+-- protocol.
+
+     radiusAccClientInvalidServerAddresses OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Accounting-Response packets
+                  received from unknown addresses since client start-up."
+           ::= { radiusAccClient 1 }
+
+     radiusAccClientIdentifier OBJECT-TYPE
+           SYNTAX DisplayString
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The NAS-Identifier of the RADIUS accounting client."
+           ::= { radiusAccClient 2 }
+
+     radiusAccServerTable OBJECT-TYPE
+           SYNTAX     SEQUENCE OF RadiusAccServerEntry
+           ACCESS not-accessible
+           STATUS mandatory
+           DESCRIPTION
+                 "The (conceptual) table listing the RADIUS accounting
+                  servers with which the client shares a secret."
+           ::= { radiusAccClient 3 }
+
+     radiusAccServerEntry OBJECT-TYPE
+           SYNTAX     RadiusAccServerEntry
+           ACCESS not-accessible
+           STATUS     mandatory
+           DESCRIPTION
+                 "An entry (conceptual row) representing a RADIUS
+                  accounting server with which the client shares a secret."
+           INDEX      { radiusAccServerIndex }
+           ::= { radiusAccServerTable 1 }
+
+     RadiusAccServerEntry ::= SEQUENCE {
+           radiusAccServerIndex                           INTEGER,
+           radiusAccServerAddress                         IpAddress,
+           radiusAccClientServerPortNumber                INTEGER,
+           radiusAccClientRoundTripTime                   TimeTicks,
+           radiusAccClientAccountingRequests              Counter,
+           radiusAccClientAccountingRetransmissions       Counter,
+           radiusAccClientAccountingResponses             Counter,
+           radiusAccClientMalformedAccountingResponses    Counter,
+           radiusAccClientAccountingBadAuthenticators     Counter,
+           radiusAccClientAccountingPendingRequests       Counter,
+           radiusAccClientAccountingTimeouts              Counter,
+           radiusAccClientUnknownType                     Counter
+     }
+
+     radiusAccServerIndex OBJECT-TYPE
+           SYNTAX INTEGER
+           ACCESS read-only
+           STATUS     mandatory
+           DESCRIPTION
+                 "The RADIUS accounting server with which
+                  the client interacts."
+           ::= { radiusAccServerEntry 1 }
+
+     radiusAccServerAddress OBJECT-TYPE
+           SYNTAX     IpAddress
+           ACCESS read-only
+           STATUS     mandatory
+           DESCRIPTION
+                 "The IP address of the RADIUS accounting server
+                 referred to in this table entry."
+           ::= { radiusAccServerEntry 2 }
+   
+     radiusAccClientServerPortNumber  OBJECT-TYPE
+           SYNTAX INTEGER
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+              "The UDP port the client is using to send requests to
+               this server."
+     ::= { radiusAccServerEntry 3 }
+
+     radiusAccClientRoundTripTime  OBJECT-TYPE
+           SYNTAX TimeTicks
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total roundtrip time of the last packet sent
+                 between the accounting client and the RADIUS server
+                 referred to in this table entry."
+           ::= { radiusAccServerEntry 4 }
+
+     radiusAccClientAccountingRequests OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Accounting-Request packets
+                  sent since client start-up. This does not include
+                  retransmissions."
+           ::= { radiusAccServerEntry 5 }
+
+     radiusAccClientAccountingRetransmissions OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Accounting-Request packets
+                  retransmitted to the same server since client start-up.
+                  Retransmissions include retries where the
+                  Identifier and Acct-Delay have been updated."
+           ::= { radiusAccServerEntry 6 }
+
+     radiusAccClientAccountingResponses OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Accounting-Response
+                 packets received from this server since client start-up."
+           ::= { radiusAccServerEntry 7 }
+
+     radiusAccClientMalformedAccountingResponses OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of malformed RADIUS Accounting-Response
+                 packets received from this server since client start-up.
+                 Bad authenticators are not included as malformed access
+                 responses."
+           ::= { radiusAccServerEntry 8 }
+
+     radiusAccClientAccountingBadAuthenticators OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Accounting-Response
+                  packets which contained invalid authenticators
+                  received from this server since client start-up."
+           ::= { radiusAccServerEntry 9 }
+
+     radiusAccClientAccountingPendingRequests OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS Accounting-Request packets
+                  sent to this server that have not yet timed out or
+                  received a response. This variable is incremented when an
+                  Accounting-Request is sent and decremented due to a timeout
+                  or retransmission."
+           ::= { radiusAccServerEntry 10 }
+
+     radiusAccClientAccountingTimeouts OBJECT-TYPE
+          SYNTAX Counter
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+                 "The total number of accounting timeouts to this server
+                 since client startup. After a timeout the client may
+                 retry to the same server, send to a different server, or
+                 give up. A retry to the same server is counted as a
+                 retransmit as well as a timeout. A send to a different
+                 server is counted as an Accounting-Request as well as a 
+                 timeout."
+           ::= { radiusAccServerEntry  11 }
+
+     radiusAccClientUnknownType OBJECT-TYPE
+           SYNTAX Counter
+           ACCESS read-only
+           STATUS mandatory
+           DESCRIPTION
+                 "The total number of RADIUS packets of unknown type which
+                  were received from this server on the accounting port
+                  since client start-up."
+           ::= { radiusAccServerEntry  12 }
+
+-- General synchronous port(s) for 8000
+
+  gsyTotalPorts OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The number of GSY ports on this Annex."
+		::= { anxgsystats 1 }
+
+  gsyTotalInChars OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The total number of characters received on all
+			GSY ports."
+		::= { anxgsystats 2 }
+
+  gsyTotalOutChars OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"The total number of characters transmitted on
+			all gsy ports."
+		::= { anxgsystats 3 }
+
+  gsyTotalFrameCheckErrs OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The total number of frame check errors detected
+			on all gsy ports since the last boot."
+		::= { anxgsystats 4 }
+
+  gsyTotalXmitUnderrunErrs OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The total number of transmit underrun errors 
+			detected on all gsy ports since the 
+			last boot."
+		::= { anxgsystats 5 }
+
+  gsyTotalRecvOverrunErrs OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"The total number of receive overrun errors 
+			detected on all gsy ports since the 
+			last boot."
+		::= { anxgsystats 6 }
+
+  gsyInterfaceType 	OBJECT-TYPE
+		SYNTAX INTEGER {
+		x21(1),
+		v35(2),
+		rs232(3),
+		rs422(4)
+		}
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+		"The interface running on this gsy"
+		::= { anxgsystats 7}
+
+
+-- New table is added to the private MIB for compression card statistics
+
+anxPktsComp		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is the total number of packets that are 
+			 successfully compressed by the 
+			 compression card."
+			::= { anxccpstats 1 }
+
+anxPktsDecomp		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is the total number of packets that are 
+			 successfully decompressed by the 
+			 compression card."
+			::= { anxccpstats 2 }
+
+anxUncompPkts		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is the total number of packets that are 
+			 received by CCP and are marked as being 
+			 uncompressed packets (valid for MPPC)."
+			::= { anxccpstats 3 }
+
+anxPktsCompFails 	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"Number of packets that failed to be compress due
+			 to data expansion or lack or resources." 
+			::= { anxccpstats 4 }
+
+anxPktsDataExpansion	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"Number of packets that failed to be compress due
+			 to data expansion." 
+			::= { anxccpstats 5 }
+
+anxPktsDecompFails	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"Number of packets that failed to decompress due 
+			 to checksum errors, out of sequence errors or 
+			 lack or resources."
+			::= { anxccpstats 6 }
+
+anxLCBCRCMismatches	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is the total number of packets that failed 
+			 to decompress due to LCB/CRC checksum mismatch or
+			 out of sequence errors."
+			::= { anxccpstats 7 }
+
+anxCompResets		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is the total number of explicit compressor
+			 resets."
+			::= { anxccpstats 8 }
+
+anxDecompResets		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is the total number of explicit decompressor
+			 resets."
+			::= { anxccpstats 9 }
+
+anxHistoryFails		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is the total number of times we failed to 
+			 allocate a history in the compression card CRAM 
+			 memory for a session."
+			::= { anxccpstats 10 }	
+
+anxPktsDropFullQ	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is the total number of packets that got 
+			 dropped because the hardware compression / 
+			 decompression queue was full."
+			::= { anxccpstats 11 }	
+
+anxCompMbufFails	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is the total number of packets that failed 
+			 to compress / decompress because of a lack of
+			 mbufs."
+			::= { anxccpstats 12 }
+
+anxCompBefore		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is total number of bytes before
+			 compression."
+			::= { anxccpstats 13 }
+
+anxCompAfter		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is total number of bytes after
+ 			 compression."
+			::= { anxccpstats 14 }
+
+anxDecompBefore		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is total number of bytes before
+			 decompression."
+			::= { anxccpstats 15 }
+
+anxDecompAfter		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+			"This is total number of bytes after
+			 decompression."
+			::= { anxccpstats 16 }
+
+
+igmpconfig	OBJECT IDENTIFIER ::= { igmp 1 }
+
+igmpVersion  OBJECT-TYPE
+	SYNTAX INTEGER {
+	igmp-off(1),
+	igmp-ver1(2),
+	igmp-ver2(3)
+	}
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Controls if IGMP is enabled, and if enabled
+	 which version of the IGMP protocol to use.
+	The default is IGMP protocol version 2. This MIB object
+	corresponds to the NA/Admin parameter 'igmp_version'."
+	::= { igmpconfig 1 }
+
+igmpRobustness  OBJECT-TYPE
+	SYNTAX INTEGER (1..15)
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	     "Robustness allows tuning for a lossy subnet.
+              If lossy subnets exist, then this value should
+              be increased. Valid values are in the range of
+              1-15. The default of 2. The value of 1 is NOT
+              recommended. This MIB object corresponds to the NA/Admin 
+	      parameter 'igmp_robustness'."
+	::= { igmpconfig 2 }
+
+igmpQueryTime  OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+             "This is the Max Response Time inserted into
+              general query messages. Valid values are in
+              the range of 1-65535 deciseconds. The default
+              is 100 deciseconds. This MIB object corresponds to the 
+	      NA/Admin parameter 'igmp_query_time'."
+        ::= { igmpconfig 3 }
+
+
+igmpResponseTime  OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	ACCESS read-write
+	STATUS mandatory	
+	DESCRIPTION
+             "This is the Query Response time(Interval).
+              When periodic general queries are made this
+              value is placed into the Max Response Time
+              field of the message. Settable values are in
+              the decisecond range of 1-65535. Valid values
+              are in the decisecond range of 1 and
+              IGMPQueryTime. The default is 100
+              deciseconds. IF THIS VALUE EXCEEDS
+              IGMPQueryTime, THE RUNTIME VALUE WILL BE
+              MODIFIED TO IGMPQueryTime - 1 WHEN 
+	      IGMP STARTS AND A SYSLOG WILL BE
+              GENERATED. This MIB object corresponds to the 
+	      NA/Admin parameter 'igmp_response_time'."
+        ::= { igmpconfig 4 }
+
+
+igmpStartQueryTime  OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	     "This is the Startup Query Interval. It
+	 specifies the time interval between queries
+	 sent out on startup. Settable values for are
+	 in the decisecond range of 1-65535. Valid
+	 values are in the range of 1 and 1 less than
+	 IGMPRobustness. The default is 313
+	 deciseconds. IF THIS VALUE EXCEEDS
+	 IGMPQueryTime, THE RUNTIME VALUE WILL BE
+	 MODIFIED TO IGMPQueryTime WHEN IGMP STARTS 
+	 AND A SYSLOG WILL BE GENERATED. This MIB object 
+	 corresponds to the NA/Admin parameter 'igmp_start_query_time'."
+	::= { igmpconfig 5 }
+
+
+igmpStartQueryCount  OBJECT-TYPE
+	SYNTAX INTEGER (1..15)
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+             "This is the Startup Query Count. It specifies
+              the number of queries sent out on startup.
+              Valid values for are in the range of 1-15.
+	      This MIB object corresponds to the NA/Admin parameter
+	      'igmp_start_query_count'."
+	::= { igmpconfig 6 }
+
+
+igmpLastQueryTime  OBJECT-TYPE
+	SYNTAX INTEGER (1..256)
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+             "The Last Member Query time(Interval) is the
+              Max Response Time inserted into group-specific
+              queries sent in response to leave group
+              messages. It also the amount of time between
+              group-specific query messages. Valid values
+              are in the range of 1-256 deciseconds.
+              The default is 10 deciseconds. This MIB object corresponds 
+	      to the NA/Admin parameter 'igmp_last_query_time'."
+	::= { igmpconfig 7 }
+
+
+igmpLastQueryCount  OBJECT-TYPE
+	SYNTAX INTEGER (1..15)
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+             "The Last Member Query Count is the number of
+	      group specific queries sent before the router
+              assumes there are no local members. The
+              default is 2. This MIB object corresponds to the 
+	      NA/Admin parameter 'igmp_last_query_count'."
+	::= { igmpconfig 8 }
+
+
+igmpJoinQueryTime  OBJECT-TYPE
+	SYNTAX INTEGER (1..256)
+	ACCESS read-write
+	STATUS mandatory	
+	DESCRIPTION
+             "This specifies the time interval between
+              repetitions of Unsolicited Reports when a host
+              initially become a member of a group. Valid
+              values are in the range of 1-256 deciseconds.
+              The default is 10 deciseconds. This MIB object 
+	      corresponds to the NA/Admin parameter 'igmp_join_query_time'."
+	::= { igmpconfig 9 }
+
+
+igmpV1Timeout  OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+             "This is the Version 1 Router Present Timeout.
+              It controls how long a host must wait before
+              after hearing a Version 1 Query before it may
+              send any IGMP version 2 messages. Valid values
+              are in the decisecond range of 1-65535. The
+              default is 4000 deciseconds. This MIB object 
+	      corresponds to the NA/Admin parameter 'igmp_v1_timeout'."
+	::= { igmpconfig 10 }
+
+igmpQueueSize OBJECT-TYPE
+   	SYNTAX INTEGER
+   	ACCESS  read-write
+   	STATUS mandatory
+   	DESCRIPTION
+   		"The maximum number of elements that can be allocated to 
+		the IGMP processing queue. The value will be rounded up 
+		to the next value evenly divisible by 10. This MIB object 
+		corresponds to the na/admin parameter 'igmp_queue_size'."
+   	::= { igmpconfig 11 }
+
+igmpMaxPendingMcast OBJECT-TYPE
+   	SYNTAX INTEGER
+   	ACCESS  read-write
+   	STATUS mandatory
+   	DESCRIPTION
+   		"The maximum number of multicast messages that can be placed 
+		in the IGMP processing queue.  We recommend that this value 
+		be less than igmpQueueSize otherwise unexpected IGMP operation 
+		may result. This MIB object corresponds to the na/admin parameter 
+		igmp_max_pending_mcast."
+   	::= { igmpconfig 12 }
+
+-- New table is added to the private MIB for PPP Callback statistics
+
+anxPPPCallbackTable    OBJECT-TYPE
+          SYNTAX SEQUENCE OF AnxPPPCallbackEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "Table of PPP Callback parameters."
+          ::= { anxPPPStats 1 }
+ 
+anxPPPCallbackEntry OBJECT-TYPE
+          SYNTAX AnxPPPCallbackEntry
+          ACCESS not-accessible
+          STATUS mandatory
+          DESCRIPTION
+               "The PPP Callback parameters."
+          INDEX  { anxPPPCallbackIndex }
+          ::= { anxPPPCallbackTable 1 }
+ 
+AnxPPPCallbackEntry ::= SEQUENCE {
+        anxPPPCallbackIndex         INTEGER,
+        anxPPPCallbackParticipant IpAddress
+        }
+
+anxPPPCallbackIndex OBJECT-TYPE
+          SYNTAX INTEGER 
+          ACCESS read-only
+          STATUS mandatory
+          DESCRIPTION
+               "The index value which uniquely identifies the
+               PPP Callback entry."
+          ::= { anxPPPCallbackEntry  1 }
+
+anxPPPCallbackParticipant OBJECT-TYPE
+                SYNTAX IpAddress
+                ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                        "This object returns the IP address
+                of the callback participant associated with the index."
+                ::= { anxPPPCallbackEntry 2}
+
+
+l2tpStats   OBJECT IDENTIFIER ::= { l2tp 2 }
+
+	anxl2tpCntrlPkts OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total control pkts transmitted."
+			::= { l2tpStats 1 }
+
+	anxl2tpDataPkts	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total data packets transmitted."
+			::= { l2tpStats 2 }
+
+	anxl2tpCntrlPktsRx OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total control pkts rx"
+			::= { l2tpStats 3 }
+
+	anxl2tpDataPktsRx OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total data packets rx."
+			::= { l2tpStats 4 }
+
+	anxl2tpSeqErr   OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total pkts drop on rx for bad seq"
+			::= { l2tpStats 5 }
+
+	anxl2tpPppDownErr OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total data pkts drop on rx - to ppp not
+				 ready ."
+			::= { l2tpStats 6 }
+
+	anxl2tpProtocolErr OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total pkts with a protocol error."
+			::= { l2tpStats 7 }
+
+	anxl2tpStateErr	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total pkts drop - tunnel/session state 
+				 error."
+			::= { l2tpStats 8 }
+
+	anxl2tpPktsDrop OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total pkts dropped on rx for other 
+				 reasons."
+			::= { l2tpStats 9 }
+
+
+-- Annex Generic Routing Statistics
+
+	anxGREInPackets		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total number of GRE packets received."
+			::= { anxgrestats 1 }
+	anxGREOutPackets		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total number of GRE packets sent."
+			::= { anxgrestats 2 }
+
+	anxGREChecksum		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total number of GRE packets received with
+				bad checksum."
+			::= { anxgrestats 3 }
+
+	anxGREInDropped		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total number of GRE packets dropped on
+				receive."
+			::= { anxgrestats 4 }
+
+	anxGREOutDropped		OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total number of GRE packets dropped on
+				transmit."
+			::= { anxgrestats 5 }
+
+	anxGREInBytes	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total number of GRE bytes recieved."
+			::= { anxgrestats 6 }
+
+	anxGREOutBytes	OBJECT-TYPE
+			SYNTAX Counter
+			ACCESS read-only
+			STATUS mandatory
+			DESCRIPTION
+				"The total number of GRE bytes transmitted."
+			::= { anxgrestats 7 }
+
+
+
+
+ippoolEnable  OBJECT-TYPE
+	SYNTAX INTEGER {
+	enable (1),
+	disable (2)
+	}
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Parameter to enable or disable address pooling."
+        DEFVAL{disable}
+	::= { ippool 1 }
+
+
+ippoolSystemName  OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (1..20))
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Identification for pooling system name."
+	::= { ippool 2 }
+
+
+ippoolLeaseDuration  OBJECT-TYPE
+	SYNTAX INTEGER 
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Lease duration for address pooling."
+	::= { ippool 3 }
+
+ippoolMulticastAddress  OBJECT-TYPE
+	SYNTAX IpAddress
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Multicast address used for address pooling."
+	::= { ippool 4 }
+
+ippoolServerUDPPort  OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"UDP port for address pool server"
+	::= { ippool 5 }
+
+ippoolClientUDPPort  OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"UDP port for address pool client"
+	::= { ippool 6 }
+
+ippoolPoolIds  OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (1..20))
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"UDP port for address pool client"
+	::= { ippool 7 }
+
+ippoolConfPrimaryAddress  OBJECT-TYPE
+	SYNTAX IpAddress
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"IP address for configured primary address server blade"
+	::= { ippool 8 }
+
+ippoolConfBackupAddress  OBJECT-TYPE
+	SYNTAX IpAddress
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"IP address for configured backup address server blade"
+	::= { ippool 9 }
+
+ippoolSelectionTimeout  OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Timeout value for address pooling selection mechanism"
+	::= { ippool 10 }
+
+ippoolTimeout  OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Timeout value for address pooling pool configuration propagation"
+	::= { ippool 11 }
+
+ippoolRetransmitTimeout  OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Timeout value for address pooling pool message retransmissions"
+	::= { ippool 12 }
+
+ippoolDiscoveryTimeout  OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	"Timeout value for address pooling pool discovery mechanism"
+	::= { ippool 13 }
+
+ippoolTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF IppoolEntry
+	ACCESS not-accessible
+	STATUS mandatory
+    DESCRIPTION
+	"Table for IP pool configuration."
+	::= {ippool 14}
+
+ippoolEntry OBJECT-TYPE
+	SYNTAX IppoolEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"IP pool configuration parameters."
+    INDEX {poolIndex, subpoolIndex}
+	::= {ippoolTable 1}
+
+IppoolEntry ::= SEQUENCE {
+				ippoolpoolIndex 		INTEGER,
+				ippoolsubpoolIndex		INTEGER,
+				ippoolserverLowWaterMark	INTEGER,
+				ippoolclientLowWaterMark	INTEGER,
+				ippoolpoolPriority		INTEGER,
+				ippooladdressRequest		INTEGER,
+				ippoolsubpoolStartAddress 	INTEGER,
+				ippoolsubpoolSize		INTEGER,
+				ippoolsubpoolDelete		INTEGER
+				}
+
+ippoolpoolIndex OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-write
+		STATUS mandatory
+	    DESCRIPTION
+			"Identifier for the pool."
+		::= {ippoolEntry 1}
+
+ippoolsubpoolIndex OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-write
+		STATUS mandatory
+	    DESCRIPTION
+			"Identifier for the subpool."
+		::= {ippoolEntry 2}
+
+ippoolserverLowWaterMark OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-write
+		STATUS mandatory
+	    DESCRIPTION
+			"Low water mark for address pool server."
+		::= {ippoolEntry 3}
+
+ippoolclientLowWaterMark OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-write
+		STATUS mandatory
+	    DESCRIPTION
+			"Low water mark for address pool client."
+		::= {ippoolEntry 4}
+
+ippoolpoolPriority OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-write
+		STATUS mandatory
+	    DESCRIPTION
+			"Priority associated with the pool."
+		::= {ippoolEntry 5}
+
+ippooladdressRequest OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-write
+		STATUS mandatory
+	    DESCRIPTION
+			"Number of addresses requested by the client for a specific pool"
+		::= {ippoolEntry 6}
+
+ippoolsubpoolStartAddress OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-write
+		STATUS mandatory
+	    DESCRIPTION
+			"Start address of subpool."
+		::= {ippoolEntry 7}
+
+ippoolsubpoolSize OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-write
+		STATUS mandatory
+	    DESCRIPTION
+			"Size of subpool."
+		::= {ippoolEntry 8}
+
+ippoolsubpoolDelete OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-write
+		STATUS mandatory
+	    DESCRIPTION
+			"To delete a subpool from VCU, if set to 1, delets the particular subpool."
+		::= {ippoolEntry 9}
+
+END
+
+
+

@@ -1,0 +1,541 @@
+BORDERWARE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+
+    OBJECT-TYPE, NOTIFICATION-TYPE, 
+    MODULE-IDENTITY, OBJECT-IDENTITY,
+    Counter32, Integer32, Opaque, enterprises, IpAddress
+        FROM SNMPv2-SMI
+
+    TEXTUAL-CONVENTION, DisplayString, DateAndTime
+        FROM SNMPv2-TC;
+
+borderware MODULE-IDENTITY
+    LAST-UPDATED "200211070000Z"
+    ORGANIZATION "Borderware Technology Inc."
+    CONTACT-INFO 
+	 "mibs@borderware.com "
+    DESCRIPTION
+	"The private Borderware SNMP extensions."
+    REVISION	 "200211070000Z"
+    DESCRIPTION
+	"Draft."
+    ::= { enterprises 8673 }
+
+-- Current mib entries -----------------------------------------
+bwProducts   OBJECT IDENTIFIER ::= { borderware 1 }
+bwProductId  OBJECT IDENTIFIER ::= { bwProducts 2 }
+
+-- ObjectId 
+bwFirewallServer7   OBJECT IDENTIFIER ::= { bwProductId 1 }
+
+-- Current core mib table entries:
+--   memory           OBJECT IDENTIFIER ::= { ucdavis   4 }
+--   diskTable        OBJECT IDENTIFIER ::= { ucdavis   9 }
+--   systemStats      OBJECT IDENTIFIER ::= { ucdavis  11 }
+
+
+--
+-- Define the Float Textual Convention
+--   This definition was written by David Perkins.
+--
+
+Float ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "A single precision floating-point number.  The semantics
+         and encoding are identical for type 'single' defined in
+         IEEE Standard for Binary Floating-Point,
+         ANSI/IEEE Std 754-1985.
+         The value is restricted to the BER serialization of
+         the following ASN.1 type:
+             FLOATTYPE ::= [120] IMPLICIT FloatType
+         (note: the value 120 is the sum of '30'h and '48'h)
+         The BER serialization of the length for values of
+         this type must use the definite length, short
+         encoding form.
+
+         For example, the BER serialization of value 123
+         of type FLOATTYPE is '9f780442f60000'h.  (The tag
+         is '9f78'h; the length is '04'h; and the value is
+         '42f60000'h.) The BER serialization of value
+         '9f780442f60000'h of data type Opaque is
+         '44079f780442f60000'h. (The tag is '44'h; the length
+         is '07'h; and the value is '9f780442f60000'h."
+    SYNTAX Opaque (SIZE (7))
+
+
+
+--
+-- Memory usage/watch reporting.
+--
+bwSysMemory OBJECT IDENTIFIER ::= { borderware 4 }
+
+memIndex OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Bogus Index.  This should always return the integer 0."
+    ::= { bwSysMemory 1 } 
+
+memErrorName OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Bogus Name. This should always return the string 'swap'."
+    ::= { bwSysMemory 2 } 
+
+memTotalSwap OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Total Swap Size configured for the host."
+    ::= { bwSysMemory 3 }
+
+memAvailSwap OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Available Swap Space on the host."
+    ::= { bwSysMemory 4 }
+
+memTotalReal OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Total Real/Physical Memory Size on the host."
+    ::= { bwSysMemory 5 }
+
+memAvailReal OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Available Real/Physical Memory Space on the host."
+    ::= { bwSysMemory 6 }
+
+memTotalSwapTXT OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Total virtual memory used by text."
+    ::= { bwSysMemory 7 }
+
+memAvailSwapTXT OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION	
+	"Active virtual memory used by text."
+    ::= { bwSysMemory 8 }
+
+memTotalRealTXT OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Total Real/Physical Memory Size used by text."
+    ::= { bwSysMemory 9 }
+
+memAvailRealTXT OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Active Real/Physical Memory Space used by text."
+    ::= { bwSysMemory 10 }
+
+memTotalFree OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Total Available Memory on the host"
+    ::= { bwSysMemory 11 }
+
+memMinimumSwap OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Minimum amount of free swap required to be free
+	 or else memErrorSwap is set to 1 and an error string is
+	 returned memSwapErrorMsg."
+    ::= { bwSysMemory 12 }
+
+memShared OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Total Shared Memory"
+    ::= { bwSysMemory 13 }
+
+memBuffer OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Total Buffered Memory"
+    ::= { bwSysMemory 14 }
+
+memCached OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Total Cached Memory"
+    ::= { bwSysMemory 15 }
+
+memSwapError OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Error flag.  1 indicates very little swap space left"
+    ::= { bwSysMemory 100 }
+	
+memSwapErrorMsg OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Error message describing the Error Flag condition"
+    ::= { bwSysMemory 101 } 
+
+
+dskTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF DskEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"Disk watching information.  Partions to be watched
+	 are configured by the snmpd.conf file of the agent."
+    ::= { borderware 9 }
+
+dskEntry OBJECT-TYPE
+    SYNTAX     DskEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry containing a disk and its statistics."
+    INDEX      { dskIndex }
+    ::= { dskTable  1 }
+
+DskEntry ::= SEQUENCE {
+    dskIndex		Integer32,
+    dskPath		DisplayString,
+    dskDevice		DisplayString,
+    dskMinimum		Integer32,
+    dskMinPercent	Integer32,
+    dskTotal		Integer32,
+    dskAvail		Integer32,
+    dskUsed		Integer32,
+    dskPercent		Integer32,
+    dskPercentNode	Integer32,
+    dskErrorFlag	Integer32,
+    dskErrorMsg		DisplayString
+}
+
+dskIndex OBJECT-TYPE
+    SYNTAX	Integer32 (0..65535)
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Integer reference number (row number) for the disk mib."
+    ::= { dskEntry 1 }
+	
+dskPath OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Path where the disk is mounted."
+    ::= { dskEntry 2 } 
+
+dskDevice OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Path of the device for the partition"
+    ::= { dskEntry 3 } 
+
+dskMinimum OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Minimum space required on the disk (in kBytes) before the
+         errors are triggered.  Either this or dskMinPercent is
+         configured via the agent's snmpd.conf file."
+    ::= { dskEntry 4 } 
+
+dskMinPercent OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Percentage of minimum space required on the disk before the
+         errors are triggered.  Either this or dskMinimum is
+         configured via the agent's snmpd.conf file."
+    ::= { dskEntry 5 } 
+
+dskTotal OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Total size of the disk/partion (kBytes)"
+    ::= { dskEntry 6 } 
+
+dskAvail OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Available space on the disk"
+    ::= { dskEntry 7 } 
+
+dskUsed OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Used space on the disk"
+    ::= { dskEntry 8 } 
+
+dskPercent OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Percentage of space used on disk"
+    ::= { dskEntry 9 } 
+
+dskPercentNode OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Percentage of inodes used on disk"
+    ::= { dskEntry 10 } 
+
+dskErrorFlag OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"Error flag signaling that the disk or partition is under
+	 the minimum required space configured for it."
+    ::= { dskEntry 100 } 
+     
+dskErrorMsg OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION  
+	"A text description providing a warning and the space left
+	 on the disk."
+    ::= { dskEntry 101 } 
+     
+
+systemStats OBJECT IDENTIFIER ::= { borderware 11 }
+
+ssIndex OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Reference Index for each observed systemStat (1)."
+    ::= { systemStats 1 }
+
+ssErrorName OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The list of systemStats names (vmstat) we're Counting."
+    ::= { systemStats 2 }
+
+ssSwapIn OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Amount of memory swapped in from disk (kB/s)."
+    ::= { systemStats 3 }
+
+ssSwapOut OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Amount of memory swapped to disk (kB/s)."
+    ::= { systemStats 4 }
+
+ssIOSent OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	deprecated
+    DESCRIPTION
+	"Blocks sent to a block device (blocks/s). Deprecated, replaced by
+	the ssIORawSent object"
+    ::= { systemStats 5 }
+
+ssIOReceive OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	deprecated
+    DESCRIPTION
+	"Blocks received from a block device (blocks/s). Deprecated, replaced by
+	the ssIORawReceived object"
+    ::= { systemStats 6 }
+
+ssSysInterrupts OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	deprecated
+    DESCRIPTION
+	"The number of interrupts per second, including the clock.
+	Deprecated, replaced by ssRawInterrupts"
+    ::= { systemStats 7 }
+
+ssSysContext OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	deprecated
+    DESCRIPTION
+	"The number of context switches per second.
+	Deprecated, replaced by ssRawContext"
+    ::= { systemStats 8 }
+
+ssCpuUser OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	deprecated
+    DESCRIPTION
+	"percentages of user CPU time. Deprecated, replaced by the ssCpuRawUser
+	object"
+    ::= { systemStats 9 }
+
+ssCpuSystem OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	deprecated
+    DESCRIPTION
+	"percentages of system CPU time. Deprecated, replaced by of the
+	ssCpuRawSystem object"
+    ::= { systemStats 10 }
+
+ssCpuIdle OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	deprecated
+    DESCRIPTION
+	"percentages of idle CPU time. Deprecated, replaced by of the
+	ssCpuRawIdle object"
+    ::= { systemStats 11 }
+
+-- The agent only implements those of the following counters that the
+-- kernel supports! Don't expect all to be present.
+
+ssCpuRawUser OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "user CPU time."
+    ::= { systemStats 50 }
+
+ssCpuRawNice OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "nice CPU time."
+    ::= { systemStats 51 }
+
+ssCpuRawSystem OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "system CPU time."
+    ::= { systemStats 52 }
+
+ssCpuRawIdle OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "idle CPU time."
+    ::= { systemStats 53 }
+
+ssCpuRawWait OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "iowait CPU time. This is primarily a SysV thingie"
+    ::= { systemStats 54 }
+
+ssCpuRawKernel OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "kernel CPU time."
+    ::= { systemStats 55 }
+
+ssCpuRawInterrupt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "interruptlevel CPU time. This is primarily a BSD thingie"
+    ::= { systemStats 56 }
+
+ssIORawSent OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of requests sent to a block device"
+    ::= { systemStats 57 }
+
+ssIORawReceived OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of interrupts processed"
+    ::= { systemStats 58 }
+
+ssRawInterrupts OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of requests received from a block device"
+    ::= { systemStats 59 }
+
+ssRawContexts OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of context switches"
+    ::= { systemStats 60 }
+
+
+
+END

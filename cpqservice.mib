@@ -1,0 +1,516 @@
+-- ****************************************************************************
+-- ****************************************************************************
+--
+--                  Service Incident Information
+--         Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 1998,2003 Hewlett-Packard Development Company, L.P.
+--
+--      Hewlett-Packard Company shall not be liable for technical or
+--      editorial errors or omissions contained herein. The information in
+--      this document is provided "as is" without warranty of any kind and
+--      is subject to change without notice. The warranties for HP products
+--      are set forth in the express limited warranty statements
+--      accompanying such products. Nothing herein should be construed as
+--      constituting an additional warranty.
+--
+--      Confidential computer software. Valid license from HP required for
+--      possession, use or copying. Consistent with FAR 12.211 and 12.212,
+--      Commercial Computer Software, Computer Software Documentation, and
+--      Technical Data for Commercial Items are licensed to the U.S.
+--      Government under vendor's standard commercial license.
+--
+--      Refer to the READMIB.RDM file for more information about the
+--      organization of the information in the Compaq Enterprise.
+--
+--      The Compaq Enterprise number is 232.
+--      The ASN.1 prefix to, and including the Compaq Enterprise is:
+--           1.3.6.1.4.1.232
+--
+--      The Services Incident MIB provides Service Incident notification information.
+--
+-- ****************************************************************************
+
+
+CPQSERVICE-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+       compaq                  FROM CPQHOST-MIB
+       DisplayString           FROM RFC1213-MIB
+       IpAddress	       FROM RFC1155-SMI
+       OBJECT-TYPE             FROM RFC-1212
+       TRAP-TYPE               FROM RFC-1215
+       sysName                 FROM RFC1213-MIB;
+
+--  compaq                  OBJECT IDENTIFIER ::= { enterprises 232 }
+    cpqService              OBJECT IDENTIFIER ::= { compaq 164 }
+    cpqServiceMibRev        OBJECT IDENTIFIER ::= { cpqService 1 }
+    cpqServiceIncident      OBJECT IDENTIFIER ::= { cpqService 2 }
+
+
+-- ****************************************************************************
+--   Service Information MIB Revision
+--   ================================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqService Group               (1.3.6.1.4.1.232.164)
+--      cpqServiceMibRev Group         (1.3.6.1.4.1.232.164.1)
+--
+--      Implementation of the cpqServiceMibRev group is mandatory for all agents
+--      supporting the SI MIB.
+--
+--      An SNMP Agent conforming to this document will return a
+--      cpqServiceMibRevMajor of one (2) and a cpqServiceMibRevMinor of zero (0).
+--
+--
+-- ****************************************************************************82
+
+    cpqServiceMibRevMajor OBJECT-TYPE
+        SYNTAX  INTEGER (1..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Major Revision level of the MIB.
+
+            A change in the major revision level represents a major change
+            in the architecture of the MIB.  A change in the major revision
+            level may indicate a significant change in the information
+            supported and/or the meaning of the supported information.
+            Correct interpretation of data may require a MIB document with
+            the same major revision level."
+        ::= { cpqServiceMibRev 2 }
+
+    cpqServiceMibRevMinor OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Minor Revision level of the MIB.
+
+            A change in the minor revision level may represent some minor
+            additional support, no changes to any pre-existing information
+            has occurred."
+        ::= { cpqServiceMibRev 1 }
+
+
+-- ****************************************************************************
+--   Service Incident Common
+--   =======================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqService Group                    (1.3.6.1.4.1.232.164)
+--       cpqService Incident Group          (1.3.6.1.4.1.232.164.2)
+--
+--      The cpqServiceIncident group contains the general information about the
+--      service event.
+--
+--  Implementation of the cpqServiceIncident group is mandatory for all
+--  agents that support the SI MIB.
+--
+-- ****************************************************************************
+
+   cpqServiceIncidentSeverity OBJECT-TYPE
+        SYNTAX  INTEGER {
+            important(1),
+            informational(2)
+            }
+        ACCESS  read-only
+        STATUS  deprecated
+        DESCRIPTION
+            "The severity of the service incident."
+        ::= { cpqServiceIncident 1 }
+
+   cpqServiceIncidentStatus OBJECT-TYPE
+
+        SYNTAX  INTEGER {
+            other(1),
+            intransit(2),
+            delivered(3),
+           undelivered(4),
+            assigned(5),
+            closed(6),
+	   submitted_to_ISEE(7)
+            }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+           "The status of the service incident."
+
+        ::= { cpqServiceIncident 2 }
+
+    cpqServiceIncidentInformation OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Provides the URL to the event analysis report. "
+--     CpqServiceIncidentInformation is a URL pointing to
+--     the Service Rule describing the serviceable event.
+        ::= { cpqServiceIncident 3 }
+
+    cpqServiceIncidentEvent OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Brief description of the event that initiated the service incident."
+        ::= { cpqServiceIncident 4 }
+
+    cpqServiceIncidentUniqueID OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Unique Event Analysis Identifier assigned to the incident."
+        ::= { cpqServiceIncident 5 }
+
+    cpqServiceIncidentTimeofOriginalEvent OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	    "Time of the original event this service event relates to."
+--      Time format in the form of "12 September 2003 23:23:23.000".
+	::= { cpqServiceIncident 6 }
+
+    cpqServiceIncidentSourceSystemName OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	    "Name of the system this service event relates to."
+	::= { cpqServiceIncident 7 }
+
+    cpqServiceIncidentIPAddessOfSource OBJECT-TYPE
+	SYNTAX IpAddress
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	    "IP Address of the system this service event relates to."
+	::= { cpqServiceIncident 8 }
+
+   cpqServiceISEEIncidentInformation OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "This is a URL pointing to the Service Incident status in ISEE if available."
+--     This is a URL pointing to the Service Incident status if ISEE is capable of
+--     providing this information. This would be an XML tag including a text field
+--     identifying the status of the incident and an attached URL pointing to
+--     incident information accessed via the ISEE client or the SPOP. If the ISEE
+--     client can not provide this tag information, but could provide status
+--     information, then the returned values would be as defined here.
+        ::= { cpqServiceIncident 9 }
+
+    cpqServiceIncidentIdentifier OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Service Incident Identifier assigned to the incident report by the
+             ISEE client."
+        ::= { cpqServiceIncident 10 }
+
+    cpqServiceIncidentReceiveTrapOID OBJECT-TYPE
+        SYNTAX OBJECT IDENTIFIER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	    "The ID of the originally received event."
+	::= { cpqServiceIncident 11 }
+
+    cpqServiceIncidentFilterOID OBJECT-TYPE
+        SYNTAX OBJECT IDENTIFIER
+	ACCESS read-only
+	STATUS deprecated
+	DESCRIPTION
+	    "The OID of the value that is used by the OSEM filter."
+	::= { cpqServiceIncident 12 }
+
+    cpqServiceIncidentFilterValue OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (0..255))
+	ACCESS read-only
+	STATUS deprecated
+	DESCRIPTION
+	    "The value contained in the Filter OID."
+	::= { cpqServiceIncident 13 }
+
+    cpqServiceRecommendedAction1 OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Recommended action."
+        ::= { cpqServiceIncident 14 }
+
+    cpqServiceRecommendedAction2 OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Recommended action continued"
+        ::= { cpqServiceIncident 15 }
+
+    cpqServiceRecommendedAction3 OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Recommended action continued"
+        ::= { cpqServiceIncident 16 }
+
+    cpqServiceCustomerSelfRepairInstructionURL OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "A URL pointing to additional repair information"
+        ::= { cpqServiceIncident 17 }
+
+    cpqServiceEventSeverity OBJECT-TYPE
+        SYNTAX  INTEGER {
+	    critical(1),
+	    major(2),
+	    minor(3),
+	    warning(4),
+	    informational(5)
+            }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The severity of the service incident."
+        ::= { cpqServiceIncident 18 }
+
+    cpqServiceAnalyzerSystemName OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	    "Name of the system this service event was analyzed on."
+	::= { cpqServiceIncident 19 }
+
+    cpqServiceFRUList1 OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Replaceable Unit information"
+        ::= { cpqServiceIncident 20 }
+
+    cpqServiceFRUList2 OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Replaceable Unit information continued"
+        ::= { cpqServiceIncident 21 }
+
+    cpqServiceFRUList3 OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Replaceable Unit information continued"
+        ::= { cpqServiceIncident 22 }
+
+    cpqServiceFRUList4 OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Replaceable Unit information continued"
+        ::= { cpqServiceIncident 23 }
+
+    cpqServiceLocation1 OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Replaceable Unit location"
+        ::= { cpqServiceIncident 24 }
+
+    cpqServiceLocation2 OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Replaceable Unit location continued"
+        ::= { cpqServiceIncident 25 }
+
+-- ****************************************************************************
+--  Service MIB Trap Definitions
+--  ============================
+--
+--  The SNMP trap messages must not be bigger than 484 octets (bytes).
+--
+--  Trap support in an SNMP agent implementation is optional.  An SNMP
+--  agent implementation may support all, some, or none of the traps.
+--  If traps are supported, The user should be provided with the option of
+--  disabling traps.
+--
+-- **************************************************************************
+
+-- New in 164.00
+    cpqServiceInformation TRAP-TYPE
+        ENTERPRISE cpqService
+        VARIABLES { sysName,
+                    cpqServiceIncidentSeverity,
+                    cpqServiceIncidentStatus,
+                    cpqServiceIncidentInformation,
+                    cpqServiceIncidentEvent,
+                    cpqServiceIncidentUniqueID,
+		    cpqServiceIncidentTimeofOriginalEvent,
+		    cpqServiceIncidentSourceSystemName,
+		    cpqServiceIncidentIPAddessOfSource,
+		    cpqServiceISEEIncidentInformation,
+		    cpqServiceIncidentIdentifier,
+		    cpqServiceIncidentReceiveTrapOID,
+		    cpqServiceIncidentFilterOID,
+		    cpqServiceIncidentFilterValue }
+        DESCRIPTION
+            "This trap will be sent any time a service incident is logged or
+             updated. A service incident is generated when it is determined that
+             a service event has occurred based upon an analysis of system
+             initiated event traps or an update to a service event has occurred.
+
+             User Action: None Required"
+
+             --#TYPE "A Service Incident has been reported (Type 1)."
+             --#SUMMARY "%s reported an %s Service Incident Trap whose status is located at %s."
+             --#ARGUMENTS {0, 2, 3}
+--                              (the argument consists of the
+--                             following:
+--                             - text string containing a brief description of the
+--                              event type with an associated url pointing to a
+--                              description of the service event provided by
+--                              OSEM/MSADB
+--                            - text containing the device name with an associated
+--                              URL pointing to the server agent that initiated the
+--                              event.
+--                            - the Event Time)
+             --#SEVERITY MAJOR
+             --#TIMEINDEX 18
+    	       --#CATEGORY "HP Service Events"
+             --#ENABLE true
+             --#NOTICE_HANDLER "com.hp.mx.portal.alerts.handlers.ServiceTrapDisplayHandler"
+             --#RULE_HANDLER "com.hp.mx.core.protocol.snmp.trap.components.ServiceTrapRuleHandler"
+
+        ::= 164001
+
+    cpqService2Information TRAP-TYPE
+        ENTERPRISE cpqService
+        VARIABLES { sysName,
+                    cpqServiceIncidentStatus,
+                    cpqServiceIncidentInformation,
+                    cpqServiceIncidentEvent,
+                    cpqServiceIncidentUniqueID,
+		    cpqServiceIncidentTimeofOriginalEvent,
+		    cpqServiceIncidentSourceSystemName,
+		    cpqServiceIncidentIPAddessOfSource,
+		    cpqServiceISEEIncidentInformation,
+		    cpqServiceIncidentIdentifier,
+		    cpqServiceIncidentReceiveTrapOID,
+		    cpqServiceRecommendedAction1,
+		    cpqServiceRecommendedAction2,
+		    cpqServiceRecommendedAction3,
+		    cpqServiceCustomerSelfRepairInstructionURL }
+        DESCRIPTION
+            "This event will be sent any time a service incident is reported. 
+             A service incident is generated when it is determined that a serviceable 
+             event has occurred based upon analysis of system-initiated events.
+
+             User Action: Refer to the Recommended Action section under the event details section"
+
+             --#TYPE "A Service Incident has been reported (Type 2)."
+             --#SUMMARY "%s reported a Service Incident Trap whose status is located at %s."
+             --#ARGUMENTS {0, 1}
+--                              (the argument consists of the
+--                             following:
+--                             - text string containing a brief description of the
+--                              event type with an associated url pointing to a
+--                              description of the service event provided by
+--                              OSEM/MSADB
+--                            - text containing the device name with an associated
+--                              URL pointing to the server agent that initiated the
+--                              event.
+--                            - the Event Time)
+             --#SEVERITY MAJOR
+             --#TIMEINDEX 18
+	       --#CATEGORY "HP Service Events"
+             --#ENABLE true
+             --#NOTICE_HANDLER "com.hp.mx.portal.alerts.handlers.ServiceTrapDisplayHandler"
+             --#RULE_HANDLER "com.hp.mx.core.protocol.snmp.trap.components.ServiceTrapRuleHandler"
+        ::= 164002
+
+    cpqService3Information TRAP-TYPE
+        ENTERPRISE cpqService
+        VARIABLES { cpqServiceIncidentSourceSystemName,
+		    cpqServiceIncidentIPAddessOfSource,
+		    cpqServiceEventSeverity,
+                    cpqServiceIncidentStatus,
+                    cpqServiceIncidentInformation,
+                    cpqServiceIncidentEvent,
+                    cpqServiceIncidentUniqueID,
+		    cpqServiceIncidentTimeofOriginalEvent,
+                    cpqServiceAnalyzerSystemName,
+		    cpqServiceISEEIncidentInformation,
+		    cpqServiceIncidentIdentifier,
+		    cpqServiceIncidentReceiveTrapOID,
+		    cpqServiceRecommendedAction1,
+		    cpqServiceRecommendedAction2,
+		    cpqServiceRecommendedAction3,
+		    cpqServiceFRUList1,
+		    cpqServiceFRUList2,
+	            cpqServiceFRUList3,
+		    cpqServiceFRUList4,
+                    cpqServiceLocation1,
+                    cpqServiceLocation2,
+		    cpqServiceCustomerSelfRepairInstructionURL }
+        DESCRIPTION
+            "This event will be sent any time a service incident is reported. 
+             A service incident is generated when it is determined that a serviceable 
+             event has occurred based upon analysis of system-initiated events.
+
+             User Action: Refer to the Recommended Action section under the event details section"
+
+             --#TYPE "A Service Incident has been reported (Type 3)."
+             --#SUMMARY "%s reported a Service Incident Trap whose status is located at %s."
+             --#ARGUMENTS {0, 4}
+--                              (the argument consists of the
+--                             following:
+--                             - text string containing a brief description of the
+--                              event type with an associated url pointing to a
+--                              description of the service event provided by
+--                              OSEM/MSADB
+--                            - text containing the device name with an associated
+--                              URL pointing to the server agent that initiated the
+--                              event.
+--                            - the Event Time)
+             --#SEVERITY MAJOR
+             --#TIMEINDEX 18
+	     --#CATEGORY "HP Service Events"
+             --#ENABLE true
+	     --#VARBINDSEVERITY 3
+             --#SEVERITYMAP "INFORMATIONAL = INFORMATIONAL, MINOR = MINOR, WARNING = WARNING, MAJOR = MAJOR, CRITICAL = CRITICAL,5 = INFORMATIONAL, 4 = WARNING, 3=MINOR, 2 = MAJOR, 1 = CRITICAL"
+             --#NOTICE_HANDLER "com.hp.mx.portal.alerts.handlers.ServiceTrapDisplayHandler"
+             --#RULE_HANDLER "com.hp.mx.core.protocol.snmp.trap.components.ServiceTrapRuleHandler"
+
+        ::= 164003
+
+--     This Trap presents CpqServiceIncidentSeverity as an XML Tag including a text
+--     description as described within the varbind definition and
+--     CpqServiceIncidentInformation as a hidden URL pointing to
+--     the Service Rule describing the serviceable event (OSEM).
+--     This Trap presents cpqServiceIncidentStatus as an XML tag including a text
+--     field identifying the originating status of the incident and
+--     CpqServiceIncidentStatus an a hidden URL pointing to incident information
+--     accessed via the ISEE client or the SPOP.
+--     If the ISEE client can not provide this tag information, but could provide
+--     status information, then the returned values would be as defined within the
+--     varbind definition.
+
+
+END
+

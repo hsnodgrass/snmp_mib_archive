@@ -1,0 +1,962 @@
+
+RC-2K-ATM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, Counter64, IpAddress
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, MacAddress, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rc2kAtm
+        FROM RC-2K-MIB
+    IdList
+        FROM RAPID-CITY;
+
+
+rc2kAtmMib MODULE-IDENTITY
+       LAST-UPDATED     "200407210000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200407210000Z" -- 21 July 2004
+       DESCRIPTION "Version 4: Fixed typo"
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"
+
+       ::= { rc2kAtm 0 }
+
+
+rc2kAtmGlobal   OBJECT IDENTIFIER ::= { rc2kAtm 1 }
+
+
+-- Atm Port Table
+
+rc2kAtmPortTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kAtmPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "ATM port table"
+        ::= { rc2kAtm 2 }
+
+rc2kAtmPortEntry OBJECT-TYPE
+        SYNTAX        Rc2kAtmPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of ATM port"
+        INDEX         { rc2kAtmPortIfIndex }
+        ::= { rc2kAtmPortTable 1 }
+
+Rc2kAtmPortEntry ::= SEQUENCE {
+                rc2kAtmPortIfIndex InterfaceIndex,
+                rc2kAtmPortNumVpiBits INTEGER,
+                rc2kAtmPortNumVciBits INTEGER,
+                rc2kAtmPortMediaType INTEGER,
+                rc2kAtmPortScrambleEnable TruthValue,
+                rc2kAtmPortFramingMode INTEGER,
+                rc2kAtmPortClockSource INTEGER,
+                rc2kAtmPortLineSpeed INTEGER,
+                rc2kAtmPortLoopBackMode INTEGER,
+                rc2kAtmPortMacAddress MacAddress
+        }
+
+rc2kAtmPortIfIndex OBJECT-TYPE
+        SYNTAX          InterfaceIndex
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "port number"
+        ::= { rc2kAtmPortEntry 1 }
+
+rc2kAtmPortNumVpiBits OBJECT-TYPE
+        SYNTAX          INTEGER (1..8)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION   	"# of vpi bits. For OC3, the max number of vpibits is 6. 
+                         However, for OC12, it is 8.  Both media types share 
+                         the same MIB object. "
+        ::= { rc2kAtmPortEntry 2 }
+
+rc2kAtmPortNumVciBits OBJECT-TYPE
+        SYNTAX          INTEGER (1..16)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "# of vci bits"
+        ::= { rc2kAtmPortEntry 3 }
+
+rc2kAtmPortMediaType OBJECT-TYPE
+        SYNTAX          INTEGER {
+                          smf(1),       -- single mode fiber
+                          mmf(2),       -- mixed mode fiber
+                          ds3(3)         
+                        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "media type"
+        ::= { rc2kAtmPortEntry 4 }
+
+rc2kAtmPortScrambleEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "enable scramble"
+        DEFVAL          { false }
+        ::= { rc2kAtmPortEntry 5 }
+
+rc2kAtmPortFramingMode OBJECT-TYPE
+        SYNTAX          INTEGER {
+                          sonet(1),
+                          sdh(2),
+                          ds3CbitAdm(3),
+                          ds3CbitPlcp(4),
+                          ds3M23Adm(5),
+                          ds3M23Plcp(6)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "port framing mode"
+        DEFVAL          { sonet }
+        ::= { rc2kAtmPortEntry 6 }
+
+rc2kAtmPortClockSource OBJECT-TYPE
+        SYNTAX          INTEGER {
+                          loopTimed(1),
+                          freeRunning(2)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "clock source"
+        ::= { rc2kAtmPortEntry 7 }
+
+rc2kAtmPortLineSpeed OBJECT-TYPE
+        SYNTAX          INTEGER {
+                          oc3c(1),
+                          oc12c(2),
+                          ds3(3)
+                        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "line speed"
+        ::= { rc2kAtmPortEntry 8 }
+
+rc2kAtmPortLoopBackMode OBJECT-TYPE
+        SYNTAX          INTEGER {
+                          off(1),
+                          internal(2),
+                          external(3),
+                          ds3PayloadLoop(4),
+                          ds3DiagLoop(5),
+                          ds3LineLoop(6)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "loop back mode"
+        DEFVAL          { off }
+        ::= { rc2kAtmPortEntry 9 }
+
+rc2kAtmPortMacAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "XLR assigned MAC addr"
+        ::= { rc2kAtmPortEntry 10 }
+
+-- Atm Pvc Table
+
+rc2kAtmPvcTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kAtmPvcEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "ATM Pvc table"
+        ::= { rc2kAtm 3 }
+
+rc2kAtmPvcEntry OBJECT-TYPE
+        SYNTAX        Rc2kAtmPvcEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of ATM Pvc"
+        INDEX         { rc2kAtmPvcIfIndex, rc2kAtmPvcVpi, rc2kAtmPvcVci }
+        ::= { rc2kAtmPvcTable 1 }
+
+Rc2kAtmPvcEntry ::= SEQUENCE {
+                rc2kAtmPvcIfIndex InterfaceIndex,
+                rc2kAtmPvcVpi INTEGER,
+                rc2kAtmPvcVci INTEGER,
+                rc2kAtmPvcPvcId Integer32,
+                rc2kAtmPvcName DisplayString,
+                rc2kAtmPvcEncapsulation INTEGER,
+                rc2kAtmPvcServiceType INTEGER,
+                rc2kAtmPvcPeakCellRate INTEGER,
+                rc2kAtmPvcSustainedCellRate INTEGER,
+                rc2kAtmPvcMaxBurstSize INTEGER,
+                rc2kAtmPvcRowStatus RowStatus,
+                rc2kAtmPvcOamLbMgmtEnable     TruthValue,
+                rc2kAtmPvcOamLbSendFrequency     INTEGER,
+                rc2kAtmPvcOamLbRetryFrequency    INTEGER,
+                rc2kAtmPvcOamLbUpCount        INTEGER,
+                rc2kAtmPvcOamLbDownCount         INTEGER,
+                rc2kAtmPvcOamTrapEnable    TruthValue,
+                rc2kAtmPvcOamVcStatus         INTEGER,
+                rc2kAtmPvcOamLbRequestSent    Counter32,
+                rc2kAtmPvcOamLbReplySent         Counter32,
+                rc2kAtmPvcOamLbReplyReceived     Counter32
+        }
+
+rc2kAtmPvcIfIndex OBJECT-TYPE
+        SYNTAX          InterfaceIndex
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "port number"
+        ::= { rc2kAtmPvcEntry 1 }
+
+rc2kAtmPvcVpi OBJECT-TYPE
+        SYNTAX          INTEGER (0..255)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "vpi of this pvc"
+        ::= { rc2kAtmPvcEntry 2 }
+
+rc2kAtmPvcVci OBJECT-TYPE
+        SYNTAX          INTEGER (0..4095)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "vci of this pvc"
+        ::= { rc2kAtmPvcEntry 3 }
+
+rc2kAtmPvcPvcId OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "internal pvc id"
+        ::= { rc2kAtmPvcEntry 4 }
+
+rc2kAtmPvcName OBJECT-TYPE
+        SYNTAX          DisplayString
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "name of pvc"
+        ::= { rc2kAtmPvcEntry 5 }
+
+rc2kAtmPvcEncapsulation OBJECT-TYPE
+        SYNTAX          INTEGER {
+                          null(1),
+                          llcSnap(2)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "encapsulation"
+        DEFVAL          { llcSnap }
+        ::= { rc2kAtmPvcEntry 6 }
+
+rc2kAtmPvcServiceType OBJECT-TYPE
+        SYNTAX          INTEGER {
+                          ubr(1),
+                          vbr(2)
+                  }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "service type"
+        DEFVAL          { ubr }
+        ::= { rc2kAtmPvcEntry 7 }
+
+rc2kAtmPvcPeakCellRate OBJECT-TYPE
+        SYNTAX          INTEGER (86..733490)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION   	"Peak cell rate in cells per second. The maximum 
+                         peak cell rate is half of the line rate.  The peak 
+                         cell rate for MDA type OC12 must be less than 733491. 
+                         However, for OC3, it is less than 182783."
+        DEFVAL          { 23584 }
+        ::= { rc2kAtmPvcEntry 8 }
+
+rc2kAtmPvcSustainedCellRate OBJECT-TYPE
+        SYNTAX          INTEGER (86..733490)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION   	"Sustained cell rate in cells per second. The maximum 
+                         peak cell rate is half of the line rate.  The peak 
+                         cell rate for MDA type OC12 must be less than 733491. 
+                         However, for OC3, it is less than 182783."
+        DEFVAL          { 23584 }
+        ::= { rc2kAtmPvcEntry 9 }
+
+rc2kAtmPvcMaxBurstSize OBJECT-TYPE
+        SYNTAX          INTEGER (2..255)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "max burst size"
+        DEFVAL          { 255 }
+        ::= { rc2kAtmPvcEntry 10 }
+
+rc2kAtmPvcRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "row status"
+        ::= { rc2kAtmPvcEntry 11 }
+
+rc2kAtmPvcOamLbMgmtEnable OBJECT-TYPE
+        SYNTAX		    TruthValue
+        MAX-ACCESS		read-write
+        STATUS		    current
+        DESCRIPTION    "Indicate whether end-to-end F5 OAM loopback is enabled.
+                        When it is enabled, OAM loopback request is sent 
+                        periodically"
+        DEFVAL		{ true }
+        ::= { rc2kAtmPvcEntry  12 }
+
+rc2kAtmPvcOamLbSendFrequency OBJECT-TYPE
+        SYNTAX		   INTEGER (1..255)
+        MAX-ACCESS		   read-write
+        STATUS		   current
+        DESCRIPTION	"Number of seconds between transmitting OAM loopback 
+                         request"
+        DEFVAL		{ 5 }
+        ::= { rc2kAtmPvcEntry  13 } 
+
+rc2kAtmPvcOamLbRetryFrequency OBJECT-TYPE
+        SYNTAX		   INTEGER (1..255)
+        MAX-ACCESS		   read-write
+        STATUS		   current
+        DESCRIPTION   "Number of seconds between retry"
+        DEFVAL		{ 1 }
+        ::= { rc2kAtmPvcEntry  14 }
+
+rc2kAtmPvcOamLbUpCount OBJECT-TYPE
+        SYNTAX		   INTEGER (1..255)
+        MAX-ACCESS		   read-write
+        STATUS		   current
+        DESCRIPTION    "Number of consecutive end-to-end F5 OAM loopback cell 
+                       responses that must be received in order to change a 
+                       PVC connection state to up"
+        DEFVAL		{ 3 }
+        ::= { rc2kAtmPvcEntry  15 }
+
+rc2kAtmPvcOamLbDownCount OBJECT-TYPE
+        SYNTAX		   INTEGER (1..255)
+        MAX-ACCESS		   read-write
+        STATUS		   current
+        DESCRIPTION    "Number of consecutive end-to-end F5 OAM loopback cell 
+                       responses that are not received in order to change a 
+                       PVC state to down."
+        DEFVAL		{ 5 }
+        ::= { rc2kAtmPvcEntry  16 }
+
+rc2kAtmPvcOamTrapEnable OBJECT-TYPE
+        SYNTAX		   TruthValue
+        MAX-ACCESS		   read-write
+        STATUS		   current
+        DESCRIPTION	"Indicate whether OAM trap is enabled. When it is enabled,
+                        a trap is sent to the management station when 
+                       rc2kAtmPvcOamVcStatus is going up or down."
+        DEFVAL		{ false }
+        ::= { rc2kAtmPvcEntry 17 } 
+
+rc2kAtmPvcOamVcStatus OBJECT-TYPE
+        SYNTAX        	INTEGER {
+                          notManaged(1),
+                          downVerify(2),
+                          down(3),
+                          upVerify(4),
+                          up(5)
+                      	}
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION     "Indicate the status of PVC link.
+                         Not Managed--VC is not being managed by OAM. 
+			 Down Verify --An OAM loopback failed. End-to-end F5 OAM
+                          loopback cells are sent at retry frequency to verify 
+                          the VC is really down. After down-count unsuccessful 
+                          retries, the VC goes to the down state (see definition 
+                          of rc2kAtmPvcOamLoopbackDownCount).
+                         Down --VC has not received responses to by end-to-end 
+                          F5 OAM loopback cells. 
+                         Up Verify -- An OAM loopback was successful. 
+                          End-to-end F5 OAM loopback cells are sent at retry 
+                          frequency to verify the VC is really up. After up-count
+                          successive and successful loopback retries, the VC
+                          goes to the Up state (see definition of 
+                          rc2kAtmPvcOamLoopbackUpCount).
+                         Up - End-to-end loopbacks are successful. "
+       ::= { rc2kAtmPvcEntry  18 }
+
+
+rc2kAtmPvcOamLbRequestSent OBJECT-TYPE
+       SYNTAX			Counter32
+       MAX-ACCESS		   read-only
+       STATUS		   current
+       DESCRIPTION	"Number of OAM loopback request sent"
+       ::= { rc2kAtmPvcEntry  19 }
+
+rc2kAtmPvcOamLbReplySent OBJECT-TYPE
+       SYNTAX		   Counter32
+       MAX-ACCESS		   read-only
+       STATUS		   current
+       DESCRIPTION	"Number of OAM loopback reply sent"
+       ::= { rc2kAtmPvcEntry  20 }
+
+rc2kAtmPvcOamLbReplyReceived OBJECT-TYPE
+       SYNTAX		   Counter32
+       MAX-ACCESS		   read-only
+       STATUS		   current
+       DESCRIPTION	"Number of OAM loopback reply received"
+       ::= { rc2kAtmPvcEntry  21 } 
+
+-- Atm 1483Elan Table
+
+rc2kAtm1483ElanTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kAtm1483ElanEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "ATM 1483Elan table"
+        ::= { rc2kAtm 5 }
+
+rc2kAtm1483ElanEntry OBJECT-TYPE
+        SYNTAX        Rc2kAtm1483ElanEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of ATM 1483Elan"
+        INDEX         { rc2kAtm1483ElanIfIndex, rc2kAtm1483ElanVlanId }
+        ::= { rc2kAtm1483ElanTable 1 }
+
+Rc2kAtm1483ElanEntry ::= SEQUENCE {
+                rc2kAtm1483ElanIfIndex InterfaceIndex,
+                rc2kAtm1483ElanElanId Integer32,
+                rc2kAtm1483ElanNumPvcIds INTEGER,
+                rc2kAtm1483ElanPvcIds IdList,
+                rc2kAtm1483ElanVlanId Integer32,
+                rc2kAtm1483ElanRowStatus RowStatus,
+                rc2kAtm1483ElanConnectType INTEGER,
+                rc2kAtm1483ElanVlanMacAddress MacAddress,
+                rc2kAtm1483ElanDummyMacAddress MacAddress,
+                rc2kAtm1483ElanLocalIpAddress IpAddress,
+                rc2kAtm1483ElanRemoteIpAddress IpAddress,
+                rc2kAtm1483ElanInArpSendEnable TruthValue,
+                rc2kAtm1483ElanInArpSendInterval INTEGER,
+                rc2kAtm1483ElanIpxVlanEncapMethod INTEGER,
+                rc2kAtm1483ElanIpxNetworkNum INTEGER,
+                rc2kAtm1483ElanStgId Integer32,
+                rc2kAtm1483ElanrcStgTaggedBpduVlanId Integer32,
+                rc2kAtm1483ElanIpxNetworkAddr OCTET STRING
+        }
+
+rc2kAtm1483ElanIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "port number"
+        ::= { rc2kAtm1483ElanEntry 1 }
+
+rc2kAtm1483ElanElanId OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Elan Id"
+        ::= { rc2kAtm1483ElanEntry 2 }
+
+rc2kAtm1483ElanNumPvcIds OBJECT-TYPE
+        SYNTAX        INTEGER (0..64)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "# pvc-ids in list"
+        ::= { rc2kAtm1483ElanEntry 3 }
+
+rc2kAtm1483ElanPvcIds OBJECT-TYPE
+        SYNTAX        IdList (SIZE (256))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "list of pvc-ids. each pvc-id is represented by a
+                      32 bit value  this field can contain a maximum of
+                      64 pvc-ids."
+        ::= { rc2kAtm1483ElanEntry 4 }
+
+rc2kAtm1483ElanVlanId OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "vlan tag for this 1483"
+        ::= { rc2kAtm1483ElanEntry 5 }
+
+rc2kAtm1483ElanRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "row status"
+        ::= { rc2kAtm1483ElanEntry 6 }
+
+rc2kAtm1483ElanConnectType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          bridged(1),
+                          ip(2),
+                          ipx(3),
+                          muxIpIpx(4)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "connection type"
+        ::= { rc2kAtm1483ElanEntry 7 }
+
+rc2kAtm1483ElanVlanMacAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "mac for vlan"
+        ::= { rc2kAtm1483ElanEntry 8 }
+
+rc2kAtm1483ElanDummyMacAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "dummy mac for the other router"
+        ::= { rc2kAtm1483ElanEntry 9 }
+
+rc2kAtm1483ElanLocalIpAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "local ip, if ConnectType is ip(2)"
+        ::= { rc2kAtm1483ElanEntry 10 }
+
+rc2kAtm1483ElanRemoteIpAddress OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "remote ip, if ConnectType is ip(2)"
+        ::= { rc2kAtm1483ElanEntry 11 }
+
+rc2kAtm1483ElanInArpSendEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "enable arp sending on the port, if
+                       ConnectType is ip(2)"
+        DEFVAL        { false }
+        ::= { rc2kAtm1483ElanEntry 12 }
+
+rc2kAtm1483ElanInArpSendInterval OBJECT-TYPE
+        SYNTAX        INTEGER (0..60)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "interval of arp sending on the port, if
+                       ConnectType is ip(2)"
+        ::= { rc2kAtm1483ElanEntry 13 }
+
+rc2kAtm1483ElanIpxVlanEncapMethod OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          llc(1),
+                          snap(2),
+                          ether-ii(3),
+                          raw(4)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "vlan encapsulation method, if ConnectType
+                       is ipx(3)"
+        ::= { rc2kAtm1483ElanEntry 14 }
+
+rc2kAtm1483ElanIpxNetworkNum OBJECT-TYPE
+        SYNTAX        INTEGER (0..2147483647)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "network number, if ConnectType is ipx(3)"
+        ::= { rc2kAtm1483ElanEntry 15 }
+
+rc2kAtm1483ElanStgId OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "An identifier used to identify a STG in the device,
+                         only in bridge mode"
+        ::= { rc2kAtm1483ElanEntry 16 }
+
+rc2kAtm1483ElanrcStgTaggedBpduVlanId OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The VLAN ID to be used for tagging BPDUs,
+                         only in bridge mode."
+        ::= { rc2kAtm1483ElanEntry 17 }
+
+rc2kAtm1483ElanIpxNetworkAddr OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(4))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "network number, instead of rc2kAtm1483ElanIpxNetworkNum"
+        ::= { rc2kAtm1483ElanEntry 18 }
+
+
+-- 2kAtm Sio Card Config Table
+
+rc2kAtmSioCardConfigTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kAtmSioCardConfigEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2kAtm Sio Card Config Table"
+        ::= { rc2kAtm 8 }
+
+rc2kAtmSioCardConfigEntry OBJECT-TYPE
+        SYNTAX        Rc2kAtmSioCardConfigEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of 2kAtm Sio Card Config."
+        INDEX         { rc2kAtmSioCardConfigSlotIndex }
+        ::= { rc2kAtmSioCardConfigTable 1 }
+
+Rc2kAtmSioCardConfigEntry ::= SEQUENCE {
+                rc2kAtmSioCardConfigSlotIndex       Integer32,
+                rc2kAtmSioCardConfigAction          INTEGER,
+                rc2kAtmSioCardConfigTraceMode       INTEGER,
+                rc2kAtmSioCardConfigImageFileName   DisplayString,
+                rc2kAtmSioCardConfigElanStatsEnable INTEGER,
+                rc2kAtmSioCardConfigStatsPollPeriod INTEGER
+        }
+
+rc2kAtmSioCardConfigSlotIndex OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "slot Index."
+        ::= { rc2kAtmSioCardConfigEntry 1 }
+
+rc2kAtmSioCardConfigAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          other(0),
+                          reset(1)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rc2kAtmSioCardConfigEntry 2 }
+
+rc2kAtmSioCardConfigTraceMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          other(0),
+                          traceOn(1)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rc2kAtmSioCardConfigEntry 3 }
+
+rc2kAtmSioCardConfigImageFileName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "ATM Image file name."
+        ::= { rc2kAtmSioCardConfigEntry 4 }
+
+rc2kAtmSioCardConfigElanStatsEnable OBJECT-TYPE
+        SYNTAX       INTEGER {
+                        disable(1),
+                        enable(2)
+                     }   
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Enable/Disable Elan Statistics collection"
+        DEFVAL       { disable }
+        ::= { rc2kAtmSioCardConfigEntry 5 }
+
+rc2kAtmSioCardConfigStatsPollPeriod OBJECT-TYPE
+        SYNTAX       INTEGER(3..15)
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Time interval after which  Elan statistics would 
+                      be polled"
+        DEFVAL       { 5 }
+        ::= { rc2kAtmSioCardConfigEntry 6 }  
+    
+    
+--- ATM global 
+
+rc2kAtmElanStatsClearAll OBJECT-TYPE
+       SYNTAX        TruthValue
+       MAX-ACCESS    read-write
+       STATUS        current
+       DESCRIPTION   "Clear all Elan Statistics"
+       ::= { rc2kAtmGlobal 1}  
+
+
+--- ATM port stats
+
+rc2kAtmPortStatsTable OBJECT-TYPE
+       SYNTAX        SEQUENCE OF Rc2kAtmPortStatsEntry
+       MAX-ACCESS    not-accessible
+       STATUS        current
+       DESCRIPTION   "ATM port statistics table"
+       ::= { rc2kAtm 10 }
+
+rc2kAtmPortStatsEntry OBJECT-TYPE
+       SYNTAX        Rc2kAtmPortStatsEntry
+       MAX-ACCESS    not-accessible
+       STATUS        current
+       DESCRIPTION   "Entry containing infomation of ATM port statistics"
+       INDEX         { rc2kAtmPortStatsIfIndex }
+       ::= { rc2kAtmPortStatsTable 1 }
+
+Rc2kAtmPortStatsEntry ::= SEQUENCE {
+       rc2kAtmPortStatsIfIndex          InterfaceIndex,
+       rc2kAtmPortStatsInCells          Counter64,
+   	   rc2kAtmPortStatsOutCells         Counter64,
+   	   rc2kAtmPortStatsOutIdleCells     Counter64,
+   	   rc2kAtmPortStatsInHecCorrected   Counter32,
+   	   rc2kAtmPortStatsInHecUncorrected	Counter32,
+   	   rc2kAtmPortStatsInUnknownProtos  Counter32,
+   	   rc2kAtmPortStatsInPkts           Counter32,
+   	   rc2kAtmPortStatsOutPkts          Counter32,
+   	   rc2kAtmPortStatsInDroppedPkts    Counter32,
+   	   rc2kAtmPortStatsOutDroppedPkts   Counter32
+}
+
+rc2kAtmPortStatsIfIndex OBJECT-TYPE
+       SYNTAX        InterfaceIndex
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "port number"
+       ::= { rc2kAtmPortStatsEntry 1 }
+
+rc2kAtmPortStatsInCells OBJECT-TYPE
+       SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Cells received from ATM interface"
+      	::= { rc2kAtmPortStatsEntry 2 }
+
+rc2kAtmPortStatsOutCells OBJECT-TYPE
+	      SYNTAX        Counter64
+	      MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Cells transmitted by ATM interface"
+       ::= { rc2kAtmPortStatsEntry 3 }
+
+rc2kAtmPortStatsOutIdleCells OBJECT-TYPE
+	      SYNTAX        Counter64
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of Idle Cells transmitted"
+       ::= { rc2kAtmPortStatsEntry 4 }
+
+rc2kAtmPortStatsInHecCorrected OBJECT-TYPE
+	      SYNTAX        Counter32
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of received cells in which HCS  
+                      was corrected"
+      	::= { rc2kAtmPortStatsEntry 5 }
+
+rc2kAtmPortStatsInHecUncorrected OBJECT-TYPE
+	      SYNTAX        Counter32
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of received cells dropped because HCS 
+                      couldn't be corrected"
+       ::= { rc2kAtmPortStatsEntry 6 }
+
+rc2kAtmPortStatsInUnknownProtos OBJECT-TYPE
+	      SYNTAX        Counter32
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of received cells dropped with wrong VPI/VCI"
+       ::= { rc2kAtmPortStatsEntry 7 }
+
+rc2kAtmPortStatsInPkts OBJECT-TYPE
+	      SYNTAX        Counter32
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of AAL5 CPCS PDUs received"
+       ::= { rc2kAtmPortStatsEntry 8 }
+
+rc2kAtmPortStatsOutPkts OBJECT-TYPE
+	      SYNTAX        Counter32
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of AAL5 CPCS PDUs transmitted"
+       ::= { rc2kAtmPortStatsEntry 9 }
+
+rc2kAtmPortStatsInDroppedPkts OBJECT-TYPE
+	      SYNTAX        Counter32
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of AAL5 CPCS PDUs dropped due to 
+                      resource exhaustion"
+       ::= { rc2kAtmPortStatsEntry 10 }
+
+rc2kAtmPortStatsOutDroppedPkts OBJECT-TYPE
+	      SYNTAX        Counter32
+       MAX-ACCESS    read-only
+       STATUS        current
+       DESCRIPTION   "Number of AAL5 CPCS PDUs dropped because the
+                      transmitter closed the channel"
+       ::= { rc2kAtmPortStatsEntry 11 } 
+
+-- ATM vPort Stats
+
+rc2kAtmVPortStatsTable OBJECT-TYPE
+	      SYNTAX        SEQUENCE OF Rc2kAtmVPortStatsEntry
+       MAX-ACCESS    not-accessible
+       STATUS        current
+       DESCRIPTION   "ATM Elan statistics table"
+       ::= { rc2kAtm 11 }
+
+rc2kAtmVPortStatsEntry OBJECT-TYPE
+       SYNTAX        Rc2kAtmVPortStatsEntry
+       MAX-ACCESS    not-accessible
+       STATUS        current
+       DESCRIPTION   "Entry containing infomation of ATM Elan statistics"
+       INDEX         { rc2kAtmVPortStatsIfIndex , rc2kAtmVPortStatsVlanId }
+       ::= { rc2kAtmVPortStatsTable 1 }
+
+Rc2kAtmVPortStatsEntry ::= SEQUENCE {
+       rc2kAtmVPortStatsIfIndex          InterfaceIndex,
+       rc2kAtmVPortStatsVlanId           Integer32,		
+	      rc2kAtmVPortStatsClear            INTEGER,
+       rc2kAtmVPortStatsInOctets         Counter64,
+       rc2kAtmVPortStatsOutOctets        Counter64,
+       rc2kAtmVPortStatsInErrors         Counter32,
+       rc2kAtmVPortStatsOutErrors        Counter32,		
+       rc2kAtmVPortStatsInDiscards       Counter32,
+       rc2kAtmVPortStatsOutDiscards      Counter32,
+       rc2kAtmVPortStatsInUcastPkts      Counter32,
+       rc2kAtmVPortStatsOutUcastPkts     Counter32,
+       rc2kAtmVPortStatsInMulticastPkts  Counter32,
+       rc2kAtmVPortStatsOutMulticastPkts Counter32,
+       rc2kAtmVPortStatsInBroadcastPkts  Counter32,
+       rc2kAtmVPortStatsOutBroadcastPkts Counter32 
+    }
+
+rc2kAtmVPortStatsIfIndex OBJECT-TYPE
+       SYNTAX       InterfaceIndex
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "port number"
+       ::= { rc2kAtmVPortStatsEntry 1 }
+
+rc2kAtmVPortStatsVlanId OBJECT-TYPE
+       SYNTAX       Integer32 (0..2147483647)
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Vlan Id"
+       ::= { rc2kAtmVPortStatsEntry 2 }
+
+rc2kAtmVPortStatsClear OBJECT-TYPE
+       SYNTAX       INTEGER {
+                       other (0),
+                       clear (1)
+                    } 
+       MAX-ACCESS   read-write
+       STATUS       current
+       DESCRIPTION  "Clear Elan Stats"
+       DEFVAL       { other }
+       ::= { rc2kAtmVPortStatsEntry 3 }
+
+rc2kAtmVPortStatsInOctets OBJECT-TYPE
+       SYNTAX       Counter64
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "AAL5 CPCS PDU octects received from ATM interface"
+       ::= { rc2kAtmVPortStatsEntry 4 }
+
+rc2kAtmVPortStatsOutOctets OBJECT-TYPE
+       SYNTAX       Counter64
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "AAL5 CPCS PDU octects transmitted out of ATM interface"
+       ::= { rc2kAtmVPortStatsEntry 5 }
+
+rc2kAtmVPortStatsInErrors OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION "AAL5 CPCS PDUs received with errors from ATM interface.
+                    These errors include CRC-32 errors,SAR time-out errors
+                    And oversized SDU errors" 
+	      ::= { rc2kAtmVPortStatsEntry 6 }
+
+rc2kAtmVPortStatsOutErrors OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Number of AAL5 CPCS PDUs that couldn't be transmitted
+                     due to errors"
+       ::= { rc2kAtmVPortStatsEntry 7 }
+
+rc2kAtmVPortStatsInDiscards OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Number of received AAL5 CPCS PDUs discarded "
+       ::= { rc2kAtmVPortStatsEntry 8 }
+
+rc2kAtmVPortStatsOutDiscards  OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Number of AAL5 CPCS PDUs which are to be transmitted
+                     but discarded"
+       ::= { rc2kAtmVPortStatsEntry 9 }
+
+rc2kAtmVPortStatsInUcastPkts OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Received ethernet/IP/IPX packets whose destination 
+                     address is neither a multicast nor a broadcast 
+                     address"
+       ::= { rc2kAtmVPortStatsEntry 10 }
+
+rc2kAtmVPortStatsOutUcastPkts OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Forwarded ethernet/IP/IPX packets whose destination  
+                     address is neither a multicast nor a broadcast     
+                     address"
+       ::= { rc2kAtmVPortStatsEntry 11 }
+
+rc2kAtmVPortStatsInMulticastPkts OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Received ethernet/IP/IPX packets whose destination  
+                     MAC address(or IP address in case of IP ELAN type)
+                     is multicast MAC address or class D IP address 
+                     (in case of IP ELAN type) "    
+       ::= { rc2kAtmVPortStatsEntry 12 }
+
+rc2kAtmVPortStatsOutMulticastPkts OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Forwarded ethernet/IP/IPX packets whose destination  
+                     MAC address(or IP address in case of IP ELAN type)
+                     is multicast MAC address or class D IP address 
+                     (in case of IP ELAN type) "
+       ::= { rc2kAtmVPortStatsEntry 13 }
+
+rc2kAtmVPortStatsInBroadcastPkts OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Received ethernet/IP/IPX packets whose destination
+                     address in broadcast address"
+       ::= { rc2kAtmVPortStatsEntry 14 }
+
+rc2kAtmVPortStatsOutBroadcastPkts OBJECT-TYPE
+       SYNTAX       Counter32
+       MAX-ACCESS   read-only
+       STATUS       current
+       DESCRIPTION  "Forwarded ethernet/IP/IPX packets whose destination
+                     address in broadcast address"
+       ::= { rc2kAtmVPortStatsEntry 15 }
+
+END

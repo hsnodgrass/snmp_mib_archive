@@ -1,0 +1,244 @@
+-- * Revision 1.2  1997/12/20 03:06:32  asmith
+
+CPQN54NN-MIB DEFINITIONS ::= BEGIN
+
+	IMPORTS
+		enterprises             FROM RFC1155-SMI
+		sysUpTime, sysDescr     FROM RFC1213-MIB
+                TRAP-TYPE   	        FROM RFC-1215
+        	OBJECT-TYPE             FROM RFC-1212;
+
+
+	--  Organization & Product branches
+
+
+        compaq			OBJECT IDENTIFIER ::= { enterprises 232 }
+
+        --
+        -- Compaq Products
+        --
+	cpqGigaSwitch 		OBJECT IDENTIFIER ::= { compaq 111}
+	cpqGigaSwitchProd 	OBJECT IDENTIFIER ::= { cpqGigaSwitch 1}
+	cpqGigaSwitchId5422 	OBJECT IDENTIFIER ::= { cpqGigaSwitchProd 1}
+	cpqGigaSwitchId5411 	OBJECT IDENTIFIER ::= { cpqGigaSwitchProd 2}
+
+
+--
+--  MIB Objects
+--
+          cpqGigaSwitchMib OBJECT IDENTIFIER ::= { cpqGigaSwitch 3 }
+
+--
+--  System group
+--
+          cpqGigaSwitchSystem OBJECT IDENTIFIER ::= { cpqGigaSwitchMib 1 }
+
+--  Configuration save objects.  These objects are used by the network
+--  management application to save configuration changes into the
+--  persistant store.  There are 2 stores on the device; a primary and
+--  a secondary.
+
+        cpqSaveConfiguration OBJECT-TYPE
+        	SYNTAX INTEGER {
+            	saveToPrimary(1),
+                saveToSecondary(2)
+	}
+        ACCESS	write-only
+        STATUS mandatory
+        DESCRIPTION
+            	"When this object is set, the device will copy the contents
+		of the configuration database to a buffer and save it to the
+		persistant store specified by the value of the object.  The
+		save is	performed asynchronously, and the snmp agent will continue
+		to respond to both gets and sets while the save is taking
+	        place.  A network management application may use the
+		cpqSaveStatus object to determine when the asynchronous
+		save operation has completed."
+	::= { cpqGigaSwitchSystem 3 }
+
+	cpqSaveStatus OBJECT-TYPE
+       	SYNTAX INTEGER {
+          	saveInProgress(1),
+                saveNotInProgress(2)
+	}
+        ACCESS	read-only
+        STATUS mandatory
+        DESCRIPTION
+           	"This object will return the status of a save operation invoked
+		by setting the cpqSaveConfiguration object.  A network
+		management application can read this object to determine that a
+		save operation has completed."
+	::= { cpqGigaSwitchSystem 4 }
+
+        cpqCurrentConfigInUse OBJECT-TYPE
+                SYNTAX INTEGER { primary(1), secondary(2) }
+        	ACCESS read-only
+                STATUS mandatory
+                DESCRIPTION
+                "Shows which configuration store was used at last boot"
+	::= { cpqGigaSwitchSystem 5 }
+
+        cpqConfigToUseOnReboot OBJECT-TYPE
+                SYNTAX INTEGER { primary(1), secondary(2) }
+        	ACCESS read-write
+                STATUS mandatory
+                DESCRIPTION
+        	"Controls which configuration store will be used on next reboot."
+	::= { cpqGigaSwitchSystem 6 }
+
+--
+-- Assorted OIDs that are pointed to by other MIBs
+--
+          cpqOids              OBJECT IDENTIFIER ::= { cpqGigaSwitch 2 }
+
+--
+-- OIDs for as-yet-unstandardised 802.3 MAU types
+--     (see MAU MIB for usage)
+--
+          cpqMauType              OBJECT IDENTIFIER ::= { cpqOids 1 }
+
+          cpqMauType1000BaseSX OBJECT IDENTIFIER              ::= { cpqMauType 1 }
+--                      "X fiber over short-wavelength laser PMD as specified
+--                        in clause 38, duplex mode unknown"
+
+          cpqMauType1000BaseLX OBJECT IDENTIFIER              ::= { cpqMauType 2 }
+--                      "X fiber over long-wavelength laser PMD as specified
+--                        in clause 38, duplex mode unknown"
+
+          cpqMauType1000BaseCX OBJECT IDENTIFIER              ::= { cpqMauType 3 }
+--                      "X copper over 150-ohm balanced cable PMD as specified
+--                        in clause 39, duplex mode unknown"
+
+          cpqMauType1000BaseSXFD OBJECT IDENTIFIER              ::= { cpqMauType 4 }
+--                      "X fiber over short-wavelength laser PMD as specified
+--                        in clause 38, full-duplex mode"
+
+          cpqMauType1000BaseLXFD OBJECT IDENTIFIER              ::= { cpqMauType 5 }
+--                      "X fiber over long-wavelength laser PMD as specified
+--                        in clause 38, full-duplex mode"
+
+          cpqMauType1000BaseCXFD OBJECT IDENTIFIER              ::= { cpqMauType 6 }
+--                      "X copper over 150-ohm balanced cable PMD as specified
+--                        in clause 39, full-duplex mode"
+
+
+	--
+	--	Traps
+	--
+          overheat TRAP-TYPE
+              ENTERPRISE  cpqGigaSwitch
+              VARIABLES   { sysUpTime, sysDescr }
+              DESCRIPTION
+                          "A overheat trap indicates that the on board
+                          tempature sensor has reported a overheat
+                          condition.  System will shutdown until unit has
+			  sufficiently cooled such that operation may begin
+                          again.  A cold start trap will be issued when
+                          the unit has come back on line."
+
+        --#TYPE "overheat"
+        --#SUMMARY "overheat"
+        --#ARGUMENTS {2}
+        --#SEVERITY CRITICAL
+        --#TIMEINDEX 99
+
+              ::= 6
+
+          fanfailed TRAP-TYPE
+              ENTERPRISE  cpqGigaSwitch
+              VARIABLES   { sysUpTime, sysDescr }
+              DESCRIPTION
+                          "A fan failed trap indicates one or more of the
+                          cooling fans inside the device has failed.  A
+                          fanOK trap will be sent once the fan has attained
+                          normal operation."
+        --#TYPE "fanfailed"
+        --#SUMMARY "fanfailed"
+        --#ARGUMENTS {2}
+        --#SEVERITY MAJOR
+        --#TIMEINDEX 99
+
+              ::= 7
+
+          fanOK TRAP-TYPE
+              ENTERPRISE  cpqGigaSwitch
+              VARIABLES   { sysUpTime, sysDescr }
+              DESCRIPTION
+                          "A fan has transitioned out of a failure state and
+                          is now operating correctly."
+        --#TYPE "fanOk"
+        --#SUMMARY "fanOk"
+        --#ARGUMENTS {2}
+        --#SEVERITY INFORMATIONAL
+        --#TIMEINDEX 99
+
+              ::= 8
+
+          invalidLoginAttempt TRAP-TYPE
+              ENTERPRISE  cpqGigaSwitch
+              VARIABLES   { sysUpTime, sysDescr }
+              DESCRIPTION
+                          "A user attempted to login to console or by telnet but was refused
+                           access due to incorrect username or password"
+        --#TYPE "invalidLoginAttempt"
+        --#SUMMARY "invalidLoginAttempt"
+        --#ARGUMENTS {2}
+        --#SEVERITY INFORMATIONAL
+        --#TIMEINDEX 99
+
+              ::= 9
+
+          powerSupplyFail TRAP-TYPE
+              ENTERPRISE  cpqGigaSwitch
+              VARIABLES   { sysUpTime, sysDescr }
+              DESCRIPTION
+                          "One or more sources of power to this agent has failed.
+                           Presumably a redundant power-supply has taken over."
+        --#TYPE "powerSupplyFail"
+        --#SUMMARY "powerSupplyFail"
+        --#ARGUMENTS {2}
+        --#SEVERITY MAJOR
+        --#TIMEINDEX 99
+              ::= 10
+
+          powerSupplyGood TRAP-TYPE
+              ENTERPRISE  cpqGigaSwitch
+              VARIABLES   { sysUpTime, sysDescr }
+              DESCRIPTION
+                          "One or more previously bad sources of power to this agent
+                           has come back to life without causing an agent restart."
+        --#TYPE "powerSupplyGood"
+        --#SUMMARY "powerSupplyGood"
+        --#ARGUMENTS {2}
+        --#SEVERITY INFORMATIONAL
+        --#TIMEINDEX 99
+              ::= 11
+
+          rpsAlarm TRAP-TYPE
+              ENTERPRISE  cpqGigaSwitch
+              VARIABLES   { sysUpTime, sysDescr }
+              DESCRIPTION
+                          "Attached Redundant Power Supply device is indicating
+                           an alarm condition."
+        --#TYPE "rpsAlrm"
+        --#SUMMARY "rpsAlarm"
+        --#ARGUMENTS {2}
+        --#SEVERITY MAJOR
+        --#TIMEINDEX 99
+              ::= 12
+
+          rpsNoAlarm TRAP-TYPE
+              ENTERPRISE  cpqGigaSwitch
+              VARIABLES   { sysUpTime, sysDescr }
+              DESCRIPTION
+                          "Attached Redundant Power Supply device is no longer
+                           indicating an alarm condition."
+        --#TYPE "rpsNoAlarm"
+        --#SUMMARY "rpsNoAlarm"
+        --#ARGUMENTS {2}
+        --#SEVERITY INFORMATIONAL
+        --#TIMEINDEX 99
+              ::= 13
+
+
+END

@@ -1,0 +1,587 @@
+-- ****************************************************************************
+-- LEFTHAND-NETWORKS-NSM-SECURITY-MIB
+-- Management Information Base for SNMP Network Management
+--
+-- This MIB provides security (user and group) information for a storage node.
+
+-- This MIB must be loaded after:
+--                                LEFTHAND-NETWORKS-GLOBAL-REG-MIB.mib
+--                                LEFTHAND-NETWORKS-NSM-MIB.mib
+--
+-- The LeftHand Networks Enterprise number is 9804.
+-- The ASN.1 prefix to, and including the LeftHand Networks Enterprise is:
+--     1.3.6.1.4.1.9804
+-- ****************************************************************************
+-- Copyright 2009,2010 Hewlett-Packard Development Company, L.P.
+-- Copyright 2008,2009 LeftHand Networks, Inc.
+-- All Rights Reserved.
+--
+-- Hewlett-Packard Company shall not be liable for technical or
+-- editorial errors or omissions contained herein. The information in
+-- this document is provided "as is" without warranty of any kind and
+-- is subject to change without notice. The warranties for HP products
+-- are set forth in the express limited warranty statements
+-- accompanying such products. Nothing herein should be construed as
+-- constituting an additional warranty.
+--
+-- Confidential computer software. Valid license from HP required for
+-- possession, use or copying. Consistent with FAR 12.211 and 12.212,
+-- Commercial Computer Software, Computer Software Documentation, and
+-- Technical Data for Commercial Items are licensed to the U.S.
+-- Government under vendor's standard commercial license.
+-- ****************************************************************************
+
+LEFTHAND-NETWORKS-NSM-SECURITY-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32
+		FROM SNMPv2-SMI
+	OBJECT-GROUP, MODULE-COMPLIANCE
+		FROM SNMPv2-CONF
+	TEXTUAL-CONVENTION, DisplayString, RowStatus
+		FROM SNMPv2-TC
+	lhnModules, lhnNsm
+		FROM LEFTHAND-NETWORKS-GLOBAL-REG-MIB
+	lhnNsmSecurity
+		FROM LEFTHAND-NETWORKS-NSM-MIB;
+
+-- lhnNsm is imported but never used, this will create a smilint warning
+-- however, it's necessary for some MIB compilers
+
+--
+-- Module definition and a brief description of this mib.
+--
+lhnNsmSecurityModule MODULE-IDENTITY
+    LAST-UPDATED        "201006230000Z"
+    ORGANIZATION        "Hewlett Packard Company, StorageWorks Division"
+    CONTACT-INFO        "Product Support
+                         Product URL: www.hp.com/go/p4000
+                         Support URL: www.itrc.hp.com
+                         Product Phone: www.hp.com/go/contact
+                                        1-800-786-7967 (US only)
+                         Support Phone: www.hp.com/go/contact
+                                        1-800-334-5144 (US only)"
+    DESCRIPTION         "HP StorageWorks P4000 Security Information"
+    REVISION            "201006230000Z"
+    DESCRIPTION         "SAN/iQ 7.0, SAN/iQ 8.0, SAN/iQ 8.1, SAN/iQ 8.5"
+
+	::= { lhnModules 11 }
+
+--******************************************************************************
+--
+-- Conformance
+--
+--******************************************************************************
+
+lhnNsmSecurityModuleConformance OBJECT IDENTIFIER
+	::= { lhnNsmSecurityModule 1 }
+
+lhnNsmSecurityModuleCompliances OBJECT IDENTIFIER
+	::= { lhnNsmSecurityModuleConformance 1 }
+
+lhnNsmSecurityModuleGroups OBJECT IDENTIFIER
+	::= { lhnNsmSecurityModuleConformance 2 }
+
+lefthandNetworksNsmSecurityMibCompliance MODULE-COMPLIANCE
+	STATUS current
+	DESCRIPTION "The compliance statement."
+	MODULE
+	MANDATORY-GROUPS {
+			lefthandNetworksNsmSecurityGroup
+		}
+	::= { lhnNsmSecurityModuleCompliances 1 }
+
+lefthandNetworksNsmSecurityGroup OBJECT-GROUP
+	OBJECTS {     
+					secAdminUserCount,
+					secAdminGroupCount,
+					secAdminUserName,
+					secAdminUserDesc,
+					secAdminGroupName,
+					secAdminGroupUserName,
+					secAdminGroupDesc,
+					secAdminGroupUserCount
+			}
+	STATUS              current
+	DESCRIPTION         "The default group for all NSM Info objects."
+	::= { lhnNsmSecurityModuleGroups 1 }
+
+lefthandNetworksNsmSecurityGroupObsolete OBJECT-GROUP
+	OBJECTS {     
+					secUserCount,
+					secUserName,
+					secUserDesc,
+					secUserPassword,
+					secUserRowStatus,
+					secGroupCount,
+					secGroupName,
+					secGroupDesc,
+					secGroupUserCount,
+					secGroupRowStatus,
+					secGroupUserName,
+					secGroupUserRowStatus,
+					secAdminUserPassword,
+					secAdminUserRowStatus,
+					secAdminGroupUserRowStatus,
+					secAdminGroupAccessKey,
+					secAdminGroupAccessMode,
+					secAdminGroupAccessRowStatus,
+					secAdminGroupRowStatus
+			}
+	STATUS              obsolete
+	DESCRIPTION         "The group for obsolete NSM Info objects."
+	::= { lhnNsmSecurityModuleGroups 2 }
+
+--------------------------------------------------------------------------------
+--
+-- Security User Module Objects (Linux Users)
+--
+--------------------------------------------------------------------------------
+
+secUserCount OBJECT-TYPE
+    SYNTAX				Integer32
+    MAX-ACCESS			read-only
+    STATUS				obsolete
+    DESCRIPTION			"The number of Linux users. Obsolete in SAN/iQ 8."
+    ::= { lhnNsmSecurity 1 }
+    
+secUserTable OBJECT-TYPE
+    SYNTAX				SEQUENCE OF SecUserEntry
+    MAX-ACCESS			not-accessible
+    STATUS				obsolete
+    DESCRIPTION			"A table of Linux users. The number of entries is given by secUserCount. Obsolete in SAN/iQ 8."
+    ::= { lhnNsmSecurity 2 }
+		
+	secUserEntry OBJECT-TYPE
+		SYNTAX			SecUserEntry
+		MAX-ACCESS		not-accessible
+		STATUS			obsolete
+		DESCRIPTION		"A row of Linux user information. Obsolete in SAN/iQ 8."
+		INDEX			{
+							secUserIndex
+						}
+		::= { secUserTable 1 }
+		
+	SecUserEntry ::= SEQUENCE
+	{
+	   secUserIndex     Unsigned32,
+	   secUserName      DisplayString,
+	   secUserDesc      DisplayString,
+	   secUserPassword  DisplayString,
+	   secUserRowStatus RowStatus
+	}
+
+	secUserIndex OBJECT-TYPE
+		SYNTAX				Unsigned32
+		MAX-ACCESS			not-accessible
+		STATUS				obsolete
+		DESCRIPTION			"The index for the secUserTable table. Obsolete in SAN/iQ 8."
+		::= { secUserEntry 1 }
+
+	secUserName OBJECT-TYPE
+		SYNTAX				DisplayString
+		MAX-ACCESS			read-only
+		STATUS				obsolete
+		DESCRIPTION			"The Linux username. Obsolete in SAN/iQ 8."
+		::= { secUserEntry 2 }
+
+	secUserDesc OBJECT-TYPE
+		SYNTAX				DisplayString
+		MAX-ACCESS			read-only
+		STATUS				obsolete
+		DESCRIPTION			"The Linux user description. Obsolete in SAN/iQ 8."
+		::= { secUserEntry 3 }
+		
+	secUserPassword OBJECT-TYPE
+		SYNTAX				DisplayString
+		MAX-ACCESS			read-write  -- write only
+		STATUS				obsolete
+		DESCRIPTION			"The Linux user password. Obsolete in SAN/iQ 8."
+		::= { secUserEntry 4 }
+		
+	secUserRowStatus OBJECT-TYPE
+		SYNTAX				RowStatus
+		MAX-ACCESS			read-only
+		STATUS				obsolete
+		DESCRIPTION			"The table row status. Obsolete in SAN/iQ 8."
+		::= { secUserEntry 5 }
+
+--------------------------------------------------------------------------------
+--
+-- Security Group Module Objects (Linux Groups)
+--
+--------------------------------------------------------------------------------
+
+secGroupCount OBJECT-TYPE
+	SYNTAX              Integer32
+    MAX-ACCESS			read-only
+    STATUS				obsolete
+    DESCRIPTION			"The number of Linux groups. Obsolete in SAN/iQ 8."
+    ::= { lhnNsmSecurity 3 }
+
+secGroupTable OBJECT-TYPE
+    SYNTAX				SEQUENCE OF SecGroupEntry
+    MAX-ACCESS			not-accessible
+    STATUS				obsolete
+    DESCRIPTION			"A table of Linux groups. The number of entries is
+						given by secGroupCount. Obsolete in SAN/iQ 8."
+    ::= { lhnNsmSecurity 4 }
+
+	secGroupEntry OBJECT-TYPE
+		SYNTAX				SecGroupEntry
+		MAX-ACCESS			not-accessible
+		STATUS				obsolete
+		DESCRIPTION			"A row of Linux group information.
+							Obsolete in SAN/iQ 8."
+		INDEX				{
+								secGroupIndex
+							}
+		::= { secGroupTable 1 }
+
+	SecGroupEntry ::= SEQUENCE
+	{
+	   secGroupIndex      Unsigned32,
+	   secGroupName       DisplayString,
+	   secGroupDesc       DisplayString,
+	   secGroupUserCount  Integer32,
+	   secGroupRowStatus  RowStatus
+	}
+
+	secGroupIndex OBJECT-TYPE
+		SYNTAX				Unsigned32
+		MAX-ACCESS			not-accessible
+		STATUS				obsolete
+		DESCRIPTION			"The index for the secGroupTable table.
+							Obsolete in SAN/iQ 8."
+		::= { secGroupEntry 1 }
+
+	secGroupName OBJECT-TYPE
+		SYNTAX				DisplayString
+		MAX-ACCESS			read-only
+		STATUS				obsolete
+		DESCRIPTION			"The Linux group name."
+		::= { secGroupEntry 2 }
+
+	secGroupDesc OBJECT-TYPE
+		SYNTAX				DisplayString
+		MAX-ACCESS			read-only
+		STATUS				obsolete
+		DESCRIPTION			"The Linux group description."
+		::= { secGroupEntry 3 }
+
+	secGroupUserCount OBJECT-TYPE
+		SYNTAX				Integer32
+		MAX-ACCESS			read-only
+		STATUS				obsolete
+		DESCRIPTION			"The number of users in the Linux group.
+							Obsolete in SAN/iQ 8."
+		::= { secGroupEntry 4 }
+
+	secGroupRowStatus OBJECT-TYPE
+		SYNTAX				RowStatus
+		MAX-ACCESS			read-only
+		STATUS				obsolete
+		DESCRIPTION			"The table row status."
+		::= { secGroupEntry 5 }
+
+secGroupUserTable OBJECT-TYPE
+    SYNTAX				SEQUENCE OF SecGroupUserEntry
+    MAX-ACCESS			not-accessible
+    STATUS				obsolete
+    DESCRIPTION			"A table of Linux security group users. The number
+						of entries is given by secGroupUserCount.
+						Obsolete in SAN/iQ 8."
+    ::= { lhnNsmSecurity 5 }
+
+	secGroupUserEntry OBJECT-TYPE
+		SYNTAX				SecGroupUserEntry
+		MAX-ACCESS			not-accessible
+		STATUS				obsolete
+		DESCRIPTION			"A row of Linux security group user information.
+							Obsolete in SAN/iQ 8."
+		INDEX				{
+								secGroupIndex,
+								secGroupUserIndex
+							}
+		::= { secGroupUserTable 1 }
+
+	SecGroupUserEntry ::= SEQUENCE
+	{
+	   secGroupUserIndex      Unsigned32,
+	   secGroupUserName       DisplayString,
+	   secGroupUserRowStatus  RowStatus
+	}
+
+	secGroupUserIndex OBJECT-TYPE
+		SYNTAX				Unsigned32
+		MAX-ACCESS			not-accessible
+		STATUS				obsolete
+		DESCRIPTION			"The index for the secGroupUserTable table.
+							Obsolete in SAN/iQ 8."
+		::= { secGroupUserEntry 1 }
+
+	secGroupUserName OBJECT-TYPE
+		SYNTAX				DisplayString
+		MAX-ACCESS			read-only
+		STATUS				obsolete
+		DESCRIPTION			"The Linux security group name.
+							Obsolete in SAN/iQ 8."
+		::= { secGroupUserEntry 2 }
+
+	secGroupUserRowStatus OBJECT-TYPE
+		SYNTAX				RowStatus
+		MAX-ACCESS			read-only
+		STATUS				obsolete
+		DESCRIPTION			"The table row status. Obsolete in SAN/iQ 8."
+		::= { secGroupUserEntry 3 }
+
+--------------------------------------------------------------------------------
+--
+-- Security Admin User Module Objects (LeftHand Users)
+--
+--------------------------------------------------------------------------------
+
+secAdminUserCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of users."
+	::= { lhnNsmSecurity 6 }
+
+secAdminUserTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF SecAdminUserEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of users for the NSM. The number of entries
+						is given by secAdminUserCount."
+	::= { lhnNsmSecurity 7 }
+
+	secAdminUserEntry OBJECT-TYPE
+		SYNTAX              SecAdminUserEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of user information."
+		INDEX               {
+								secAdminUserIndex
+							}
+		::= { secAdminUserTable 1 }
+
+	SecAdminUserEntry ::= SEQUENCE {
+		secAdminUserIndex		Unsigned32,
+		secAdminUserName		DisplayString,
+		secAdminUserDesc		DisplayString,
+		secAdminUserPassword	DisplayString,
+		secAdminUserRowStatus	RowStatus
+	}
+
+	secAdminUserIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the secAdminUserTable table."
+		::= { secAdminUserEntry 1 }
+
+	secAdminUserName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The user's username."
+		::= { secAdminUserEntry 2 }
+
+	secAdminUserDesc OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The user description."
+		::= { secAdminUserEntry 3 }
+
+	secAdminUserPassword OBJECT-TYPE
+		SYNTAX				DisplayString
+		MAX-ACCESS			read-write  -- write only
+		STATUS				obsolete
+		DESCRIPTION			"The user's password. Obsolete in SAN/iQ 8."
+		::= { secAdminUserEntry 4 }
+
+	secAdminUserRowStatus OBJECT-TYPE
+		SYNTAX              RowStatus
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { secAdminUserEntry 5 }
+
+--------------------------------------------------------------------------------
+--
+-- Security Admin Group Module Objects (LeftHand Groups)
+--
+--------------------------------------------------------------------------------
+
+secAdminGroupCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of user groups."
+	::= { lhnNsmSecurity 8 }
+
+secAdminGroupTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF SecAdminGroupEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of groups on the NSM. The number of entries
+						is given by secAdminGroupCount."
+	::= { lhnNsmSecurity 9 }
+
+	secAdminGroupEntry OBJECT-TYPE
+		SYNTAX              SecAdminGroupEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of group information."
+		INDEX               {
+								secAdminGroupIndex
+							}
+		::= { secAdminGroupTable 1 }
+
+	SecAdminGroupEntry ::= SEQUENCE {
+		secAdminGroupIndex					Unsigned32,
+		secAdminGroupName					DisplayString,
+		secAdminGroupDesc					DisplayString,
+		secAdminGroupUserCount				Integer32,
+		secAdminGroupRowStatus				RowStatus
+	}
+
+	secAdminGroupIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the secAdminGroupTable table."
+		::= { secAdminGroupEntry 1 }
+
+	secAdminGroupName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The group name."
+		::= { secAdminGroupEntry 2 }
+
+	secAdminGroupDesc OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The group description."
+		::= { secAdminGroupEntry 3 }
+
+	secAdminGroupUserCount OBJECT-TYPE
+		SYNTAX              Integer32
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The number of users in the group."
+		::= { secAdminGroupEntry 4 }
+
+	secAdminGroupRowStatus OBJECT-TYPE
+		SYNTAX              RowStatus
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { secAdminGroupEntry 5 }
+
+secAdminGroupUserTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF SecAdminGroupUserOrSubGroupEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of administrators on the NSM. The number of entries
+						is given by secAdminGroupCount for the 'full_administrator' group."
+	::= { lhnNsmSecurity 10 }
+
+	secAdminGroupUserEntry OBJECT-TYPE
+		SYNTAX              SecAdminGroupUserOrSubGroupEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of administrator group information."
+		INDEX               {
+								secAdminGroupIndex,
+								secAdminGroupUserIndex
+							}
+		::= { secAdminGroupUserTable 1 }
+
+	SecAdminGroupUserOrSubGroupEntry ::= SEQUENCE {
+		secAdminGroupUserIndex		Unsigned32,
+		secAdminGroupUserName			DisplayString,
+		secAdminGroupUserRowStatus	RowStatus
+	}
+
+	secAdminGroupUserIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the secAdminGroupUserTable table."
+		::= { secAdminGroupUserEntry 1 }
+
+	secAdminGroupUserName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The user's username."
+		::= { secAdminGroupUserEntry 2 }
+
+	secAdminGroupUserRowStatus OBJECT-TYPE
+		SYNTAX              RowStatus
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { secAdminGroupUserEntry 3 }
+
+secAdminGroupAccessTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF SecAdminGroupAccessEntry
+	MAX-ACCESS          not-accessible
+	STATUS              obsolete
+	DESCRIPTION         "The group access permissions table."
+	::= { lhnNsmSecurity 11 }
+
+	secAdminGroupAccessEntry OBJECT-TYPE
+		SYNTAX              SecAdminGroupAccessEntry
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "A row of group access permissions."
+		INDEX               {
+								secAdminGroupIndex,
+								secAdminGroupAccessIndex
+							}
+		::= { secAdminGroupAccessTable 1 }
+
+	SecAdminGroupAccessEntry ::= SEQUENCE {
+		secAdminGroupAccessIndex		Unsigned32,
+		secAdminGroupAccessKey			DisplayString,
+		secAdminGroupAccessMode			BITS,
+		secAdminGroupAccessRowStatus	RowStatus
+	}
+
+	secAdminGroupAccessIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "The index for the secAdminGroupAccessTable table."
+		::= { secAdminGroupAccessEntry 1 }
+
+	secAdminGroupAccessKey OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The key."
+		::= { secAdminGroupAccessEntry 2 }
+
+	secAdminGroupAccessMode OBJECT-TYPE
+		SYNTAX              BITS { get( 0 ), set( 1 ), add( 2 ), delete( 3 ) }
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The access mode."
+		::= { secAdminGroupAccessEntry 3 }
+
+	secAdminGroupAccessRowStatus OBJECT-TYPE
+		SYNTAX              RowStatus
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The table row status."
+		::= { secAdminGroupAccessEntry 4 }
+
+END
+
+-- END: some MIB compilers require a CR/LF after the END statement --

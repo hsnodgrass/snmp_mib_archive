@@ -1,0 +1,1374 @@
+
+RC-TRAP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    rcTraps,
+    rcCardIndex, rcCardAdminStatus, rcCardOperStatus,
+    rcChasPowerSupplyId, rcChasPowerSupplyOperStatus,
+    rcChasFanId, rcChasFanOperStatus, rcChasEmModeError,
+    rcCliPasswordChange, rcCliPassChangeResult,
+    rcSyslogHostSeverity,
+    rcSshGlobalPort, rcSshGlobalHostIpAddr,
+    rcSysAction, rcSysMsgLogFrequency, rcSysMsgLogText,
+    rcSysConfigFileName, rcSysIpAddr,
+    rcSysDnsServerListIpAddr, rcSysDnsRequestType,
+    rcSysMacFlapLimitTime, rcSysMacFlapLimitCount,
+    rcSysExtCplimitSysOctapidCongested,rcSysExtCplimitPortsMonitored
+        FROM RAPID-CITY
+    rcErrorLevel, rcErrorCode, rcErrorText
+        FROM RC-ERROR-MIB
+    rcStgId, rcStgBridgeAddress
+        FROM RC-BRIDGE-MIB
+    rcPortIndex, rcPortCpLimitShutDown, rcPortPoeMainPseExtnPwrAdmin,
+    rcPortPoePseIndexGroupIndex, rcPortPoePseIndexPortIndex,
+    rcPortBpduFilteringTimeout
+        FROM RC-PORT-MIB
+    pethPsePortDetectionStatus, pethMainPseConsumptionPower
+        FROM POWER-ETHERNET-MIB
+    rcPosSonetTrapType, rcPosSonetTrapIndication
+        FROM RC-POS-MIB
+    rc2kCardIndex, rc2kCardFrontAdminStatus,
+    rc2kCardFrontOperStatus, rc2kChassisTemperature
+        FROM RC-2K-MIB
+    rc2kAtmPvcIfIndex, rc2kAtmPvcVpi, rc2kAtmPvcVci, rc2kAtmPvcOamVcStatus
+        FROM RC-2K-ATM-MIB
+    rcMltId, rcMltSmltId, rcL2RedundancyHaCpuState
+        FROM RC-MLT-MIB
+    rcVpnVpnId, rcVpnTunnelLspId, rcVpnRemotePeerId
+        FROM RC-OPM-MIB
+    rcIpMplsGlobalRouterId
+        FROM RC-IP-MPLS-MIB
+    ifAdminStatus, ifOperStatus
+        FROM IF-MIB
+    rcIpBgpPeerIpAddress, rcIpBgpPeerLastError, rcIpBgpPeerState
+        FROM RC-IP-BGP-MIB
+    rcIgmpGroupIfIndex, rcIgmpGroupIpAddress, rcIgmpGroupInPort,
+    rcIgmpGroupMembers
+        FROM RC-IGMP-MIB
+    rcVlanId, rcVlanNewLoopDetectedMac, rcVlanNewLoopDetectedPortIndex, 
+    rcVlanNewLoopDetectedAction 
+        FROM RC-VLAN-MIB
+    rcTlsTdiEndptTdId, rcTlsTdiEndptUniAddr, rcTlsEndptWatermarkIndication,
+    rcTlsTestTdcTestId, rcTlsTdcTestResultIndication,
+    rcTlsUniIpServiceWatermarkIndication, rcTlsTdcTestRttExceedIndication
+        FROM RC-TLS-MIB
+    ipNetToMediaPhysAddress, ipNetToMediaNetAddress
+        FROM IP-MIB
+    rcTacacsGlobalLastUserName, rcTacacsServerPortNumber,
+    rcTacacsGlobalLastAddressType, rcTacacsGlobalLastAddress
+        FROM RC-TACACS-MIB
+    rcRadiusPaePortNumber, rcRadiusEapLastAuthMac, rcRadiusEapLastRejMac
+        FROM RC-RADIUS-MIB;
+
+rcTrapsMib MODULE-IDENTITY
+       LAST-UPDATED     "200601030001Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "Yu-Ten Lee
+                         Postal:        Nortel Networks, Inc.
+                                              4655 Great America Parkway
+                                              Santa Clara, CA 95052-8185
+
+                              Tel:        408-495-2560
+                             Fax:        408-495-6680
+                         E-mail:       ylee@nortelnetworks.com"
+
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION    "200601030001Z" -- 03 Jan 2006
+       DESCRIPTION "Version 30: Fixed corrupted char in rcnEapMacIntrusion"
+
+       REVISION    "200601030000Z" -- 03 Jan 2006
+       DESCRIPTION "Version 29: Added missing objects to IMPORTS"
+
+       REVISION    "200512170000Z" -- 17 Dec 2005
+       DESCRIPTION "Version 28: Changed trap rcnEapMacIntrusion"
+
+       REVISION    "200512120000Z" -- 12 Dec 2005
+       DESCRIPTION "Version 27: Added rcnEapMacIntrusion"
+
+       REVISION    "200510250000Z" -- 25 Oct 2005
+       DESCRIPTION "Version 26: Added trap rcnExtCpLimitShutDownNormal."
+
+       REVISION    "200509200000Z" -- 20 September 2005
+       DESCRIPTION "Version 25: Fix typo."
+
+       REVISION    "200508050000Z" -- 5 August 2005
+       DESCRIPTION "Version 24: Added rcnVlacpPortDown, rcnVlacpPortUp."
+
+       REVISION    "200506200000Z" -- 1 June 2005
+       DESCRIPTION "Version 23: Added rcnBpduReceived."
+
+       REVISION    "200506010000Z" -- 1 June 2005
+       DESCRIPTION "Version 22: Fixed SMIv2 violations."
+
+       REVISION    "200504140000Z" -- 14 April 2005
+       DESCRIPTION "Version 21: Updated rcnTacacsRxUnSupportedFrame.
+                                Added rcTraps 39 - 55 as they currently exist
+                                in code."
+
+       REVISION    "200504060000Z" -- 06 April 2005
+       DESCRIPTION "Version 20: Added TACACS+ traps."
+
+       REVISION    "200503280000Z" -- 28 March 2005
+       DESCRIPTION "Version 19: Added rcnTlsUniIpServiceWatermarkTrap trap.
+				IMPORT rcTlsUniIpServiceWatermarkIndication"
+       
+       REVISION    "200503040000Z" -- 04 March 2005
+       DESCRIPTION "Version 18: Added rcnNonEapIntrusion trap"
+
+       REVISION    "200501040000Z" -- 04 January 2005
+       DESCRIPTION "Version 17: Imports added for rcnExtCpLimitShutDown,
+                                rcnExtCpLimitSopCongestion added"
+    
+       REVISION    "200412210000Z" -- 21 December 2004
+       DESCRIPTION "Version 16: Added rcnExtCpLimitShutDown,
+                                rcnExtCpLimitSopCongestion"
+       
+       REVISION    "200409300000Z" -- 30 September 2004
+       DESCRIPTION "Version 14: Removed rcVlanNewLoopDetectedMac,
+                                rcVlanNewLoopDetectedPortIndex from trap
+                                definition."
+
+       REVISION    "200409200000Z" -- 20 September 2004
+       DESCRIPTION "Version 13: Changed 'rcnBgpEstablished' and
+                                'rcnBgpBackwardTransition' to
+		                'rcnbgpEstablished' and
+                                'rcnbgpBackwardTransition' to be in sync
+                                with the ClearCase branches/releases."
+
+       REVISION    "200409080000Z" -- 08 September 2004
+       DESCRIPTION "Version 12: Added rcnLoopDetectMacDiscard,
+                                rcnAutoRecoverPort,
+                                rcnAutoRecoverLoopDetectedPort trap"
+
+       REVISION    "200408250000Z" -- 25 August 2004
+       DESCRIPTION "Version 11:  Added rcnTlsPortWatermark trap"
+
+       REVISION    "200407220000Z" -- 22 July 2004
+       DESCRIPTION "Version 10:  Changed description of rcnLoopDetectOnPort"
+
+       REVISION    "200407020000Z" -- 2 July 2004
+       DESCRIPTION "Version 9:  Added rcnUnauthorizedAccessToStandByCPU"
+
+       REVISION    "200406240000Z" -- 24 June 2004
+       DESCRIPTION "Version 8:  Added rcnLoopDetectPortdown"
+
+       ::= { rcTraps 0 }
+
+rcnCardDown NOTIFICATION-TYPE
+        OBJECTS      { rcCardIndex, rcCardAdminStatus, rcCardOperStatus }
+        STATUS       current
+        DESCRIPTION  "A rcCardDown trap signifies that the SNMPv2 entity,
+                     acting in an agent role, has detected that the
+                     rcCardOperStatus object for one of its cards 
+                     is about to transition into the down state."
+        ::= { rcTrapsMib 1 }
+
+rcnCardUp NOTIFICATION-TYPE
+        OBJECTS       { rcCardIndex, rcCardAdminStatus, rcCardOperStatus }
+        STATUS        current
+        DESCRIPTION   "A rcCardUp trap signifies that the SNMPv2 entity,
+                      acting in an agent role, has detected that the
+                      rcCardOperStatus object for one of its cards 
+                      is about to transition into the up state."
+        ::= { rcTrapsMib 2 }
+
+rcnErrorNotification NOTIFICATION-TYPE
+        OBJECTS       { rcErrorLevel, rcErrorCode, rcErrorText }
+        STATUS        current
+        DESCRIPTION   "A rcErrorNotification trap signifies that the 
+                      SNMPv2 entity, acting in an agent role, has 
+                      detected that an error condition has occured."
+        ::= { rcTrapsMib 3 }
+ 
+rcnStpNewRoot NOTIFICATION-TYPE
+        OBJECTS       { rcStgId }
+        STATUS        current
+        DESCRIPTION   "A rcStpNewRoot trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected the Spanning Tree Protocol has declared
+                      the device to be the new root of the spanning 
+       		      tree." 
+        ::= { rcTrapsMib 4 }
+
+rcnStpTopologyChange NOTIFICATION-TYPE
+       OBJECTS        { rcStgId, rcPortIndex }
+       STATUS         current   
+       DESCRIPTION    "A rcStpTopologyChange trap signifies that the 
+                      SNMPv2 entity, acting in an agent role, has 
+                      detected the Spanning Tree Protocol has gone due
+                      a topology change event."
+       ::= { rcTrapsMib 5 }
+
+rcnChasPowerSupplyDown NOTIFICATION-TYPE
+        OBJECTS       { rcChasPowerSupplyId, rcChasPowerSupplyOperStatus}
+        STATUS        current
+        DESCRIPTION   "A rcChasPowerSupplyDown trap signifies that the 
+                      SNMPv2 entity, acting in an agent role, has 
+                      detected that the rcChasPowerSupplyOperStatus 
+                      object for one of its power supply unit is 
+                      about to transition into the down state."
+        ::= { rcTrapsMib 6 }
+
+rcnChasFanDown NOTIFICATION-TYPE
+        OBJECTS       { rcChasFanId, rcChasFanOperStatus}
+        STATUS        current
+        DESCRIPTION   "A rcChasFanDown trap signifies that the 
+                      SNMPv2 entity, acting in an agent role, has 
+                      detected that the rcChasFanOperStatus object 
+                      for one of its power supply unit is about to 
+                      transition into the down state."
+        ::= { rcTrapsMib 7 }
+
+rcnLinkOscillation NOTIFICATION-TYPE
+        OBJECTS          { rcPortIndex }
+        STATUS             current
+        DESCRIPTION   "A rcLinkOscillation trap signifies that the
+                       SNMPv2 entity, acting in an agent role, has
+                       detected an excessive number of link state
+                       transitions on the specified port."
+        ::= { rcTrapsMib 8 }
+
+rcnMacViolation NOTIFICATION-TYPE	
+        OBJECTS       { rcErrorText, rcPortIndex }
+        STATUS        current
+        DESCRIPTION   "A rcMacViolation trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      received a PDU with an invalid source MAC
+                      address."
+        ::= { rcTrapsMib 9 }
+
+rcnSonetTrap NOTIFICATION-TYPE
+        OBJECTS       { rcPortIndex, rcPosSonetTrapType, rcPosSonetTrapIndication }
+        STATUS        current
+        DESCRIPTION   "A rcSonetTrap trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected a change of status on a Sonet port."
+        ::= { rcTrapsMib 10 }
+
+rcn2kCardDown NOTIFICATION-TYPE
+        OBJECTS      { rc2kCardIndex, 
+                       rc2kCardFrontAdminStatus, 
+                       rc2kCardFrontOperStatus }
+        STATUS       current
+        DESCRIPTION  "A rcCardDown trap signifies that the SNMPv2 entity,
+                     acting in an agent role, has detected that the
+                     rcCardOperStatus object for one of its cards
+                     is about to transition into the down state."
+        ::= { rcTrapsMib 11 }
+
+rcn2kCardUp NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex, 
+                        rc2kCardFrontAdminStatus, 
+                        rc2kCardFrontOperStatus }
+        STATUS        current
+        DESCRIPTION   "A rcCardUp trap signifies that the SNMPv2 entity,
+                      acting in an agent role, has detected that the
+                      rcCardOperStatus object for one of its cards
+                      is about to transition into the up state."
+        ::= { rcTrapsMib 12 }
+
+rcn2kTemperature NOTIFICATION-TYPE
+        OBJECTS       { rc2kChassisTemperature }
+        STATUS        current
+        DESCRIPTION   "A rc2kTemperature trap signifies that the SNMPv2 
+		      entity, acting in an agent role, has detected the
+                      chassis is over-heating."
+        ::= { rcTrapsMib 13 }
+
+rcnChasPowerSupplyUp NOTIFICATION-TYPE
+        OBJECTS       { rcChasPowerSupplyId, rcChasPowerSupplyOperStatus}
+        STATUS        current
+        DESCRIPTION   "A rcChasPowerSupplyUp trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected that the rcChasPowerSupplyOperStatus
+                      object for one of its power supply unit is
+                      about to transition into the up state."
+        ::= { rcTrapsMib 14 }
+
+rcn2kAtmPvcLinkStateChange NOTIFICATION-TYPE
+        OBJECTS       { rc2kAtmPvcIfIndex, 
+                        rc2kAtmPvcVpi, 
+                        rc2kAtmPvcVci, 
+                        rc2kAtmPvcOamVcStatus }    
+        STATUS        current
+        DESCRIPTION   "A rc2kAtmPvcLinkStateChange trap signifies that the 
+                       SNMPv2 entity, acting in an agent role, has detected 
+                       that the rc2kAtmPvcOamVcStatus object for one of PVC is
+                       about to transition into different state, either from 
+                       up to down or from down to up."
+        ::= { rcTrapsMib 15 } 
+
+rcnStpTCN NOTIFICATION-TYPE
+       OBJECTS        { rcStgId, rcPortIndex, rcStgBridgeAddress }
+       STATUS         current
+       DESCRIPTION    "A rcStpTopologyChange trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected the Spanning Tree Protocol has gone due
+                      a topology change event."
+       ::= { rcTrapsMib 16 }
+
+rcnSmltIstLinkUp NOTIFICATION-TYPE
+        STATUS        current
+        DESCRIPTION   "A rcSmltIstLinkUp trap signifies that the split
+                      MLT link is from down to up."
+        ::= { rcTrapsMib 17 }
+
+rcnSmltIstLinkDown NOTIFICATION-TYPE
+        STATUS        current
+        DESCRIPTION   "A rcSmltIstLinkDown trap signifies that the
+                      split MLT link is from up to down."
+        ::= { rcTrapsMib 18 }
+
+rcnSmltLinkUp NOTIFICATION-TYPE
+        OBJECTS       { rcMltSmltId }
+        STATUS        current
+        DESCRIPTION   "A rcMltSmltId trap signifies that the split 
+                      SMLT link is up."
+        ::= { rcTrapsMib 19 }
+
+rcnSmltLinkDown NOTIFICATION-TYPE
+        OBJECTS       { rcMltSmltId }
+        STATUS        current
+        DESCRIPTION   "A rcMltSmltId trap signifies that the split 
+                      SMLT link is down."
+        ::= { rcTrapsMib 20 }
+
+rcnChasFanUp NOTIFICATION-TYPE
+        OBJECTS       { rcChasFanId, rcChasFanOperStatus}
+        STATUS        current
+        DESCRIPTION   "A rcChasFanUp trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected that the rcChasFanOperStatus object
+                      for one of its power supply unit is about to
+                      transition into the up state."
+        ::= { rcTrapsMib 21 }
+
+rcnPasswordChange NOTIFICATION-TYPE
+        OBJECTS       { rcCliPasswordChange, rcCliPassChangeResult}
+        STATUS        current
+        DESCRIPTION   "A rcPasswordChange trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected that the one of the cli password is
+                      changed."
+        ::= { rcTrapsMib 22 }
+
+rcnEmError NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex, rcChasEmModeError}
+        STATUS        current
+        DESCRIPTION   "A rcEmError trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected Em error."
+        ::= { rcTrapsMib 23 }
+
+rcnVpnTrap NOTIFICATION-TYPE
+        OBJECTS       { rcVpnVpnId, rcErrorText, rcVpnTunnelLspId,
+                        rcIpMplsGlobalRouterId, rcVpnRemotePeerId, 
+                        rcSyslogHostSeverity}    
+        STATUS        current
+        DESCRIPTION   "L2Vpn will send trap when the Lsp goes down, which
+                       would affect the operational status of the Vpn (given
+                       by the VpnId). The Cause will indicate the reason for
+                       sending the trap. It can either LSP down/failure or
+                       to the bandwidth requirements cannot be fulfilled.
+                       Severity Level can be Warning/Error/Fatal."
+        ::= { rcTrapsMib 24 }
+
+rcnPcmciaCardRemoved NOTIFICATION-TYPE
+        STATUS        current
+        DESCRIPTION   "A rcPcmciaRemoved trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected that the PCMCIA card is being removed."
+        ::= { rcTrapsMib 25 }
+
+rcnSmartCpldTimerFired NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex }
+        STATUS        current
+        DESCRIPTION   "A rcSmartCpldTimerFired trap signifies that the
+                       cpld timer fired."
+        ::= { rcTrapsMib 26 }
+
+rcnCardCpldNotUpDate NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex }
+        STATUS        current
+        DESCRIPTION   "A rcCardCpldNotUpDate trap signifies that the
+                       cpld is not up to date."
+        ::= { rcTrapsMib 27 }
+
+rcnIgapLogFileFull NOTIFICATION-TYPE
+        STATUS        current
+        DESCRIPTION   "A rcIgapLogFileFull trap signifies that the
+                       Igap accounting time-out Log File reach the 
+                       maximum."
+        ::= { rcTrapsMib 28 }
+
+rcnCpLimitShutDown NOTIFICATION-TYPE
+        OBJECTS       { rcPortIndex, 
+                        ifAdminStatus,
+                        ifOperStatus,
+                        rcPortCpLimitShutDown } 
+        STATUS        current
+        DESCRIPTION   "A rcCpLimitShutDown trap signifies that the
+                       cp limit for the port is shutting down."
+        ::= { rcTrapsMib 29 }
+
+rcnSshServerEnabled NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalPort }
+        STATUS        current
+        DESCRIPTION   "A rcSshServerEnabled trap signifies that the
+                       SSH server is enabled."
+        ::= { rcTrapsMib 30 }
+
+rcnSshServerDisabled NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalPort }
+        STATUS        current
+        DESCRIPTION   "A rcSshServerDisabled trap signifies that the
+                       SSH server is disabled."
+        ::= { rcTrapsMib 31 }
+
+rcnSshSessionLogin NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalHostIpAddr }
+        STATUS        current
+        DESCRIPTION   "A rcSshSessionLogin trap signifies that there
+                       is a SSH session login."
+        ::= { rcTrapsMib 32 }
+
+rcnSshSessionLogout NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalHostIpAddr }
+        STATUS        current
+        DESCRIPTION   "A rcSshSessionLogout trap signifies that there
+                       is a SSH session logout."
+        ::= { rcTrapsMib 33 }
+
+rcnSshUnauthorizedAccess NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalHostIpAddr }
+        STATUS        current
+        DESCRIPTION   "A rcSshUnauthorizedAccess trap signifies that
+                       an unauthorized access has occured."
+        ::= { rcTrapsMib 34 }
+
+rcnHaCpuState NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex, rcL2RedundancyHaCpuState }
+        STATUS        current
+        DESCRIPTION   "A rcHaCpuState trap signifies that the
+                       state of the HA-CPU."
+        ::= { rcTrapsMib 35 }
+
+rcnInsufficientMemory NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex}
+        STATUS        current
+        DESCRIPTION   "A rcInsufficientMemory trap indicates insufficient memory on
+                       CPU blade for proper operation. Recommended memory = 256 MB 
+                       available through Nortel Networks upgrade kit"
+        ::= { rcTrapsMib 36 }
+
+rcnSaveConfigAction NOTIFICATION-TYPE
+        OBJECTS       { rcSysAction }
+        STATUS        current
+        DESCRIPTION   "A rcSaveConfigAction trap indicates the switch run
+                       time or boot configuration is being saved"
+        ::= { rcTrapsMib 37 }
+
+rcnLoopDetectOnPort NOTIFICATION-TYPE
+        OBJECTS       { rcVlanId, rcPortIndex }
+        STATUS        current
+        DESCRIPTION   "A rcnLoopDetectOnPort trap indicates that a loop has
+                       been detected on a port. The vlan on that port will
+                       be disabled."
+        ::= { rcTrapsMib 38 }
+
+rcnbgpEstablished NOTIFICATION-TYPE
+        OBJECTS { rcIpBgpPeerIpAddress,
+                  rcIpBgpPeerLastError,
+                  rcIpBgpPeerState      }
+        STATUS  current
+        DESCRIPTION
+                "The BGP Established event is generated when
+                 the BGP FSM enters the ESTABLISHED state."
+        ::= { rcTrapsMib 39 }
+
+rcnbgpBackwardTransition NOTIFICATION-TYPE
+        OBJECTS { rcIpBgpPeerIpAddress,
+                  rcIpBgpPeerLastError,
+                  rcIpBgpPeerState      }
+        STATUS  current
+        DESCRIPTION
+                "The BGPBackwardTransition Event is generated
+                 when the BGP FSM moves from a higher numbered
+                 state to a lower numbered state."
+        ::= { rcTrapsMib 40 }
+
+rcnAggLinkUp NOTIFICATION-TYPE
+        OBJECTS       { rcMltId }
+        STATUS        current
+        DESCRIPTION   "A rcAggLinkUp trap is generated when the operational
+                       state of the aggregator changes from down to up."
+        ::= { rcTrapsMib 41 }
+
+rcnAggLinkDown NOTIFICATION-TYPE
+        OBJECTS       { rcMltId }
+        STATUS        current
+        DESCRIPTION   "A rcAggLinkDown trap is generated when the operational
+                       state of the aggregator changes from up to down."
+        ::= { rcTrapsMib 42 }
+
+rcnIgmpNewGroupMember NOTIFICATION-TYPE
+        OBJECTS       { rcIgmpGroupIfIndex,
+                        rcIgmpGroupIpAddress,
+                        rcIgmpGroupInPort,
+                        rcIgmpGroupMembers }
+        STATUS        current
+        DESCRIPTION   "An IgmpNewGroupMember  trap signifies that a
+                       new member has come on an interface."
+        ::= { rcTrapsMib 43 }
+
+rcnIgmpLossGroupMember NOTIFICATION-TYPE
+        OBJECTS       { rcIgmpGroupMembers,
+                        rcIgmpGroupIpAddress,
+                        rcIgmpGroupInPort,
+                        rcIgmpGroupIfIndex }
+        STATUS        current
+        DESCRIPTION   "An IgmpLossGroupMember  trap signifies that a
+                       group member has been lost on an interface."
+        ::= { rcTrapsMib 44 }
+
+rcnIgmpNewQuerier NOTIFICATION-TYPE
+-- cannot include igmpInterfaceIfIndex in the OBJECTS clause because it
+-- is not-accessible
+--        OBJECTS       { igmpInterfaceIfIndex,
+--                        igmpInterfaceQuerier }
+        STATUS        current
+        DESCRIPTION   "An igmpNewQuerier trap signifies that a new
+                       querier has come up on an interface."
+        ::= { rcTrapsMib 45 }
+
+rcnIgmpQuerierChange NOTIFICATION-TYPE
+-- cannot include igmpInterfaceIfIndex in the OBJECTS clause because it
+-- is not-accessible
+--        OBJECTS       { igmpInterfaceIfIndex,
+--                        rcIgmpInterfaceExtnNewQuerier,
+--                        igmpInterfaceQuerier }
+        STATUS        current
+        DESCRIPTION   "An rcIgmpQuerierChange trap signifies that
+                       the querier has changed."
+        ::= { rcTrapsMib 46 }
+
+rcnDvmrpIfStateChange NOTIFICATION-TYPE
+-- Cannot use these, as they are either not-accessible, or no longer exist
+-- in the current draft of the DVMRP-STD-MIB
+--        OBJECTS       { dvmrpInterfaceIfIndex,
+--                        dvmrpInterfaceOperState }
+        STATUS        current
+        DESCRIPTION   "A rcDvmrpIfStateChange trap signifies that there
+                       has been a change in the state of a DVMRP
+                       interface."
+        ::= { rcTrapsMib 47 }
+
+rcnDvmrpNewNbrChange NOTIFICATION-TYPE
+-- Cannot use these, as they are either not-accessible, or no longer exist
+-- in the current draft of the DVMRP-STD-MIB
+--        OBJECTS       { dvmrpNeighborIfIndex,
+--                        dvmrpNeighborAddress }
+        STATUS        current
+        DESCRIPTION   "A rcDvmrpNewNbrChange trap signifies that a new
+                       neighbor has come up on a DVMRP interface."
+        ::= { rcTrapsMib 48 }
+
+rcnDvmrpNbrLossChange NOTIFICATION-TYPE
+-- Cannot use these, as they are either not-accessible, or no longer exist
+-- in the current draft of the DVMRP-STD-MIB
+--        OBJECTS       { dvmrpNeighborIfIndex,
+--                        dvmrpNeighborAddress }
+        STATUS        current
+        DESCRIPTION   "A rcDvmrpNbrLossChange trap signifies that a new
+                       neighbor has gone down on a DVMRP interface."
+        ::= { rcTrapsMib 49 }
+
+rcnPsePortOnOff NOTIFICATION-TYPE
+-- Cannot include pethPsePortGroupIndex or pethPsePortIndex in OBJECTS
+-- clause because they are not-accessible
+--        OBJECTS       { pethPsePortGroupIndex,
+--                        pethPsePortIndex,
+--                        pethPsePortDetectionStatus }
+        STATUS        current
+        DESCRIPTION   "A rcPsePortOnOff trap signifies that if
+                       Pse Port is delivering or not power to the
+                       This Notification SHOULD be sent on every
+                       status change except in the searching mode."
+        ::= { rcTrapsMib 50 }
+
+rcnPsePortPowerMaintenanceStatus NOTIFICATION-TYPE
+-- pethPsePortPowerMaintenanceStatus no longer exists, cannot use it here
+-- Also, cannot include pethPsePortGroupIndex or pethPsePortIndex in OBJECTS
+-- clause because they are not-accessible
+--        OBJECTS       { pethPsePortGroupIndex,
+--                        pethPsePortIndex,
+--                        pethPsePortPowerMaintenanceStatus }
+        STATUS        current
+        DESCRIPTION   "A rcPsePortPowerMaintenanceStatus trap
+                       signifies that a Port change Status and
+                       it SHOULD be sent on every status change."
+        ::= { rcTrapsMib 51 }
+
+rcnMainPseBackupActivate NOTIFICATION-TYPE
+-- Cannot include pethPsePortGroupIndex or pethPsePortIndex in OBJECTS
+-- clause because they are not-accessible
+--        OBJECTS       { pethPsePortGroupIndex,
+--                        pethPsePortIndex,
+--                        pethMainPseBackupActivated }
+        STATUS        current
+        DESCRIPTION   "A rcMainPseBackupActivate trap signifies that
+                       a Backup is Activated or BackUp is released
+                       on a Pse Port Group."
+        ::= { rcTrapsMib 52 }
+
+rcnMainPowerUsageOn NOTIFICATION-TYPE
+-- Cannot include pethPsePortGroupIndex or pethPsePortIndex in OBJECTS
+-- clause because they are not-accessible
+--        OBJECTS       { pethPsePortGroupIndex,
+--                        pethMainPseConsumptionPower }
+        STATUS        current
+        DESCRIPTION   "A rcMainPowerUsageOn trap signifies that
+                       PSE Threshold Usage indication of a PSE
+                       Port Group is on, the usage power is above
+                       the threshold."
+        ::= { rcTrapsMib 53 }
+
+rcnMainPowerUsageOff NOTIFICATION-TYPE
+-- Cannot include pethPsePortGroupIndex or pethPsePortIndex in OBJECTS
+-- clause because they are not-accessible
+--        OBJECTS       { pethPsePortGroupIndex,
+--                        pethMainPseConsumptionPower }
+        STATUS        current
+        DESCRIPTION   "A rcMainPowerUsageOn trap signifies that
+                       PSE Threshold Usage indication of a PSE
+                       Port Group is off, the usage power is above
+                       the threshold."
+        ::= { rcTrapsMib 54 }
+
+rcnPseCardOnOff NOTIFICATION-TYPE
+        OBJECTS       { rcPortPoeMainPseExtnPwrAdmin }
+        STATUS        current
+        DESCRIPTION   "A rcPoeMainPwrFailure trap signifies that the
+                       main power admin status is up."
+        ::= { rcTrapsMib 55 }
+
+rcnTlsWatermarkTrap NOTIFICATION-TYPE
+         OBJECTS       { rcTlsTdiEndptTdId,
+                         rcTlsTdiEndptUniAddr,
+                         rcTlsEndptWatermarkIndication}
+        STATUS        current
+        DESCRIPTION   "A Watermark trap signifies that the Mac Table for the
+                       endpoint has reached its high watermark or is already
+                       full."
+        ::= { rcTrapsMib 56 }
+
+rcnTdcTestResultTrap NOTIFICATION-TYPE
+        OBJECTS       { rcTlsTestTdcTestId,
+                        rcTlsTdcTestResultIndication }
+        STATUS        current
+        DESCRIPTION   "A Tdc test fail trap indicates that the tdc test
+                       test identified by test ID failed."
+        ::= { rcTrapsMib 57 }
+
+rcnTdcTestRttExceedTrap NOTIFICATION-TYPE
+        OBJECTS       { rcTlsTestTdcTestId,
+                        rcTlsTdcTestRttExceedIndication }
+        STATUS        current
+        DESCRIPTION   "A Tdc Rtt Exceed trap indicates that the round trip
+                       time of the tdc test identified by test ID exceeded
+                       the configured threshold value."
+        ::= { rcTrapsMib 58 }
+
+rcnFdbProtectViolation NOTIFICATION-TYPE
+        OBJECTS { rcPortIndex,
+                  rcVlanId }
+        STATUS  current
+        DESCRIPTION
+                "The rcFdbProtectViolation trap signifies that the
+                 port has violated the user configured limit for
+                 total number of fdb-entries learned on that port."
+        ::= { rcTrapsMib 59 }
+
+rcnLogMsgControl NOTIFICATION-TYPE
+        OBJECTS { rcSysMsgLogFrequency, rcSysMsgLogText }
+        STATUS  current
+        DESCRIPTION
+                "A rcMsgControl trap signifies whether the number of times of
+                 repeatation of the particular Log message has exceeded
+                 the particular frequency/count or not."
+        ::= { rcTrapsMib 60 }
+
+rcnSaveConfigFile       NOTIFICATION-TYPE
+        OBJECTS       { rcSysAction, rcSysConfigFileName }
+        STATUS        current
+        DESCRIPTION   "A rcSaveConfig trap signifies that either the
+                       runtime config or the boot config has been saved
+                       on the switch"
+        ::= { rcTrapsMib 61 }
+
+rcnDNSRequestResponse NOTIFICATION-TYPE
+        OBJECTS       { rcSysDnsServerListIpAddr, rcSysDnsRequestType }
+        STATUS        current
+        DESCRIPTION  
+	 "A rcDnsRequestResponse trap signifies that the
+                       switch had sent a query to the DNS server or it had
+                       received a successful response from the DNS Server"
+        ::= { rcTrapsMib 62 }
+
+rcnDuplicateIpAddress NOTIFICATION-TYPE
+        OBJECTS       { ipNetToMediaNetAddress , ipNetToMediaPhysAddress }
+        STATUS        current
+        DESCRIPTION  
+	 "A rcDuplicateIpAddressTrap signifies that a duplicate IP
+                       address is detected on the subnet"
+        ::= { rcTrapsMib 63 }
+
+rcnLoopDetectPortDown NOTIFICATION-TYPE
+        OBJECTS       { rcPortIndex,  ifAdminStatus, ifOperStatus }
+        STATUS        current
+        DESCRIPTION  
+	 "A rcLoopDetectPortDown trap signifies that a loop has
+                        been detected on a port and the port is going to shut down."
+        ::= { rcTrapsMib 64 }
+
+rcnUnauthorizedAccessToStandByCPU NOTIFICATION-TYPE
+        OBJECTS       { rcSysIpAddr }
+        STATUS        current
+        DESCRIPTION   "A rcnUnauthorizedAccessToStandByCPU trap
+                       signifies that the user attempt to access
+                       standby CPU."
+        ::= { rcTrapsMib 65 }
+
+rcnTlsPortWatermarkTrap  NOTIFICATION-TYPE
+        OBJECTS       { rcPortIndex,  
+                        rcTlsEndptWatermarkIndication}
+        STATUS        current
+        DESCRIPTION   "A Watermark trap signifies that the
+                       Mac Table for the port has reached its high watermark or already full"
+        ::= { rcTrapsMib 66 }
+
+rcnLoopDetectMacDiscard NOTIFICATION-TYPE
+        OBJECTS  { rcPortIndex, rcSysMacFlapLimitTime, rcSysMacFlapLimitCount}
+        STATUS     current
+        DESCRIPTION  "A rcLoopDetectMacDiscard  trap signifies that a loop 
+                      has been Detected on a port and the mac address will 
+                      be discarded on all ports in that vlan"
+        ::= { rcTrapsMib 67}
+
+rcnAutoRecoverPort NOTIFICATION-TYPE
+        OBJECTS { rcPortIndex }
+        STATUS current
+        DESCRIPTION "A rcnAutoRecoverPort trap signifies that autorecover 
+                     has re-enabled a port disabled by link flap or cp limit"
+        ::= {rcTrapsMib 68 }
+
+rcnAutoRecoverLoopDetectedPort NOTIFICATION-TYPE
+        OBJECTS { rcVlanNewLoopDetectedAction }
+        STATUS current
+        DESCRIPTION "A rcnAutoRecoverPort trap signifies that autorecover 
+                     has cleared the action taken on a port by loop detect"
+        ::= {rcTrapsMib 69 }
+
+rcnExtCpLimitShutDown NOTIFICATION-TYPE
+         OBJECTS       { rcPortIndex,
+                         ifAdminStatus
+                       }
+         STATUS        current
+         DESCRIPTION  "A rcnExtCpLimitShutDown trap signifies that
+                       port is shut down due to Extended CP-Limit."
+         ::= { rcTrapsMib 70 }
+ 
+rcnExtCpLimitSopCongestion NOTIFICATION-TYPE
+         OBJECTS       { rcSysExtCplimitSysOctapidCongested,
+                         rcSysExtCplimitPortsMonitored
+                       }
+         STATUS        current
+         DESCRIPTION  "A rcnExtCpLimitSopCongestion signifies that system octapid
+                       polling finds that system octapid is congested or not.
+                       rcSysExtCplimitSysOctapidCongested signifies whether 
+                       system octapid is congested or not.
+                       rcSysExtCplimitPortsMonitored signifies whether ports are
+                       selected for monitoring the ingress traffic utilization."
+         ::= {rcTrapsMib 71 }
+
+rcnNonEapIntrusion NOTIFICATION-TYPE
+        OBJECTS       { rcErrorText, rcPortIndex }
+        STATUS        current
+        DESCRIPTION   "A rcNonEapIntrusion trap signifies that the
+                      an intrusion has occurred in the port. This occurs when
+                      the number of non-eap clients exceed the maximum allowed
+                      non-eap clients on the port "
+        ::= { rcTrapsMib 72 }
+
+rcnTlsUniIpServiceWatermarkTrap  NOTIFICATION-TYPE
+        OBJECTS       { rcTlsUniIpServiceWatermarkIndication}
+        STATUS        current
+        DESCRIPTION   "A Watermark trap signifies that the Ip Table for the Uni Ip Service (Cust Ip)  
+		has reached its high watermark or already full"
+        ::= { rcTrapsMib 73 }
+
+rcnTacacsAuthFailure NOTIFICATION-TYPE
+    OBJECTS       { rcTacacsGlobalLastUserName }
+    STATUS        current
+    DESCRIPTION   "TACACS+ authentication failed for user"
+    ::= { rcTrapsMib 74 }
+
+rcnTacacsNoServers NOTIFICATION-TYPE
+    STATUS        current
+    DESCRIPTION   "Unable to use any TACACS+ servers for authentication"
+    ::= { rcTrapsMib 75 }
+
+rcnTacacsRxUnsupportedFrame NOTIFICATION-TYPE
+    OBJECTS       { rcTacacsGlobalLastAddressType, rcTacacsGlobalLastAddress }
+    STATUS        current
+    DESCRIPTION   "Received unsupported frame from TACACS+ server"
+    ::= { rcTrapsMib 76 }
+
+rcnTacacsExceededMaxLogins NOTIFICATION-TYPE
+    STATUS        current
+    DESCRIPTION   "Attempted to exceed the maximum number of allowed TACACS+ logins"
+    ::= { rcTrapsMib 77 }
+
+rcnTacacsClientFailure NOTIFICATION-TYPE
+    STATUS        current
+    DESCRIPTION   "TACACS+ Client application is down"
+    ::= { rcTrapsMib 78 }
+
+
+rcnBpduReceived NOTIFICATION-TYPE
+    OBJECTS       { rcPortBpduFilteringTimeout }
+    STATUS        current
+    DESCRIPTION   "This notification will be generated when a BPDU is
+                   received on a port which has BPDU filtering enabled."
+    ::= { rcTrapsMib 79 }
+
+rcnVlacpPortDown NOTIFICATION-TYPE
+    OBJECTS       { rcPortIndex}
+    STATUS        current
+    DESCRIPTION  "A rcnVlacpPortDown trap signifies that
+                  Vlacp is down on the port specified."
+    ::= { rcTrapsMib 80 }
+
+rcnVlacpPortUp NOTIFICATION-TYPE
+    OBJECTS       { rcPortIndex}
+    STATUS        current
+    DESCRIPTION  "A rcnVlacpPortUp trap signifies that
+                 Vlacp is Up on the port specified."
+    ::= { rcTrapsMib 81 }
+
+rcnExtCpLimitShutDownNormal NOTIFICATION-TYPE
+    STATUS        current
+    DESCRIPTION  "An rcnExtCpLimitShutDownNormal trap signifies that
+                 Ports are shut down due to Extended CP-Limit in Normal mode."
+    ::= { rcTrapsMib 82 }
+
+rcnEapMacIntrusion NOTIFICATION-TYPE
+     OBJECTS      {rcSysIpAddr, rcRadiusPaePortNumber,
+                   rcRadiusEapLastAuthMac, rcRadiusEapLastRejMac}
+     STATUS       current
+     DESCRIPTION  "A rcnEapMacIntrusion trap signifies that 
+                   an EAP MAC intrusion had occurred on this port."
+     ::= { rcTrapsMib 83 }
+
+
+--
+-- IMPORTANT NOTE:  The following section contains older definitions of
+--                  notifications that do not follow the standard format
+--                  for OIDs for notifications.  New notifications should
+--                  *NOT* be added to this section.  Instead, they should
+--                  be added above, under the snmpTrapsMib branch.
+--
+
+rcCardDown NOTIFICATION-TYPE
+        OBJECTS      { rcCardIndex, rcCardAdminStatus, rcCardOperStatus }
+        STATUS       current
+        DESCRIPTION  "A rcCardDown trap signifies that the SNMPv2 entity,
+                     acting in an agent role, has detected that the
+                     rcCardOperStatus object for one of its cards 
+                     is about to transition into the down state."
+        ::= { rcTraps 1 }
+
+rcCardUp NOTIFICATION-TYPE
+        OBJECTS       { rcCardIndex, rcCardAdminStatus, rcCardOperStatus }
+        STATUS        current
+        DESCRIPTION   "A rcCardUp trap signifies that the SNMPv2 entity,
+                      acting in an agent role, has detected that the
+                      rcCardOperStatus object for one of its cards 
+                      is about to transition into the up state."
+        ::= { rcTraps 2 }
+
+rcErrorNotification NOTIFICATION-TYPE
+        OBJECTS       { rcErrorLevel, rcErrorCode, rcErrorText }
+        STATUS        current
+        DESCRIPTION   "A rcErrorNotification trap signifies that the 
+                      SNMPv2 entity, acting in an agent role, has 
+                      detected that an error condition has occured."
+        ::= { rcTraps 3 }
+ 
+rcStpNewRoot NOTIFICATION-TYPE
+        OBJECTS       { rcStgId }
+        STATUS        current
+        DESCRIPTION   "A rcStpNewRoot trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected the Spanning Tree Protocol has declared
+                      the device to be the new root of the spanning 
+       		      tree." 
+        ::= { rcTraps 4 }
+
+rcStpTopologyChange NOTIFICATION-TYPE
+       OBJECTS        { rcStgId, rcPortIndex }
+       STATUS         current   
+       DESCRIPTION    "A rcStpTopologyChange trap signifies that the 
+                      SNMPv2 entity, acting in an agent role, has 
+                      detected the Spanning Tree Protocol has gone due
+                      a topology change event."
+       ::= { rcTraps 5 }
+
+rcChasPowerSupplyDown NOTIFICATION-TYPE
+        OBJECTS       { rcChasPowerSupplyId, rcChasPowerSupplyOperStatus}
+        STATUS        current
+        DESCRIPTION   "A rcChasPowerSupplyDown trap signifies that the 
+                      SNMPv2 entity, acting in an agent role, has 
+                      detected that the rcChasPowerSupplyOperStatus 
+                      object for one of its power supply unit is 
+                      about to transition into the down state."
+        ::= { rcTraps 6 }
+
+rcChasFanDown NOTIFICATION-TYPE
+        OBJECTS       { rcChasFanId, rcChasFanOperStatus}
+        STATUS        current
+        DESCRIPTION   "A rcChasFanDown trap signifies that the 
+                      SNMPv2 entity, acting in an agent role, has 
+                      detected that the rcChasFanOperStatus object 
+                      for one of its power supply unit is about to 
+                      transition into the down state."
+        ::= { rcTraps 7 }
+
+rcLinkOscillation NOTIFICATION-TYPE
+        OBJECTS          { rcPortIndex }
+        STATUS             current
+        DESCRIPTION   "A rcLinkOscillation trap signifies that the
+                       SNMPv2 entity, acting in an agent role, has
+                       detected an excessive number of link state
+                       transitions on the specified port."
+        ::= { rcTraps 8 }
+
+rcMacViolation NOTIFICATION-TYPE	
+        OBJECTS       { rcErrorText, rcPortIndex }
+        STATUS        current
+        DESCRIPTION   "A rcMacViolation trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      received a PDU with an invalid source MAC
+                      address."
+        ::= { rcTraps 9 }
+
+rcSonetTrap NOTIFICATION-TYPE
+        OBJECTS       { rcPortIndex, rcPosSonetTrapType, rcPosSonetTrapIndication }
+        STATUS        current
+        DESCRIPTION   "A rcSonetTrap trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected a change of status on a Sonet port."
+        ::= { rcTraps 10 }
+
+rc2kCardDown NOTIFICATION-TYPE
+        OBJECTS      { rc2kCardIndex, 
+                       rc2kCardFrontAdminStatus, 
+                       rc2kCardFrontOperStatus }
+        STATUS       current
+        DESCRIPTION  "A rcCardDown trap signifies that the SNMPv2 entity,
+                     acting in an agent role, has detected that the
+                     rcCardOperStatus object for one of its cards
+                     is about to transition into the down state."
+        ::= { rcTraps 11 }
+
+rc2kCardUp NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex, 
+                        rc2kCardFrontAdminStatus, 
+                        rc2kCardFrontOperStatus }
+        STATUS        current
+        DESCRIPTION   "A rcCardUp trap signifies that the SNMPv2 entity,
+                      acting in an agent role, has detected that the
+                      rcCardOperStatus object for one of its cards
+                      is about to transition into the up state."
+        ::= { rcTraps 12 }
+
+rc2kTemperature NOTIFICATION-TYPE
+        OBJECTS       { rc2kChassisTemperature }
+        STATUS        current
+        DESCRIPTION   "A rc2kTemperature trap signifies that the SNMPv2 
+		      entity, acting in an agent role, has detected the
+                      chassis is over-heating."
+        ::= { rcTraps 13 }
+
+rcChasPowerSupplyUp NOTIFICATION-TYPE
+        OBJECTS       { rcChasPowerSupplyId, rcChasPowerSupplyOperStatus}
+        STATUS        current
+        DESCRIPTION   "A rcChasPowerSupplyUp trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected that the rcChasPowerSupplyOperStatus
+                      object for one of its power supply unit is
+                      about to transition into the up state."
+        ::= { rcTraps 14 }
+
+rc2kAtmPvcLinkStateChange NOTIFICATION-TYPE
+        OBJECTS       { rc2kAtmPvcIfIndex, 
+                        rc2kAtmPvcVpi, 
+                        rc2kAtmPvcVci, 
+                        rc2kAtmPvcOamVcStatus }    
+        STATUS        current
+        DESCRIPTION   "A rc2kAtmPvcLinkStateChange trap signifies that the 
+                       SNMPv2 entity, acting in an agent role, has detected 
+                       that the rc2kAtmPvcOamVcStatus object for one of PVC is
+                       about to transition into different state, either from 
+                       up to down or from down to up."
+        ::= { rcTraps 15 } 
+
+rcStpTCN NOTIFICATION-TYPE
+       OBJECTS        { rcStgId, rcPortIndex, rcStgBridgeAddress }
+       STATUS         current
+       DESCRIPTION    "A rcStpTopologyChange trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected the Spanning Tree Protocol has gone due
+                      a topology change event."
+       ::= { rcTraps 16 }
+
+rcSmltIstLinkUp NOTIFICATION-TYPE
+        STATUS        current
+        DESCRIPTION   "A rcSmltIstLinkUp trap signifies that the split
+                      MLT link is from down to up."
+        ::= { rcTraps 17 }
+
+rcSmltIstLinkDown NOTIFICATION-TYPE
+        STATUS        current
+        DESCRIPTION   "A rcSmltIstLinkDown trap signifies that the
+                      split MLT link is from up to down."
+        ::= { rcTraps 18 }
+
+rcSmltLinkUp NOTIFICATION-TYPE
+        OBJECTS       { rcMltSmltId }
+        STATUS        current
+        DESCRIPTION   "A rcMltSmltId trap signifies that the split 
+                      SMLT link is up."
+        ::= { rcTraps 19 }
+
+rcSmltLinkDown NOTIFICATION-TYPE
+        OBJECTS       { rcMltSmltId }
+        STATUS        current
+        DESCRIPTION   "A rcMltSmltId trap signifies that the split 
+                      SMLT link is down."
+        ::= { rcTraps 20 }
+
+rcChasFanUp NOTIFICATION-TYPE
+        OBJECTS       { rcChasFanId, rcChasFanOperStatus}
+        STATUS        current
+        DESCRIPTION   "A rcChasFanUp trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected that the rcChasFanOperStatus object
+                      for one of its power supply unit is about to
+                      transition into the up state."
+        ::= { rcTraps 21 }
+
+rcPasswordChange NOTIFICATION-TYPE
+        OBJECTS       { rcCliPasswordChange, rcCliPassChangeResult}
+        STATUS        current
+        DESCRIPTION   "A rcPasswordChange trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected that the one of the cli password is
+                      changed."
+        ::= { rcTraps 22 }
+
+rcEmError NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex, rcChasEmModeError}
+        STATUS        current
+        DESCRIPTION   "A rcEmError trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected Em error."
+        ::= { rcTraps 23 }
+
+rcVpnTrap NOTIFICATION-TYPE
+        OBJECTS       { rcVpnVpnId, rcErrorText, rcVpnTunnelLspId,
+                        rcIpMplsGlobalRouterId, rcVpnRemotePeerId, 
+                        rcSyslogHostSeverity}    
+        STATUS        current
+        DESCRIPTION   "L2Vpn will send trap when the Lsp goes down, which
+                       would affect the operational status of the Vpn (given
+                       by the VpnId). The Cause will indicate the reason for
+                       sending the trap. It can either LSP down/failure or
+                       to the bandwidth requirements cannot be fulfilled.
+                       Severity Level can be Warning/Error/Fatal."
+        ::= { rcTraps 24 }
+
+rcPcmciaCardRemoved NOTIFICATION-TYPE
+        STATUS        current
+        DESCRIPTION   "A rcPcmciaRemoved trap signifies that the
+                      SNMPv2 entity, acting in an agent role, has
+                      detected that the PCMCIA card is being removed."
+        ::= { rcTraps 25 }
+
+rcSmartCpldTimerFired NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex }
+        STATUS        current
+        DESCRIPTION   "A rcSmartCpldTimerFired trap signifies that the
+                       cpld timer fired."
+        ::= { rcTraps 26 }
+
+rcCardCpldNotUpDate NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex }
+        STATUS        current
+        DESCRIPTION   "A rcCardCpldNotUpDate trap signifies that the
+                       cpld is not up to date."
+        ::= { rcTraps 27 }
+
+rcIgapLogFileFull NOTIFICATION-TYPE
+        STATUS        current
+        DESCRIPTION   "A rcIgapLogFileFull trap signifies that the
+                       Igap accounting time-out Log File reach the 
+                       maximum."
+        ::= { rcTraps 28 }
+
+rcCpLimitShutDown NOTIFICATION-TYPE
+        OBJECTS       { rcPortIndex, 
+                        ifAdminStatus,
+                        ifOperStatus,
+                        rcPortCpLimitShutDown } 
+        STATUS        current
+        DESCRIPTION   "A rcCpLimitShutDown trap signifies that the
+                       cp limit for the port is shutting down."
+        ::= { rcTraps 29 }
+
+rcSshServerEnabled NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalPort }
+        STATUS        current
+        DESCRIPTION   "A rcSshServerEnabled trap signifies that the
+                       SSH server is enabled."
+        ::= { rcTraps 30 }
+
+rcSshServerDisabled NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalPort }
+        STATUS        current
+        DESCRIPTION   "A rcSshServerDisabled trap signifies that the
+                       SSH server is disabled."
+        ::= { rcTraps 31 }
+
+rcSshSessionLogin NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalHostIpAddr }
+        STATUS        current
+        DESCRIPTION   "A rcSshSessionLogin trap signifies that there
+                       is a SSH session login."
+        ::= { rcTraps 32 }
+
+rcSshSessionLogout NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalHostIpAddr }
+        STATUS        current
+        DESCRIPTION   "A rcSshSessionLogout trap signifies that there
+                       is a SSH session logout."
+        ::= { rcTraps 33 }
+
+rcSshUnauthorizedAccess NOTIFICATION-TYPE
+        OBJECTS       { rcSshGlobalHostIpAddr }
+        STATUS        current
+        DESCRIPTION   "A rcSshUnauthorizedAccess trap signifies that
+                       an unauthorized access has occured."
+        ::= { rcTraps 34 }
+
+rcHaCpuState NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex, rcL2RedundancyHaCpuState }
+        STATUS        current
+        DESCRIPTION   "A rcHaCpuState trap signifies that the
+                       state of the HA-CPU."
+        ::= { rcTraps 35 }
+
+rcInsufficientMemory NOTIFICATION-TYPE
+        OBJECTS       { rc2kCardIndex}
+        STATUS        current
+        DESCRIPTION   "A rcInsufficientMemory trap indicates insufficient memory on
+                       CPU blade for proper operation. Recommended memory = 256 MB 
+                       available through Nortel Networks upgrade kit"
+        ::= { rcTraps 36 }
+
+rcSaveConfigAction NOTIFICATION-TYPE
+        OBJECTS       { rcSysAction }
+        STATUS        current
+        DESCRIPTION   "A rcSaveConfigAction trap indicates the switch run
+                       time or boot configuration is being saved"
+        ::= { rcTraps 37 }
+
+rcLoopDetectOnPort NOTIFICATION-TYPE
+        OBJECTS       { rcVlanId, rcPortIndex }
+        STATUS        current
+        DESCRIPTION   "A rcSaveConfigAction trap indicates that a loop has
+                       been detected on a port. The vlan on that port will
+                       be disabled."
+        ::= { rcTraps 38 }
+
+cbgpEstablished NOTIFICATION-TYPE
+        OBJECTS { rcIpBgpPeerIpAddress, rcIpBgpPeerLastError, rcIpBgpPeerState }
+        STATUS  current
+        DESCRIPTION "The BGP Established event is generated when
+                 the BGP FSM enters the ESTABLISHED state."
+        ::= { rcTraps 39 }
+
+rcbgpBackwardTransition NOTIFICATION-TYPE
+        OBJECTS { rcIpBgpPeerIpAddress, rcIpBgpPeerLastError, rcIpBgpPeerState }
+        STATUS  current
+        DESCRIPTION "The BGPBackwardTransition Event is generated
+                 when the BGP FSM moves from a higher numbered
+                 state to a lower numbered state."
+        ::= { rcTraps 40 }
+
+rcAggLinkUp NOTIFICATION-TYPE
+        OBJECTS       { rcMltId }
+        STATUS        current
+        DESCRIPTION   "A rcAggLinkUp trap is generated when the operational
+                       state of the aggregator changes from down to up."
+        ::= { rcTraps 41 }
+
+rcAggLinkDown NOTIFICATION-TYPE
+        OBJECTS       { rcMltId }
+        STATUS        current
+        DESCRIPTION   "A rcAggLinkDown trap is generated when the operational
+                       state of the aggregator changes from up to down."
+        ::= { rcTraps 42 }
+
+rcIgmpNewGroupMember NOTIFICATION-TYPE
+        OBJECTS       { rcIgmpGroupIfIndex, rcIgmpGroupIpAddress, rcIgmpGroupInPort,
+                                      rcIgmpGroupMembers }
+        STATUS        current
+        DESCRIPTION   "An IgmpNewGroupMember  trap signifies that a
+                       new member has come on an interface."
+        ::= { rcTraps 43 }
+
+rcIgmpLossGroupMember NOTIFICATION-TYPE
+        OBJECTS       { rcIgmpGroupMembers, rcIgmpGroupIpAddress, rcIgmpGroupInPort,
+                                      rcIgmpGroupIfIndex }
+        STATUS        current
+        DESCRIPTION   "An IgmpLossGroupMember  trap signifies that a
+                       group member has been lost on an interface."
+        ::= { rcTraps 44 }
+
+rcIgmpNewQuerier NOTIFICATION-TYPE
+-- cannot include igmpInterfaceIfIndex in the OBJECTS clause because it
+-- is not-accessible
+--        OBJECTS       { igmpInterfaceIfIndex, igmpInterfaceQuerier }
+        STATUS        current
+        DESCRIPTION   "An igmpNewQuerier trap signifies that a new
+                       querier has come up on an interface."
+        ::= { rcTraps 45 }
+
+rcIgmpQuerierChange NOTIFICATION-TYPE
+-- cannot include igmpInterfaceIfIndex in the OBJECTS clause because it
+-- is not-accessible
+--        OBJECTS       { igmpInterfaceIfIndex,
+--                        rcIgmpInterfaceExtnNewQuerier,
+--                        igmpInterfaceQuerier }
+        STATUS        current
+        DESCRIPTION   "An rcIgmpQuerierChange trap signifies that
+                       the querier has changed."
+        ::= { rcTraps 46 }
+
+rcDvmrpIfStateChange NOTIFICATION-TYPE
+-- Cannot use these, as they are either not-accessible, or no longer exist
+-- in the current draft of the DVMRP-STD-MIB
+--        OBJECTS       { dvmrpInterfaceIfIndex, dvmrpInterfaceOperState }
+        STATUS        current
+        DESCRIPTION   "A rcDvmrpIfStateChange trap signifies that there
+                       has been a change in the state of a DVMRP
+                       interface."
+        ::= { rcTraps 47 }
+
+rcDvmrpNewNbrChange NOTIFICATION-TYPE
+-- Cannot use these, as they are either not-accessible, or no longer exist
+-- in the current draft of the DVMRP-STD-MIB
+--        OBJECTS       { dvmrpNeighborIfIndex, dvmrpNeighborAddress }
+        STATUS        current
+        DESCRIPTION   "A rcDvmrpNewNbrChange trap signifies that a new
+                       neighbor has come up on a DVMRP interface."
+        ::= { rcTraps 48 }
+
+rcDvmrpNbrLossChange NOTIFICATION-TYPE
+-- Cannot use these, as they are either not-accessible, or no longer exist
+-- in the current draft of the DVMRP-STD-MIB
+--        OBJECTS       { dvmrpNeighborIfIndex, dvmrpNeighborAddress }
+        STATUS        current
+        DESCRIPTION   "A rcDvmrpNbrLossChange trap signifies that a new
+                       neighbor has gone down on a DVMRP interface."
+        ::= { rcTraps 49 }
+
+rcPsePortOnOff  NOTIFICATION-TYPE
+        OBJECTS       { rcPortPoePseIndexGroupIndex,
+                        rcPortPoePseIndexPortIndex,
+                        pethPsePortDetectionStatus }
+        STATUS        current
+        DESCRIPTION   "A rcPsePortOnOff trap signifies that if Pse Port is delivering or not power to the
+                   This Notification SHOULD be sent on every status change except in the searching mode."
+        ::= { rcTraps 50 }
+
+rcPsePortPowerMaintenanceStatus  NOTIFICATION-TYPE
+-- pethPsePortPowerMaintenanceStatus no longer exists, cannot use it here
+--        OBJECTS       { rcPortPoePseIndexGroupIndex,
+--                        rcPortPoePseIndexPortIndex,
+--                        pethPsePortPowerMaintenanceStatus }
+        OBJECTS       { rcPortPoePseIndexGroupIndex,
+                        rcPortPoePseIndexPortIndex }
+        STATUS        current
+        DESCRIPTION   "A rcPsePortPowerMaintenanceStatus trap signifies that a Port change Status
+                                          and it SHOULD be sent on every status change."
+        ::= { rcTraps 51 }
+
+rcMainPseBackupActivate  NOTIFICATION-TYPE
+-- pethMainPseBackupActivated no longer exists, cannot use it here
+--        OBJECTS       { rcPortPoePseIndexGroupIndex,
+--                        rcPortPoePseIndexPortIndex,
+--                        pethMainPseBackupActivated }
+        OBJECTS       { rcPortPoePseIndexGroupIndex,
+                        rcPortPoePseIndexPortIndex }
+        STATUS        current
+        DESCRIPTION   "A rcMainPseBackupActivate trap signifies that
+                       a Backup is Activated or BackUp is released on a Pse Port Group."
+        ::= { rcTraps 52 }
+
+rcMainPowerUsageOn  NOTIFICATION-TYPE
+        OBJECTS       { rcPortPoePseIndexGroupIndex, pethMainPseConsumptionPower }
+        STATUS        current
+        DESCRIPTION   "A rcMainPowerUsageOn trap signifies that PSE Threshold Usage indication
+                                          of a PSE Port Group is on, the usage power is above the threshold."
+        ::= { rcTraps 53 }
+
+rcMainPowerUsageOff  NOTIFICATION-TYPE
+        OBJECTS       { rcPortPoePseIndexGroupIndex, pethMainPseConsumptionPower }
+        STATUS        current
+        DESCRIPTION   "A rcMainPowerUsageOn trap signifies that PSE Threshold Usage indication
+                                           of a PSE Port Group is off, the usage power is above the threshold."
+        ::= { rcTraps 54 }
+
+rcPseCardOnOff NOTIFICATION-TYPE
+        OBJECTS       { rcPortPoeMainPseExtnPwrAdmin }
+        STATUS        current
+        DESCRIPTION   "A rcPoeMainPwrFailure trap signifies that the main power admin status is up."
+        ::= { rcTraps 55 }
+
+rcTlsWatermarkTrap  NOTIFICATION-TYPE
+        OBJECTS       { rcTlsTdiEndptTdId, rcTlsTdiEndptUniAddr, rcTlsEndptWatermarkIndication}
+        STATUS        current
+        DESCRIPTION   "A Watermark trap signifies that the Mac Table for the
+                       endpoint has reached its high watermark or is already full."
+        ::= { rcTraps 56 }
+
+rcTdcTestResultTrap  NOTIFICATION-TYPE
+        OBJECTS       { rcTlsTestTdcTestId, rcTlsTdcTestResultIndication }
+        STATUS        current
+        DESCRIPTION   "A Tdc test fail trap indicates that the tdc test test identified by test ID failed."
+        ::= { rcTraps 57 }
+
+rcTdcTestRttExceedTrap  NOTIFICATION-TYPE
+        OBJECTS       { rcTlsTestTdcTestId, rcTlsTdcTestRttExceedIndication }
+        STATUS        current
+        DESCRIPTION   "A Tdc Rtt Exceed trap indicates that the round trip
+                       time of the tdc test identified by test ID exceeded the configured threshold value."
+        ::= { rcTraps 58 }
+
+END
+

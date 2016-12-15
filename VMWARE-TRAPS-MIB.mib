@@ -1,0 +1,147 @@
+-- **********************************************************
+-- Copyright 2007 VMware, Inc.  All rights reserved. 
+-- 
+--  This MIB Module provides definitions for notifications
+--  not previously specific MIB modules. 
+--
+-- **********************************************************
+-- Version: 4.0
+
+VMWARE-TRAPS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+   TRAP-TYPE 
+      FROM RFC-1215
+   OBJECT-TYPE
+      FROM RFC-1212
+   DisplayString 
+      FROM RFC1213-MIB 
+   vmware, vmwTraps
+      FROM VMWARE-ROOT-MIB
+   vmDisplayName
+      FROM VMWARE-VMINFO-MIB;
+
+--  "This file contains the MIB for VMware specific traps. All traps are of
+--  the SNMPv1 type." 
+
+vmPoweredOn TRAP-TYPE 
+   ENTERPRISE vmware 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+      "This trap is sent when a virtual machine is powered ON from a suspended 
+       or a powered off state." 
+   ::= 1 
+
+vmPoweredOff TRAP-TYPE 
+   ENTERPRISE vmware 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+      "This trap is sent when a virtual machine is powered OFF." 
+   ::= 2 
+
+vmHBLost TRAP-TYPE 
+   ENTERPRISE vmware 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+      "This trap is sent when a virtual machine detects a loss in guest heartbeat." 
+   ::= 3 
+
+vmHBDetected TRAP-TYPE 
+   ENTERPRISE vmware 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+      "This trap is sent when a virtual machine detects or regains the guest heartbeat." 
+   ::= 4 
+
+vmSuspended TRAP-TYPE 
+   ENTERPRISE vmware 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+      "This trap is sent when a virtual machine is suspended." 
+   ::= 5 
+
+-- Accompanying variables for traps
+
+vmID OBJECT-TYPE
+   SYNTAX     INTEGER 
+   ACCESS     read-only 
+   STATUS     mandatory
+   DESCRIPTION
+      "This is the ID of the affected vm generating the trap. If the vmID
+      is non-existent, (such as for a power-off trap) -1 is returned."
+   ::= { vmwTraps 101 }
+
+vmConfigFile OBJECT-TYPE
+   SYNTAX     DisplayString 
+   ACCESS     read-only 
+   STATUS     mandatory
+   DESCRIPTION
+      "This is the config file of the affected vm generating the trap."
+   ::= { vmwTraps 102 }
+
+
+-- **********************************************************
+-- Traps sending from vpxd (VMware VirtualCenter).
+-- **********************************************************
+
+vpxdTrap TRAP-TYPE
+   ENTERPRISE vmwTraps
+   VARIABLES { vpxdTrapType, vpxdHostName, vpxdVMName, vpxdNewStatus, vpxdOldStatus, vpxdObjValue }
+   DESCRIPTION 
+      "This trap is sent when entity status changed."
+   ::= 201
+
+
+-- **********************************************************
+-- Trap parameters in vpxd (VMware VirtualCenter).
+-- **********************************************************
+
+vpxdTrapType OBJECT-TYPE
+   SYNTAX     DisplayString 
+   ACCESS     read-only 
+   STATUS     mandatory
+   DESCRIPTION
+      "This is the trap type in the preceding traps."
+   ::= { vmwTraps 301 }
+
+vpxdHostName OBJECT-TYPE
+   SYNTAX     DisplayString 
+   ACCESS     read-only 
+   STATUS     mandatory
+   DESCRIPTION
+      "This is the name of the host in the preceding traps."
+   ::= { vmwTraps 302 }
+
+vpxdVMName OBJECT-TYPE
+   SYNTAX     DisplayString 
+   ACCESS     read-only 
+   STATUS     mandatory
+   DESCRIPTION
+      "This is the name of the VM in the preceding traps."
+   ::= { vmwTraps 303 }
+
+vpxdOldStatus OBJECT-TYPE
+   SYNTAX     DisplayString 
+   ACCESS     read-only 
+   STATUS     mandatory
+   DESCRIPTION
+      "This is the old status in the preceding traps."
+   ::= { vmwTraps 304 }
+
+vpxdNewStatus OBJECT-TYPE
+   SYNTAX     DisplayString 
+   ACCESS     read-only 
+   STATUS     mandatory
+   DESCRIPTION
+      "This is the new status in the preceding traps."
+   ::= { vmwTraps 305 }
+
+vpxdObjValue OBJECT-TYPE
+   SYNTAX     DisplayString 
+   ACCESS     read-only 
+   STATUS     mandatory
+   DESCRIPTION
+      "This is the current object value in the preceding traps."
+   ::= { vmwTraps 306 }
+
+END

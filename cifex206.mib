@@ -1,0 +1,341 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-IF-EXTENSIONS-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion Interface Extension MIB Release 2.0.6
+-- Revision 04/18/00
+
+-- Copyright 1994-2000 Nortel Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	extensions, BitField, Boolean, EnableIndicator, MacAddress
+		FROM CENTILLION-ROOT-MIB
+	Counter
+		FROM RFC1155-SMI;
+
+
+-- Groups
+
+cnIfExtensions	OBJECT IDENTIFIER ::= { extensions 2 }
+
+
+-- SECTION 2: Interface Extension Table
+
+cnIfExtnTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnIfExtnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of interface entries. The numebr of entries is
+		given by the value of ifNumber."
+	::= { cnIfExtensions 1 }
+
+cnIfExtnEntry OBJECT-TYPE
+	SYNTAX	CnIfExtnEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An interface entry containing objects at the subnetwork
+		layer and below for a particular interface."
+	INDEX	{ cnIfExtnIndex }
+	::= { cnIfExtnTable 1 }
+
+CnIfExtnEntry ::= SEQUENCE {
+	cnIfExtnIndex
+		INTEGER,
+	cnIfExtnCardNumber
+		INTEGER,
+	cnIfExtnPortNumber
+		INTEGER,
+	cnIfFilterEnable
+		INTEGER,
+	cnIfFilterDownload
+		BitField,
+	cnIfNetbiosNameFilteringState
+		EnableIndicator,
+	cnIfNetbiosBcastDiscard
+		Boolean,
+	cnIfNetbiosNameProxyState
+		EnableIndicator,
+	cnIfForwardingIdentifier
+		OBJECT IDENTIFIER,
+        cnIfInNoResources
+		Counter,
+        cnIfOutNoResources
+		Counter,
+	cnIfVlanMismatch
+		Counter,
+	cnIfVlanCapabilities
+		OCTET STRING,
+        cnIfExtnLocalAdminAddress
+		MacAddress,
+	cnIfExtnPhyAddressDefault
+	    INTEGER,
+    cnIfVlanTrunk
+        EnableIndicator,
+	cnIfUsrInDiscards
+		Counter,
+	cnIfUsrOutDiscards
+		Counter,
+    cnIfUserPriority
+        INTEGER,
+    cnIfTrafficClasses
+        INTEGER,
+    cnIfExpeditedPriorities
+        OCTET STRING
+	}
+
+cnIfExtnIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"A unique value for each interface corresponding to the
+		ifIndex value for the same interface."
+	::= { cnIfExtnEntry 1 }
+
+cnIfExtnCardNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The card number associated with this particular interface."
+	::= { cnIfExtnEntry 2 }
+
+cnIfExtnPortNumber OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The port number associated with this particular interface."
+	::= { cnIfExtnEntry 3 }
+
+cnIfFilterEnable OBJECT-TYPE
+	SYNTAX  INTEGER {
+			enableInputFiltersOnly(1),
+			disableAllFilters(2),
+			enableOutputFiltersOnly(3),
+			enableInputAndOutputFilters(4)
+			}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The state of filtering on this port. 
+		The filter port table will become valid when 
+		filters are is downloaded to the port via setting the
+		cnIfFilterDownload object. In the high-perfomrance mode,
+		filters will be disable on all ports execpt the management
+		port."
+	::= { cnIfExtnEntry 4 }
+
+cnIfFilterDownload OBJECT-TYPE
+	SYNTAX	BitField
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Downloads the filters to the port. Value will always
+		be read as zero."
+	::= { cnIfExtnEntry 5 }
+
+cnIfNetbiosNameFilteringState OBJECT-TYPE
+	SYNTAX	EnableIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The state of NetBIOS name filtering on this port. 
+		Note that a port with filtering disabled may have a valid
+		NetBIOS name table. The table will become valid when 
+		filtering is enabled on the port."
+	::= { cnIfExtnEntry 6 }
+
+cnIfNetbiosBcastDiscard OBJECT-TYPE
+	SYNTAX	Boolean
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This indicates whether NetBIOS broadcasts are to be discarded
+		on this interface."
+	::= { cnIfExtnEntry 7 }
+
+cnIfNetbiosNameProxyState OBJECT-TYPE
+	SYNTAX	EnableIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The state of NetBIOS name proxying on this port."
+	::= { cnIfExtnEntry 8 }
+
+cnIfForwardingIdentifier OBJECT-TYPE
+	SYNTAX	OBJECT IDENTIFIER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This object references the correspsonding instance in the
+		MIB object which describes the ports forwarding function.
+		For example, if the port is participating in bridging, then
+		this object contains the OID of the bridgeGroupPortTable.
+		If this information is not present, its value is set to the
+		OBJECT IDENTIFIER { 0 0 }."
+	::= { cnIfExtnEntry 9 }
+
+cnIfInNoResources  OBJECT-TYPE
+	SYNTAX  Counter
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of inbound packet which were dropped by the switch
+                 because of lack of certain type of system resource."
+	::= { cnIfExtnEntry 10 }
+
+cnIfOutNoResources  OBJECT-TYPE
+	SYNTAX  Counter
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The number of outbound packet which were dropped by the switch
+                 because of lack of certain type of system resource."
+	::= { cnIfExtnEntry 11 }
+
+cnIfVlanMismatch        OBJECT-TYPE
+     	SYNTAX   Counter
+     	ACCESS   read-only
+     	STATUS   mandatory
+     	DESCRIPTION
+              	"The number of packets which were dropped due to
+                the switch not being able to qualify a packet based
+                on the VLAN policies defined. This object is only
+                valid on  interfaces that represent LAN physical
+                port."
+     	::= { cnIfExtnEntry 12 }
+
+cnIfVlanCapabilities    OBJECT-TYPE
+	SYNTAX	 OCTET STRING(SIZE(1))
+     	ACCESS   read-only
+     	STATUS   mandatory
+     	DESCRIPTION
+     	   	"This object contains bit mask flags to indicate
+                support for port-based VLAN, 802.1Q Tagging,
+                and protocol-based VLAN on a port. Bit definition:
+				bit 0:	port-based VLAN
+				bit 1:	802.1Q Tagging
+				bit 2:	protocol-based VLAN
+				bit 3-7:future use."
+     	::= { cnIfExtnEntry 13 }
+
+cnIfExtnLocalAdminAddress OBJECT-TYPE
+     	SYNTAX  MacAddress
+     	ACCESS  read-write
+     	STATUS  mandatory
+     	DESCRIPTION
+          	"The interface's locally administed address if applicable.
+          	The interface's media-specific MIB must define the bit
+          	and byte ordering and format of the value contained by
+          	this object. For interfaces which do not have such an
+          	address (e.g., a serial line), this object should
+          	contain an octet string of zero length."
+     	::= { cnIfExtnEntry 14}
+
+cnIfExtnPhyAddressDefault OBJECT-TYPE
+     	SYNTAX  INTEGER {
+             	useDefaultPhyAddress(1),
+             	useLocallyAdministeredAddress(2)
+             	}
+     	ACCESS  read-write
+     	STATUS  mandatory
+     	DESCRIPTION
+          	"This object refers to which mac address is being used:
+          	the default or locally administered address. The value 
+		of useLocallyAdministeredAddress(2) is read-only.
+		Setting this object with useDefaultPhyAddress(1) will 
+		have the effect of deleting the locally administered 
+		address.  It cannot be restored."
+     	::= { cnIfExtnEntry 15}
+ 
+cnIfVlanTrunk OBJECT-TYPE
+        SYNTAX  EnableIndicator
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "This object controls the VLAN trunk mode for the interface.
+            In trunk mode, the interface accepts both tagged and untagged
+            frames in its default VLAN.  Trunk mode is only available for
+            interfaces that support 802.1Q tagging, as indicated by
+            cnIfVlanCapabilities.  An interface in trunk mode cannot do
+            protocol-based VLAN classification.  The trunk mode cannot be
+            changed while the interface belongs to an MLT group."
+        ::= { cnIfExtnEntry 16 }
+
+cnIfUsrInDiscards OBJECT-TYPE
+	SYNTAX  Counter
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The total number of inbound packets which were dropped by
+		user-defined filters."
+	::= { cnIfExtnEntry 17 }
+
+cnIfUsrOutDiscards OBJECT-TYPE
+	SYNTAX  Counter
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+		"The total number of outbound packets which were dropped by
+		user-defined filters."
+	::= { cnIfExtnEntry 18 }
+ 
+cnIfUserPriority OBJECT-TYPE
+    SYNTAX  INTEGER (0..7)
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "The IEEE 802.1Q default user priority associated with this
+        particular interface.  All ingress frames that lack a priority
+        tag are assigned this user priority.  Ethernet LAN ports and
+        virtual ports can be assigned any valid user priority value.
+        Token Ring LAN ports and virtual ports can only have user
+        priority 0."
+    ::= { cnIfExtnEntry 19 }
+ 
+cnIfTrafficClasses OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The number of internal traffic classes supported by this
+        particular interface.  An interface with more than 1 traffic
+        class supports prioritized frames."
+    ::= { cnIfExtnEntry 20 }
+ 
+cnIfExpeditedPriorities OBJECT-TYPE
+    SYNTAX  OCTET STRING (SIZE(0..8))
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "The user priorities that receive expedited forwarding on
+        this particular interface.  An empty octet string indicates
+        that all frames forward at normal priority, regardless of the
+        user priority.  Each octet in a non-empty string defines a
+        user priority which receives expedited forwarding treatment.
+        Ethernet LAN interfaces can be configured with expedited user
+        priorities.  All other types of interfaces must always be
+        configured with empty expedited priority strings."
+    ::= { cnIfExtnEntry 21 }
+
+END

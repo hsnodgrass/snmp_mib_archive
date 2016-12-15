@@ -1,0 +1,166 @@
+START-MIB DEFINITIONS ::= BEGIN
+
+internet  	OBJECT IDENTIFIER ::= { iso org(3) dod(6) 1 }
+directory 	OBJECT IDENTIFIER ::= { internet 1 }
+mgmt  		OBJECT IDENTIFIER ::= { internet 2 }
+experimental 	OBJECT IDENTIFIER ::= { internet 3 }
+private  	OBJECT IDENTIFIER ::= { internet 4 }
+enterprises 	OBJECT IDENTIFIER ::= { private 1 }
+snmpV2 		OBJECT IDENTIFIER ::= { internet 6 }
+snmpModules 	OBJECT IDENTIFIER ::= { snmpV2 3 } 
+snmpMIB 	OBJECT IDENTIFIER ::= { snmpModules 1 }
+snmpMIBObjects 	OBJECT IDENTIFIER ::= { snmpMIB 1 }
+snmpTrap 	OBJECT IDENTIFIER ::= { snmpMIBObjects 4 }
+snmpTraps 	OBJECT IDENTIFIER ::= { snmpMIBObjects 5 }
+std             OBJECT IDENTIFIER ::= { iso 0 }
+iso8802         OBJECT IDENTIFIER ::= { std 8802 }
+ieee802dot1     OBJECT IDENTIFIER ::= { iso8802 1 }
+ieee802dot1mibs OBJECT IDENTIFIER ::= { ieee802dot1 1 }
+ieee8021paeMIB  OBJECT IDENTIFIER ::= { ieee802dot1mibs 1 }
+member-body     OBJECT IDENTIFIER ::= { iso 2 }
+us              OBJECT IDENTIFIER ::= { member-body 840 }
+ieee802dot3     OBJECT IDENTIFIER ::= { us 10006 }
+snmpmibs        OBJECT IDENTIFIER ::= { ieee802dot3 300 }
+lagMIB          OBJECT IDENTIFIER ::= { snmpmibs 43 }
+
+
+
+-- Text Conventions
+TruthValue ::= INTEGER { true (1), false (2) }
+RowStatus ::= INTEGER {
+	active(1),
+	notInService(2),
+	notReady(3),
+	createAndGo(4),
+	createAndWait(5),
+	destroy(6)
+}
+InterfaceIndex ::= Integer32
+PhysAddress ::= OCTET STRING
+AutonomousType ::= OBJECT IDENTIFIER
+TestAndIncr ::= Integer32
+
+StorageType ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "Describes the memory realization of a conceptual row.  A
+            row which is volatile(2) is lost upon reboot.  A row which
+            is either nonVolatile(3), permanent(4) or readOnly(5), is
+            backed up by stable storage.  A row which is permanent(4)
+            can be changed but not deleted.  A row which is readOnly(5)
+            cannot be changed nor deleted.
+
+            If the value of an object with this syntax is either
+            permanent(4) or readOnly(5), it cannot be modified.
+            Conversely, if the value is either other(1), volatile(2) or
+            nonVolatile(3), it cannot be modified to be permanent(4) or
+            readOnly(5).
+
+            Every usage of this textual convention is required to
+            specify the columnar objects which a permanent(4) row must
+            at a minimum allow to be writable."
+    SYNTAX       INTEGER {
+                     other(1),       -- eh?
+                     volatile(2),    -- e.g., in RAM
+                     nonVolatile(3), -- e.g., in NVRAM
+                     permanent(4),   -- e.g., partially in ROM
+                     readOnly(5)     -- e.g., completely in ROM
+                 }
+
+TDomain ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+          "Denotes a kind of transport service.
+
+          Some possible values, such as snmpUDPDomain, are defined in
+          'Transport Mappings for Version 2 of the Simple Network
+          Management Protocol (SNMPv2)'."
+    SYNTAX       OBJECT IDENTIFIER
+
+
+TAddress ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+          "Denotes a transport service address.
+
+          For snmpUDPDomain, a TAddress is 6 octets long, the initial 4
+          octets containing the IP-address in network-byte order and the
+          last 2 containing the UDP port in network-byte order.  Consult
+          'Transport Mappings for Version 2 of the Simple Network
+          Management Protocol (SNMPv2)' for further information on
+          snmpUDPDomain."
+    SYNTAX       OCTET STRING (SIZE (1..255))
+
+RowPointer ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "Represents a pointer to a conceptual row.  The value is the
+            name of the instance of the first accessible columnar object
+            in the conceptual row.
+
+            For example, ifIndex.3 would point to the 3rd row in the
+            ifTable (note that if ifIndex were not-accessible, then
+            ifDescr.3 would be used instead)."
+    SYNTAX       OBJECT IDENTIFIER
+
+TimeInterval ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "A period of time, measured in units of 0.01 seconds."
+    SYNTAX       INTEGER (0..2147483647)
+
+
+
+-- HACK
+--
+-- These well-known traps are placed here so we don't have to pull
+-- in a lot of SNMP V2 MIB files to get these variables.
+--
+-- HACK
+ 
+coldStart NOTIFICATION-TYPE
+    STATUS  current
+    DESCRIPTION
+            "A coldStart trap signifies that the SNMPv2 entity, acting
+            in an agent role, is reinitializing itself and that its
+            configuration may have been altered."
+    ::= { snmpTraps 1 }
+ 
+warmStart NOTIFICATION-TYPE
+    STATUS  current
+    DESCRIPTION
+            "A warmStart trap signifies that the SNMPv2 entity, acting
+            in an agent role, is reinitializing itself such that its
+            configuration is unaltered."
+    ::= { snmpTraps 2 }
+
+authenticationFailure NOTIFICATION-TYPE
+    STATUS  current
+    DESCRIPTION 
+             "An authenticationFailure trap signifies that the
+             SNMP entity has received a protocol message that is
+             not properly authenticated.  While all implementations
+             of SNMP entities MAY be capable of generating this
+             trap, the snmpEnableAuthenTraps object indicates
+             whether this trap will be generated."
+    ::= { snmpTraps 5 }
+
+snmpSet        OBJECT IDENTIFIER ::= { snmpMIBObjects 6 }
+
+
+snmpSetSerialNo OBJECT-TYPE
+    SYNTAX     TestAndIncr
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+            "An advisory lock used to allow several cooperating SNMPv2
+            entities, all acting in a manager role, to coordinate their
+            use of the SNMPv2 set operation.
+
+            This object is used for coarse-grain coordination.  To
+            achieve fine-grain coordination, one or more similar objects
+            might be defined within each MIB group, as appropriate."
+    ::= { snmpSet 1 }
+
+
+END

@@ -1,0 +1,1718 @@
+--
+--                     Sonus Networks CONFIDENTIAL
+--
+--  This listing of source code is proprietary and confidential to
+--  Sonus Networks, Inc.  It may not be copied or made available in
+--  any form (electronic or hard copy) to any person not authorized
+--  by Sonus Networks, Inc. All rights reserved.
+--
+--                Copyright (C) 2009-2014
+--                Sonus Networks, Inc.
+--                4 Technology Park Drive
+--                Westford, MA  01886, U.S.A.
+--
+--
+-- Release: 3.0
+--
+
+UX-CALL-STATS-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, IpAddress, enterprises, Counter32, Counter64, Gauge32, Integer32, TimeTicks, Unsigned32
+                FROM SNMPv2-SMI
+        TEXTUAL-CONVENTION, DisplayString
+                FROM SNMPv2-TC
+        MODULE-COMPLIANCE, OBJECT-GROUP
+                FROM SNMPv2-CONF
+	    PerfCurrentCount, PerfIntervalCount,
+        PerfTotalCount
+        FROM PerfHist-TC-MIB;   -- [RFC3593]
+		
+
+--iso            OBJECT IDENTIFIER ::= { 1 }
+--org            OBJECT IDENTIFIER ::= { iso 3 }
+--dod            OBJECT IDENTIFIER ::= { org 6 }
+--internet       OBJECT IDENTIFIER ::= { dod 1 }
+
+--directory      OBJECT IDENTIFIER ::= { internet 1 }
+
+--mgmt           OBJECT IDENTIFIER ::= { internet 2 }
+--mib-2          OBJECT IDENTIFIER ::= { mgmt 1 }
+--transmission   OBJECT IDENTIFIER ::= { mib-2 10 }
+
+--experimental   OBJECT IDENTIFIER ::= { internet 3 }
+
+--private        OBJECT IDENTIFIER ::= { internet 4 }
+--enterprises    OBJECT IDENTIFIER ::= { private 1 }
+
+
+
+ux MODULE-IDENTITY
+                LAST-UPDATED "200911041705Z"
+                ORGANIZATION "net.com"
+                CONTACT-INFO
+                        "        TAC
+                         E-mail: tac@net.com"
+                DESCRIPTION
+                        "The MIB module for net.com entities."
+                REVISION      "200911041705Z"
+                DESCRIPTION
+                        "This MIB will describe the entries for the SBC line of products."
+                ::= { enterprises 177 15 }
+
+net OBJECT IDENTIFIER ::= { enterprises 177 }
+uxObjects     OBJECT IDENTIFIER ::= { ux 1 }
+uxTraps       OBJECT IDENTIFIER ::= { ux 2 }
+
+
+ipSystem	OBJECT IDENTIFIER ::= { uxObjects 4 }
+
+sysVersion OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Current SBC software version."
+	::= { ipSystem 1 }
+	
+sysBuildNumber OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Current SBC software build number."
+	::= { ipSystem 2 }
+	
+ipTelephony        OBJECT IDENTIFIER ::= { uxObjects  5 }
+callStatistics	   OBJECT IDENTIFIER ::= { ipTelephony 1 }
+
+------------------------------------------------------------------
+-- uxChannelTable obsolete and removed. 
+-- { callStatistics 1 } will not be used for any future tables.
+------------------------------------------------------------------
+
+uxPortTable       OBJECT-TYPE
+	SYNTAX SEQUENCE OF UxPortEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"The list of ports in the system. In general this table applies to T1/E1 ports and SIP SG except as noted on individual attributes."
+	::= { callStatistics 2 }
+	
+uxPortEntry       OBJECT-TYPE
+	SYNTAX UxPortEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"An entry containing information about the ports in the system."    
+	INDEX	{ uxPTIndex }
+	::= { uxPortTable 1 }
+	
+UxPortEntry ::=
+	SEQUENCE {
+                uxPTIndex                 Unsigned32,
+		uxPTShelf			Unsigned32,
+		uxPTSlot			Unsigned32,
+		uxPTPort			Unsigned32,
+		uxPTCurrentCalls		Gauge32,
+		uxPTTotalCalls		Counter32,
+		uxPTConnectedCalls 	Counter32,
+		uxPTRefusedCalls		Counter32,
+		uxPTErroredCalls		Counter32,
+		uxPTEgressCallAttempts	Counter32,
+		uxPTEgressCallsAccepted	Counter32,
+		uxPTEgressCallsCompleted 	Counter32,
+		uxPTEgressCallsRejected	Counter32,
+		uxPTIngressCallAttempts	Counter32,
+		uxPTIngressCallsAccepted	Counter32,
+		uxPTIngressCallsCompleted Counter32,
+		uxPTIngressCallsRejected	Counter32,
+		uxPTBlockedCalls         Counter32,
+		uxPTEgressBlockedCalls   Counter32,
+		uxPTIngressBlockedCalls  Counter32,
+		uxPTEgressCurrentCalls    Counter32,
+		uxPTIngressCurrentCalls   Counter32,
+		uxPTBHCARate			   Counter32,
+		uxPTBHCCRate			   Counter32
+	}	
+uxPTIndex OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                "Index for the port table. This number is assigned sequentially."
+        ::= { uxPortEntry 1}
+
+uxPTShelf	OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The shelf number this port is assigned to."
+	::= { uxPortEntry 2 }	
+	
+uxPTSlot	OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The slot this port is assigned to. A slot number of 0 indicates the row is associated with a SIP SG."
+	::= { uxPortEntry 3 }
+	
+uxPTPort	OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The port number (within the slot). For SIP SG this value would represent the row number of the SG."
+	::= { uxPortEntry 4 }
+
+
+uxPTCurrentCalls	OBJECT-TYPE
+	SYNTAX Gauge32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The current number of calls active on this port. Not applicable to CAS ports."
+	::= { uxPortEntry 5 }
+
+uxPTTotalCalls	OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The total number of calls received on this port. Not applicable to CAS ports."
+	::= { uxPortEntry 6 }
+
+uxPTConnectedCalls	OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of calls answered on this port. Not applicable to CAS ports."
+	::= { uxPortEntry 7 }
+	
+uxPTRefusedCalls	OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of calls refused on this port. Not applicable to CAS ports."
+	::= { uxPortEntry 8 }
+
+uxPTErroredCalls	OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of errors on this port. Not applicable to CAS ports."
+	::= { uxPortEntry 9 }
+	
+uxPTEgressCallAttempts OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The total number of Egress call attempts on this port."
+	::= { uxPortEntry 10 }
+
+uxPTEgressCallsAccepted OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of Egress successfull call attempts on this port. Not applicable to CAS ports."
+	::= { uxPortEntry 11 }
+
+uxPTEgressCallsCompleted OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of successfully completed Egress calls on this port."
+	::= { uxPortEntry  12 }
+
+uxPTEgressCallsRejected OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of Egress calls from this port that were rejected. Not applicable to CAS ports."
+	::= { uxPortEntry  13 }
+
+uxPTIngressCallAttempts OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The total number of Ingress call attempts on this port."
+	::= { uxPortEntry  14 }
+
+uxPTIngressCallsAccepted OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The total number of Ingress calls accepted on this port. Not applicable to CAS ports."
+	::= { uxPortEntry 15 }
+
+uxPTIngressCallsCompleted OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of successfully completed Ingress calls on this port."
+	::= { uxPortEntry  16 }
+
+uxPTIngressCallsRejected OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of Ingress calls to this port that were rejected. Not applicable to CAS ports."
+	::= { uxPortEntry 17 }
+uxPTBlockedCalls OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of calls blocked per channel per port. Only applicable to ISDN ports."
+	::= { uxPortEntry 18 }
+uxPTEgressBlockedCalls OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of Egress calls blocked on this port. Only applicable to ISDN ports."
+	::= { uxPortEntry 19 }
+uxPTIngressBlockedCalls OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of Ingress calls blocked on this port. Only applicable to ISDN ports."
+	::= { uxPortEntry 20 }
+uxPTEgressCurrentCalls OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of Egress active calls on this port. Not applicable to CAS ports."
+	::= { uxPortEntry 21 }
+uxPTIngressCurrentCalls OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of Ingress active calls on this port. Not applicable to CAS ports."
+	::= { uxPortEntry 22 }
+uxPTBHCARate OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"BHCA rate per DS1."
+	::= { uxPortEntry 23}
+uxPTBHCCRate OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"BHCC rate per DS1."
+	::= { uxPortEntry 24 }
+
+uxCallRtTablesTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxCallRtTablesEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                  "This table gives the information about the Call route tables configured in SBC."
+        ::= {ipTelephony 2}
+uxCallRtTablesEntry  OBJECT-TYPE
+       SYNTAX   UxCallRtTablesEntry
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Call route tables table"
+       INDEX { uxCallRtTablesTableIndex }
+        ::= {uxCallRtTablesTable  1}
+UxCallRtTablesEntry ::= SEQUENCE {
+			uxCallRtTablesTableIndex       INTEGER,
+			uxDesc		 DisplayString,
+			uxCallRtSequence DisplayString
+		}			
+uxCallRtTablesTableIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Index to Call route tables table."
+	::= { uxCallRtTablesEntry 1}
+uxDesc OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Description about the Call route table."
+	::= { uxCallRtTablesEntry 2}
+uxCallRtSequence OBJECT-TYPE
+	SYNTAX DisplayString (SIZE(0..30000))
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Call route sequence followed by this table."
+	::= { uxCallRtTablesEntry 3}
+	
+uxCallRtTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxCallRtEntry 
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                  "This table gives the information about the Call route table configured in SBC."
+        ::= {ipTelephony 3}
+
+   uxCallRtEntry  OBJECT-TYPE
+       SYNTAX   UxCallRtEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Call route table"
+       INDEX { uxCallRtTablesIndex, uxCallRtIndex }
+        ::= {uxCallRtTable  1}
+
+   UxCallRtEntry ::= SEQUENCE {
+			uxCallRtTablesIndex INTEGER,
+			uxCallRtIndex       INTEGER,
+			uxDescription		 DisplayString,
+			uxAdminState       INTEGER,
+            uxRoutePriority    INTEGER,            
+			uxSignalingGroupList DisplayString,
+            uxQualityMetricCalls   INTEGER,
+            uxQualityMetricTime INTEGER,
+			uxQualityMinASRThreshold INTEGER,
+			uxQualityMaxRoundTripDelayThreshold  INTEGER,
+			uxQualityMaxJitterThreshold INTEGER,
+			uxQualityMinMOSThreshold INTEGER			     
+		}	
+uxCallRtTablesIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Index to Call route tables table."
+	::= { uxCallRtEntry 1}
+uxCallRtIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Index to Call route table."
+	::= { uxCallRtEntry 2}
+uxDescription OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Description about the Call route table."
+	::= { uxCallRtEntry 3}
+uxAdminState OBJECT-TYPE
+	SYNTAX INTEGER{
+					disabled(0),
+					enabled(1)
+					}
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"AdminState of Call route table."
+	::= { uxCallRtEntry 4}
+
+uxRoutePriority OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"RoutePriority to Call route table."
+	::= { uxCallRtEntry 5}
+
+
+uxSignalingGroupList OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"SignalingGroup List to this Call route table."
+	::= { uxCallRtEntry 6}
+
+uxQualityMetricCalls OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"QualityMetricCalls of this Call route table."
+	::= { uxCallRtEntry 7}
+
+uxQualityMetricTime OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"QualityMetricTime of this Call route table."
+	::= { uxCallRtEntry 8}
+
+uxQualityMinASRThreshold OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"QualityMinASRThreshold of this Call route table."
+	::= { uxCallRtEntry 9}
+
+uxQualityMaxRoundTripDelayThreshold OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"QualityMaxRoundTripDelayThreshold of this Call route table."
+	::= { uxCallRtEntry 10}
+
+uxQualityMaxJitterThreshold OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"QualityMaxJitterThreshold of this Call route table."
+	::= { uxCallRtEntry 11}
+	
+uxQualityMinMOSThreshold OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"QualityMinMOSThreshold of this Call route table. Shown in one tenths units"
+	::= { uxCallRtEntry 12}
+uxSGTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxSgEntry 
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                  "This table gives the information about the Signaling groups configured in SBC."
+        ::= {ipTelephony 4}
+
+  uxSGEntry  OBJECT-TYPE
+       SYNTAX   UxSgEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Signaling group table"
+       INDEX { uxSGEntryIndex }
+        ::= {uxSGTable  1}
+
+   UxSgEntry ::= SEQUENCE {
+			uxSGEntryIndex       INTEGER,
+			uxSGDescription		 DisplayString,
+			uxSGType       INTEGER,
+            uxSGAdminState    INTEGER,
+            uxSGServiceState        INTEGER			           	     
+		}	
+uxSGEntryIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Index of the Signaling group table."
+	::= { uxSGEntry 1}
+uxSGDescription OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Description of the Signaling group table."
+	::= { uxSGEntry 2}
+uxSGType OBJECT-TYPE
+	SYNTAX INTEGER{
+					sip(1),
+					isdn(2),
+					cas(3)
+					}
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"If the signaling group is of type SIP/ISDN."
+	::= { uxSGEntry 3}
+uxSGAdminState OBJECT-TYPE
+	SYNTAX INTEGER{
+					disabled(0),
+					enabled(1),
+                    drain(2)
+					}
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"AdminState of the Signaling group table."
+	::= { uxSGEntry 4}
+uxSGServiceState OBJECT-TYPE
+	SYNTAX INTEGER{
+					disabled(0),
+					enabled(1)
+					}
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"ServiceState of the Signaling group table.Applicable to SIP only"
+	::= { uxSGEntry 5}
+uxSipServerTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxSipServerEntry 
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                  "This table gives the information about the SIP servers associated with the SIP signalling groups in SBC."
+        ::= {ipTelephony 5}
+
+uxSipServerEntry  OBJECT-TYPE
+       SYNTAX   UxSipServerEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the SIP Server table"
+       INDEX { uxSGIndex, uxSipServerIndex }
+        ::= {uxSipServerTable  1}
+
+UxSipServerEntry ::= SEQUENCE {
+			uxSGIndex       INTEGER,
+			uxSipServerIndex		 INTEGER,
+			uxSipSvrPriority       INTEGER,
+            uxSipSvrHost    DisplayString,
+            uxSipSvrPort        INTEGER,
+            uxSipSvrTransProtocol    INTEGER			           	     
+		}	
+uxSGIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Index of the Signaling group table to which this SIP server is part of."
+	::= { uxSipServerEntry 1}
+uxSipServerIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Index of the SIP server table."
+	::= { uxSipServerEntry 2}
+uxSipSvrPriority OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Priority of SIP server."
+	::= { uxSipServerEntry 3}
+uxSipSvrHost OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"IP address or FQDN of this SIP server."
+	::= { uxSipServerEntry 4}
+uxSipSvrPort OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Port at which this SIP server responds."
+	::= { uxSipServerEntry 5}
+uxSipSvrTransProtocol OBJECT-TYPE
+	SYNTAX INTEGER{					
+					udp(1),
+					tcp(2),
+					tls(4)					
+					}
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Transport protocol used by this SIP server."
+	::= { uxSipServerEntry 6}
+
+uxChannelStatusTable	OBJECT-TYPE
+	SYNTAX SEQUENCE OF UxChannelStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"The list of all channels state like admin/operational state in the system."
+	::= { ipTelephony 6 }
+		
+uxChannelStatusEntry	OBJECT-TYPE
+	SYNTAX UxChannelStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"An entry containing information about the channels in the system."   
+	INDEX	{ uxChShelfNumber,  uxChSlotNumber, uxChPortNumber, uxChChannelNumber}
+	::= { uxChannelStatusTable 1 }
+	
+UxChannelStatusEntry ::=
+	SEQUENCE {
+		uxChShelfNumber		Unsigned32,
+		uxChSlotNumber		Unsigned32,
+		uxChPortNumber		Unsigned32,
+		uxChChannelNumber		Unsigned32,
+		uxChAdminState  INTEGER,
+		uxChOperState  INTEGER,		
+		uxChInUseSeconds    Counter32		
+		}
+
+uxChShelfNumber OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS  not-accessible
+	STATUS current
+	DESCRIPTION
+		"The shelf number this channel is attached to."
+	::= { uxChannelStatusEntry 1 }
+	
+uxChSlotNumber OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS  not-accessible
+	STATUS current
+	DESCRIPTION
+		"The slot number this channel is attached to."
+	::= { uxChannelStatusEntry 2 }
+
+uxChPortNumber OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS  not-accessible
+	STATUS current
+	DESCRIPTION
+		"The port number this channel is attached to."
+	::= { uxChannelStatusEntry 3 }
+
+uxChChannelNumber OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS  not-accessible
+	STATUS current
+	DESCRIPTION
+		"The (port-based) channel number this channel is attached to."
+	::= { uxChannelStatusEntry 4 }
+
+uxChAdminState OBJECT-TYPE
+	SYNTAX INTEGER{					
+					down(0),
+					up(1)
+					}
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Admin state of the channel, whether adminstraively blocked or not"
+	::= { uxChannelStatusEntry 5 }
+	
+uxChOperState OBJECT-TYPE
+	SYNTAX INTEGER{
+					outOfService(0),
+					idle(1),
+					pending(2),
+					waitingForRoute(3),
+					actionList(4),
+					waitingForDigits(5),
+					remoteSetUp(6),
+					peerSetUp(7),
+					alerting(8),
+					inBandInfo(9),
+					connected(10),
+					toneGeneration(11),
+					releasing(12),
+					aborting(13),
+					resetting(14),
+					up(15),
+					down(16)
+					}
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Operational state of the channel. Indicates all the channel states similar to the channel monitor view on WEBUI."
+	::= { uxChannelStatusEntry 6 }
+
+uxChInUseSeconds OBJECT-TYPE
+	SYNTAX Counter32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of channel inuse Seconds. Indicates the total accumulated channel connected time in seconds"
+	::= { uxChannelStatusEntry 7 }
+	
+uxSGStatsCurrentTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxSGStatsCurrentEntry 
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+			"The SG Current table contains various statistics
+		    being collected for the current 1 hour interval."
+        ::= {ipTelephony 7}
+
+uxSGStatsCurrentEntry  OBJECT-TYPE
+       SYNTAX   UxSGStatsCurrentEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the SG Current table."
+       INDEX {uxSGCurrentIndex}
+        ::= {uxSGStatsCurrentTable  1}
+
+UxSGStatsCurrentEntry ::= SEQUENCE {
+			uxSGCurrentIndex                 INTEGER,
+			uxSGCurrentPeakChannelUsage      PerfCurrentCount,
+			uxSGCurrentCompletedCalls        PerfCurrentCount,
+            uxSGCurrentIncompleteCalls       PerfCurrentCount
+		}	
+		
+uxSGCurrentIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION		
+		"The index value that uniquely identifies the
+		signaling group to which this entry is applicable."
+	::= { uxSGStatsCurrentEntry 1}
+	
+uxSGCurrentPeakChannelUsage OBJECT-TYPE 
+	SYNTAX PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Peak Channel Usage count for the current interval."
+	::= { uxSGStatsCurrentEntry 2}
+
+uxSGCurrentCompletedCalls OBJECT-TYPE
+	SYNTAX PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Completed calls count for the current interval."
+	::= { uxSGStatsCurrentEntry 3}
+	
+uxSGCurrentIncompleteCalls OBJECT-TYPE 
+	SYNTAX PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Incomplete calls count for the current interval."
+	::= { uxSGStatsCurrentEntry 4}
+	
+	
+uxSGStatsIntervalTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxSGStatsIntervalEntry 
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                "The SG interval Table contains various statistics collected 
+                 by each of the Signalling Group over the previous 24 hours."
+        ::= {ipTelephony 8}
+
+uxSGStatsIntervalEntry  OBJECT-TYPE
+       SYNTAX   UxSGStatsIntervalEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Signaling group Interval table"
+       INDEX { uxSGIntervalIndex, uxSGIntervalNumber}
+        ::= {uxSGStatsIntervalTable  1}
+
+UxSGStatsIntervalEntry ::= SEQUENCE {
+			uxSGIntervalIndex                 INTEGER,
+			uxSGIntervalNumber                INTEGER,
+			uxSGIntervalPeakChannelUsage      PerfIntervalCount,
+			uxSGIntervalCompletedCalls        PerfIntervalCount,
+            uxSGIntervalIncompleteCalls       PerfIntervalCount
+		}	
+		
+uxSGIntervalIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The index value that uniquely identifies the
+		signaling group to which this entry is applicable."
+	::= { uxSGStatsIntervalEntry 1}
+	
+uxSGIntervalNumber OBJECT-TYPE
+    SYNTAX  INTEGER (1..24)
+    MAX-ACCESS  read-only 
+    STATUS  current
+    DESCRIPTION
+        "A number between 1 and 24, where 1 is the most
+        recently completed 1 hour interval and 24 is
+        the 1 hour interval completed 23 hours prior to interval 1."
+    ::= { uxSGStatsIntervalEntry 2 }
+
+uxSGIntervalPeakChannelUsage OBJECT-TYPE 
+	SYNTAX PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Peak Channel Usage count." 
+	::= { uxSGStatsIntervalEntry 3}
+
+uxSGIntervalCompletedCalls OBJECT-TYPE 
+	SYNTAX PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Completed calls count."
+	::= { uxSGStatsIntervalEntry 4}
+	
+uxSGIntervalIncompleteCalls OBJECT-TYPE 
+	SYNTAX PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Incomplete calls count." 
+	::= { uxSGStatsIntervalEntry 5}
+
+
+uxCallRtStatsCurrentTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF UxCallRtStatsCurrentEntry 
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+       "The Call Route Current table contains various 
+	   statistics collected for the current 1 hour interval." 
+        ::= {ipTelephony 10}
+
+uxCallRtStatsCurrentEntry  OBJECT-TYPE
+       SYNTAX   UxCallRtStatsCurrentEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Call Route Current table"
+       INDEX { uxCallRtCurrentTablesIndex, uxCallRtCurrentEntryIndex}
+        ::= {uxCallRtStatsCurrentTable  1}
+
+UxCallRtStatsCurrentEntry ::= SEQUENCE {
+			uxCallRtCurrentTablesIndex         INTEGER,		
+			uxCallRtCurrentEntryIndex          INTEGER,
+			uxCallRtCurrentRuleUsage           PerfCurrentCount		
+		}	
+		
+uxCallRtCurrentTablesIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The index value that uniquely identifies the
+		call route  table to which this entry is applicable."
+	::= { uxCallRtStatsCurrentEntry 1}
+
+uxCallRtCurrentEntryIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The index value that uniquely identifies the
+		call route entry to which this entry is applicable."
+	::= { uxCallRtStatsCurrentEntry 2}
+
+uxCallRtCurrentRuleUsage OBJECT-TYPE
+	SYNTAX PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of times this call route has been 
+		selected for a call."
+	::= { uxCallRtStatsCurrentEntry 3}
+	
+
+uxCallRtStatsTotalTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF UxCallRtStatsTotalEntry 
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+       "The Call Route Total table contains cumulative 
+	   call route usage statistics for the past 24 hours."	  			   
+        ::= {ipTelephony 12}
+
+uxCallRtStatsTotalEntry  OBJECT-TYPE
+       SYNTAX   UxCallRtStatsTotalEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Call Route Total table"
+       INDEX { uxCallRtTotalTablesIndex, uxCallRtTotalEntryIndex}
+        ::= {uxCallRtStatsTotalTable  1}
+
+UxCallRtStatsTotalEntry ::= SEQUENCE {
+			uxCallRtTotalTablesIndex         INTEGER,		
+			uxCallRtTotalEntryIndex          INTEGER,
+			uxCallRtTotalRuleUsage           PerfTotalCount			
+		}	
+		
+uxCallRtTotalTablesIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The index value that uniquely identifies the
+		call route  table to which this entry is applicable."
+	::= { uxCallRtStatsTotalEntry 1}
+	
+uxCallRtTotalEntryIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The index value that uniquely identifies the
+		call route  entry ."
+	::= { uxCallRtStatsTotalEntry 2}
+
+uxCallRtTotalRuleUsage OBJECT-TYPE
+	SYNTAX PerfTotalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of times this call route has been 
+		selected for a call."
+	::= { uxCallRtStatsTotalEntry 3}
+
+
+uxCallRtStatsIntervalTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxCallRtStatsIntervalEntry 
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The Call Route Interval table contains various 
+			statistics collected by each call route over  
+			previous 24 hours. The past 24 hours are broken into 24 
+			completed 1 hour intervals.  Each row in this table 
+		    represents one such interval."		   
+        ::= {ipTelephony 11}
+
+uxCallRtStatsIntervalEntry  OBJECT-TYPE
+       SYNTAX   UxCallRtStatsIntervalEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Call Route Interval table."
+       INDEX { uxCallRtIntervalTablesIndex, uxCallRtIntervalEntryIndex, uxCallRtIntervalNumber}
+        ::= {uxCallRtStatsIntervalTable  1}
+
+UxCallRtStatsIntervalEntry ::= SEQUENCE {
+			uxCallRtIntervalTablesIndex         INTEGER,
+			uxCallRtIntervalEntryIndex          INTEGER,
+            uxCallRtIntervalNumber              INTEGER,			
+			uxCallRtIntervalRuleUsage           PerfIntervalCount		
+		}	
+		
+uxCallRtIntervalTablesIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The index value that uniquely identifies the
+		call route  table to which this entry is applicable."
+	::= { uxCallRtStatsIntervalEntry 1}
+
+uxCallRtIntervalEntryIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The index value that uniquely identifies the
+		call route  table."
+	::= { uxCallRtStatsIntervalEntry 2}
+
+uxCallRtIntervalNumber OBJECT-TYPE
+	SYNTAX INTEGER (1..24)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"A number between 1 and 24, where 1 is the most
+        recently completed 1 hour interval and 24 is
+        the 1 hour interval completed 23 hours prior to 
+		interval 1."
+	::= { uxCallRtStatsIntervalEntry 3}
+	
+uxCallRtIntervalRuleUsage OBJECT-TYPE
+	SYNTAX PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The number of times this call route has been selected for a call."   
+	::= { uxCallRtStatsIntervalEntry 4}
+	
+uxLicenseStatsIntervalTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF UxLicenseStatsIntervalEntry 
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The License Statistics Interval table contains various 
+		 license statitics collected over the past 24 hours.
+		 The past 24 hours are broken into 24 completed 1 hour 
+		 intervals. Each row in this table represents one such 
+		 interval."		 
+        ::= {ipTelephony 13}
+
+uxLicenseStatsIntervalEntry  OBJECT-TYPE
+       SYNTAX   UxLicenseStatsIntervalEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the System Usage Interval table"
+       INDEX { uxLicenseIntervalNumber }
+        ::= {uxLicenseStatsIntervalTable  1}
+
+UxLicenseStatsIntervalEntry ::= SEQUENCE {
+			uxLicenseIntervalNumber           INTEGER,		
+			uxLicenseIntervalPeakSIPCall              PerfTotalCount,
+			uxLicenseIntervalPeakSIPRegistration      PerfTotalCount,
+			uxLicenseIntervalPeakTDMChannel           PerfTotalCount,
+			uxLicenseIntervalPeakDSP                  PerfTotalCount
+		}	
+		
+uxLicenseIntervalNumber OBJECT-TYPE
+	SYNTAX INTEGER (1..24)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"A number between 1 and 24 where 1 is the most
+        recently completed 1 hour interval and 24 is
+        the 1 hour interval completed 23 hours prior 
+		to interval 1."
+	::= { uxLicenseStatsIntervalEntry 1}
+
+uxLicenseIntervalPeakSIPCall OBJECT-TYPE
+	SYNTAX PerfTotalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Peak value of used SIP call licenses."
+	::= { uxLicenseStatsIntervalEntry 2}
+
+uxLicenseIntervalPeakSIPRegistration OBJECT-TYPE
+	SYNTAX PerfTotalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Peak value of used SIP registration licenses."
+	::= { uxLicenseStatsIntervalEntry 3}
+uxLicenseIntervalPeakTDMChannel OBJECT-TYPE
+	SYNTAX PerfTotalCount
+	MAX-ACCESS read-only
+	STATUS deprecated
+	DESCRIPTION
+		"Peak value of used TDM channel licenses. 'No such object' will be returned if this attribute is requested."
+	::= { uxLicenseStatsIntervalEntry 4}
+
+uxLicenseIntervalPeakDSP OBJECT-TYPE
+	SYNTAX PerfTotalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Peak value of used DSP licenses."
+	::= { uxLicenseStatsIntervalEntry 5}
+	
+uxSIPRegistrationsStatsIntervalTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF UxSIPRegistrationsStatsIntervalEntry 
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The SIP Registrations Interval table contains various 
+		 statitics collected by each registrar over the previous 
+		 24 hours. The past 24 hours are broken into 24 
+		 completed 1 hour intervals.  Each row in this table 
+		 represents one such interval."		 
+        ::= {ipTelephony 16}
+
+uxSIPRegistrationsStatsIntervalEntry  OBJECT-TYPE
+       SYNTAX   UxSIPRegistrationsStatsIntervalEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the SIP Registrations Interval table"
+       INDEX { uxSIPRegistrationsIntervalIndex, uxSIPRegistrationsIntervalNumber}
+        ::= {uxSIPRegistrationsStatsIntervalTable  1}
+
+UxSIPRegistrationsStatsIntervalEntry ::= SEQUENCE {
+			uxSIPRegistrationsIntervalIndex           INTEGER,		
+			uxSIPRegistrationsIntervalNumber          INTEGER,		
+			uxSIPRegistrationsIntervalPeakUsers       PerfIntervalCount
+
+		}	
+
+uxSIPRegistrationsIntervalIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Identifies the SIP Registrations Table."
+	::= { uxSIPRegistrationsStatsIntervalEntry 1}
+		
+uxSIPRegistrationsIntervalNumber OBJECT-TYPE
+	SYNTAX INTEGER (1..24)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"A number between 1 and 24 where 1 is the most
+        recently completed 1 hour interval and 24 is
+        the 1 hour interval completed 23 hours prior 
+		to interval 1."
+	::= { uxSIPRegistrationsStatsIntervalEntry 2}
+
+uxSIPRegistrationsIntervalPeakUsers OBJECT-TYPE
+	SYNTAX PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Peak number of registered endpoints in the registrar."
+	::= { uxSIPRegistrationsStatsIntervalEntry 3}
+	
+
+uxSIPRegistrationsStatsCurrentTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF UxSIPRegistrationsStatsCurrentEntry 
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The SIP Registrations Curent table contains various 
+		 statitics collected for the current 1 hour interval."		 
+        ::= {ipTelephony 15}
+
+uxSIPRegistrationsStatsCurrentEntry  OBJECT-TYPE
+       SYNTAX   UxSIPRegistrationsStatsCurrentEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the SIP Registrations Current table."
+       INDEX { uxSIPRegistrationsCurrentIndex }
+        ::= {uxSIPRegistrationsStatsCurrentTable  1}
+
+UxSIPRegistrationsStatsCurrentEntry ::= SEQUENCE {
+			uxSIPRegistrationsCurrentIndex              INTEGER,		
+			uxSIPRegistrationsCurrentPeakUsers          PerfCurrentCount
+
+		}	
+
+uxSIPRegistrationsCurrentIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Identifies the SIP Registrations Table."
+	::= { uxSIPRegistrationsStatsCurrentEntry 1}
+		
+
+uxSIPRegistrationsCurrentPeakUsers OBJECT-TYPE
+	SYNTAX PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Peak number of registered endpoints in the registrar."
+	::= { uxSIPRegistrationsStatsCurrentEntry 2}
+
+	
+uxEthernetPortStatsIntervalTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF UxEthernetPortStatsIntervalEntry 
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The Ethernet Port Stats table contains various statistics
+		 collected by each interface over the previoud 24 hours 
+		 of operation. The past 24 hours are broken into 24 
+		 completed 1 hour intervals.  Each row in this table 
+		 represents one such interval ."		  			   
+        ::= {ipTelephony 17}
+
+uxEthernetPortStatsIntervalEntry  OBJECT-TYPE
+       SYNTAX   UxEthernetPortStatsIntervalEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Ethernet Port Stats Interval table"
+       INDEX { uxEthernetPortIntervalIndex,uxEthernetPortInterval }
+        ::= {uxEthernetPortStatsIntervalTable  1}
+
+UxEthernetPortStatsIntervalEntry ::= SEQUENCE {
+			uxEthernetPortIntervalIndex          INTEGER,		
+			uxEthernetPortInterval               INTEGER,
+			uxIntervalifInUcastPkts 			PerfIntervalCount,
+			uxIntervalifInBroadcastPkts 		PerfIntervalCount,
+			uxIntervalifInMulticastPkts 		PerfIntervalCount,
+			uxIntervalifInOctets				PerfIntervalCount,
+			uxIntervalifInErrors 				PerfIntervalCount,
+			uxIntervalifInDiscards				PerfIntervalCount,
+			uxIntervalifInUnknwnProto 			PerfIntervalCount,	
+			uxIntervalifInUndersizedPkts		PerfIntervalCount,
+			uxIntervalifInOverSizedPkts			PerfIntervalCount,
+			uxIntervalifInFCSErrors				PerfIntervalCount,
+			uxIntervalifInAlignErrors			PerfIntervalCount,
+			uxIntervalifInFragmentedPkts		PerfIntervalCount,
+			uxIntervalifOutUcastPkts			PerfIntervalCount,
+			uxIntervalifOutOctets				PerfIntervalCount,
+			uxIntervalifOutBroadcastPkts		PerfIntervalCount,
+			uxIntervalifOutMulticastPkts		PerfIntervalCount,
+			uxIntervalifOutErrors				PerfIntervalCount,
+			uxIntervalifOutDiscards				PerfIntervalCount,
+			uxIntervalifOutLateCollissions		PerfIntervalCount,
+			uxIntervalifOutDeferredTransmissions PerfIntervalCount
+		}	
+		
+uxEthernetPortIntervalIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The Index value which identifies Ethernet Interface."
+	::= { uxEthernetPortStatsIntervalEntry 1}
+
+uxEthernetPortInterval OBJECT-TYPE
+	SYNTAX INTEGER (1..24)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"A number between 1 and 24 where 1 is the most
+        recently completed 1 hour interval and 24 is
+        the 1 hour interval completed 23 hours prior 
+		to interval 1."
+	::= { uxEthernetPortStatsIntervalEntry 2}  
+	
+uxIntervalifInUcastPkts OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of received unicast packets on this port."
+	::= { uxEthernetPortStatsIntervalEntry 3}  
+	
+uxIntervalifInBroadcastPkts OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of received broadcast packets on this port."
+	::= { uxEthernetPortStatsIntervalEntry 4}  
+	
+uxIntervalifInMulticastPkts OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of received multicast packets on this port."
+	::= { uxEthernetPortStatsIntervalEntry 5}  
+	
+uxIntervalifInOctets OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of received octets on this port."
+	::= { uxEthernetPortStatsIntervalEntry 6} 
+	
+uxIntervalifInErrors OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 7} 
+	
+uxIntervalifInDiscards OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of discard errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 8} 
+	
+uxIntervalifInUnknwnProto OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Unknown Protocol errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 9} 
+	
+uxIntervalifInUndersizedPkts OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Undersized Packet errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 10} 
+	
+uxIntervalifInOverSizedPkts OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Oversized Packet errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 11} 
+	
+uxIntervalifInFCSErrors OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of discard Frame Check Sequence errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 12} 
+	
+uxIntervalifInAlignErrors OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Align errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 13} 
+	
+	
+uxIntervalifInFragmentedPkts OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Fragmented Packet errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 14} 
+	
+uxIntervalifOutUcastPkts OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of transmitted unicast packets on this port."
+	::= { uxEthernetPortStatsIntervalEntry 15} 
+	
+uxIntervalifOutOctets OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of transmitted octets on this port."
+	::= { uxEthernetPortStatsIntervalEntry 16} 
+	
+uxIntervalifOutBroadcastPkts OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of transmitted broadcast packets on this port."
+	::= { uxEthernetPortStatsIntervalEntry 17} 
+	
+uxIntervalifOutMulticastPkts OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of transmitted multicast packets on this port."
+	::= { uxEthernetPortStatsIntervalEntry 18} 
+	
+uxIntervalifOutErrors OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 19} 
+	
+uxIntervalifOutDiscards OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of discard errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 20} 
+	
+uxIntervalifOutLateCollissions OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Late Collision errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 21} 
+	
+uxIntervalifOutDeferredTransmissions OBJECT-TYPE
+	SYNTAX 	PerfIntervalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Deferred Transmission errors detected on this port."
+	::= { uxEthernetPortStatsIntervalEntry 22} 
+	
+uxEthernetPortStatsCurrentTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF UxEthernetPortStatsCurrentEntry 
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The Ethernet Port Stats table contains various statistics
+		 being collected for the 1 hour interval."		  			   
+        ::= {ipTelephony 18}
+
+uxEthernetPortStatsCurrentEntry  OBJECT-TYPE
+       SYNTAX   UxEthernetPortStatsCurrentEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Ethernet Port Stats Interval table"
+       INDEX { uxEthernetPortCurrentIndex}
+        ::= {uxEthernetPortStatsCurrentTable  1}
+
+UxEthernetPortStatsCurrentEntry ::= SEQUENCE {
+			uxEthernetPortCurrentIndex          INTEGER,		
+			uxCurrentifInUcastPkts 				PerfCurrentCount,
+			uxCurrentifInBroadcastPkts 			PerfCurrentCount,
+			uxCurrentifInMulticastPkts 			PerfCurrentCount,
+			uxCurrentifInOctets					PerfCurrentCount,
+			uxCurrentifInErrors 				PerfCurrentCount,
+			uxCurrentifInDiscards				PerfCurrentCount,
+			uxCurrentifInUnknwnProto 			PerfCurrentCount,	
+			uxCurrentifInUndersizedPkts			PerfCurrentCount,
+			uxCurrentifInOverSizedPkts			PerfCurrentCount,
+			uxCurrentifInFCSErrors				PerfCurrentCount,
+			uxCurrentifInAlignErrors			PerfCurrentCount,
+			uxCurrentifInFragmentedPkts			PerfCurrentCount,
+			uxCurrentifOutUcastPkts				PerfCurrentCount,
+			uxCurrentifOutOctets				PerfCurrentCount,
+			uxCurrentifOutBroadcastPkts			PerfCurrentCount,
+			uxCurrentifOutMulticastPkts			PerfCurrentCount,
+			uxCurrentifOutErrors				PerfCurrentCount,
+			uxCurrentifOutDiscards				PerfCurrentCount,
+			uxCurrentifOutLateCollissions		PerfCurrentCount,
+			uxCurrentifOutDeferredTransmissions PerfCurrentCount
+		}	
+		
+uxEthernetPortCurrentIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The Index value which identifies Ethernet Interface."
+	::= { uxEthernetPortStatsCurrentEntry 1}
+	
+uxCurrentifInUcastPkts OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of received unicast packets on this port."
+	::= { uxEthernetPortStatsCurrentEntry 2}  
+	
+uxCurrentifInBroadcastPkts OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of received broadcast packets on this port."
+	::= { uxEthernetPortStatsCurrentEntry 3}  
+	
+uxCurrentifInMulticastPkts OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of received multicast packets on this port."
+	::= { uxEthernetPortStatsCurrentEntry 4}  
+	
+uxCurrentifInOctets OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of received octets on this port."
+	::= { uxEthernetPortStatsCurrentEntry 5} 
+	
+uxCurrentifInErrors OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 6} 
+	
+uxCurrentifInDiscards OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of discard errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 7} 
+	
+uxCurrentifInUnknwnProto OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Unknown Protocol errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 8} 
+	
+uxCurrentifInUndersizedPkts OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Undersized Packet errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 9} 
+	
+uxCurrentifInOverSizedPkts OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Oversized Packet errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 10} 
+	
+uxCurrentifInFCSErrors OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of discard Frame Check Sequence errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 11} 
+	
+uxCurrentifInAlignErrors OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Align errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 12} 
+	
+	
+uxCurrentifInFragmentedPkts OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Fragmented Packet errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 13} 
+	
+uxCurrentifOutUcastPkts OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of transmitted unicast packets on this port."
+	::= { uxEthernetPortStatsCurrentEntry 14} 
+	
+uxCurrentifOutOctets OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of transmitted octets on this port."
+	::= { uxEthernetPortStatsCurrentEntry 15} 
+	
+uxCurrentifOutBroadcastPkts OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of transmitted broadcast packets on this port."
+	::= { uxEthernetPortStatsCurrentEntry 16} 
+	
+uxCurrentifOutMulticastPkts OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of transmitted multicast packets on this port."
+	::= { uxEthernetPortStatsCurrentEntry 17} 
+	
+uxCurrentifOutErrors OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 18} 
+	
+uxCurrentifOutDiscards OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of discard errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 19} 
+	
+uxCurrentifOutLateCollissions OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Late Collision errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 20} 
+	
+uxCurrentifOutDeferredTransmissions OBJECT-TYPE
+	SYNTAX 	PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of Deferred Transmission errors detected on this port."
+	::= { uxEthernetPortStatsCurrentEntry 21} 
+	
+uxGlobalCallCounters  OBJECT IDENTIFIER ::= {ipTelephony 19}
+
+uxNumCallAttempts OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Total number of call attempts system wide since system came up."
+	::= { uxGlobalCallCounters 1}
+
+uxNumCallSucceeded OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Total number of successfull calls system wide since system came up."
+	::= { uxGlobalCallCounters 2}
+
+uxNumCallFailed OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Total number of failed calls system wide since system came up."
+	::= { uxGlobalCallCounters 3}
+
+uxNumCallCurrentlyUp OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of currently connected calls system wide."
+	::= { uxGlobalCallCounters 4}
+
+uxNumCallCurrentlyTransient OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of transient calls (setup, progress, alerting state) system wide."
+	::= { uxGlobalCallCounters 5}
+
+uxNumInternalGlares OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of internal glares system wide since system came up."
+	::= { uxGlobalCallCounters 6}
+
+uxNumExternalGlares OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of external glares system wide since system came up."
+	::= { uxGlobalCallCounters 7}
+
+uxNumCallAbandonedNoTrunk OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of rejected calls due to no channel available system wide since system came up."
+	::= { uxGlobalCallCounters 8}
+
+uxNumCallUnAnswered OBJECT-TYPE
+	SYNTAX INTEGER
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of unanswered calls system wide since system came up."
+	::= { uxGlobalCallCounters 9}
+
+END

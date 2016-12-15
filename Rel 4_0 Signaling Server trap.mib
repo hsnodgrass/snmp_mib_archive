@@ -1,0 +1,345 @@
+SS-TRAP-MIB
+    --FORCE-INCLUDE <mib.h>
+    --FORCE-INCLUDE <snmpdefs.h>
+    --FORCE-INCLUDE <snmpstat.h>
+
+
+DEFINITIONS ::= BEGIN
+
+--  TITLE:  CS 1000 Signaling Server Trap MIB
+--
+--  Author: Joseph Abraham
+--
+--  This specification has been successfully compiled with the following
+--  MIB compilers:
+--    a) Wind River Systems  Emissary SNMP MIB Compiler, version 7.0
+--
+--  Note:
+--  This document is maintained as a text file.
+
+IMPORTS
+	OBJECT-TYPE, enterprises, MODULE-IDENTITY    FROM SNMPv2-SMI
+	RowPointer, DateAndTime                      FROM SNMPv2-TC
+	TRAP-TYPE                                    FROM RFC-1215
+	DisplayString                                FROM RFC1213-MIB;
+
+sstrapmib	MODULE-IDENTITY
+	LAST-UPDATED "0302191600Z"
+	ORGANIZATION "Nortel Networks"
+	CONTACT-INFO
+		"Postal: Nortel Networks
+		250 Sidney Street
+		Belleville ON K8P 3Z3
+		Tel   : +1 613 967 5000"
+	DESCRIPTION
+		"The Signaling Server SNMP trap MIB."
+	::= { sigserv 50 }
+
+-- LAST-UPDATED field is in UTC Time Format
+--   YYMMDDHHMMZ
+--   where: YY - last two digits of year       MM - month (01 through 12)
+--          DD - day of month (01 through 31)  HH - hours (00 through 23)
+--          MM - minutes (00 through 59)
+--           Z - the character "Z" denotes Greenwich Mean Time (GMT).
+
+-- For example, "0302191600Z" represents 4:00pm GMT on 19 February 2003.
+
+nt                      OBJECT IDENTIFIER ::= { enterprises 562 }
+--  nt. The name under which 562 is registered with IANA.
+
+meridian                OBJECT IDENTIFIER ::= { nt 3 }
+--  Meridian. The value assigned for Meridian.
+
+sigserv                 OBJECT IDENTIFIER ::= { meridian 21 }
+--  sigserv. The value assigned for Signaling Server.
+
+ssmib                   OBJECT IDENTIFIER ::= { sigserv 5 }
+
+fm-Info                 OBJECT IDENTIFIER ::= { ssmib 4 }
+
+
+--  General definitions
+
+AlarmSeverity           ::= INTEGER {
+                                        indeterminate   (0),
+                                        critical        (1),
+                                        major           (2),
+                                        minor           (3),
+                                        warning         (4),
+                                        cleared         (5)
+                                        }
+
+AlarmType               ::= INTEGER {
+                                        communications          (1),
+                                        qualityOfService        (2),
+                                        processing              (3),
+                                        equipment               (4),
+                                        security                (5),
+                                        operator                (6),
+                                        debug                   (7),
+                                        unknown                 (8)
+                                        }
+
+
+fmSSAlarmTraps         OBJECT IDENTIFIER       ::= { fm-Info 1 }
+
+
+--  Fault management alarm types
+
+fmSScriticalAlarm 	TRAP-TYPE
+	ENTERPRISE 	fmSSAlarmTraps
+	VARIABLES 	{ componentRowPointer, componentName, eventTime,
+			activeListStatus, severity, alarmType, probableCause,
+			ntpIndex, commentData }
+	DESCRIPTION
+			"This trap is used to provide a real time indication
+			of a critical alarm condition. The variables listed
+			in VARIABLES clause are defined in `fmSSAlarmInfo'
+			group are present in all critical alarms."
+	::= 1
+
+fmSSmajorAlarm		TRAP-TYPE
+	ENTERPRISE 	fmSSAlarmTraps
+	VARIABLES 	{ componentRowPointer, componentName, eventTime,
+			activeListStatus, severity, alarmType, probableCause,
+			ntpIndex, commentData }
+	DESCRIPTION
+			"This trap is used to provide a real time indication
+			of a major alarm condition. The variables listed in
+			VARIABLES clause are defined in `fmSSAlarmInfo' group
+			are present in all major alarms."
+	::= 2
+
+fmSSminorAlarm 		TRAP-TYPE
+	ENTERPRISE 	fmSSAlarmTraps
+	VARIABLES 	{ componentRowPointer, componentName, eventTime,
+			activeListStatus, severity, alarmType, probableCause,
+			ntpIndex, commentData }
+	DESCRIPTION
+			"This trap is used to provide a real time indication
+			of a minor alarm condition. The variables listed in
+			VARIABLES clause are defined in `fmSSAlarmInfo' group
+			are present in all minor alarms."
+	::= 3
+
+fmSSwarningAlarm 	TRAP-TYPE
+	ENTERPRISE 	fmSSAlarmTraps
+	VARIABLES 	{ componentRowPointer, componentName, eventTime,
+			activeListStatus, severity, alarmType, probableCause,
+			ntpIndex, commentData }
+	DESCRIPTION
+			"This trap is used to provide a real time indication
+			of a warning alarm condition. The variables listed in
+			VARIABLES clause are defined in `fmSSAlarmInfo' group
+			are present in all warning alarms."
+	::= 4
+
+fmSSclearedAlarm 	TRAP-TYPE
+	ENTERPRISE 	fmSSAlarmTraps
+	VARIABLES 	{ componentRowPointer, componentName, eventTime,
+			activeListStatus, severity, alarmType, probableCause,
+			ntpIndex, commentData }
+	DESCRIPTION
+			"This trap is used to provide a real time indication
+			of a cleared alarm. The variables listed in VARIABLES
+			clause are defined in `fmSSAlarmInfo' group are present
+			in all cleared alarms."
+	::= 5
+
+fmSSindeterminateAlarm 	TRAP-TYPE
+	ENTERPRISE 	fmSSAlarmTraps
+	VARIABLES 	{ componentRowPointer, componentName, eventTime,
+			activeListStatus, severity, alarmType, probableCause,
+			ntpIndex, commentData }
+	DESCRIPTION
+			"This trap is used to provide a real time indication
+			of a indeterminate alarm condition. The variables
+			listed in VARIABLES clause are defined in
+			`fmSSAlarmInfo' group are present in all
+			indeterminate alarms."
+	::= 6
+
+
+fmSSAlarmInfo OBJECT IDENTIFIER ::= { fmSSAlarmTraps 7}
+
+componentRowPointer 	OBJECT-TYPE
+	SYNTAX 		RowPointer
+	MAX-ACCESS 	not-accessible
+	STATUS 		current
+	DESCRIPTION
+			"A pointer to the RowStatus variable of the component
+			emitting the alarm, on a system where a component is
+			generally a table entry."
+	::= { fmSSAlarmInfo 1 }
+
+componentName 		OBJECT-TYPE
+	SYNTAX 		DisplayString
+	MAX-ACCESS 	not-accessible
+	STATUS 		current
+	DESCRIPTION
+			"This convention is used where each component can be
+			uniquely referenced by a type and instance name
+			(at the console interface also). The textual content
+			of this may be limited to the string representation
+			of the OID."
+	::= { fmSSAlarmInfo 2 }
+
+eventTime 		OBJECT-TYPE
+	SYNTAX 		DateAndTime
+	MAX-ACCESS 	not-accessible
+	STATUS 		current
+	DESCRIPTION
+			"The date and time at which the alarmed event occurred."
+	::= { fmSSAlarmInfo 3 }
+
+activeListStatus 	OBJECT-TYPE
+	SYNTAX 		INTEGER { message(0), set(1), clear(2) }
+	MAX-ACCESS 	not-accessible
+	STATUS 		current
+	DESCRIPTION
+			"The active alarm list status. This may be used by the
+			Manager to add (on receiving a set) and delete (on
+			receiving a clear) alarms from the alarm display."
+	::= { fmSSAlarmInfo 4 }
+
+severity 		OBJECT-TYPE
+	SYNTAX 		AlarmSeverity
+	MAX-ACCESS 	not-accessible
+	STATUS 		current
+	DESCRIPTION
+			"The severity of the alarm which should indicate what
+			priority should be given for fixing this problem. All
+			values are OSI-defined; refer to CCITT X.733/ISO 10164-4
+			for a more complete description."
+	::= { fmSSAlarmInfo 5 }
+
+alarmType 		OBJECT-TYPE
+	SYNTAX		AlarmType
+	MAX-ACCESS 	not-accessible
+	STATUS 		current
+	DESCRIPTION
+			"The alarm type field as defined by OSI which is used
+			to indicate a broad category of what is wrong. The
+			first 6 values are OSI-defined; refer to CCITT X.733/ISO
+			10164-4 (for the first 5) and CCITT X.736/ISO 10164-4
+			(for the last) for a more complete description. The
+			value 'operator' is used when an alarm is issued due
+			to an operator command. The values 'debug' and 'unknown'
+			are for compatibility with older switches and are used
+			for debugging alarms and for those which do not fit
+			any of the above, respectively."
+	::= { fmSSAlarmInfo 6}
+
+probableCause 		OBJECT-TYPE
+	SYNTAX 		INTEGER {
+-- Start of OSI-defined values
+-- (see X.733/ ISO 10165-3)
+			lossOfSignal(0),
+			lossOfFrame(1),
+			framingError(2),
+			localTransmissionError(3),
+			remoteTransmissionError(4),
+			callEstablishmentError(5),
+			degradedSignal(6),
+			commSubsystemFailure(7),
+			commProtocolError(8),
+			lanError(9),
+			dteDceInterfaceError(10),
+			responseTimeExcessive(20),
+			queueSizeExceeded(21),
+			bandwidthReduced(22),
+			retransmissionRateReduced(23),
+			thresholdCrossed(24),
+			performanceDegraded(25),
+			congestion(26),
+			atOrNearCapacity(27),
+			storageCapacityProblem(40),
+			versionMismatch(41),
+			corruptData(42),
+			cpuCyclesLimitExceeded(43),
+			softwareError(44),
+			softwareProgramError(45),
+			softwareProgramTermination(46),
+			fileError(47),
+			outOfMemory(48),
+			underlyingResourceUnavail(49),
+			applicationSubsystemFailure(50),
+			configurationError(51),
+			powerProblem(60),
+			timingProblem(61),
+			processorProblem(62),
+			datasetModemError(63),
+			multiplexorProblem(64),
+			receiverFailure(65),
+			transmitterFailure(66),
+			outputDeviceError(67),
+			inputDeviceError(68),
+			ioDeviceError(69),
+			equipmentFailure(70),
+			adapterError(71),
+-- OSI-defined values continued (see X.736)
+			duplicateInfo(80),
+			infoMissing(81),
+			infoModification(82),
+			infoOutOfSequence(83),
+			unexpectedInfo(84),
+			denialOfService(90),
+			outOfService(91),
+			proceduralError(92),
+			otherOperational(93),
+			cableTamper(100),
+			intrusionDetection(101),
+			otherPhysical(102),
+			authenticationFailure(110),
+			breachOfConfidence(111),
+			nonRepudiationFailure(112),
+			unauthorizedMAX-ACCESS(113),
+			otherSecurityService(114),
+			delayedInfo(120),
+			keyExpired(121),
+			outOfHoursActivity(122),
+-- Start of non-OSI defined values
+			operationalCondition(200),
+			debugging(201),
+			unknown(202),
+			inactiveVirtualCircuit(203),
+			networkServerIntervention(204)
+			}
+	MAX-ACCESS 	not-accessible
+	STATUS 		current
+	DESCRIPTION
+			"The probable cause for the alarm which usually
+			qualifies the Alarm Type field. Most values are
+			OSI-defined; refer to CCITT X.733 and X.736
+			(ISO 10164-4 and 10164-7) for a more complete
+			description."
+	::= { fmSSAlarmInfo 7}
+
+ntpIndex 		OBJECT-TYPE
+	SYNTAX 		DisplayString(SIZE(8))
+	MAX-ACCESS 	not-accessible
+	STATUS 		current
+	DESCRIPTION
+			"An 8-digit code which is an index into an NTP to
+			provide more description of the alarm and possible
+			actions to take. The first 4 digits indicate a 'group'
+			of alarms (belonging to a particular subsystem or
+			component, etc.). The last 4 digits are a subindex
+			arbitrarily assigned by the application which is
+			responsible for them."
+	::= { fmSSAlarmInfo 8 }
+
+commentData 		OBJECT-TYPE
+	SYNTAX 		DisplayString (SIZE(0..750))
+	MAX-ACCESS 	not-accessible
+	STATUS 		current
+	DESCRIPTION
+			"Additional textual information for the network
+			operator to use. It contains only ASCII characters.
+			Note: The total number of bytes in commentData,
+			operatorData and internalData may not exceed 750 bytes."
+
+	::= { fmSSAlarmInfo 9}
+
+END
+

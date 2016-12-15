@@ -1,0 +1,452 @@
+ADTRAN-ATLAS-MODULE-MIB         DEFINITIONS ::= BEGIN
+
+-- TITLE:               Atlas Module MIB
+-- FILENAME:            atmod.mib
+-- PARTNUMBER:
+-- AUTHOR:              Jason Schock
+
+-- HISTORY:
+--   03/11/2002	 Created.
+
+-- The Atlas Module MIB contains ASN.1 objects that store general
+-- information common to all modules supported in the Atlas family
+-- of products.
+
+-- This MIB replaces atgenoc.mib by creating a single table indexed
+-- by slot with the combined functionality of adATLASGenOCIfTable and
+-- adATLASGenOCStatusTable.
+
+IMPORTS
+    enterprises
+        FROM RFC1155-SMI
+    OBJECT-TYPE
+        FROM RFC-1212
+    ifIndex, DisplayString
+        FROM RFC1213-MIB
+    TRAP-TYPE
+        FROM RFC-1215
+	adATLASUnitSlotAddress, adATLASUnitPortAddress, adATLASUnitFPStatus
+        FROM ADTRAN-ATLAS-UNIT-MIB;
+
+-- OBJECT IDENTIFIERS
+
+adtran                  OBJECT IDENTIFIER ::= { enterprises 664 }
+adMgmt                  OBJECT IDENTIFIER ::= { adtran 2 }
+adATLASmg               OBJECT IDENTIFIER ::= { adMgmt 154 }
+adGenATLASmg            OBJECT IDENTIFIER ::= { adATLASmg 1 }
+adATLASModulemg         OBJECT IDENTIFIER ::= { adGenATLASmg 6 }
+
+adATLASModuleInfoNumber      OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This value indicates the number of entries found in the
+        Atlas Module Information Table and corresponds to the
+        number of physical slots in the particular Atlas product."
+
+    ::= { adATLASModulemg 1}
+
+-- The Atlas Module Information Table
+
+adATLASModuleInfoTable       OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLASModuleInfoEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The Atlas Module Information Table"
+
+    ::= { adATLASModulemg 2}
+
+adATLASModuleInfoEntry       OBJECT-TYPE
+    SYNTAX  AdATLASModuleInfoEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the Atlas Module Information Table"
+    INDEX   { adATLASModuleInfoIndex }
+
+    ::= { adATLASModuleInfoTable 1}
+
+AdATLASModuleInfoEntry ::=
+    SEQUENCE {
+        adATLASModuleInfoIndex         INTEGER,
+        adATLASModuleInfoNumIfs        INTEGER,
+        adATLASModuleInfoNumRsrcs      INTEGER,
+        adATLASModuleInfoOID           OBJECT IDENTIFIER,
+        adATLASModuleInfoPartNum       DisplayString,
+        adATLASModuleInfoSerialNum     DisplayString,
+        adATLASModuleInfoHardwareRev   DisplayString,
+        adATLASModuleInfoFirmwareRev   DisplayString,
+        adATLASModuleInfoState         INTEGER,
+        adATLASModuleInfoStatus        INTEGER,
+        adATLASModuleInfoFPStatus      INTEGER
+    }
+
+adATLASModuleInfoIndex       OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "An index into the Atlas Module Information Table.
+        This variable corresponds to the module's slot number."
+
+    ::= { adATLASModuleInfoEntry 1 }
+
+adATLASModuleInfoNumIfs      OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The number of physical interfaces (i.e. ports) on the
+        module."
+
+    ::= { adATLASModuleInfoEntry 2 }
+
+adATLASModuleInfoNumRsrcs    OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The total number of resources (e.g. number of bonding
+        sessions in an IMUX module) on the module."
+
+    ::= { adATLASModuleInfoEntry 3 }
+
+adATLASModuleInfoOID         OBJECT-TYPE
+    SYNTAX  OBJECT IDENTIFIER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The OID that uniquely identifies the specific module."
+
+    ::= { adATLASModuleInfoEntry 4 }
+
+adATLASModuleInfoPartNum     OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The ADTRAN part number of the module."
+
+    ::= { adATLASModuleInfoEntry 5 }
+
+adATLASModuleInfoSerialNum   OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The serial number of the module."
+
+    ::= { adATLASModuleInfoEntry 6 }
+
+adATLASModuleInfoHardwareRev  OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The hardware revision of the module."
+
+    ::= { adATLASModuleInfoEntry 7 }
+
+adATLASModuleInfoFirmwareRev  OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The firmware revision of the module."
+
+    ::= { adATLASModuleInfoEntry 8 }
+
+adATLASModuleInfoState        OBJECT-TYPE
+    SYNTAX  INTEGER {
+                online(1),
+                offline(2)
+            }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "The operational state of the module.  It can be set
+        to either Online or Offline.  When a module is taken
+        Offline, it is no longer considered to be an available
+        resource.  This setting may be useful in system
+        troubleshooting."
+
+    ::= { adATLASModuleInfoEntry 9 }
+
+adATLASModuleInfoStatus       OBJECT-TYPE
+    SYNTAX  INTEGER {
+                online(1),
+                offline(2),
+                noResponse(3),
+                unResponsiveOffline(4),
+                notReady(5),
+                restarting(6),
+                notSupported(7),
+                standby(8),
+                empty(9)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The hardware status of the module."
+
+    ::= { adATLASModuleInfoEntry 10 }
+
+adATLASModuleInfoFPStatus     OBJECT-TYPE
+    SYNTAX  INTEGER (0..255)
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "A bit-encoded variable that indicates the front panel
+        status of the module.  It is encoded as follows:
+
+        OFF              0x00
+        OK               0x01
+        ONLINE           0x02
+        TESTING          0x04
+        FLASH DOWNLOAD   0x08
+        ERROR            0x10
+        ALARM            0x20
+        STANDBY          0x40
+        WARN             0x80
+
+        Note: Multiple bits may be set concurrently, based on the
+        module's current state."
+
+    ::= { adATLASModuleInfoEntry 11 }
+
+
+--_________________________________________________________
+-- Atlas Enterprise Specific Module Online/Offline Traps --
+--_________________________________________________________
+
+adATLASModuleOffline  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                adATLASModuleInfoIndex,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates a module is offline."
+        --#TYPE       "Module is offline."
+        --#SUMMARY    "ATLAS 15400600: Module Offline "
+        --#SUMMARY    "Slot %d, Module Status %d, Box Status %d"
+        --#ARGUMENTS  {0, 1, 2}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Status Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400600
+
+adATLASModuleOnline  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                adATLASModuleInfoIndex,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates a module is online."
+        --#TYPE       "Module is online."
+        --#SUMMARY    "ATLAS 15400601: Module Online "
+        --#SUMMARY    "Slot %d, Module Status %d, Box Status %d"
+        --#ARGUMENTS  {0, 1, 2}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Status Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400601
+
+--__________________________________________________
+-- Atlas Enterprise Specific Circuit Backup Traps --
+--__________________________________________________
+
+adATLASCbuBackupAttempt TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates an endpoint has detected a failure
+                 and is attempting a backup call."
+        --#TYPE       "Error - Circuit Backup"
+        --#SUMMARY    "ATLAS 15400602:  Backup attempt for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400602
+
+adATLASCbuBackupAttemptFailed TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates a backup call has failed."
+        --#TYPE       "Error - Circuit Backup"
+        --#SUMMARY    "ATLAS 15400603:  Backup failure for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400603
+
+adATLASCbuBackupActive TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates a backup call has connected."
+        --#TYPE       "Error - Circuit Backup"
+        --#SUMMARY    "ATLAS 15400604:  Backup active for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Status Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400604
+
+adATLASCbuPrimaryRestored TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates an endpoint has come out of backup."
+        --#TYPE       "Error - Circuit Backup"
+        --#SUMMARY    "ATLAS 15400605:  Backup inactive for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400605
+
+adATLASCbuTestCallOriginated TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates an endpoint has originated a test call."
+        --#TYPE       "Info - Test Call Originated"
+        --#SUMMARY    "ATLAS 15400606:  Test call originated for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   INFORMATIONAL
+        --#GENERIC    6
+        --#CATEGORY   "Status Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400606
+
+adATLASCbuTestCallConnected TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates an endpoint's test call has connected."
+        --#TYPE       "Info - Test Call Connected"
+        --#SUMMARY    "ATLAS 15400607:  Test call connected for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   INFORMATIONAL
+        --#GENERIC    6
+        --#CATEGORY   "Status Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400607
+
+adATLASCbuTestCallPassed TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates an endpoint's test call has passed."
+        --#TYPE       "Info - Test Call Passed"
+        --#SUMMARY    "ATLAS 15400608:  Test call passed for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   INFORMATIONAL
+        --#GENERIC    6
+        --#CATEGORY   "Status Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400608
+
+adATLASCbuTestCallFailed TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates an endpoint's test call has failed."
+        --#TYPE       "Error - Test Call Failed"
+        --#SUMMARY    "ATLAS 15400609:  Test call failed for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400609
+END

@@ -1,0 +1,73 @@
+-- Availant Manager MIB
+-- SNMP V1 Version
+
+AVAM-SNMPv1 DEFINITIONS	::= BEGIN
+
+IMPORTS
+	enterprises		FROM RFC1155-SMI
+	OBJECT-TYPE		FROM RFC-1212
+	DisplayString	FROM RFC1213-MIB
+	TRAP-TYPE		FROM RFC-1215
+	DateAndTime		FROM HOST-RESOURCES-MIB;	-- Defined in RFC1514
+
+availant			OBJECT IDENTIFIER ::= { enterprises 5910 }
+avProducts			OBJECT IDENTIFIER ::= { availant 1 }
+avamMIB				OBJECT IDENTIFIER ::= { avProducts 3 }
+
+avamVisObj			OBJECT IDENTIFIER ::= { avamMIB 1 }	-- Visible Objects
+avamNotify			OBJECT IDENTIFIER ::= { avamMIB 2 }	-- Objects only sent via traps
+
+--
+-- Visible Object Definitions
+--
+
+	avVersionString OBJECT-TYPE
+		SYNTAX		DisplayString
+		ACCESS		read-only
+		STATUS		mandatory
+		DESCRIPTION
+			"The version of the Availant Manager SNMP agent."
+			::= { avamVisObj 1 }
+
+--
+-- Trap Object Definitions
+--
+
+
+	avEventDateTime OBJECT-TYPE
+		SYNTAX		DisplayString
+		ACCESS		read-only
+		STATUS		mandatory
+		DESCRIPTION
+               "The date and time when the Event occurred, shown as GMT."
+           ::= { avamNotify 1 }
+
+	avEventAgent OBJECT-TYPE
+		SYNTAX		DisplayString
+		ACCESS		read-only
+		STATUS		mandatory
+		DESCRIPTION
+               "The Agent that signaled the Event."
+           ::= { avamNotify 2 }
+
+	avHostURL OBJECT-TYPE
+		SYNTAX		DisplayString
+		ACCESS		read-only
+		STATUS		mandatory
+		DESCRIPTION
+               "A URL to Availant Manager on the host where the Event occurred."
+           ::= { avamNotify 4 }
+
+--
+-- Trap Definition
+--
+
+	avEventNotify TRAP-TYPE
+		ENTERPRISE	avamMIB	
+		VARIABLES    { avEventDateTime, avEventAgent, avHostURL }
+		DESCRIPTION
+               "Notification when an Availant Manager Event has occurred."
+            ::= 1 
+
+END
+

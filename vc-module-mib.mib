@@ -1,0 +1,326 @@
+-- ****************************************************************************
+--
+--                         Virtual Connect Module MIB
+--
+--      Copyright 2008 Hewlett-Packard Development Company, L.P.
+-- 
+--
+-- ****************************************************************************
+
+HPVCMODULE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE,
+    Integer32, Unsigned32,
+    NOTIFICATION-TYPE, Counter32,
+    Gauge32, mib-2, zeroDotZero         FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, TruthValue,
+    RowPointer                          FROM SNMPv2-TC
+    SnmpAdminString                     FROM SNMP-FRAMEWORK-MIB
+    enterprises                         FROM RFC1155-SMI
+    TransportAddressType, TransportAddress  FROM TRANSPORT-ADDRESS-MIB
+    ifIndex, ifInErrors, ifOutErrors    FROM IF-MIB
+
+
+    MODULE-COMPLIANCE, OBJECT-GROUP,
+    NOTIFICATION-GROUP                  FROM SNMPv2-CONF;
+
+
+    hp                     OBJECT IDENTIFIER ::= { enterprises 11 }
+    hpSysMgt               OBJECT IDENTIFIER ::= { hp 5 }
+    hpEmbeddedServerMgt    OBJECT IDENTIFIER ::= { hpSysMgt 7 }
+    hpModuleMgmtProc       OBJECT IDENTIFIER ::= { hpEmbeddedServerMgt 5 }
+    virtualConnect         OBJECT IDENTIFIER ::= { hpModuleMgmtProc 2 }
+
+vcModuleMIB MODULE-IDENTITY
+    LAST-UPDATED "200809160000Z"            -- 16 September 2008
+    ORGANIZATION "Hewlett-Packard Company"
+    CONTACT-INFO "Robert Teisberg
+                  Hewlett-Packard Company.
+                  Email: robert.teisberg@hp.com"
+    DESCRIPTION
+     "This MIB module describes module specific MIB objects present in each of the
+      Virtual Connect Ethernet (VC-Enet) Modules. These objects represent 
+      information about individual VC-Enet modules irrespective of its VC domain
+      role."
+
+-- Revision History
+
+       REVISION     "200810080000Z"            -- 08 October 2008
+       DESCRIPTION  "Draft-0. Initial cut.  -Jitendra Vegiraju"
+       REVISION     "200902180000Z"            -- 18 February 2009
+       DESCRIPTION  "Draft-1. Adding enclosure role object.  -Jitendra Vegiraju"
+    ::= { virtualConnect 3 }
+
+vcModuleMIBObjects          OBJECT IDENTIFIER ::= { vcModuleMIB 1 }
+
+-- Top level object groups for VC MIB
+vcModuleObjects          OBJECT IDENTIFIER ::= { vcModuleMIBObjects 1 }
+
+VcModuleRole ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "The virtual connect operational role of this module.
+             The enumerations are described below:
+
+                unintegrated       - module is not a member of a domain
+                primaryProtected   - module is VCM primary, and a VCM standby exists
+                primaryUnprotected - module is VCM primary, and no VCM standby exists
+                standby            - module is VCM standby
+                other                - module is not able to host VCM
+              "
+    SYNTAX      INTEGER
+    {
+       unintegrated(1),
+       primaryProtected(2),
+       primaryUnprotected(3),
+       standby(4),
+       other(5)
+    }
+
+VcEnclosureRole ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "The virtual connect operational role of the enclosure associated with
+             with this module.
+             The enumerations are described below:
+
+                unknown   - The enclosure role is unknown because of one of the
+                            following reasons,
+                                - The enclsoure is not part of a VC domain.
+                                - The module is in a transitory state.
+                primary   - The module is installed in the primary or sole enclosure.
+                secondary - The module is installed in a secondary enclosure of a
+                            multi-enclosure domain.
+              "
+    SYNTAX      INTEGER
+    {
+       unknown(1),
+       primary(2),
+       secondary(3)
+    }
+
+VcModuleType ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+            "The virtual connect interconnect module type.
+             The enumerations are described below:
+
+                vcModuleEnet       - VC-Enet module
+                vcModuleFC         - VC-FC module
+                vcModuleOther      - Unknown module or a module not suppported by VC
+              "
+    SYNTAX      INTEGER
+    {
+       vcModuleEnet(1),
+       vcModuleFC(2),
+       vcModuleOther(3)
+    }
+
+-- Domain level objects
+
+vcModuleDomainName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The administratively assigned name of the Virtual Connect Domain 
+         associated with this module."
+    ::= { vcModuleObjects 1 }
+
+vcModuleRole OBJECT-TYPE
+    SYNTAX      VcModuleRole
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The VC domain role of this VC module."
+    ::= { vcModuleObjects 2 }
+
+vcModuleDomainPrimaryAddressType OBJECT-TYPE
+    SYNTAX      TransportAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The transport address type used to address the primary VC module."
+    ::= { vcModuleObjects 3 }
+
+vcModuleDomainPrimaryAddress OBJECT-TYPE
+    SYNTAX      TransportAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The address of the primary VC module. The address format is determined
+         by the vcDomainPrimaryAddressType object."
+    ::= { vcModuleObjects 4 }
+
+vcModuleEnclosureRole OBJECT-TYPE
+    SYNTAX      VcEnclosureRole
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The VC enclosure role of the enclosure  VC module."
+    ::= { vcModuleObjects 5 }
+
+
+--
+-- Notification Objects
+--
+vcModuleMIBNotificationPrefix OBJECT IDENTIFIER ::=
+    { vcModuleMIB 2 }
+vcModuleMIBNotifications OBJECT IDENTIFIER ::=
+    { vcModuleMIBNotificationPrefix 0 }
+vcModuleMIBNotificationObjects OBJECT IDENTIFIER
+   ::= { vcModuleMIBNotificationPrefix 1 }
+
+--
+-- Notifications
+--
+
+vcModuleDomainRoleChange NOTIFICATION-TYPE
+    OBJECTS { vcModuleRole }
+    STATUS  current
+    DESCRIPTION
+        "The VCM role of the VC module has changed."
+    ::= { vcModuleMIBNotifications 1 }
+
+--
+-- Threshold traps
+--
+
+vcModPortInputUtilizationUp NOTIFICATION-TYPE
+    OBJECTS { ifIndex }
+    STATUS  current
+    DESCRIPTION
+        "The port input utilization rate has exceeded high threshold.
+
+          The input line utilization on a port has exceeded its threshold
+          for longer than the threshold averaging period. The ifIndex
+          is the index of the affected port in ifTable."
+    ::= { vcModuleMIBNotifications 11 }
+
+vcModPortInputUtilizationDown NOTIFICATION-TYPE
+    OBJECTS { ifIndex }
+    STATUS  current
+    DESCRIPTION
+        "The port input utilization rate has dropped below low watermark.
+
+          The input line utilization on a port has dropped below its low 
+          watermark for longer than the threshold averaging period. The ifIndex
+          is the index of the affected port in ifTable."
+    ::= { vcModuleMIBNotifications 12 }
+
+vcModPortOutputUtilizationUp NOTIFICATION-TYPE
+    OBJECTS { ifIndex }
+    STATUS  current
+    DESCRIPTION
+        "The port output utilization rate has exceeded high threshold.
+
+          The output line utilization on a port has exceeded its high watermark
+          for longer than the threshold averaging period. The ifIndex
+          is the index of the affected port in ifTable."
+    ::= { vcModuleMIBNotifications 13 }
+
+vcModPortOutputUtilizationDown NOTIFICATION-TYPE
+    OBJECTS { ifIndex }
+    STATUS  current
+    DESCRIPTION
+        "The port output utilization rate has dropped below low watermark.
+
+          The output line utilization on a port has dropped below its low watermark
+          for longer than the threshold averaging period. The ifIndex
+          is the index of the affected port in ifTable."
+    ::= { vcModuleMIBNotifications 14 }
+
+vcModPortInputErrorsUp NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifInErrors }
+    STATUS  current
+    DESCRIPTION
+        "The input error count on a port has exceeded high watermark.
+
+         The input error count on a port has exceeded its high watermark for
+         longer than the error averaging period. The port is identified by
+         ifIndex in ifTable."
+    ::= { vcModuleMIBNotifications 15 }
+
+vcModPortInputErrorsDown NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifInErrors }
+    STATUS  current
+    DESCRIPTION
+        "The input error count on a port has dropped below low watermark.
+
+         The input error count on a port has dropped below its low watermark for
+         longer than the error averaging period. The port is identified by
+         ifIndex in ifTable."
+    ::= { vcModuleMIBNotifications 16 }
+
+vcModPortOutputErrorsUp NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifOutErrors }
+    STATUS  current
+    DESCRIPTION
+        "The output error count on a port has exceeded its high watermark.
+
+         The output error count on a port has exceeded its high watermark for
+         longer than the error averaging period. The port is identified by
+         ifIndex in ifTable."
+    ::= { vcModuleMIBNotifications 17 }
+
+vcModPortOutputErrorsDown NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifOutErrors }
+    STATUS  current
+    DESCRIPTION
+        "The output error count on a port has dropped below its low watermark.
+
+         The output error count on a port has dropped below its low watermark for
+         longer than the error averaging period. The port is identified by
+         ifIndex in ifTable."
+    ::= { vcModuleMIBNotifications 18 }
+
+--
+-- Conformance
+--
+
+vcModuleMIBConformance OBJECT IDENTIFIER ::= { vcModuleMIB 3 }
+vcModuleMIBCompliances OBJECT IDENTIFIER ::= { vcModuleMIBConformance 1 }
+vcModuleMIBGroups      OBJECT IDENTIFIER ::= { vcModuleMIBConformance 2 }
+
+-- Compliance
+
+vcModuleMIBCompliance MODULE-COMPLIANCE
+        STATUS current
+        DESCRIPTION
+
+                "The compliance statement for entities which implement
+                the VC MIB."
+        MODULE  -- this module
+                MANDATORY-GROUPS {
+                        vcModuleGroup,
+                        vcModPortThresholdNotificationsGroup
+                }
+
+        ::= { vcModuleMIBCompliances 1 }
+
+-- Units of Conformance
+
+vcModuleGroup OBJECT-GROUP
+        OBJECTS {
+                vcModuleDomainName, vcModuleRole,
+                vcModuleDomainPrimaryAddressType, vcModuleDomainPrimaryAddress
+        }
+        STATUS current
+        DESCRIPTION
+                "Virtual Connect Module objects."
+        ::= { vcModuleMIBGroups 1 }
+
+vcModPortThresholdNotificationsGroup  NOTIFICATION-GROUP
+    NOTIFICATIONS {
+                 vcModPortInputUtilizationUp, vcModPortInputUtilizationDown,
+                 vcModPortOutputUtilizationUp, vcModPortOutputUtilizationDown,
+                 vcModPortInputErrorsUp, vcModPortInputErrorsDown,
+                 vcModPortOutputErrorsUp, vcModPortOutputErrorsDown
+    }
+    STATUS  current
+    DESCRIPTION
+            "The notifications which indicate specific changes in the
+            Virtual Connect port status."
+    ::= { vcModuleMIBGroups 2 }
+END

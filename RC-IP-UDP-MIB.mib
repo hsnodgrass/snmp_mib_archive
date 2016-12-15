@@ -1,0 +1,428 @@
+
+RC-IP-UDP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, IpAddress
+        FROM SNMPv2-SMI
+    DisplayString, RowStatus
+        FROM SNMPv2-TC
+    rcIpUdp
+        FROM RC-IP-MIB
+    IdList
+        FROM RAPID-CITY;
+
+
+rcIpUdpMib MODULE-IDENTITY
+       LAST-UPDATED     "200409220000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+       REVISION "200409220000Z" -- 22 Sept 2004
+       DESCRIPTION "Version 4: Increase the range for rcIpUdpPortFwdListId to 1..1000"
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcIpUdp 0 }
+
+-- Ip UDP Protocol Table
+ 
+rcIpUdpProtocolTableSize OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of entries in the 
+		      rcIpUdpProtocolTable."
+        ::= { rcIpUdp 1 }
+
+rcIpUdpProtocolTable OBJECT-TYPE 
+        SYNTAX          SEQUENCE OF RcIpUdpProtocolEntry
+        MAX-ACCESS      not-accessible 
+        STATUS          current 
+        DESCRIPTION     "list of UDP protocols. Used to determine whether to
+                         forward the UDP broadcast packet or not."
+    ::= { rcIpUdp 2 }
+
+rcIpUdpProtocolEntry OBJECT-TYPE
+        SYNTAX        	RcIpUdpProtocolEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"Used to include a particular UDP port in the table.  
+		      	An entry in this table indicates that the box might do 
+		      	forwarding of UDP broadcast packets if there is a 
+                        matching entry for this packet in the 
+                        rcIpUdpPortFwdTable."
+        INDEX         	{ rcIpUdpProtocolPortNumber }
+        ::= { rcIpUdpProtocolTable 1 }
+ 
+RcIpUdpProtocolEntry ::=
+        SEQUENCE {
+                rcIpUdpProtocolPortNumber      INTEGER,
+                rcIpUdpProtocolName    	       DisplayString,
+                rcIpUdpProtocolRowStatus       RowStatus
+        }
+ 
+rcIpUdpProtocolPortNumber OBJECT-TYPE
+        SYNTAX        	INTEGER (1..65535)
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"well-known UDP Port number. Pre-assigned port
+                         number for this protocol. Port used by the
+                         server process as its contact port. It cannot 
+                         be BOOTP/DHCP port#s 67, 68."
+        ::= { rcIpUdpProtocolEntry 1 }
+ 
+rcIpUdpProtocolName OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE(1..15))
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate the name of the protocol 
+		      	that is running on top of UDP protocol. 
+                        cannot change the name once created. This 
+                        should be set while creating the entry."  
+        ::= { rcIpUdpProtocolEntry 2 }
+ 
+rcIpUdpProtocolRowStatus OBJECT-TYPE
+        SYNTAX        	RowStatus
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Rowstatus of this entry."
+        ::= { rcIpUdpProtocolEntry 3 }
+
+
+-- Ip Udp Port Forward Table
+
+rcIpUdpPortFwdTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      rcIpUdpPortFwdTable."
+        ::= { rcIpUdp 3 }
+ 
+rcIpUdpPortFwdTable OBJECT-TYPE 
+        SYNTAX	      	SEQUENCE OF RcIpUdpPortFwdEntry
+        MAX-ACCESS        	not-accessible 
+        STATUS        	current 
+        DESCRIPTION   	"Udp forward entry table."
+    ::= { rcIpUdp 4 }
+
+rcIpUdpPortFwdEntry OBJECT-TYPE
+        SYNTAX        	RcIpUdpPortFwdEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"An entry is configured to specify forwarding policy
+                         parameters."
+        INDEX         	{ rcIpUdpPortFwdDestPort,
+                          rcIpUdpPortFwdDestAddr}
+        ::= { rcIpUdpPortFwdTable 1 }
+ 
+RcIpUdpPortFwdEntry ::=
+        SEQUENCE {
+                rcIpUdpPortFwdDestPort      INTEGER,
+                rcIpUdpPortFwdDestAddr      IpAddress,
+                rcIpUdpPortFwdId            Integer32,
+                rcIpUdpPortFwdFwdListIdListSize INTEGER,
+                rcIpUdpPortFwdFwdListIdList IdList,
+                rcIpUdpPortFwdNumFwdPackets Counter32,
+                rcIpUdpPortFwdNumDropPacketsTtlExpired Counter32,
+                rcIpUdpPortFwdNumDropPacketsDestUnreach Counter32,
+                rcIpUdpPortFwdRowStatus     RowStatus
+        }
+ 
+rcIpUdpPortFwdDestPort OBJECT-TYPE
+        SYNTAX        	INTEGER(1..65535)
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The well-known port number defined for UDP/TCP 
+                        depending on the value of IpProtoType field in this
+                        entry. This port number has to be defined in the
+                        rcIpUdpProtoTable. In order to select this policy the 
+                        destination port number has to match the DestPort 
+                        value."
+        ::= { rcIpUdpPortFwdEntry 1 }
+ 
+rcIpUdpPortFwdDestAddr OBJECT-TYPE
+        SYNTAX        	IpAddress
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Destination IP address. The IP addres to which the 
+                        UDP/TCP broadcast should be forwarded. This IP address 
+                        can be any IP server address or subnet broadcast 
+                        address.  If the IP address is one of the routable 
+                        interface's address on the router, the frame will be 
+                        rebroadcast out as a limited broadcast. If the Ip 
+                        address is that of a server then the received 
+                        broadcast packet will be sent as a unicast packet to 
+                        this address."
+        ::= { rcIpUdpPortFwdEntry 2 }
+
+rcIpUdpPortFwdId OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Identifier of this entry. Used internally to identify
+                      this entry."
+        ::= { rcIpUdpPortFwdEntry 3 }
+
+rcIpUdpPortFwdFwdListIdListSize OBJECT-TYPE
+        SYNTAX        INTEGER (0..128)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of id(s) in the
+                      rcIpUdpPortFwdListId variable."
+        ::= { rcIpUdpPortFwdEntry 4 }
+
+rcIpUdpPortFwdFwdListIdList OBJECT-TYPE
+        SYNTAX        IdList(SIZE(64))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate zero or more rcIpUdpPortFwdListEntry(s)
+                      that are referring to this entry.  Each list-id identifier
+                      is stored as two bytes in this array starting from
+                      offset zero.  Any unused bytes should be set to zero."
+        ::= { rcIpUdpPortFwdEntry 5 }
+ 
+rcIpUdpPortFwdNumFwdPackets OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The total number of UDP/TCP broadcast packets forwarded
+                        using this policy."
+        ::= { rcIpUdpPortFwdEntry 6 }
+
+rcIpUdpPortFwdNumDropPacketsTtlExpired OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The total number of UDP/TCP broadcast packets dropped
+                        because the TTL has expired."
+        ::= { rcIpUdpPortFwdEntry 7 }
+
+rcIpUdpPortFwdNumDropPacketsDestUnreach OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The total number of UDP/TCP broadcast packets dropped
+                        because the rcIpUdpPortFwdDestAddr specified in
+                        this policy was unreachable."
+        ::= { rcIpUdpPortFwdEntry 8 }
+
+rcIpUdpPortFwdRowStatus OBJECT-TYPE
+        SYNTAX        	RowStatus
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Row status of this entry."
+        ::= { rcIpUdpPortFwdEntry 9 }
+
+-- Udp Port Fwd List Table 
+
+rcIpUdpPortFwdListTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      rcIpUdpPortFwdListTable."
+        ::= { rcIpUdp 5 }
+
+rcIpUdpPortFwdListTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpUdpPortFwdListEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to group rcIpUdpPortFwdEntry(s) 
+                      into a list."
+        ::= { rcIpUdp 6 }
+
+rcIpUdpPortFwdListEntry OBJECT-TYPE
+        SYNTAX        RcIpUdpPortFwdListEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Route entry attributes."
+        INDEX         { rcIpUdpPortFwdListId }
+        ::= { rcIpUdpPortFwdListTable 1 }
+ 
+RcIpUdpPortFwdListEntry ::= SEQUENCE {
+                  rcIpUdpPortFwdListId INTEGER,
+                  rcIpUdpPortFwdListName DisplayString,
+                  rcIpUdpPortFwdListFwdIdListSize INTEGER,
+                  rcIpUdpPortFwdListFwdIdList OCTET STRING,
+                  rcIpUdpPortFwdListRowStatus RowStatus
+                  }
+
+rcIpUdpPortFwdListId OBJECT-TYPE
+        SYNTAX        INTEGER (1..1000)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "A value that uniquely identifies this list of 
+                       rcIpUdpPortFwdListEntry."
+        ::= { rcIpUdpPortFwdListEntry 1 }
+ 
+rcIpUdpPortFwdListName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..15))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "An administratively-assigned name for this list."
+        ::= { rcIpUdpPortFwdListEntry 3 }
+ 
+rcIpUdpPortFwdListFwdIdListSize OBJECT-TYPE
+        SYNTAX        INTEGER (0..64)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of rcIpUdpPortFwdNetEntry 
+                      id(s) in the rcIpUdpPortFwdListIdList variable."
+        ::= { rcIpUdpPortFwdListEntry 4 }
+ 
+rcIpUdpPortFwdListFwdIdList OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(128))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate zero or more UdpPortFwd entries 
+                      that are associated to this list.  Each entry identifier
+                      is stored as two bytes in this array starting from
+                      offset zero.  Any unused bytes should be set to zero."
+        ::= { rcIpUdpPortFwdListEntry 5 }
+
+rcIpUdpPortFwdListRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Row status of this entry."
+        ::= { rcIpUdpPortFwdListEntry 6 }
+ 
+
+-- Ip Config Broadcast Forwarding Table
+
+rcIpUdpConfBroadcastIntfTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of entries in the
+                      rcIpUdpBroadcastIntfTable."
+        ::= { rcIpUdp 7 }
+ 
+rcIpUdpConfBroadcastIntfTable OBJECT-TYPE 
+        SYNTAX          SEQUENCE OF RcIpUdpConfBroadcastIntfEntry
+        MAX-ACCESS      not-accessible 
+        STATUS          current 
+        DESCRIPTION     "IP broadcast forward configuration table"
+    ::= { rcIpUdp 8 }
+
+rcIpUdpConfBroadcastIntfEntry OBJECT-TYPE
+        SYNTAX        	RcIpUdpConfBroadcastIntfEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"Used to configure UDP broadcast forward on a 
+                        particular interface."
+        INDEX         	{ rcIpUdpConfBroadcastIntfLocalIfAddr }
+        ::= { rcIpUdpConfBroadcastIntfTable 1 }
+ 
+RcIpUdpConfBroadcastIntfEntry ::=
+        SEQUENCE {
+                rcIpUdpConfBroadcastIntfLocalIfAddr   	    IpAddress,
+                rcIpUdpConfBroadcastIntfUdpPortFwdListId    INTEGER,
+                rcIpUdpConfBroadcastIntfMaxTtl    	    INTEGER,
+                rcIpUdpConfBroadcastIntfNumRxPkts           Counter32,
+                rcIpUdpConfBroadcastIntfNumFwdPkts          Counter32,
+                rcIpUdpConfBroadcastIntfNumDropPktsMaxTtlExpired  Counter32,
+                rcIpUdpConfBroadcastIntfNumDropPktsDestUnreach   Counter32,
+                rcIpUdpConfBroadcastIntfNumDropPktsUnknownPort   Counter32,
+                rcIpUdpConfBroadcastIntfRowStatus 	             RowStatus,
+                rcIpUdpConfBroadcastIntfBroadCastMask       IpAddress
+ 
+        }
+ 
+rcIpUdpConfBroadcastIntfLocalIfAddr OBJECT-TYPE
+        SYNTAX        	IpAddress 
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The ip address of the local interface that is
+           	        partipating in the forwarding UDP broadcast packets."
+        ::= { rcIpUdpConfBroadcastIntfEntry 1 }
+ 
+rcIpUdpConfBroadcastIntfUdpPortFwdListId OBJECT-TYPE
+        SYNTAX        INTEGER (0..1000)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number UDP ports that this 
+                      interface is configured to forward.
+
+                      A value of '0' indicates that this interface will not
+                      forward any UDP broadcast packets. This is a required
+                      field to create an entry."
+        ::= { rcIpUdpConfBroadcastIntfEntry 2 }
+
+rcIpUdpConfBroadcastIntfMaxTtl OBJECT-TYPE
+        SYNTAX        	INTEGER (1..16)
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate the maximum number of hops an 
+		      	IP broadcast packet can take from the source 
+                        device to the destination device."
+ 	    DEFVAL        	{ 4 }
+        ::= { rcIpUdpConfBroadcastIntfEntry 3 }
+ 
+rcIpUdpConfBroadcastIntfNumRxPkts OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The total number of UDP/TCP broadcast packets 
+                        received by this local interface."
+        ::= { rcIpUdpConfBroadcastIntfEntry 4 }
+
+rcIpUdpConfBroadcastIntfNumFwdPkts OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The total number of UDP/TCP broadcast packets 
+                        forwarded."
+        ::= { rcIpUdpConfBroadcastIntfEntry 5 }
+
+rcIpUdpConfBroadcastIntfNumDropPktsMaxTtlExpired OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The total number of UDP/TCP broadcast packets 
+                        dropped because the TTL has expired."
+        ::= { rcIpUdpConfBroadcastIntfEntry 6 }
+
+rcIpUdpConfBroadcastIntfNumDropPktsDestUnreach OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The total number of UDP broadcast packets 
+                        dropped because the destination was unreachable."
+        ::= { rcIpUdpConfBroadcastIntfEntry 7 }
+
+rcIpUdpConfBroadcastIntfNumDropPktsUnknownPort OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The total number of UDP/TCP broadcast packets 
+                        dropped because the destination port/protocol 
+                        specified has no matching forwarding policy." 
+        ::= { rcIpUdpConfBroadcastIntfEntry 8 }
+
+rcIpUdpConfBroadcastIntfRowStatus OBJECT-TYPE
+        SYNTAX        	RowStatus
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Entry row status."
+        ::= { rcIpUdpConfBroadcastIntfEntry 9 }
+
+rcIpUdpConfBroadcastIntfBroadCastMask OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The subnet mask of the local interface that is
+                        used for broadcasting the UDP broadcast packets."
+        ::= { rcIpUdpConfBroadcastIntfEntry 10 }
+
+END

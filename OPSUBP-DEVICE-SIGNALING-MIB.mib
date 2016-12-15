@@ -1,0 +1,294 @@
+OPSUBP-DEVICE-SIGNALING-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	Unsigned32, enterprises, MODULE-IDENTITY, OBJECT-TYPE, OBJECT-IDENTITY
+		FROM SNMPv2-SMI
+
+	TEXTUAL-CONVENTION, DisplayString, TimeStamp
+		FROM SNMPv2-TC
+
+        nortel
+                FROM NORTEL-MIB
+
+	MODULE-COMPLIANCE, OBJECT-GROUP, NOTIFICATION-GROUP
+		FROM SNMPv2-CONF;
+
+nnOPSNetIDGroup OBJECT-IDENTITY
+	STATUS		current
+	DESCRIPTION
+		"The root naming arc for Nortel Networks."
+	::= { nortel 42 }  
+
+nnOPSMIBS OBJECT-IDENTITY
+	STATUS		current
+	DESCRIPTION
+		"The root naming arc for Nortel Networks."
+	::= { nnOPSNetIDGroup 5 }  
+
+nnOPSQoSRootOID OBJECT-IDENTITY
+	STATUS		current
+	DESCRIPTION
+		"The root naming arc for the ops ubp device signalling mib."
+	::= { nnOPSMIBS 1 }  
+
+nnOpsUbpDeviceSignalingMIB MODULE-IDENTITY
+	LAST-UPDATED	"200306190000Z"
+	ORGANIZATION	"Nortel Networks OPS group"
+	CONTACT-INFO
+	"Support ERC# 245
+
+           North America: (800) 4-NORTEL
+                          (800) 466-7835
+                    EMEA: (33)(4) 92-966-968
+            Asia Pacific: 61-2-9927-8800
+                   China: (800) 810-5000
+	"
+	DESCRIPTION
+		"The MIB module."
+
+	::= { nnOPSQoSRootOID 3 }
+
+nnOpsUbpDeviceSignalingMIBObjects OBJECT-IDENTITY
+	STATUS		current
+	DESCRIPTION
+		"OPS UBP device signaling MIB objects are all defined in this 
+branch."
+	::= { nnOpsUbpDeviceSignalingMIB 1 }
+
+ubpNotifyObjects OBJECT-IDENTITY
+	STATUS		current
+	DESCRIPTION
+		"Group of objects related to notification information."
+	::= { nnOpsUbpDeviceSignalingMIBObjects 1 }  
+
+
+--  ubpNotifyObjects: Objects which are used only in notifications
+
+ubpNotifyDeviceIdentifierType  OBJECT-TYPE 
+	SYNTAX		INTEGER{
+						devicemgmtadd(1),
+						snmpengineid(2)
+						}
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"This indicates the type of the device identifier that will be sent 
+in the serverNotifyDeviceIdentifier attribute. This attribute is sent with 
+the notification."
+	::= { ubpNotifyObjects 1 }
+
+ubpNotifyDeviceIdentifier  OBJECT-TYPE 
+	SYNTAX		DisplayString
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"A string that can be used to uniquely identify the device which is 
+acting as an EAP access point. This attribute is sent with the 
+notification."
+	::= { ubpNotifyObjects 2 }
+
+ubpNotifyEAPAccessPortEntityIdentifier  OBJECT-TYPE 
+	SYNTAX		DisplayString
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"A string that can be used to identify the interface on the EAP 
+access point on which the EAP session was started/ended. The format for 
+this attribute is device specific. For Passport 8600 devices, it will take 
+the form of ?<slot>/<port>? e.g. ?3/16?. This attribute is sent with the 
+notification."
+	::= { ubpNotifyObjects 3 }
+
+
+ubpNotifyEAPUserIdentifier  OBJECT-TYPE 
+	SYNTAX		DisplayString
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"The name of the user initiating the EAP session e.g. ?Joe?. This 
+attribute is sent with the notification."
+	::= { ubpNotifyObjects 4 }
+
+ubpNotifyEAPUserGroupIdentifier  OBJECT-TYPE 
+	SYNTAX		DisplayString
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"The groups the user initiating the EAP session is associated with. 
+The value for this attribute is made available through vendor specific 
+attributes in the RADIUS authentication message received by the EAP access 
+point. This attribute may contain multiple group names following the format 
+?<groupname1>+<groupname2>? e.g. ?Engg+Admin?. This attribute is sent with 
+the notification."
+	::= { ubpNotifyObjects 5 }
+
+
+
+ubpNotifyEAPUserRoles OBJECT-TYPE 
+	SYNTAX		DisplayString
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"The name of the role combination. A role combination is a set of 
+unordered roles; a role being an abstraction used to bind policies with 
+actual interfaces on devices. Each role takes the form of a string. The 
+value for this attribute is made available through vendor specific 
+attributes in the RADIUS authentication message received by the EAP access 
+point. This attribute may contain multiple roles, in the form 
+?<role1>+<role2>? e.g. ?Student+TeachingAssistant?. The invalid characters 
+for a role are : ?+?, ? ? (space), null, lf, cr, bell, bs, HT (tab), VT, FF 
+(form feed). The maximum length for a role is 31 characters. This attribute 
+is sent with the notification."
+	::= { ubpNotifyObjects 6 }
+
+
+ubpNotifyEAPSignalSequenceNumber OBJECT-TYPE 
+	SYNTAX		Unsigned32
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"This is a unique sequence identifier for a EAP session start or 
+end event. The EAP user session event signaling is done using SNMPv3 Inform 
+messages. Each time the EAP access point does not get an acknowledgement 
+for the Inform, it may retry sending the Inform message with the same EAP 
+signal sequence number so that the Inform receiver can handle duplicate 
+Informs. This attribute is sent with the notification."
+	::= { ubpNotifyObjects 7 }
+
+ubpNotifyEAPSessionStartSignalSequenceNumber OBJECT-TYPE 
+	SYNTAX		Unsigned32
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"This is the sequence identifier that was associated with the SNMP 
+Inform message sent for a EAP session started event. It can be used to 
+correlate the EAP session end event with the notification for the EAP 
+session start event. This attribute is sent with the notification."
+	::= { ubpNotifyObjects 8 }
+
+
+ubpNotifyEAPSessionEndReason OBJECT-TYPE 
+	SYNTAX		INTEGER{
+						  eapsessionEndUserlogoff(1),
+						  eapsessionEndOther(2)
+						}
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"The reason for the EAP user session end event. This is used for 
+reporting purposes only. This attribute is sent with the notification."
+	::= { ubpNotifyObjects 9 }
+
+ubpNotifyEAPAccessPortEntityOpenFlag  OBJECT-TYPE 
+	SYNTAX		INTEGER{
+						eapAccessPortFlagNotApplicable(1),
+						eapAccessPortOpenRequired(2),
+						eapAccessPortOpenNotRequired(3)
+						}
+	MAX-ACCESS  accessible-for-notify
+	STATUS		current
+	DESCRIPTION
+		"This is a flag indicating whether the receiver of the notification 
+should perform an ?open? or ?activation? operation on the EAP access port 
+entity after it has downloaded User based policies for the current EAP user 
+session. This may be useful for reporting purposes. This attribute is sent 
+with the notification."
+	::= { ubpNotifyObjects 10 }
+
+-- Notifications
+
+ubpDeviceSignalingMIBNotifications OBJECT IDENTIFIER
+	::= { nnOpsUbpDeviceSignalingMIB 2 }
+
+ubpEAPSessionStart NOTIFICATION-TYPE
+	OBJECTS		{ ubpNotifyDeviceIdentifierType,
+				  ubpNotifyDeviceIdentifier,
+				  ubpNotifyEAPAccessPortEntityIdentifier,
+				  ubpNotifyEAPUserIdentifier,
+				  ubpNotifyEAPUserGroupIdentifier,
+				  ubpNotifyEAPUserRoles,
+				  ubpNotifyEAPSignalSequenceNumber,
+				  ubpNotifyEAPAccessPortEntityOpenFlag  	  	  
+			    }
+	STATUS		current
+	DESCRIPTION
+		"This notification signifies that an EAP session was started on the 
+host from which this notification has been sent."
+	::= { ubpDeviceSignalingMIBNotifications 1 }
+
+ubpEAPSessionEnd NOTIFICATION-TYPE
+	OBJECTS		{ ubpNotifyDeviceIdentifierType,
+				  ubpNotifyDeviceIdentifier,
+				  ubpNotifyEAPAccessPortEntityIdentifier,
+				  ubpNotifyEAPUserIdentifier,
+				  ubpNotifyEAPSessionEndReason,
+				  ubpNotifyEAPSignalSequenceNumber,
+				  ubpNotifyEAPSessionStartSignalSequenceNumber  	  	  
+			    }
+	STATUS		current
+	DESCRIPTION
+		"This notification signifies that an EAP session has ended on the 
+host from which this notification has been sent."
+	::= { ubpDeviceSignalingMIBNotifications 2 }
+
+
+
+-- Conformance
+
+nnOpsUbpDeviceSignalingMIBConformance OBJECT-IDENTITY
+	STATUS		current
+	DESCRIPTION
+		"Policy Server MIB objects are all defined in this branch."
+	::= { nnOpsUbpDeviceSignalingMIB 3 }  
+
+nnOpsUbpDeviceSignalingMIBCompliances OBJECT IDENTIFIER
+	::= { nnOpsUbpDeviceSignalingMIBConformance 1 }  
+
+nnOpsUbpDeviceSignalingMIBGroups  OBJECT IDENTIFIER
+	::= { nnOpsUbpDeviceSignalingMIBConformance 2 }  
+
+-- Compliance groups
+
+nnOpsUbpDeviceSignalingMIBCompliance MODULE-COMPLIANCE
+	STATUS		current
+	DESCRIPTION
+		"Describes the requirements for conformance to the OPS Policy
+		Server MIB"
+	MODULE  -- this module
+	MANDATORY-GROUPS {
+		ubpNotifyObjectsGroup,
+		ubpNotificationsGroup
+		}
+	::= { nnOpsUbpDeviceSignalingMIBCompliances 1 }
+
+
+ubpNotifyObjectsGroup OBJECT-GROUP
+	OBJECTS {
+		ubpNotifyDeviceIdentifierType,
+ 	   	ubpNotifyDeviceIdentifier,
+		ubpNotifyEAPAccessPortEntityIdentifier,
+		ubpNotifyEAPUserIdentifier,
+		ubpNotifyEAPUserGroupIdentifier,
+		ubpNotifyEAPUserRoles,
+		ubpNotifyEAPSignalSequenceNumber,
+		ubpNotifyEAPSessionStartSignalSequenceNumber,  
+		ubpNotifyEAPSessionEndReason,
+		ubpNotifyEAPAccessPortEntityOpenFlag
+		}
+	STATUS current
+	DESCRIPTION
+			"Policy Server MIB objects used in notifications."
+	::= { nnOpsUbpDeviceSignalingMIBGroups 1 }
+
+serverNotificationsGroup NOTIFICATION-GROUP  
+	NOTIFICATIONS {
+		ubpEAPSessionStart,
+		ubpEAPSessionEnd
+		}
+	STATUS		current
+	DESCRIPTION
+		"Notifications which are implemented by the agent on the EAP access 
+point."
+	::= { nnOpsUbpDeviceSignalingMIBGroups 2 }
+
+END

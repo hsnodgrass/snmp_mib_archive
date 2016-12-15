@@ -1,0 +1,370 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-SYSTEM-EVENT-LOG-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion System Event Log Management MIB Release 1.0.0
+-- Revision 11/03/98
+
+-- Copyright 1998 Nortel Networks, Inc.
+-- All rights reserved.
+-- This Nortel Networks SNMP Management Information Base Specification
+-- (Specification) embodies Nortel Networks' confidential and
+-- proprietary intellectual property. Nortel Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Nortel Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	IpAddress
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	DisplayString
+		FROM RFC1213-MIB
+	TimeIntervalSec
+		FROM S5-TCS-MIB
+	CardId, PortId,
+	sysEvtLogMgmt
+		FROM CENTILLION-ROOT-MIB;
+
+
+-- SECTION 2: System Event Log Management MIB Objects
+
+
+ sysEvtLogDuration OBJECT-TYPE
+ 	SYNTAX	TimeIntervalSec 
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"This value indicates the remaining duration of Event Logging. 
+ 		The unit is in seconds. The maximum value is equal to 1000 days
+		(86,400,000 seconds). A set value of greater than 1000 days will result 
+		BADVALUE return. A value of 0 indicates the Event Logging is now stopped
+		and disabled. A non-zero value indicates that Event Logging is enabled.
+		Default value is set at system cold start only.
+ 		"
+     DEFVAL { 0 }
+ 	::= { sysEvtLogMgmt 1  }
+ 
+ sysEvtLogPreFilterEntityMap OBJECT-TYPE
+ 	SYNTAX	OCTET STRING (SIZE (8))
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"The bit array that contains the bit map of all possible entities for
+ 		event logging pre-filter control. There are total of 64 entities.
+ 		Each entity represented	by one bit. A bit with a value of 1 means
+ 		that the corresponding Entity is enabled for event logging, 
+ 		0 when the event logging is disabled for the corresponding entity.
+ 		
+ 		The following show the bit position and associated entity.
+ 			Bit 0 - SNMP_ENT_ATM_PORT
+ 			Bit 1 - SNMP_ENT_BOOTP
+ 			Bit 2 - SNMP_ENT_CLC
+ 			Bit 3 - SNMP_ENT_CLI
+ 			Bit 4 - SNMP_ENT_CONFIG
+ 			Bit 5 - SNMP_ENT_ETHERNET
+ 			Bit 6 - SNMP_ENT_FDB
+ 			Bit 7 - SNMP_ENT_HW
+ 			Bit 8 - SNMP_ENT_IISP
+ 			Bit 9 - SNMP_ENT_ILMI
+ 			Bit 10 - SNMP_ENT_IP
+ 			Bit 11 - SNMP_ENT_LANE
+ 			Bit 12 - SNMP_ENT_LEC
+ 			Bit 13 - SNMP_ENT_MCP
+ 			Bit 14 - SNMP_ENT_SIGNL
+ 			Bit 15 - SNMP_ENT_SNMP
+ 			Bit 16 - SNMP_ENT_STP
+ 			Bit 17 - SNMP_ENT_TELNET
+ 			Bit 18 - SNMP_ENT_TFTP
+ 			Bit 19 - SNMP_ENT_TOKENRING
+ 			Bit 20 - SNMP_ENT_VPORT
+ 			Bit 21 - SNMP_ENT_MPOA
+ 
+ 		When a new entity is created, a new bit position should also be defined.
+ 		The order of bit is defined as bit 0-7 in the lowest oder of byte
+ 		(first byte), bit 8-15 in the second lowest order of byte(second bye),
+ 		and so on. The lower number of bit is the least significant bit within 
+ 		the byte.
+ 		"
+ 	DEFVAL { 'FFFFFFFFFFFFFFFF'h }
+ 	::= { sysEvtLogMgmt 2  }
+ 
+ sysEvtLogPreFilterSeverity OBJECT-TYPE
+ 	SYNTAX	INTEGER {
+ 		emergency (1),
+ 		alert (2),
+ 		critical (3),
+ 		error (4),
+ 		warning (5),
+ 		notice (6),
+ 		info (7),
+ 		debug(8)
+ 		}
+  	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"This value indicates the severity level for event log 
+ 		pre-filtering control. An event message with less severity level
+ 		will not be logged into event message buffer.
+ 		All messages with equal or greater severity level are logged
+ 		into the message buffer. The emergency level is also named as panic
+		level inc CLI command.  
+ 		"
+ 	DEFVAL { error }
+ 	::= { sysEvtLogMgmt 3  }
+ 
+ 
+ sysEvtLogSlotPreFilterTable OBJECT-TYPE
+ 	SYNTAX	SEQUENCE OF SysEvtLogSlotPreFilterEntry
+ 	ACCESS	not-accessible
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"A slot table for controlling pre-filter setting for all slots.
+ 		This table is managed by Event Log application only. Table entries cannot be 
+ 		created or deleted.
+ 		"
+ 	::= { sysEvtLogMgmt 4 }
+ 
+ sysEvtLogSlotPreFilterEntry OBJECT-TYPE
+ 	SYNTAX	SysEvtLogSlotPreFilterEntry
+ 	ACCESS	not-accessible
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"An entry of the slot pre-filter table.
+ 		"
+ 	INDEX	{ sysEvtLogSlotPreFilterCardId }
+ 	::= { sysEvtLogSlotPreFilterTable 1 }
+ 
+ SysEvtLogSlotPreFilterEntry ::= SEQUENCE {
+ 	sysEvtLogSlotPreFilterCardId CardId,
+ 	sysEvtLogSlotPreFilterControl INTEGER
+ 	}
+ 
+ sysEvtLogSlotPreFilterCardId OBJECT-TYPE
+ 	SYNTAX	CardId 
+ 	ACCESS	read-only
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"The slot index varies by system. It is chassis dependent.
+ 		For C100, valid number is 1-6. For BH left, valid number is 2-7.
+ 		For BH right, valid number is 8-13. etc.
+ 		"
+ 	::= { sysEvtLogSlotPreFilterEntry 1 }
+ 
+ 
+ sysEvtLogSlotPreFilterControl OBJECT-TYPE
+ 	SYNTAX	INTEGER {
+ 			disable(1),
+ 			enable(2)
+ 			}
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"This value indicates the pre-filter setting for the specified slot.
+ 		"
+ 	DEFVAL { enable }
+ 	::= { sysEvtLogSlotPreFilterEntry 2 }
+ 
+ sysEvtLogPortPreFilterTable OBJECT-TYPE
+ 	SYNTAX	SEQUENCE OF SysEvtLogPortPreFilterEntry
+ 	ACCESS	not-accessible
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"A port table for controlling pre-filter setting for all ports.
+ 		This table is managed by Event Log application only. 
+		Table entries cannot be created or deleted.
+ 		"
+ 	::= { sysEvtLogMgmt 5 }
+ 
+ sysEvtLogPortPreFilterEntry OBJECT-TYPE
+ 	SYNTAX	SysEvtLogPortPreFilterEntry
+ 	ACCESS	not-accessible
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"An entry for port table for controlling pre-filter 
+ setting for all ports.
+ 		"
+ 	INDEX	{ sysEvtLogPortPreFilterCardId, sysEvtLogPortPreFilterPortId }
+ 	::= { sysEvtLogPortPreFilterTable 1 }
+ 
+ SysEvtLogPortPreFilterEntry ::= SEQUENCE {
+ 	sysEvtLogPortPreFilterCardId CardId,
+ 	sysEvtLogPortPreFilterPortId PortId,
+ 	sysEvtLogPortPreFilterControl INTEGER
+ 	}
+ 
+ sysEvtLogPortPreFilterCardId OBJECT-TYPE
+ 	SYNTAX	CardId 
+ 	ACCESS	read-only
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"The slot index varies by system. It is chassis dependent.
+ 		For C100, valid number is 1-6. For BH left, valid number is 2-7.
+ 		For BH right, valid number is 8-13. etc.
+ 		"
+ 	::= { sysEvtLogPortPreFilterEntry 1 }
+ 
+ sysEvtLogPortPreFilterPortId OBJECT-TYPE
+ 	SYNTAX	PortId 
+ 	ACCESS	read-only
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"The port index of the specified slot.
+ 		"
+ 	::= { sysEvtLogPortPreFilterEntry 2 }
+ 
+ sysEvtLogPortPreFilterControl OBJECT-TYPE
+ 	SYNTAX	INTEGER {
+ 			disable(1),
+ 			enable(2)
+ 			}
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"This value indicates the pre-filter setting for the specified port.	
+ 		Note: A module must be properly configured before any port of the 
+		module can be set with a value of sysEvtLogPortPreFilterControl.
+		A BADVALUE is returned when one enables a port in a disabled slot.
+ 		"
+ 	DEFVAL { enable }
+ 	::= { sysEvtLogPortPreFilterEntry 3 }
+ 
+ sysEvtLogDestMap OBJECT-TYPE
+ 	SYNTAX	INTEGER 
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"This value is a bit map of each destination that Event Log 
+ 		can forward messages to, where
+			bit 0 for console CLI
+			bit 1 for Syslogd
+			bit 2 for Tftpsave
+ 		The value of other bits has no effect.
+ 		A bit value of 1 means the destination is enabled. 
+ 		Otherwise, disabled.
+		Note: Enabling Syslogd prior setting sysEvtLogSysLogHostIp will return
+		BADVALUE for set.  Enabling Tftpsave prior setting 
+		sysEvtLogTftpsaveHostIp will return BADVALUE for set.
+ 		"
+ 	DEFVAL { 0 }
+ 	::= { sysEvtLogMgmt 6 }
+ 
+-- Event Log SysLogd Destination Group
+
+ sysEvtLogSysLogCfg OBJECT IDENTIFIER ::= { sysEvtLogMgmt 7 }
+
+ sysEvtLogSysLogHostIp OBJECT-TYPE
+ 	SYNTAX  IpAddress	
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"The IP address of Unix system that runs Syslogd.
+ 		The event messages are redirect to Syslogd only when this IP address is 
+ 		valid and the bit value of Syslogd of sysEvtLogDestMap is enabled.
+		Note: Set an invalid IP address results a BADVALUE return.
+ 		"
+ 	DEFVAL { '00000000'h }
+ 	::= { sysEvtLogSysLogCfg 1  }
+ 
+ sysEvtLogSysLogSeverity OBJECT-TYPE
+ 	SYNTAX 	INTEGER {
+ 		panic (1),
+ 		alert (2),
+ 		critical (3),
+ 		error (4),
+ 		warning (5),
+ 		notice (6),
+ 		info (7),
+ 		debug(8)
+ 		}
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"This value indicates the severity level for Event Log to forward
+ 		events to SysLogd in Unix system. An event message
+ 		with less severity level will not be forwarded to SysLogd.
+ 		All messages with equal or greater severity level are forwarded to 
+		SysLogd. 
+ 		"
+ 	DEFVAL { error }
+ 	::= { sysEvtLogSysLogCfg 2  }
+ 
+ 
+ sysEvtLogSysLogFacility OBJECT-TYPE
+ 	SYNTAX	INTEGER {
+ 		local0 (1),
+ 		local1 (2),
+ 		local2 (3),
+ 		local3 (4),
+ 		local4 (5),
+ 		local5 (6),
+ 		local6 (7),
+ 		local7 (8)
+ 		}
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"This value indicates the facility number for the event messages to
+ 		be logged by syslogd. The supported values are from local0 to
+ 		local7 only (refer to syslogd manual of Unix system)
+ 		"
+ 	DEFVAL { local0 }
+ 	::= { sysEvtLogSysLogCfg 3  }
+ 
+-- Event Log Tftpsave Destination Group
+
+ sysEvtLogTftpsaveCfg OBJECT IDENTIFIER ::= { sysEvtLogMgmt 8 }
+
+ sysEvtLogTftpsaveHostIp OBJECT-TYPE
+ 	SYNTAX  IpAddress	
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"The IP address of TFTP server system.
+ 		The event messages file is transfered from event log buffer to server
+		system only when this IP is valid and the event message count reach its
+ 		threshold. (refer to sysEvtLogTftpsaveMaxMsgCount) and the bit value
+		of Tftpsave of sysEvtLogDestMap is enabled.
+		Note: Set an invalid IP address results a BADVALUE return.
+ 		"
+ 	DEFVAL { '00000000'h }
+ 	::= { sysEvtLogTftpsaveCfg 1 }
+ 
+ sysEvtLogTftpsaveFileName OBJECT-TYPE
+ 	SYNTAX  DisplayString (SIZE(0..255))	
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"This octet string indicates the file name for the Tftpsave option of 
+ 		event log function. The filename will be appended with an extension  
+ 		nnn, where nnn ranges from 000 to 999, as each TFTP 
+		file transfer occurs. The filename is default to the last three bytes
+		of MAC address of the switch in hexadecimal format.
+ 		"
+ 	::= { sysEvtLogTftpsaveCfg 2 }
+ 
+ 
+ sysEvtLogTftpsaveMaxMsgCount OBJECT-TYPE
+ 	SYNTAX	INTEGER 
+ 	ACCESS	read-write
+ 	STATUS	mandatory
+ 	DESCRIPTION
+ 		"This value indicates how many messages in the event log buffer will
+ 		trigger the TFTP file transfer for logged messages to TFTP host.
+ 		the default value is maximum messages count for the event log
+ 		buffer, which is currently equal to 680. If the value is set to 
+ 		zero or greater than the maximum value, it returns a BADVALUE.
+ 		"
+ 	::= { sysEvtLogTftpsaveCfg 3 }
+ 
+
+END

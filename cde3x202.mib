@@ -1,0 +1,385 @@
+-- SECTION 1: Top Level Definitions
+ 
+RFC1407-EXT-MIB DEFINITIONS ::= BEGIN
+ 
+ 
+-- RFC1407(DS3/E3) Extensions MIB Release 2.0.0
+-- Revision 12/01/97
+ 
+-- Copyright 1997 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+ 
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+ 
+ 
+ 
+-- Imports
+ 
+IMPORTS
+        OBJECT-TYPE
+                FROM RFC-1212
+        Gauge
+                FROM RFC1155-SMI
+        extensions, EnableIndicator
+                FROM CENTILLION-ROOT-MIB
+        dsx3TotalIndex
+                FROM RFC1407-MIB;
+ 
+ 
+cnds3e3Ext         OBJECT IDENTIFIER ::= { extensions 6 }
+ 
+cndsx3Oper         OBJECT IDENTIFIER ::= { cnds3e3Ext 1 }
+cndsx3TotalExt     OBJECT IDENTIFIER ::= { cnds3e3Ext 2 }
+cndsx3ConfigExt    OBJECT IDENTIFIER ::= { cnds3e3Ext 3 }
+ 
+-- SECTION 2: MIB Objects
+ 
+-- DS3/E3 Total Extention Table
+ 
+cndsx3TotalExtTable    OBJECT-TYPE
+       SYNTAX SEQUENCE OF  Cndsx3TotalExtEntry
+       ACCESS not-accessible
+       STATUS mandatory
+       DESCRIPTION
+               "This table contains the counters
+                that are additional to the 
+                existing dsx3TotalTable"
+       ::= { cndsx3TotalExt 1}
+ 
+cndsx3TotalExtEntry OBJECT-TYPE
+       SYNTAX Cndsx3TotalExtEntry
+       ACCESS not-accessible
+       STATUS mandatory
+       DESCRIPTION
+               "An entry in the DS3/E3 TotalExt table."
+       INDEX { dsx3TotalIndex }
+       ::= { cndsx3TotalExtTable 1 }
+ 
+Cndsx3TotalExtEntry ::= SEQUENCE {
+       cndsx3CellPayloadHECError
+               Gauge
+       }
+ 
+cndsx3CellPayloadHECError OBJECT-TYPE
+       SYNTAX  Gauge
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+               "A counter of Payload HEC errors."
+       ::= { cndsx3TotalExtEntry 1 }
+ 
+-- DS3/E3 Configuration Extention Table
+ 
+cndsx3ConfigExtTable    OBJECT-TYPE
+       SYNTAX SEQUENCE OF  Cndsx3ConfigExtEntry
+       ACCESS not-accessible
+       STATUS mandatory
+       DESCRIPTION
+               "This table contains the configurable parameters
+                that are additional to the
+                existing dsx3ConfigTable"
+       ::= { cndsx3ConfigExt 1}
+ 
+cndsx3ConfigExtEntry OBJECT-TYPE
+	SYNTAX Cndsx3ConfigExtEntry
+       	ACCESS not-accessible
+       	STATUS mandatory
+       	DESCRIPTION
+		"An entry in the DS3/E3 ConfigExt table."
+	INDEX { cndsx3LineIndex }
+       	::= { cndsx3ConfigExtTable 1 }
+ 
+Cndsx3ConfigExtEntry ::= SEQUENCE {
+       	cndsx3LineBuildOut
+               	EnableIndicator,
+       	cndsx3LineIndex
+               	INTEGER,
+       	cndsx3ScramblingEnable
+		EnableIndicator,
+	cndsx3E3ConfigType
+		INTEGER
+       	}
+
+cndsx3LineBuildOut OBJECT-TYPE
+       SYNTAX  EnableIndicator
+       ACCESS  read-write
+       STATUS  mandatory
+       DESCRIPTION
+                "Indicates LineBuild Out status"
+       ::= { cndsx3ConfigExtEntry 1 }
+ 
+cndsx3LineIndex OBJECT-TYPE
+        SYNTAX  INTEGER (1..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "This object is the identifier of a DS3/E3
+            Interface on a managed device."
+        ::= { cndsx3ConfigExtEntry 2 }
+
+cndsx3ScramblingEnable OBJECT-TYPE
+	SYNTAX  EnableIndicator
+       	ACCESS  read-write
+       	STATUS  mandatory
+       	DESCRIPTION
+       		"This field indicates if scrambing is enabled or
+		disabled."
+       	::= { cndsx3ConfigExtEntry 3 }
+
+cndsx3E3ConfigType OBJECT-TYPE
+      	SYNTAX INTEGER {
+              	other(1),
+              	g751(2),
+              	g832(3)
+              	}
+      	ACCESS read-write
+      	STATUS mandatory
+      	DESCRIPTION
+      		"This object allows to switch between E3 G751 and G832 mode.
+      		The following value is read-only:
+              		other(1).......other than g751 and g832
+      		The following value is read-write:
+              		g751(2)........E3ConfigType is G751
+              		g832(3)........E3ConfigType is G832"
+	::= { cndsx3ConfigExtEntry 4 }
+
+
+-- DS3/E3 Operational Configuration Table
+ 
+cndsx3OperTable    OBJECT-TYPE
+       SYNTAX SEQUENCE OF  Cndsx3OperEntry
+       ACCESS not-accessible
+       STATUS mandatory
+       DESCRIPTION
+               "This table contains the configuration
+               information that are operational currently. 
+               This table contains all the objects defined
+               in dsx3ConfigTable plus some additional.
+               This table is read only"
+       ::= { cndsx3Oper 1}
+ 
+cndsx3OperEntry OBJECT-TYPE
+	SYNTAX Cndsx3OperEntry
+       	ACCESS not-accessible
+       	STATUS mandatory
+       	DESCRIPTION
+               "An entry in the DS3/E3 Operational Configuration table."
+       	INDEX { cndsx3OperLineIndex }
+       	::= { cndsx3OperTable 1 }
+ 
+Cndsx3OperEntry ::= SEQUENCE {
+        cndsx3OperLineIndex
+            	INTEGER,
+        cndsx3OperLineType
+            	INTEGER,
+        cndsx3OperLoopbackConfig
+            	INTEGER,
+        cndsx3OperLineStatus
+            	INTEGER,
+        cndsx3OperTransmitClockSource
+            	INTEGER,
+        cndsx3OperPlcpLOFEvent
+            	INTEGER,
+        cndsx3OperG832CellDelineation
+            	INTEGER,
+        cndsx3OperLineBuildOut
+            	EnableIndicator,
+       	cndsx3OperScramblingEnable
+               	EnableIndicator,
+	cndsx3OperE3ConfigType
+		INTEGER
+       	}
+ 
+cndsx3OperLineIndex OBJECT-TYPE
+        SYNTAX  INTEGER (1..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "This object is the identifier of a DS3/E3
+            Interface on a managed device."
+        ::= { cndsx3OperEntry 1 }
+  
+cndsx3OperLineType OBJECT-TYPE
+        SYNTAX  INTEGER {
+                dsx3other(1),
+                dsx3M23(2),
+                dsx3SYNTRAN(3),
+                dsx3CbitParity(4),
+                dsx3ClearChannel(5),
+                e3other(6),
+                e3Framed(7),
+                e3Plcp(8)
+               	}
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+             	"This variable indicates the variety of DS3 C-bit
+              	or E3 application implementing this interface.  
+              	The type of interface affects the interpretation of the
+              	usage and error statistics.
+ 
+              	The rate of DS3 is 44.736 Mbps and E3 is 34.368 Mbps.
+              	The dsx3ClearChannel value means that the C-bits
+              	are not used except for sending/receiving AIS.
+ 
+              	The values, in sequence, describe:
+ 
+              	TITLE:            	SPECIFICATION:
+              	dsx3M23      		ANSI T1.107-1988
+              	dsx3SYNTRAN        	ANSI T1.107-1988
+              	dsx3CbitParity     	ANSI T1.107a-1989
+              	dsx3ClearChannel   	ANSI T1.102-1987
+              	e3Framed           	CCITT G.751
+              	e3Plcp             	ETSI T/NA(91)18."
+        ::= { cndsx3OperEntry 2 }
+ 
+cndsx3OperLoopbackConfig OBJECT-TYPE
+        SYNTAX  INTEGER {
+                  dsx3NoLoop(1),
+                  dsx3PayloadLoop(2),
+                  dsx3LineLoop(3),
+                  dsx3OtherLoop(4)
+                }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+           "This variable represents the loopback configuration
+            of the DS3/E3 interface.  
+ 
+           dsx3NoLoop
+              Not in the loopback state.  A device that is
+              not capable of performing a loopback on
+              the interface shall always return this as
+              it's value.
+ 
+           dsx3PayloadLoop
+              The received signal at this interface is looped
+              through the device.  Typically the received signal
+              is looped back for retransmission after it has
+              passed through the device's framing function.
+ 
+           dsx3LineLoop
+              The received signal at this interface does not
+              go through the device (minimum penetration) but
+              is looped back out.
+ 
+            dsx3OtherLoop
+              Loopbacks that are not defined here."
+        ::= { cndsx3OperEntry 3 }
+ 
+cndsx3OperLineStatus OBJECT-TYPE
+        SYNTAX  INTEGER (1..1023)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+          "This variable indicates the
+          Line Status of the interface.
+          It contains loopback state information
+          and failure state information.
+          The dsx3LineStatus is a bit map represented
+          as a sum, therefore, it can represent multiple failures
+          and a loopback (see dsx3LoopbackConfig object for the 
+          type of loopback) simultaneously.
+          The dsx3NoAlarm should be set if and only if
+          no other flag is set.
+ 
+          The various bit positions are:
+             1     dsx3NoAlarm       No alarm present
+             2     dsx3RcvRAIFailure Receiving Yellow/Remote
+                   Alarm Indication
+             4     dsx3XmitRAIAlarm Transmitting Yellow/Remote
+                   Alarm Indication
+             8     dsx3RcvAIS        Receiving AIS failure state
+            16     dsx3XmitAIS       Transmitting AIS
+            32     dsx3LOF           Receiving LOF failure state
+            64     dsx3LOS           Receiving LOS failure state
+           128     dsx3LoopbackState Looping the received signal
+           256     dsx3RcvTestCode   Receiving a Test Pattern
+           512     dsx3OtherFailure any line status not defined here"
+        ::= { cndsx3OperEntry 4 }
+ 
+cndsx3OperTransmitClockSource OBJECT-TYPE
+        SYNTAX  INTEGER {
+                  loopTiming(1),
+                  localTiming(2),
+                  throughTiming(3)
+        }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+           "The source of Transmit Clock.
+           is derived from the recovered receive clock of
+           another DS3 interface."
+        ::= { cndsx3OperEntry 5 }
+ 
+cndsx3OperPlcpLOFEvent OBJECT-TYPE
+       SYNTAX  INTEGER {
+               on(1),
+               off(2)
+               }
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+               "Indicates PLCP Loss of Frame event. 
+               The following value is read-only:
+                 on(1).......Loss of Frame event is present
+                 off(2)......Loss of Frame event is not present"
+       ::= { cndsx3OperEntry 6 }
+ 
+cndsx3OperG832CellDelineation OBJECT-TYPE
+       SYNTAX  INTEGER {
+               on(1), 
+               off(2)
+               }
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+               "Indicates Cell Delineation events.
+               The following value is read-only:
+                 on(1).......Cell Delineation event is present
+                 off(2)......Cell Delineation event is not present"
+       ::= { cndsx3OperEntry 7 }
+ 
+cndsx3OperLineBuildOut OBJECT-TYPE
+       SYNTAX  EnableIndicator
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+                "Indicates line buildout status"
+       ::= { cndsx3OperEntry 8 }
+ 
+cndsx3OperScramblingEnable OBJECT-TYPE
+       SYNTAX  EnableIndicator
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+                "This field indicates if scrambing is enabled or
+		disabled."
+       ::= { cndsx3OperEntry 9 }
+
+cndsx3OperE3ConfigType OBJECT-TYPE
+	SYNTAX INTEGER {
+		other(1),
+		g751(2),
+		g832(3)
+		}
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"This object shows E3Config mode.
+		The following value is read-only:
+			other(1).......other than g751 and g832
+			g751(2)........E3ConfigType is G751
+			g832(3)........E3ConfigType is G832"
+	::= { cndsx3OperEntry 10 }
+
+
+END
+ 

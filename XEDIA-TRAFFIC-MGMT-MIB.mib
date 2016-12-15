@@ -1,0 +1,722 @@
+XEDIA-TRAFFIC-MGMT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS 
+    MODULE-IDENTITY, OBJECT-TYPE, Gauge32, Integer32, Counter32,
+    NOTIFICATION-TYPE, IpAddress, Unsigned32
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, DisplayString, TruthValue, RowStatus
+        FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    ifIndex
+        FROM RFC1213-MIB
+    xediaMibs
+        FROM XEDIA-REG
+    ;
+
+xediaTrafficMgmtMIB MODULE-IDENTITY
+    LAST-UPDATED "9705022155Z" -- May 2, 1997      
+    ORGANIZATION "Xedia Corp."
+    CONTACT-INFO
+        "support@xedia.com"
+    DESCRIPTION
+        "This module defines objects for the management of Xedia's
+        proprietary Traffic Management capability. This capability is
+        based on Class-Based Queueing (CBQ).
+
+        The purpose of the Xedia Traffic Management (xtm) function is
+        to share access to an interface's bandwidth based on policies
+        set up by the administrator."
+    ::= { xediaMibs 2 }
+
+-- ================================================================
+-- Top-level organization of the MIB
+-- ================================================================
+
+xtmObjects          OBJECT IDENTIFIER ::= { xediaTrafficMgmtMIB 1 }
+xtmNotifications    OBJECT IDENTIFIER ::= { xediaTrafficMgmtMIB 2 }
+xtmConformance      OBJECT IDENTIFIER ::= { xediaTrafficMgmtMIB 3 }
+
+-- ================================================================
+-- Textual Conventions (datatypes)
+-- ================================================================
+
+-- Hack for pre-1902 compiler:
+-- Unsigned32 ::= Gauge32
+
+XtmIpAddress ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT    "1d."
+    STATUS          current
+    DESCRIPTION
+        "An IPv4 or IPv6 address. The version can be inferred from
+        length."
+--    SYNTAX          OCTET STRING (SIZE (4 | 16))
+    SYNTAX          IpAddress
+
+XtmProtocol ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT    "d"
+    STATUS          current
+    DESCRIPTION
+        "The value of the IP Protocol field of an IP Datagram
+        Header. This identifies the protocol layer above IP. For
+        example, the value 6 is used for TCP and the value 17 is used
+        for UDP.  The values of this field are defined in the Assigned
+        Numbers RFC."
+    SYNTAX          INTEGER {
+                        any(0),
+                        icmp(1),
+                        tcp(6),
+                        udp(17)
+                    }
+
+XtmPort ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT    "d"
+    STATUS          current
+    DESCRIPTION
+        "A UDP or TCP port value. The values of this field are defined
+        in the Assigned Numbers RFC."
+    SYNTAX          INTEGER {
+                        any(0),
+                        ftpData(20),
+                        ftp(21),
+                        telnet(23),
+                        smtp(25),
+                        domain(53),
+                        bootps(67),
+                        bootpc(68),
+                        tftp(69),
+                        gopher(70),
+                        finger(79),
+                        wwwHttp(80),
+                        nntp(119),
+                        ntp(123),
+                        snmp(161),
+                        snmpTrap(162),
+                        bgp(179)
+                    }
+
+XtmBitRate ::= TEXTUAL-CONVENTION
+    STATUS          current
+    DESCRIPTION
+        "A data rate in bits/second."
+    SYNTAX          Integer32 (0..'7FFFFFFF'h)
+
+XtmTosOctet ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT    "1x"
+    STATUS          current
+    DESCRIPTION
+        "A single hexidecimal octet used to specify a type-of-service 
+        (TOS) value or mask."
+    SYNTAX          OCTET STRING (SIZE (1))
+
+XtmRange ::= TEXTUAL-CONVENTION
+    STATUS          current
+    DESCRIPTION
+        "A range of values.  A contiguous range may be specified
+        using a dash (-).  Thus a contiguous range of integers may
+        be expressed as 'lowValue-highValue', e.g. 5-10.  A discontiguous
+        range may be specified using a comma (,) separated list.
+        For example, '1,12,55'.  Contiguous and discontiguous ranges
+        may be combined, as in '1,5-10,12,55'.
+
+        When set, values are added to the existing XtmRange.  For 
+        example, setting '100-200' to the existing range of '1,5-10,12,55'
+        yields the value '1,5-10,12,55,100-200'.
+
+        Values may be deleted from a list using the minus (-) symbol.
+        For example, setting range consisting of '1,5-10,12,55,100-200'
+        to '-55,-150' yields the range string '1,,5-10,12,100-149,151-200'.
+        String values may be completely deleted by setting them to the
+        NULL string.
+
+        This textual-convention may be used on a variety of data types,
+        including integers, integer enumerations, IpAddresses, and 
+        OCTET STRINGs."
+    SYNTAX          DisplayString
+
+
+-- ================================================================
+-- Object Definitions
+-- ================================================================
+
+--
+-- The Interface Information Table
+--
+
+
+--
+-- The Class Definition/Status Table
+--
+
+xtmClassTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF XtmClassEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table is a 'flattened' version of a hierarchical class
+        trees that specify the bandwidth allocation for the CBQ
+        interfaces of the system.
+
+        Each tree is rooted at an interface. A class may either be a
+        leaf, meaning it has no children, or it may be an interior
+        class which has children. As packets are forwarded out an
+        interface, they are compared to the 'flow definition' of each
+        class down the tree until a matching leaf is found or until
+        all classes are traversed. Once a matching class is found, the
+        packet is transmitted or not based on the constraints
+        configured for the class, most importantly the allocated
+        bandwidth as identified by xtmClassRate. If no matching class
+        is found, the packet is dropped.
+
+        The 'flow definition' for a class can be defined based on
+        inclusive ranges of the following packet fields:
+            o Source IP Address (or a domain name)
+            o Destination IP Address (or a domain name)
+            o Protocol above layer 3 (e.g., UDP, TCP, ICMP, etc.)
+            o Source Port (which identifies service, e.g., FTP,
+              Telnet, SMTP, etc.)
+            o Destination Port
+
+        It is important that packets only match zero or one traffic
+        class. In order for this to be true, certain rules must be
+        enforced when classes are defined. Specifically, all 'sibling'
+        classes must be defined using the same criteria. Also,
+        children must use criteria not already specified by one of
+        their ancestors or they must specify a subrange of an already
+        specified criteria. Therefore, this tree would be legal:
+
+        interface 1
+            subnet A
+                protocol UDP
+                    port SNMP
+                protocol TCP
+            subnet B
+
+        But this tree would be illegal:
+
+        interface 2
+            subnet A
+                subnet B (illegal -- not subrange of parent)
+            protocol TCP (illegal -- different criteria than sibling)" 
+    ::= { xtmObjects 2 }
+
+xtmClassEntry OBJECT-TYPE
+    SYNTAX      XtmClassEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a single traffic class. Traffic classes are
+        identified by their associated interface's ifIndex and their
+        name. (Which means class names must be unique for a particular
+        interface.)
+
+        Traffic classes can be created and destroyed using this
+        table's xtmClassRowStatus object. A class cannot be used by
+        the run-time system (xtmClassRowStatus = 'active(1)') if it
+        does not follow the rules listed in the DESCRIPTION of the
+        previous object. In this case, the xtmClassRowStatus will
+        remain 'notReady(3)' and the xtmClassOperStatus will be
+        'downConflict(3)'.
+
+        Also, in order to become active, the user must have specified
+        a valid value for xtmClassParent and xtmClassRate. All other
+        settable objects may be left at their default values.
+
+        Finally, the following objects cannot be modified once the row
+        is active: xtmClassParent, and xtmClassQueueElasticityFactor."
+    INDEX { ifIndex, xtmClassName }
+    ::= { xtmClassTable 1 }
+
+XtmClassEntry ::= SEQUENCE {
+    xtmClassName                    DisplayString,
+    xtmClassParent                  DisplayString,
+
+    -- Configuration Parameters
+    xtmClassRate                    XtmBitRate,
+    xtmClassBounded                 TruthValue,
+    xtmClassPriority                Integer32,
+
+    -- Status        
+        
+    xtmClassOperStatus              INTEGER,
+    xtmClassOperMsg                 DisplayString,
+    xtmClassBwUse                   INTEGER,
+    xtmClassUnsatisfied             TruthValue,
+    xtmClassQueueSize               Gauge32,
+    xtmClassRowStatus               RowStatus,
+
+    -- Max Bandwidth 
+
+    xtmClassMaxRate                 XtmBitRate,
+
+    -- AutoClass
+
+
+    xtmClassPeerClassificationOrder Integer32,
+    -- New "Flow" definition.
+
+    xtmClassSrcIpAddresses          XtmRange,
+    xtmClassDestIpAddresses         XtmRange,
+    xtmClassSrcPorts                XtmRange,
+    xtmClassDestPorts               XtmRange,
+    xtmClassProtocols               XtmRange,
+    xtmClassApplications            XtmRange,
+    xtmClassClassificationTos       XtmRange,
+    xtmClassSrcDomainNames          XtmRange,
+    xtmClassDestDomainNames         XtmRange,
+    xtmClassOperator                INTEGER
+
+}
+
+xtmClassName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..64))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A user-defined name for the traffic class. This is the unique
+        identifier for the class within the scope of the
+        interface. For example, the class that defines the IP address
+        range for a particular customer might be 'Customer Fred Co.'"
+    ::= { xtmClassEntry 1 }
+
+xtmClassParent OBJECT-TYPE          
+    SYNTAX      DisplayString (SIZE (1..64))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object will have one of the following values:
+            - the value of xtmClassName for the parent class in the
+              hierarchy,
+            - the value 'interface' if the class is directly under
+              the interface, which is the root of the tree, or
+            - the value 'orphan' if the class is defined but not yet
+              inserted into the tree.
+
+        If a parent name is specified, the row cannot become active
+        (have its xtmClassRowStatus set to 'active(1)' unless the
+        parent is valid and is itself active.
+
+        Note that an interface may have several traffic classes with
+        an xtmClassParent of 'interface'.
+
+        Note also that an 'orphan' class cannot become 'active(1)' -
+        it must first have a valid parent specified."
+    DEFVAL      { "interface" }
+    ::= { xtmClassEntry 2 }
+
+
+
+xtmClassRate OBJECT-TYPE      
+    SYNTAX      XtmBitRate
+    UNITS       "bits per second"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A fraction of the bandwidth of the root interface to be
+        allocated to this traffic class. Note that specifying 0
+        bits/second effectively filters all traffic that matches this
+        class' flow specification. Also note that the sum of bit rates
+        for all classes defined under the same class must be less
+        than or equal to xtmClassRate of the parent."
+    DEFVAL      { 0 }
+    ::= { xtmClassEntry 13 }
+
+xtmClassBounded OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The value of this object is 'true(1)' if the class is bounded
+        (can't 'borrow' bandwidth from its parent class) and
+        'false(2)' otherwise."
+    DEFVAL      { false }
+    ::= { xtmClassEntry 14 }
+
+xtmClassPriority OBJECT-TYPE        
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The priority for this class. The smaller the value, the
+        higher the priority. Delay-sensitive flows (such as video or
+        audio) should be given higher priority values."
+    DEFVAL      { 3 }
+    ::= { xtmClassEntry 15 }
+
+
+xtmClassOperStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    up(1),
+                    down(2),
+                    downConflict(3),
+                    autoClassActive(4)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The actual operational status of the traffic class. The value
+        'up(1)' means this traffic class is in use, the value
+        'down(2)' indicates the traffic class is not in use either due
+        to an internal problem or because it (or an ancestor) is
+        administratively disabled, and the value 'downConflict(3)'
+        indicates the class definition conflicts with those of its
+        siblings. The value autoClassActive(4) means that the class is
+        a dynamically created AutoClass, which may not be modified in any
+        way until it is saved to Non-Volatile configuration memory. 
+        After an AutoClass is saved to NVRAM, it's operational status 
+        will transistion to up(1)."
+    ::= { xtmClassEntry 22 }
+                    
+xtmClassOperMsg OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The operational message associated with the operational
+        status.  The message usually provides additional information
+        that may not be obvious through the operational status."
+    ::= { xtmClassEntry 23 }
+                    
+xtmClassBwUse OBJECT-TYPE     
+    SYNTAX      INTEGER {
+                    atLimit(1),
+                    underLimit(2),
+                    overLimit(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An indication of whether this traffic class has used its
+        allocated bandwidth (as indicated by xtmClassPercent), has not
+        used its allocated bandwidth or has used more than its
+        allocated bandwidth and is therefore 'atLimit(1)',
+        'underLimit(2)', or 'overLimit(3)' respectively."
+    ::= { xtmClassEntry 24 }
+
+xtmClassUnsatisfied OBJECT-TYPE       
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An indication of whether this traffic class is
+        'unsatisfied'. The value of this object is 'true(1)' if it is
+        underLimit and has a persistent backlog, meaning it has
+        packets waiting in its queue. The value is 'false(1)'
+        otherwise. Note that a class can be considered satisfied if it
+        is underLimit and it just hasn't had anything to transmit. 
+
+        The presence of an unsatisfied class indicates that some other
+        class is overLimit and 'hogging' bandwidth. Persistently
+        unsatisfied classes indicate that tuning some of the
+        parameters (such as xtmClassMaxIdle or xtmClassBounded) may be
+        necessary."
+    ::= { xtmClassEntry 25 }
+
+xtmClassQueueSize OBJECT-TYPE       
+    SYNTAX      Gauge32 (0..2048)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The size of the queue associated with this traffic
+        class. This is the maximum number of packets that can be in
+        the queue, not the number that are currently queued (see
+        xtmClassStatsQueuedPkts)."
+    ::= { xtmClassEntry 26 }
+
+xtmClassRowStatus OBJECT-TYPE       
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Traffic classes are created and delected using this object
+        (using the conventions described in RFC1903)."
+    ::= { xtmClassEntry 27 }
+
+xtmClassMaxRate OBJECT-TYPE      
+    SYNTAX      XtmBitRate
+    UNITS       "bits per second"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The maximum bandwidth the class may achieve, including
+        bandwidth allocated to this class, and any bandwidth that
+        may be borrowed. A value of zero (0) indicates that this
+        feature is not being used. The xtmClassMaxRate must be set 
+        to a value higher than the xtmClassRate, but may also exceed
+        the parent class's xtmClassRate."
+    DEFVAL      { 0 }
+    ::= { xtmClassEntry 28 }
+
+xtmClassPeerClassificationOrder OBJECT-TYPE
+    SYNTAX      Integer32 (1..2147483647)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A positive integer representing the classification order 
+        of peers within the classification hierarchy.  For example,
+        when creating three children under the 'root' class the
+        packet classifier checks incoming packets againts classification
+        parameters from left to right in the order in which the children
+        were created.  Each peer (aka 'sibling') is assigned an xtmClass-
+        PeerClassificationOrder of 100 by default, as shown below.
+
+                            +_______+
+                            | root  |
+                            | class |
+                            +_______+
+                           /    |    \
+                          /     |     \
+                         /      |      \
+                        /       |       \
+                       /        |        \
+                      /         |         \
+                 +_______+  +_______+  +_______+
+                 |   A   |  |   B   |  |   C   |
+                 | class |  | class |  | class |
+                 |  100  |  |  100  |  |  100  | (peer classification order)
+                 +_______+  +_______+  +_______+
+
+        In the figure above, classification order proceeds from A to B
+        to C.  In order to alter this order, this object may be modified.
+        For example, to change the order to C, B A one might assign
+        an xtmClassPeerClassificationOrder of 50 to class C, and an
+        xtmClassPeerClassificationOrder of 150 to class A, resulting in
+        the ordered tree shown below.
+
+                            +_______+
+                            | root  |
+                            | class |
+                            +_______+
+                           /    |    \
+                          /     |     \
+                         /      |      \
+                        /       |       \
+                       /        |        \
+                      /         |         \
+                 +_______+  +_______+  +_______+
+                 |   C   |  |   B   |  |   A   |
+                 | class |  | class |  | class |
+                 |   50  |  |  100  |  |  150  | (peer classification order)
+                 +_______+  +_______+  +_______+
+
+        "
+    DEFVAL      { 100 }
+    ::= { xtmClassEntry 44 }
+
+
+xtmClassSrcIpAddresses OBJECT-TYPE
+    SYNTAX      XtmRange
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The range of IP source addresses that match this class. 
+        An all zeros value means 'any source address'."
+    ::= { xtmClassEntry 45 }
+
+xtmClassDestIpAddresses OBJECT-TYPE
+    SYNTAX      XtmRange
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The range of IP destination addresses that match this class. 
+        An all zeros value means 'any destination address'."
+    ::= { xtmClassEntry 46 }
+
+xtmClassProtocols OBJECT-TYPE
+    SYNTAX      XtmRange
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The range of IP protocols that match this class. The value '0' 
+        'any protocol'.
+
+        Numeric strings, character strings, and combinations of the two
+        may be used. Valid strings include:
+
+        Numeric String       Character String
+        ______________       ________________
+              1              icmp
+              6              tcp
+             17              udp
+             89              ospf
+        "
+    ::= { xtmClassEntry 47 }
+
+xtmClassSrcPorts OBJECT-TYPE
+    SYNTAX      XtmRange
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The range of UDP or TCP source ports that match this class. 
+        The value '0' 'any port'.
+
+        Numeric strings, character strings, and combinations of the two
+        may be used. Valid strings include, but are not limited to the
+        following:
+
+        Numeric String       Character String
+        ______________       ________________
+             20              ftpdata
+             21              ftp
+             23              telnet
+             25              smtp
+             53              domain
+             67              bootps
+             68              bootpc
+             69              tftp
+             70              gopher
+             79              finger
+             80              http
+            119              nntp
+            123              ntp
+            161              snmp
+            162              snmptrap
+            179              bgp
+        "
+    ::= { xtmClassEntry 48 }
+
+xtmClassDestPorts OBJECT-TYPE
+    SYNTAX      XtmRange
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The range of UDP or TCP destination ports that match this class. 
+        The value '0' 'any port'.
+
+        Numeric strings, character strings, and combinations of the two
+        may be used. Valid strings include, but are not limited to the
+        following:
+
+        Numeric String       Character String
+        ______________       ________________
+             20              ftp_data
+             21              ftp
+             23              telnet
+             25              smtp
+             53              domain
+             67              bootps
+             68              bootpc
+             69              tftp
+             70              gopher
+             79              finger
+             80              http
+            119              nntp
+            123              ntp
+            161              snmp
+            162              snmptrap
+            179              bgp
+        "
+    ::= { xtmClassEntry 49 }
+
+xtmClassApplications OBJECT-TYPE
+    SYNTAX      XtmRange
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The application level protocol of the class.
+
+        Application classification allows you to classify based on the
+        application level protocol.  Each application has a corresponding
+        'Established' enumeration which specifies that communication can 
+        not be initiated through this class.  For example, 'telnetEstablished'
+        specifies that telnet connections can not pass through this class.
+        'Established' enumerations provide stateful firewall capabily.  For
+        example, in the following configuration, telnet configurations can
+        only be initiated from Host B.  Host A can not initiate a telnet
+        connection.
+                    +__________________________________+
+                    |                                  |
+        Host A _____| telnet class    telnetEstablished|_____ Host B
+                    | on cbq.1        class on cbq.2   |
+                    +__________________________________+
+
+        Numeric strings, character strings, and combinations of the two
+        may be used. Valid strings include the following:
+
+        Numeric String       Character String
+        ______________       ________________
+              1              allTcp
+              2              allTcpEstablished
+              3              allUdp
+              4              allUdpEstablished
+              5              ftp
+              6              ftpEstablished
+              7              telnet
+              8              telnetEstablished
+              9              http
+             10              httpEstablished
+             11              dns
+             12              dnsEstablished
+             13              tftp
+             14              tftpEstablished
+             15              snmp
+             16              snmpEstablished
+             17              httpSSL
+             18              httpSSLEstablished
+             19              smtp
+             20              smtpEstablished
+             21              bgp
+             22              bgpEstablished
+             23              slaProbe
+             24              slaProbeEstablished
+        "
+    ::= { xtmClassEntry 50 }
+
+xtmClassClassificationTos OBJECT-TYPE
+    SYNTAX      XtmRange
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The range of IPv4 Tos Octet values that match this class."
+    ::= { xtmClassEntry 51 }
+
+xtmClassSrcDomainNames OBJECT-TYPE
+    SYNTAX      XtmRange
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A list of domain names which are to be dynamically included
+        in the range of source IP addresses."
+    ::= { xtmClassEntry 52 }
+
+xtmClassDestDomainNames OBJECT-TYPE
+    SYNTAX      XtmRange
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A list of domain names which are to be dynamically included
+        in the range of destination IP addresses."
+    ::= { xtmClassEntry 53 }
+
+xtmClassOperator OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    and(1),
+                    or(2)
+                }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "An operator applied to all classification parameters of this
+        class.  A value of 'and' indicates that packets must match all 
+        classification parameters specified by the class in order to
+        be classified within the class.  A value of 'or' indicates that
+        packets must match any one of the configured classification
+        parameters specified by the class in order to be classified 
+        within the class.
+
+        For example, consider a class with classification parameters 
+        xtmClassSrcIpAddresses of '198.202.232.10' and xtmClassProtocol 
+        of 'udp'.
+
+        When xtmClassOperator is 'and', packets with IP source addresses
+        of 198.202.232.10 and IP protocol of udp are classified within
+        this class.  Whe xtmClassOperator is 'or', packets with IP source
+        addresses of 198.202.232.10 or IP protocol or udp are classified
+        within this class."
+    DEFVAL      { and }
+    ::= { xtmClassEntry 54 }
+
+
+
+END
+

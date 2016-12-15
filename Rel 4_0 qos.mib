@@ -1,0 +1,377 @@
+QOS-MIB 
+    --FORCE-INCLUDE <mib.h>
+    --FORCE-INCLUDE <snmpdefs.h>
+    --FORCE-INCLUDE <snmpstat.h>
+    --FORCE-INCLUDE "mibdecl_qos.h"
+    --EXCLUDE system
+    --EXCLUDE interfaces
+    --EXCLUDE tcp
+    --EXCLUDE udp
+    --EXCLUDE icmp
+    --EXCLUDE ip
+    --EXCLUDE snmp
+    --EXCLUDE egp
+    --EXCLUDE transmission
+    --EXCLUDE at
+
+
+DEFINITIONS 	::= BEGIN
+
+--  TITLE:  Communication Server 1000 Quality of Service (QoS) MIB
+
+--  Author: Joseph Abraham
+-- 
+--  This specification has been successfully compiled with the following 
+--  MIB compilers:
+--    a) Wind River Systems  Emissary SNMP MIB Compiler, version 7.0
+--    b) Wind River Systems  WindManage MIB Compiler, version 9.3
+--
+--  Note: 
+--  This document is maintained as a text file.
+
+IMPORTS	
+	OBJECT-TYPE, MODULE-IDENTITY, enterprises	FROM SNMPv2-SMI;
+
+zonetrafficrptmib	MODULE-IDENTITY 
+	LAST-UPDATED "0302202000Z"
+	ORGANIZATION "Nortel"
+	CONTACT-INFO  "GNTS"
+	DESCRIPTION "This MIB contains zone traffic report QoS parameters 
+                     from the Call Server."
+ 	::= { sigserv 6 }
+
+
+nt 	OBJECT IDENTIFIER 	::= { enterprises 562 }
+--  nt. The name under which 562 is registered with IANA.
+
+meridian 	OBJECT IDENTIFIER 	::= { nt 3 }
+--  meridian. The value assigned for meridian.
+
+sigserv	OBJECT IDENTIFIER 	::= { meridian 21 }
+--  sigserv The value assigned for Signaling Server
+
+--  object identifiers for organizing QoS MIB
+
+zoneGroup	OBJECT IDENTIFIER 	::= { zonetrafficrptmib 1 }
+
+QosParmValue				::= INTEGER ( 0..99999 )
+
+--  General definitions
+--
+--  Zone Table on Call Server
+zoneTable   OBJECT-TYPE
+              SYNTAX  SEQUENCE OF ZoneEntry
+              MAX-ACCESS  not-accessible
+              STATUS  current
+              DESCRIPTION
+                      "The zoneTable is a table of zone entries" 
+              ::= { zoneGroup 1 }
+
+zoneEntry OBJECT-TYPE
+              SYNTAX  ZoneEntry
+              MAX-ACCESS  not-accessible
+              STATUS  current
+              DESCRIPTION
+                      "The zoneEntry contains object identifiers in a zone"
+              INDEX   { callsMadeIn }
+              ::= { zoneTable 1 }
+
+ZoneEntry ::=
+              SEQUENCE {
+        	callsMadeIn 	   QosParmValue,
+        	callsBlockedIn 	   QosParmValue,
+        	peakIn 		   QosParmValue,
+        	avgIn 		   QosParmValue,
+        	inThrViol 	   QosParmValue,
+        	intervalIn 	   QosParmValue,
+        	unacpLatencyIn 	   QosParmValue,
+        	unacpPacketLossIn  QosParmValue,
+        	unacpJitterIn 	   QosParmValue,
+        	unacpRFactorIn 	   QosParmValue,
+        	unacpEchoRLossIn   QosParmValue,
+        	warnLatencyIn 	   QosParmValue,
+        	warnJitterIn 	   QosParmValue,
+        	warnPacketLossIn   QosParmValue,
+        	warnRFactorIn 	   QosParmValue,
+        	warnEchoRLossIn    QosParmValue,
+        	callsMadeOut 	   QosParmValue,
+        	callsBlockedOut    QosParmValue,
+        	peakOut 	   QosParmValue,
+        	avgOut 		   QosParmValue,
+        	outThrViol 	   QosParmValue,
+        	intervalOut 	   QosParmValue,
+        	unacpLatencyOut    QosParmValue,
+        	unacpPacketLossOut QosParmValue,
+        	unacpJitterOut 	   QosParmValue,
+        	unacpRFactorOut    QosParmValue,
+        	unacpEchoRLossOut  QosParmValue,
+        	warnLatencyOut 	   QosParmValue,
+        	warnJitterOut 	   QosParmValue,
+        	warnPacketLossOut  QosParmValue,
+        	warnRFactorOut 	   QosParmValue,
+        	warnEchoRLossOut   QosParmValue
+		}
+
+
+-- Intra Zone data
+
+callsMadeIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of successful Intrazone calls made"
+        ::=  { zoneEntry 1 }
+
+callsBlockedIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone calls blocked"
+        ::=  { zoneEntry 2 }
+
+peakIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Intrazone peak bandwidth (%)"
+        ::=  { zoneEntry 3 }
+
+avgIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Intrazone average bandwidth usage (%)"
+        ::=  { zoneEntry 4 }
+
+inThrViol   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Intrazone bandwidth usage threshold violations"
+        ::=  { zoneEntry 5 }
+
+intervalIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone measuring interval samples"
+        ::=  { zoneEntry 6 }
+
+unacpLatencyIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone unacceptable latency samples"
+        ::=  { zoneEntry 7 }
+
+unacpPacketLossIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone unacceptable packet loss"
+        ::=  { zoneEntry 8 }
+
+unacpJitterIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone unacceptable jitter samples"
+        ::=  { zoneEntry 9 }
+
+unacpRFactorIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone unacceptable R factor samples"
+        ::=  { zoneEntry 10 }
+
+unacpEchoRLossIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone unacceptable Echo Return Loss"
+        ::=  { zoneEntry 11 }
+
+warnLatencyIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone warning latency samples"
+        ::=  { zoneEntry 12 }
+
+warnJitterIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone warning jitter samples"
+        ::=  { zoneEntry 13 }
+
+warnPacketLossIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone warning packet loss samples"
+        ::=  { zoneEntry 14 }
+
+warnRFactorIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone warning R factor samples"
+        ::=  { zoneEntry 15 }
+
+warnEchoRLossIn   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Intrazone warning Echo Return Loss"
+        ::=  { zoneEntry 16 }
+
+-- Inter Zone Data
+
+callsMadeOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone calls made"
+        ::=  { zoneEntry 17 }
+
+callsBlockedOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone calls blocked"
+        ::=  { zoneEntry 18 }
+
+peakOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Interzone peak bandwidth (%)"
+        ::=  { zoneEntry 19 }
+
+avgOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Interzone average bandwidth usage (%)"
+        ::=  { zoneEntry 20 }
+
+outThrViol   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Interzone bandwidth usage threshold violations"
+        ::=  { zoneEntry 21 }
+
+intervalOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone measuring interval samples"
+        ::=  { zoneEntry 22 }
+
+unacpLatencyOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone unacceptable latency samples"
+        ::=  { zoneEntry 23 }
+
+unacpPacketLossOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone unacceptable packet loss samples"
+        ::=  { zoneEntry 24 }
+
+unacpJitterOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone unacceptable jitter samples"
+        ::=  { zoneEntry 25 }
+
+unacpRFactorOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone unacceptable R factor samples"
+        ::=  { zoneEntry 26 }
+
+unacpEchoRLossOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone unacceptable Echo Return Loss"
+        ::=  { zoneEntry 27 }
+
+warnLatencyOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone warning latency samples"
+        ::=  { zoneEntry 28 }
+
+warnJitterOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone warning jitter samples"
+        ::=  { zoneEntry 29 }
+
+warnPacketLossOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone warning packet loss samples"
+        ::=  { zoneEntry 30 }
+
+warnRFactorOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone warning R factor samples"
+        ::=  { zoneEntry 31 }
+
+warnEchoRLossOut   OBJECT-TYPE
+                SYNTAX          QosParmValue
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The count of Interzone warning Echo Return Loss"
+        ::=  { zoneEntry 32 }
+
+END
+

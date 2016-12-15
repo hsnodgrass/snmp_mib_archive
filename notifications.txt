@@ -1,0 +1,708 @@
+Document: ESX 4.0 SNMP Notifications
+Security: none
+Author: mrm@vmware.com <Michael R. MacFaden>
+Date: 5 May 2009
+Version: 1.3
+
+Introduction:
+
+Notifications on ESX Server and ESXi are composed from IETF standard
+and VMWARE enterprise MIB module documents. Here is a summary of the MIB modules
+that define notifications which are sent on the wire as SNMPv1 Trap Protocol data units
+(PDU). Example output is also provided.
+
+
+ESX NOTIFICATIONS:
+
+SNMPv2-MIB (http://www.ietf.org/rfc/rfc3418.txt)
+  coldStart  -- sent when esx reboots 
+  warmStart  -- sent when vmware-hostd process restarts
+
+IF-MIB (http://www.ietf.org/rfc/rfc2863.txt)
+  linkDown  -- Physical interface changed to down state
+  linkUp  -- Physical interface changed to down state
+   When one receives these notifications, they will contain the ifIndex which
+   when used to poll the ifTable shall see the following
+   managed objects change state: ifLastChange, ifSpeed, ifOperStatus change state)
+
+VMWARE-VMINFO-MIB (www.vmware.com support page tbd)
+ vmPoweredOn TRAP-TYPE 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+    "This trap is sent when a virtual machine is powered on from a suspended 
+     or a powered off state. The origin of this event can be several:
+     for instance may be operator initiated, existing vmx process reconnects to control subsystem. 
+     NOTE: vms powered up due to VMotion are not reported. Upon receiving this notification client applications should
+     poll the vmwVmTable to obtain current status."
+   ::= 1 
+
+vmPoweredOff TRAP-TYPE 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+    "This trap is sent when a virtual machine is powered off. The origin of this event can be several:
+     for instance may be operator initiated, vmx process terminating abnormally. NOTE: vms powered down due
+     to VMotion are not reported. Upon receiving this notification client applications should
+     poll the vmwVmTable to obtain current status."
+   ::= 2 
+
+vmHBLost TRAP-TYPE 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+    "This trap is sent when a virtual machine detects a loss in guest heartbeat. The Guest heartbeat
+     is only sent if VMware Tools are installed in the Guest OS. Control process will send this event whenever it 
+     determines the number of guest heartbeats for a given period of time have not been received. 
+     Upon receiving this notification client applications should
+     poll the vmwVmTable to obtain current status."
+   ::= 3 
+
+vmHBDetected TRAP-TYPE 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+    "This trap is sent when a virtual machine detects or regains the required number of guest heartbeats
+     for a given period of time. This is only sent if VMware tools are installed in the Guest OS.
+     Upon receiving this notification client applications should
+     poll the vmwVmTable to obtain current status."
+   ::= 4 
+
+vmSuspended TRAP-TYPE 
+   VARIABLES { vmID, vmConfigFile, vmDisplayName }
+   DESCRIPTION 
+    "This trap is sent when a virtual machine is suspended. The origin of this event may be several: operator
+     initiated, by software api clients, and by other means.
+     Upon receiving this notification client applications should
+     poll the vmwVmTable to obtain current status."
+   ::= 5 
+
+VMWARE-ENV-MIB (not yet published)  
+
+  vmwEnvHardwareEvent TRAP-TYPE 
+      VARIABLES { vmwSubsystemType, vmwHardwareStatus, vmwEventDescription, vmwEnvHardwareTime }
+      DESCRIPTION 
+          "This notification, if the agent is so configured, may be sent when 
+           the ESX Operating System has detected a material change in 
+           physical condition of the hardware" 
+      ::= 301 
+
+This generic notification depends on the CIM subsystem mappings to discrete IPMI sensors.
+For example on a Dell R805, one can expect to see the following:
+
+
+EXAMPLES:
+
+2007-11-01 16:14:11 NET-SNMP version 5.1.2 Started.
+# hostd is rebooted while esx is up, a warmStart trap is sent...
+
+2007-11-01 16:14:36 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Warm Start Trap (0) Uptime: 0:00:00.02
+
+# Here is the entire set of sensors that we're seeing reported via CIM/IPMI layers:
+
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.1 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.1 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.1 = STRING: "USB Over-current 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.1 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.2 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.2 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.2 = STRING: "Mem CRC Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.2 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.3 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.3 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.3 = STRING: "Mem ECC Warning 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.3 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.4 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.4 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.4 = STRING: "Err Reg Pointer 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.4 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.5 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.5 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.5 = STRING: "Chipset Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.5 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.6 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.6 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.6 = STRING: "PCIE Fatal Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.6 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.7 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.7 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.7 = STRING: "Mem Redun Gain 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.7 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.8 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.8 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.8 = STRING: "Memory Cfg Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.8 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.9 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.9 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.9 = STRING: "Memory Removed 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.9 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.10 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.10 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.10 = STRING: "Memory Added 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.10 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.11 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.11 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.11 = STRING: "Memory RAID 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.11 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.12 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.12 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.12 = STRING: "Memory Mirrored 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.12 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.13 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.13 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.13 = STRING: "Memory Spared 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.13 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.14 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.14 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.14 = STRING: "CPU Machine Chk 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.14 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.15 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.15 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.15 = STRING: "CPU Init Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.15 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.16 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.16 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.16 = STRING: "CPU Bus PERR 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.16 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.17 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.17 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.17 = STRING: "CPU Protocol Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.17 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.18 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.18 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.18 = STRING: "Unknown 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.18 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.19 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.19 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.19 = STRING: "Logging Disabled 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.19 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.20 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.20 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.20 = STRING: "SBE Log Disabled 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.20 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.21 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.21 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.21 = STRING: "PCI System Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.21 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.76
+	VMWARE-ENV-MIB::vmwSubsystemType.22 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.22 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.22 = STRING: "PCI Parity Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.22 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.23 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.23 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.23 = STRING: "I/O Channel Chk 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.23 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.24 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.24 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.24 = STRING: "ECC Uncorr Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.24 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.25 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.25 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.25 = STRING: "ECC Corr Err 65 for BIOS 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.25 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.26 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.26 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.26 = STRING: "Power Optimized 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.26 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.27 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.27 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.27 = STRING: "Cable SAS A 0 for Disk Drive Bay 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.27 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.28 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.28 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.28 = STRING: "Drive 1 for Disk Drive Bay 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.28 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.29 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.29 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.29 = STRING: "Drive 0 for Disk Drive Bay 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.29 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.30 = INTEGER: fan(4)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.30 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.30 = STRING: "Fan Redundancy 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.30 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.31 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.31 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.31 = STRING: "Intrusion 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.31 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.32 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.32 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.32 = STRING: "SEL 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.32 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:42 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.33 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.33 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.33 = STRING: "OS Watchdog 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.33 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.34 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.34 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.34 = STRING: "RAC Status 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.34 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.35 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.35 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.35 = STRING: "USB1 Overcurrent 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.35 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.36 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.36 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.36 = STRING: "USB0 Overcurrent 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.36 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.37 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.37 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.37 = STRING: "Riser Status 0 for System Internal Expansion Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.37 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.38 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.38 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.38 = STRING: "Status 0 for Power Supply 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.38 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.39 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.39 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.39 = STRING: "Status 0 for Processor 2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.39 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.77
+	VMWARE-ENV-MIB::vmwSubsystemType.40 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.40 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.40 = STRING: "Status 0 for Processor 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.40 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.41 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.41 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.41 = STRING: "PFault Fail Safe 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.41 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.42 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.42 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.42 = STRING: "IO55 Heatsink 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.42 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.43 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.43 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.43 = STRING: "MCP55 Heatsink 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.43 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.44 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.44 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.44 = STRING: "DRAC5 Conn 2 Cbl 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.44 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.45 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.45 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.45 = STRING: "Mezz Pres 0 for System Internal Expansion Board 2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.45 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.46 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.46 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.46 = STRING: "SIDEPLANE_PRES_N 0 for System Internal Expansion Board 2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.46 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.47 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.47 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.47 = STRING: "Presence  0 for Disk Drive Bay 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.47 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.48 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.48 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.48 = STRING: "Presence 0 for Power Supply 2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.48 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.49 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.49 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.49 = STRING: "Presence 0 for Power Supply 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.49 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.50 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.50 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.50 = STRING: "Presence 0 for Processor 2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.50 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.51 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.51 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.51 = STRING: "Presence 0 for Processor 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.51 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.52 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.52 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.52 = STRING: "PS2 PG 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.52 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.53 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.53 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.53 = STRING: "PS1 PG 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.53 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.54 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.54 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.54 = STRING: "1.2V HT PG 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.54 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.55 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.55 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.55 = STRING: "VDD 3V SYS 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.55 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.56 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.56 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.56 = STRING: "VDD 5V SYS 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.56 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.57 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.57 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.57 = STRING: "1.2V VM DUAL PG 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.57 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.58 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.58 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.58 = STRING: "8V PG 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.58 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.59 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.59 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.59 = STRING: "LINEAR PG 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.59 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.60 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.60 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.60 = STRING: "1.2V VM PG 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.60 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.61 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.61 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.61 = STRING: "1.5V PG 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.61 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.62 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.62 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.62 = STRING: "VDDA 0 for Processor 2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.62 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.63 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.63 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.63 = STRING: "VDDIO 0 for Processor 2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.63 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.78
+	VMWARE-ENV-MIB::vmwSubsystemType.64 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.64 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.64 = STRING: "VTT 0 for Processor 2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.64 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.65 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.65 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.65 = STRING: "VCORE 0 for Processor 2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.65 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.66 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.66 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.66 = STRING: "VDDA 0 for Processor 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.66 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.67 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.67 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.67 = STRING: "LOM PG 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.67 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.68 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.68 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.68 = STRING: "MEZ PG 0 for System Internal Expansion Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.68 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.69 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.69 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.69 = STRING: "VDDIO 0 for Processor 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.69 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.70 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.70 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.70 = STRING: "VTT 0 for Processor 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.70 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.71 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.71 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.71 = STRING: "VCORE 0 for Processor 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.71 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.72 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.72 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.72 = STRING: "ROMB Battery 0 for Disk Drive Bay 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.72 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.73 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.73 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.73 = STRING: "CMOS Battery 0 for System Board 1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.73 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.74 = INTEGER: memory(6)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.74 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.74 = STRING: "Memory"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.74 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.75 = INTEGER: cpu(5)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.75 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.75 = STRING: "CPU1"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.75 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.76 = INTEGER: cpu(5)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.76 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.76 = STRING: "CPU2"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.76 = Timeticks: (675) 0:00:06.75
+
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.77 = INTEGER: powerSupply(3)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.77 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.77 = STRING: "Type: power supply Status: critical Name: 'System Level for System Board 1' value: 203 Watts"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.77 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.78 = INTEGER: voltage(10)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.78 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.78 = STRING: "Type: voltage Status: critical Name: 'Voltage 1 for Power Supply 1' value: 212 Volts"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.78 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.79 = INTEGER: powerSupply(3)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.79 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.79 = STRING: "Type: power supply Status: critical Name: 'Current 1 for Power Supply 1' value: 1 Amps"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.79 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.79
+	VMWARE-ENV-MIB::vmwSubsystemType.80 = INTEGER: fan(4)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.80 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.80 = STRING: "Type: fan Status: critical Name: 'FAN 6 RPM for System Board 1' value: 3075 RPM"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.80 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.81 = INTEGER: fan(4)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.81 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.81 = STRING: "Type: fan Status: critical Name: 'FAN 5 RPM for System Board 1' value: 3075 RPM"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.81 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.82 = INTEGER: fan(4)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.82 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.82 = STRING: "Type: fan Status: critical Name: 'FAN 4 RPM for System Board 1' value: 3075 RPM"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.82 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.83 = INTEGER: fan(4)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.83 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.83 = STRING: "Type: fan Status: critical Name: 'FAN 3 RPM for System Board 1' value: 3075 RPM"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.83 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.84 = INTEGER: fan(4)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.84 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.84 = STRING: "Type: fan Status: critical Name: 'FAN 2 RPM for System Board 1' value: 3000 RPM"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.84 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:43 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.85 = INTEGER: fan(4)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.85 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.85 = STRING: "Type: fan Status: critical Name: 'FAN 1 RPM for System Board 1' value: 3150 RPM"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.85 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:44 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.86 = INTEGER: temperatureSensor(8)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.86 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.86 = STRING: "Type: temperature Status: critical Name: 'Ambient Temp for System Board 1' value: 23 Degrees C"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.86 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:44 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.87 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.87 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.87 = STRING: "Type: unknown Status: critical Name: 'Cumulative Power Reading for System Board 1' value: 19.84 kWh"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.87 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:44 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.88 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.88 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.88 = STRING: "Type: unknown Status: critical Name: 'Peak Amps Reading for System Board 1' value: 1.1 Amps"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.88 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:44 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.89 = INTEGER: unknown(1)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.89 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.89 = STRING: "Type: unknown Status: critical Name: 'Peak Watts Reading for System Board 1' value: 245 Watts"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.89 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:44 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.90 = INTEGER: powerSupply(3)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.90 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.90 = STRING: "Type: power supply Status: critical Name: 'Power Supply 1: Running/Full Power-Enabled' value: 700 Watts"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.90 = Timeticks: (675) 0:00:06.75
+2007-11-01 16:15:44 esx014.eng.vmware.com [10.17.21.14] (via 10.17.21.14) TRAP, SNMP v1, community private
+	SNMPv2-SMI::VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:00:06.80
+	VMWARE-ENV-MIB::vmwSubsystemType.91 = INTEGER: powerSupply(3)	
+        VMWARE-ENV-MIB::vmwHardwareStatus.91 = INTEGER: critical(4)	
+        VMWARE-ENV-MIB::vmwEventDescription.91 = STRING: "Type: power supply Status: critical Name: 'Power Supply 2: Not Installed' value: 0 Watts"	
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.91 = Timeticks: (675) 0:00:06.75
+
+
+External RAID enclosure configured to RAID 5, pull cable from one of
+the disk and this is sent:
+
+2007-11-14 10:11:15 scho1-dev.eng.vmware.com [10.20.110.134] (via 10.20.110.134) TRAP, SNMP v1, community private
+        VMWARE-PRODUCTS-MIB::vmwESX Enterprise Specific Trap (301) Uptime: 0:03:11.14
+        VMWARE-ENV-MIB::vmwSubsystemType.1 = INTEGER: raidController(9) 
+        VMWARE-ENV-MIB::vmwHardwareStatus.1 = INTEGER: marginal(3)      
+        VMWARE-ENV-MIB::vmwERING: "RAID1 Virtual Disk 0 of Controller 0"    
+        VMWARE-ENV-MIB::vmwEnvHardwareTime.1 = Timeticks: (19114) 0:03:11.14
+
+--- 
+
+NOTE: As of 2 Feb 2008, sensor data from ipmi is send as is ie the raw values. No 
+      translation to higher level events is being done. No IPMI presence/absense detail is
+      presently sent to snmp either to handle certain cases of pulling disk drives
+      from external raid enclosures.
+
+NOTE: Given the specific hardware above for example
+  one would next consult the Dell R805 Dell's documentation 
+  on IPMI messages for the majority of those listed (not all):
+  http://support.dell.com/support/edocs/software/svradmin/5.5/en/MSG/html/msgch30.htm
+
+ 
+vSPHERE Center Server Notifications
+
+VMWARE-VC-EVENT-MIB:
+
+vmwVCNotifications OBJECT IDENTIFIER ::= {vmwVC 0}
+vpxdAlarm NOTIFICATION-TYPE
+    OBJECTS { vmwVpxdTrapType, vmwVpxdHostName, vmwVpxdVMName, 
+              vmwVpxdOldStatus, vmwVpxdNewStatus, vmwVpxdObjValue }
+    STATUS      current 
+    DESCRIPTION 
+        "This trap is sent when entity alarm status changed."
+    ::= { vmwVCNotifications 201 }
+        
+vpxdDiagnostic NOTIFICATION-TYPE
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent on starting or restarting vCenter Server, 
+         on requesting a test notification explicitly, and can also be 
+         configured to be sent periodically at a specified time interval via 
+         vCenter Server configuration."
+    ::= { vmwVCNotifications 202 }
+
+The vpxdAlarm notification is transmitted from vCenter Server on changes in
+alarm state, dictated by the trigger and notification configuration of the
+alarm.
+
+The vpxdDiagnostic notification is used for generating test traps as well as
+generating coldStart traps for vCenter Server starts/restarts.
+The transmission of test traps can be configured through the vCenter Server
+OptionManager interface, or through the vCenter configuration file (vpxd.cfg),
+using the following keys:
+snmp.testTrap.periodic.enable ("true"/"false")
+snmp.testTrap.periodic.period (defaults to 300) (Number of milliseconds)
+snmp.coldStartTrap.enable (defaults to "true") ("true"/"false")
+
+
+End of Document

@@ -1,0 +1,490 @@
+-- ****************************************************************************
+--
+--                   Compaq StorageWorks Command Console
+--         Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 1998 Compaq Computer Corporation.
+--      All Rights Reserved.
+--
+--      The information in this document is subject to change without notice.
+--
+--      COMPAQ COMPUTER CORPORATION SHALL NOT BE LIABLE FOR TECHNICAL
+--      OR EDITORIAL ERRORS OR OMISSIONS CONTAINED HEREIN; NOR FOR INCIDENTAL
+--      OR CONSEQUENTIAL DAMAGES RESULTING FROM THE FURNISHING, PERFORMANCE,
+--      OR USE OF THIS MATERIAL.
+--
+--      Refer to the READMIB.RDM file for more information about the
+--      organization of the information in the Compaq Enterprise.
+--
+--      The Compaq Enterprise number is 232.
+--      The ASN.1 prefix to, and including the Compaq Enterprise is:
+--           1.3.6.1.4.1.232
+--
+-- ****************************************************************************
+
+CPQSWCC-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        compaq                  FROM CPQHOST-MIB
+        enterprises             FROM RFC1155-SMI
+        Counter                 FROM RFC1155-SMI
+        Gauge                   FROM RFC1155-SMI
+        DisplayString           FROM RFC1213-MIB
+        OBJECT-TYPE             FROM RFC-1212
+        TRAP-TYPE               FROM RFC-1215
+        sysName                 FROM RFC1213-MIB
+        cpqHoTrapFlags          FROM CPQHOST-MIB;
+
+--  compaq            OBJECT IDENTIFIER ::= { enterprises 232 }
+
+    cpqSwcc           OBJECT IDENTIFIER ::= { compaq 132 }
+
+    cpqSwccMibRev     OBJECT IDENTIFIER ::= { cpqSwcc 1 }
+
+    cpqSwccFibre      OBJECT IDENTIFIER ::= { cpqSwcc 2 }
+    cpqSwccEmuDev     OBJECT IDENTIFIER ::= { cpqSwcc 3 }
+    cpqSwccKzpcc      OBJECT IDENTIFIER ::= { cpqSwcc 4 }
+
+
+
+-- ****************************************************************************
+--
+-- SWCC MIB Revision
+-- =================
+--
+-- Compaq enterprise        (1.3.6.1.4.1.232)
+--   cpqSwcc                (1.3.6.1.4.1.232.132)
+--     cpqSwccMibRev        (1.3.6.1.4.1.232.132.1)
+--
+--
+-- An SWCC Agent conforming to this document will return a
+-- cpqSwccMibRevMajor of one (1) and a cpqSwccMibRevMinor of one (1).
+--
+-- ****************************************************************************
+
+    cpqSwccMibRevMajor OBJECT-TYPE
+       SYNTAX  INTEGER (1..65535)
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+           "The Major Revision level.
+
+            A change in the major revision level represents a major change
+            in the architecture of the MIB.  A change in the major revision
+            level may indicate a significant change in the information
+            supported and/or the meaning of the supported information,
+            correct interpretation of data may require a MIB document with
+            the same major revision level."
+       ::= { cpqSwccMibRev 1 }
+
+    cpqSwccMibRevMinor OBJECT-TYPE
+       SYNTAX  INTEGER (0..65535)
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+           "The Minor Revision level.
+
+            A change in the minor revision level may represent some minor
+            additional support; no changes to any pre-existing information
+            has occurred."
+       ::= { cpqSwccMibRev 2 }
+
+    cpqSwccMibCondition OBJECT-TYPE
+           SYNTAX  INTEGER {
+                                other    (1),
+                                ok       (2),
+                                degraded (3),
+                                failed   (4)
+                           }
+           ACCESS  read-only
+           STATUS  mandatory
+           DESCRIPTION
+               "The overall condition.
+
+                This object represents the overall status of the Compaq
+                SWCC system represented by this MIB."
+           ::= { cpqSwccMibRev 3 }
+
+
+
+-- ****************************************************************************
+--
+-- SWCC FibreChannel Group
+-- =======================
+--
+-- Compaq                   (1.3.6.1.4.1.232)
+--   cpqSwcc                (1.3.6.1.4.1.232.132)
+--     cpqSwccFibre         (1.3.6.1.4.1.232.132.2)
+--
+--
+-- This group contains variables related to SWCC fibrechannel support.
+--
+-- ****************************************************************************
+
+
+    cpqSwccFibreDevName OBJECT-TYPE
+           SYNTAX  DisplayString( SIZE(0..64) )
+           ACCESS  read-only
+           STATUS  mandatory
+           DESCRIPTION
+             "FibreChannel Device Name.
+
+             The user-assigned name of a specific FC device."
+           ::= { cpqSwccFibre 1 }
+
+
+    cpqSwccFibreDevState OBJECT-TYPE
+           SYNTAX  INTEGER { other    (1),
+                             ok       (2),
+                             degraded (3),
+                             failed   (4) }
+           ACCESS  read-only
+           STATUS  mandatory
+           DESCRIPTION
+             "The state of a fibrechannel device."
+           ::= { cpqSwccFibre 2 }
+
+
+    cpqSwccFibreEventDescription OBJECT-TYPE
+           SYNTAX  DisplayString( SIZE(0..128) )
+           ACCESS  read-only
+           STATUS  mandatory
+           DESCRIPTION
+             "The description of a FibreChannel Device event."
+           ::= { cpqSwccFibre 3 }
+
+
+-- **************************************************************************
+--
+-- SWCC FibreChannel Trap Definitions
+-- ==================================
+--
+-- **************************************************************************
+
+cpqSwccFibreDeviceStatusChange TRAP-TYPE
+        ENTERPRISE cpqSwccFibre
+        VARIABLES  { sysName, 
+                     cpqSwccFibreDevName, 
+                     cpqSwccFibreDevState,
+                     cpqSwccFibreEventDescription }
+        DESCRIPTION
+           "FibreChannel Device Status Change.
+
+            The SWCC Agent has detected a change in state on one of the
+            managed FibreChannel devices.
+          
+            Variables:
+              sysName
+                The name of the host running the agent.
+              cpqSwccFibreDevName
+                The name of the device which has changed state.
+              cpqSwccFibreDevState
+                The current state of the device.
+              cpqSwccFibreEventDescription
+                A textual description of the reason for the trap."
+
+              --#TYPE "FibreChannel Device Status Change"
+              --#SUMMARY "Status is now %d."
+              --#ARGUMENTS {2}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+
+        ::= 1
+
+cpqSwccTapeControllerStatusChange TRAP-TYPE
+        ENTERPRISE cpqSwccFibre
+        VARIABLES  { sysName, 
+                     cpqSwccFibreDevName, 
+                     cpqSwccFibreDevState,
+                     cpqSwccFibreEventDescription }
+        DESCRIPTION
+           "FibreChannel Device Status Change.
+
+            The SWCC Agent has detected a change in state on one of the
+            managed FibreChannel Tape Controller devices.
+          
+            Variables:
+              sysName
+                The name of the host running the agent.
+              cpqSwccFibreDevName
+                The name of the device which has changed state.
+              cpqSwccFibreDevState
+                The current state of the device.
+              cpqSwccFibreEventDescription
+                A textual description of the reason for the trap."
+
+              --#TYPE "FibreChannel Device Status Change"
+              --#SUMMARY "Status is now %d."
+              --#ARGUMENTS {2}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+
+        ::= 2
+
+
+-- ****************************************************************************
+--
+-- SWCC Emu/Device Group
+-- =======================
+--
+-- Compaq                   (1.3.6.1.4.1.232)
+--   cpqSwcc                (1.3.6.1.4.1.232.132)
+--     cpqSwccEmuDev        (1.3.6.1.4.1.232.132.3)
+--
+--
+-- This group contains variables related to SWCC EMU and DeviceManager support.
+--
+-- ****************************************************************************
+
+
+    cpqSwccEmuDevDevName OBJECT-TYPE
+           SYNTAX  DisplayString( SIZE(0..64) )
+           ACCESS  read-only
+           STATUS  mandatory
+           DESCRIPTION
+             "Device Name.
+
+             The user-assigned name of a specific managed device."
+           ::= { cpqSwccEmuDev 1 }
+
+
+    cpqSwccEmuDevDevState OBJECT-TYPE
+           SYNTAX  INTEGER { other    (1),
+                             ok       (2),
+                             degraded (3),
+                             failed   (4) }
+           ACCESS  read-only
+           STATUS  mandatory
+           DESCRIPTION
+             "The state of the managed device."
+           ::= { cpqSwccEmuDev 2 }
+
+
+    cpqSwccEmuDevEventDescription OBJECT-TYPE
+           SYNTAX  DisplayString( SIZE(0..128) )
+           ACCESS  read-only
+           STATUS  mandatory
+           DESCRIPTION
+             "A description of the event."
+           ::= { cpqSwccEmuDev 3 }
+
+
+-- **************************************************************************
+--
+-- SWCC Emu/Dev Trap Definitions
+-- =============================
+--
+-- **************************************************************************
+
+
+    cpqSwccEmuDevDeviceStatusChange TRAP-TYPE
+        ENTERPRISE cpqSwccEmuDev
+        VARIABLES  { sysName, 
+                     cpqSwccEmuDevDevName, 
+                     cpqSwccEmuDevDevState,
+                     cpqSwccEmuDevEventDescription }
+        DESCRIPTION
+           "EMU/Device Manager Device Status Change.
+
+            The SWCC Agent has detected a change in state on one of the
+            managed devices.
+          
+            Variables:
+              sysName
+                The name of the host running the agent.
+              cpqSwccEmuDevDevName
+                The name of the device which has changed state.
+              cpqSwccEmuDevDevState
+                The current state of the device.
+              cpqSwccEmuDevEventDescription
+                A textual description of the reason for the trap."
+
+              --#TYPE "EMU/Device Manager Device Status Change"
+              --#SUMMARY "Status is now %d."
+              --#ARGUMENTS {2}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+
+        ::= 1
+
+
+-- ****************************************************************************
+--
+-- SWCC KZPCC
+-- ==========
+--
+-- Compaq                   (1.3.6.1.4.1.232)
+--   cpqSwcc                (1.3.6.1.4.1.232.132)
+--     cpqSwccKzpcc         (1.3.6.1.4.1.232.132.4)
+--
+--
+-- The variables under this branch are to support the Kzpcc Agent 
+--
+-- ****************************************************************************
+
+
+--
+--  Branch which will contain the variables sent in SNMP traps for the Kzpcc Agent.  This
+-- branch will also be the trap authority for the SNMP traps for the Kzpcc Agent.
+--
+ 
+    cpqSwccKzpccTrap      OBJECT IDENTIFIER ::= { cpqSwccKzpcc 1 }
+
+--
+--  Variables defined for traps 
+--
+
+    cpqSwccKzpccSytemName OBJECT-TYPE
+   	SYNTAX OCTET STRING
+   	ACCESS not-accessible
+   	STATUS mandatory
+   	DESCRIPTION
+   	"Variable which contains name of system the trap was generated from. The 
+	value of the variable will always be a printable ASCII string."
+   	::= { cpqSwccKzpccTrap 1 }
+
+    cpqSwccKzpccSubsytemName OBJECT-TYPE
+   	SYNTAX OCTET STRING
+   	ACCESS not-accessible
+   	STATUS mandatory
+   	DESCRIPTION
+   	"Variable which contains name of subsystem (controller) the trap has 
+	been generated for.  The value of the variable will always be a printable
+	ASCII string."
+   	::= { cpqSwccKzpccTrap 2 }
+
+    cpqSwccKzpccEventSeverity OBJECT-TYPE
+        SYNTAX  INTEGER {
+                          informational (1),
+                          warning       (2),
+			  error         (3)
+                        }
+   	ACCESS not-accessible
+   	STATUS mandatory
+   	DESCRIPTION
+   	"Variable whose enum value identifies the severity of the event which has 
+	occurred."
+   	::= { cpqSwccKzpccTrap 3 }
+
+   cpqSwccKzpccEventDescription OBJECT-TYPE
+   	SYNTAX OCTET STRING
+   	ACCESS not-accessible
+   	STATUS mandatory
+   	DESCRIPTION
+   	"Variable which contains description of event which caused trap to be sent.
+	The value of the variable will also be a printable ASCII string."
+   	::= { cpqSwccKzpccTrap 4 }
+
+-- ****************************************************************************
+--
+-- SWCC KZPCC Trap Definitions
+-- ===========================
+--
+-- **************************************************************************
+
+--
+--  SWCC KZPCC traps for physical device events
+--  
+
+    cpqSwccKzpccPhyDeviceEventTrap  TRAP-TYPE
+        ENTERPRISE cpqSwccKzpccTrap
+        VARIABLES {
+		    cpqSwccKzpccSystemName,
+                    cpqSwccKzpccSubsystemName,
+                    cpqSwccKzpccEventSeverity,
+                    cpqSwccKzpccEventDescription
+                  }
+         DESCRIPTION
+           "Some event has happened to a physical device on a KZPCC controller that a 
+	   user maybe interested in knowing.  The following variables are included in 
+	   the trap to provide information to the user:
+
+
+		Variables:
+
+		    cpqSwccKzpccSystemName - an octet string which will contain ASCII
+					    string identifying the name of the system
+					    the trap was generated from.
+                    cpqSwccKzpccSubsystemName - an octet string which will contain ASCII
+					    string identifying the name of the KZPCC
+					    controller (as defined by the system) the
+					    event occurred on.
+                    cpqSwccKzpccEventSeverity - an enumerated integer that identifies the
+					    severity level of the event. 
+                    cpqSwccKzpccEventDescription - an octet string which will contain
+					    an ASCII string describing the event that
+					    has occurred."
+        ::= 1
+
+--
+--  SWCC KZPCC traps for virtual devices
+--  
+
+    cpqSwccKzpccVirtualDeviceEventTrap  TRAP-TYPE
+        ENTERPRISE cpqSwccKzpccTrap
+        VARIABLES {
+		    cpqSwccKzpccSystemName,
+                    cpqSwccKzpccSubsystemName,
+                    cpqSwccKzpccEventSeverity,
+                    cpqSwccKzpccEventDescription
+                  }
+         DESCRIPTION
+           "Some event has happened to a virtual device (logical drive) on a KZPCC 
+	   controller that a user maybe interested in knowing.  The following variables 
+	   are included in the trap to provide information to the user:
+
+
+		Variables:
+
+		    cpqSwccKzpccSystemName - an octet string which will contain ASCII
+					    string identifying the name of the system
+					    the trap was generated from.
+                    cpqSwccKzpccSubsystemName - an octet string which will contain ASCII
+					    string identifying the name of the KZPCC
+					    controller (as defined by the system) the
+					    event occurred on.
+                    cpqSwccKzpccEventSeverity - an enumerated integer that identifies the
+					    severity level of the event. 
+                    cpqSwccKzpccEventDescription - an octet string which will contain
+					    an ASCII string describing the event that
+					    has occurred."
+        ::= 2
+
+--
+--  SWCC KZPCC traps for subsystem events
+--  
+
+    cpqSwccKzpccSubsystemEventTrap  TRAP-TYPE
+        ENTERPRISE cpqSwccKzpccTrap
+        VARIABLES {
+		    cpqSwccKzpccSystemName,
+                    cpqSwccKzpccSubsystemName,
+                    cpqSwccKzpccEventSeverity,
+                    cpqSwccKzpccEventDescription
+                  }
+         DESCRIPTION
+           "Some event has happened to a KZPCC controller that a user maybe interested
+	   in knowing.  The following variables are included in the trap to provide 
+	   information to the user:
+
+
+		Variables:
+
+		    cpqSwccKzpccSystemName - an octet string which will contain ASCII
+					    string identifying the name of the system
+					    the trap was generated from.
+                    cpqSwccKzpccSubsystemName - an octet string which will contain ASCII
+					    string identifying the name of the KZPCC
+					    controller (as defined by the system) the
+					    event occurred on.
+                    cpqSwccKzpccEventSeverity - an enumerated integer that identifies the
+					    severity level of the event. 
+                    cpqSwccKzpccEventDescription - an octet string which will contain
+					    an ASCII string describing the event that
+					    has occurred."
+        ::= 3
+
+
+
+END

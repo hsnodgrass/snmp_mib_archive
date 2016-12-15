@@ -1,0 +1,824 @@
+RC-LINK-OAM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32, Counter32 
+          FROM SNMPv2-SMI
+	TEXTUAL-CONVENTION, DisplayString, RowStatus, TruthValue, MacAddress  
+          FROM SNMPv2-TC
+	InterfaceIndex 
+          FROM IF-MIB
+        rcLinkOam          
+          FROM RAPID-CITY;
+
+rcLinkOamMib MODULE-IDENTITY
+       LAST-UPDATED 	"200902260000Z"
+       ORGANIZATION 	"Nortel Networks"
+       CONTACT-INFO 	"
+				 	Marty Lok
+                	 Postal: 	Nortel Networks, Inc. 
+                       			600 Technology Park 
+                       			Billerica, MA 01821
+
+                   	 Tel: 		408-495-6159
+                   	 Fax: 		408-495-5215 
+                	 E-mail:	malok@nortel.com 
+			"
+       DESCRIPTION 	"Enterprise MIB for the Accelar product family."
+ 
+       REVISION "200902260000Z" -- 26 Feb 2009
+       DESCRIPTION  "Version 1: Added rcLinkOam (1),
+                                      rcLinkOam (2),
+                                      rcLinkOam (3),
+                                      rcLinkOam (4),
+                                      rcLinkOam (5)
+                    "
+       ::= { rcLinkOam 82 }
+
+-- rcLinkOam
+-- Ethernet OAM Control group
+rcLinkOamTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF RcLinkOamEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+          "This table contains the primary controls and status for the
+          OAM capabilities of an Ethernet-like interface.  There will be
+          one row in this table for each Ethernet-like interface in the
+          system that supports the OAM functions defined in [802.3ah].
+          "
+        ::= { rcLinkOam 1 }
+
+rcLinkOamEntry OBJECT-TYPE
+        SYNTAX     RcLinkOamEntry
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+          "An entry in the table that contains information on the
+          Ethernet OAM function for a single Ethernet like interface.
+          Entries in the table are created automatically for each
+          interface supporting Ethernet OAM.  The status of the row
+          entry can be determined from rcLinkOamOperStatus.
+          "
+        INDEX       { rcLinkOamPortIndex }
+        ::= { rcLinkOamTable 1 }
+
+RcLinkOamEntry ::=
+        SEQUENCE {
+          rcLinkOamPortIndex            InterfaceIndex,
+          rcLinkOamAdminState           INTEGER,
+	  rcLinkOamRowStatus            RowStatus,
+          rcLinkOamOperStatus           INTEGER,
+          rcLinkOamMode                 INTEGER,
+          rcLinkOamMaxOamPduSize        Integer32,
+          rcLinkOamConfigRevision       Integer32,
+          rcLinkOamFunctionsSupported   BITS
+        }
+
+rcLinkOamPortIndex  OBJECT-TYPE
+         SYNTAX           InterfaceIndex
+         MAX-ACCESS       not-accessible
+         STATUS           current
+         DESCRIPTION      "the port index on which the Link OAM is enabled. This
+                           value is similar to ifIndex in MIB2."
+         ::= { rcLinkOamEntry 1}
+
+rcLinkOamAdminState OBJECT-TYPE
+        SYNTAX      INTEGER {
+                              enable(1),
+                              disable(2)
+                             }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+          "This object is used to provision the default administrative
+          OAM mode for this port.  This object represents the
+          desired state of OAM for this port.
+
+          The rcLinkOamAdminState always starts in the disabled(2) state
+          until an explicit management action or configuration
+          information retained by the system causes a transition to the
+          enabled(1) state.  When enabled(1), Ethernet OAM will attempt
+          to operate over this port.
+          "
+	DEFVAL { disable }
+        ::= { rcLinkOamEntry 2 }
+
+rcLinkOamRowStatus OBJECT-TYPE
+	SYNTAX		RowStatus
+	MAX-ACCESS	read-create
+	STATUS		current
+	DESCRIPTION	"Used to create/delete entries"
+	::= { rcLinkOamEntry 3}
+
+rcLinkOamOperStatus OBJECT-TYPE
+        SYNTAX      INTEGER {
+                      disabled(1),
+                      linkFault(2),
+                      passiveWait(3),
+                      activeSendLocal(4),
+                      sendLocalAndRemote(5),
+                      sendLocalAndRemoteOk(6),
+                      oamPeeringLocallyRejected(7),
+                      oamPeeringRemotelyRejected(8),
+                      operational(9),
+                      nonOperHalfDuplex(10)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "At initialization and failure conditions, two OAM entities on
+          the same full-duplex Ethernet link begin a discovery phase to
+          determine what OAM capabilities may be used on that link.  The
+          progress of this initialization is controlled by the OA
+          sublayer.
+
+          This value is always disabled(1) if OAM is disabled on this
+          port via the rcLinkOamAdminState.
+
+          If the link has detected a fault and is transmitting OAMPDUs
+          with a link fault indication, the value is linkFault(2).
+          Also, if the interface is not operational (ifOperStatus is
+          not up(1)), linkFault(2) is returned.  Note that the object
+          ifOperStatus may not be up(1) as a result of link failure or
+          administrative action (ifAdminState being down(2) or
+          testing(3)).
+
+          The passiveWait(3) state is returned only by OAM entities in
+          passive mode (rcLinkOamMode) and reflects the state in which the
+          OAM entity is waiting to see if the peer device is OA
+          capable.  The activeSendLocal(4) value is used by active mode
+          devices (rcLinkOamMode) and reflects the OAM entity actively
+          trying to discover whether the peer has OAM capability but has
+          not yet made that determination.
+
+          The state sendLocalAndRemote(5) reflects that the local OA
+          entity has discovered the peer but has not yet accepted or
+          rejected the configuration of the peer.  The local device can,
+          for whatever reason, decide that the peer device is
+          unacceptable and decline OAM peering.  If the local OAM entity
+          rejects the peer OAM entity, the state becomes
+          oamPeeringLocallyRejected(7).  If the OAM peering is allowed
+          by the local device, the state moves to
+          sendLocalAndRemoteOk(6).  Note that both the
+          sendLocalAndRemote(5) and oamPeeringLocallyRejected(7) states
+          fall within the state SEND_LOCAL_REMOTE of the Discovery state
+          diagram [802.3ah, Figure 57-5], with the difference being
+          whether the local OAM client has actively rejected the peering
+          or has just not indicated any decision yet.  Whether a peering
+          decision has been made is indicated via the local flags field
+          in the OAMPDU (reflected in the aOAMLocalFlagsField of
+          30.3.6.1.10).
+
+          If the remote OAM entity rejects the peering, the state
+          becomes oamPeeringRemotelyRejected(8).  Note that both the
+          sendLocalAndRemoteOk(6) and oamPeeringRemotelyRejected(8)
+          states fall within the state SEND_LOCAL_REMOTE_OK of the
+          Discovery state diagram [802.3ah, Figure 57-5], with the
+          difference being whether the remote OAM client has rejected
+          the peering or has just not yet decided.  This is indicated
+          via the remote flags field in the OAMPDU (reflected in the
+          aOAMRemoteFlagsField of 30.3.6.1.11).
+
+          When the local OAM entity learns that both it and the remote
+          OAM entity have accepted the peering, the state moves to
+          operational(9) corresponding to the SEND_ANY state of the
+          Discovery state diagram [802.3ah, Figure 57-5].
+
+          Since Ethernet OAM functions are not designed to work
+          completely over half-duplex interfaces, the value
+          nonOperHalfDuplex(10) is returned whenever Ethernet OAM is
+          enabled (dot3OamAdminState is enabled(1)), but the interface
+          is in half-duplex operation.
+          "
+        ::= { rcLinkOamEntry 4 }
+
+rcLinkOamMode OBJECT-TYPE
+        SYNTAX      INTEGER {
+                      passive(1),
+                      active(2)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "This object configures the mode of OAM operation for this
+          Ethernet-like interface.  OAM on Ethernet interfaces may be in
+          'active' mode or 'passive' mode.  These two modes differ in
+          that active mode provides additional capabilities to initiate
+          monitoring activities with the remote OAM peer entity, while
+          passive mode generally waits for the peer to initiate OA
+          actions with it.  As an example, an active OAM entity can put
+          the remote OAM entity in a loopback state, where a passive OA
+          entity cannot.
+
+          The default value of rcLink3OamMode is dependent on the type of
+          system on which this Ethernet-like interface resides.  The
+          default value should be 'active(2)' unless it is known that
+          this system should take on a subservient role to the other
+          device connected over this interface.
+
+          Changing this value results in incrementing the configuration
+          revision field of locally generated OAMPDUs and
+          potentially re-doing the OAM discovery process if the
+          rcLinkOamOperStatus was already operational(9).
+          "
+	DEFVAL { active }
+        ::= { rcLinkOamEntry 5 }
+
+rcLinkOamMaxOamPduSize OBJECT-TYPE
+        SYNTAX      Integer32 (64..2047)
+        UNITS       "octets"
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+          "The largest OAMPDU that the OAM entity supports.  OA
+          entities exchange maximum OAMPDU sizes and negotiate to use
+          the smaller of the two maximum OAMPDU sizes between the peers.
+          This value is determined by the local implementation.
+          "
+	DEFVAL {1518}
+        ::= { rcLinkOamEntry 6 }
+
+rcLinkOamConfigRevision OBJECT-TYPE
+        SYNTAX      Integer32(0..65535)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "The configuration revision of the OAM entity as reflected in
+          the latest OAMPDU sent by the OAM entity.  The config revision
+          is used by OAM entities to indicate that configuration changes
+          have occurred, which might require the peer OAM entity to
+          re-evaluate whether OAM peering is allowed.
+          "
+        ::= { rcLinkOamEntry 7 }
+
+rcLinkOamFunctionsSupported OBJECT-TYPE
+        SYNTAX      BITS {
+                      unidirectionalSupport (0),
+                      loopbackSupport(1),
+                      eventSupport(2),
+                      variableSupport(3)
+                    }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+          "The OAM functions supported on this Ethernet-like interface.
+          OAM consists of separate functional sets beyond the basic
+          discovery process that is always required.  These functional
+          groups can be supported independently by any implementation.
+          These values are communicated to the peer via the local
+          configuration field of Information OAMPDUs.
+
+          Setting 'unidirectionalSupport(0)' indicates that the OA
+          entity supports the transmission of OAMPDUs on links that are
+          operating in unidirectional mode (traffic flowing in one
+          direction only).  Setting 'loopbackSupport(1)' indicates that
+          the OAM entity can initiate and respond to loopback commands.
+          Setting 'eventSupport(2)' indicates that the OAM entity can
+          send and receive Event Notification OAMPDUs.  Setting
+          'variableSupport(3)' indicates that the OAM entity can send
+          and receive Variable Request and Response OAMPDUs.
+          "
+        ::= { rcLinkOamEntry 8 }
+
+-- Ethernet OAM Peer group
+--
+
+rcLinkOamPeerTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF RcLinkOamPeerEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+          "This table contains information about the OAM peer for a
+          particular Ethernet-like interface.  OAM entities communicate
+          with a single OAM peer entity on Ethernet links on which OA
+          is enabled and operating properly.  There is one entry in this
+          table for each entry in the rcLinkOamTable for which information
+          on the peer OAM entity is available.
+          "
+        ::= { rcLinkOam 2 }
+
+rcLinkOamPeerEntry OBJECT-TYPE
+        SYNTAX      RcLinkOamPeerEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+          "An entry in the table containing information on the peer OA
+          entity for a single Ethernet-like interface.
+
+          Note that there is at most one OAM peer for each Ethernet-like
+          interface.  Entries are automatically created when information
+          about the OAM peer entity becomes available, and automatically
+          deleted when the OAM peer entity is no longer in
+          communication.  Peer information is not available when
+          rcLinkOamOperStatus is disabled(1), linkFault(2),
+          passiveWait(3), activeSendLocal(4), or nonOperHalfDuplex(10).
+          "
+        INDEX       { rcLinkOamPeerPortIndex }
+        ::= { rcLinkOamPeerTable 1 }
+
+RcLinkOamPeerEntry ::=
+        SEQUENCE {
+          rcLinkOamPeerPortIndex                   InterfaceIndex,
+          rcLinkOamPeerMacAddress               MacAddress,
+          rcLinkOamPeerVendorOui                 Integer32,
+          rcLinkOamPeerVendorInfo                Integer32,
+          rcLinkOamPeerMode                          INTEGER,
+          rcLinkOamPeerMaxOamPduSize       Integer32,
+          rcLinkOamPeerConfigRevision           Integer32,
+          rcLinkOamPeerFunctionsSupported    BITS
+        }
+
+rcLinkOamPeerPortIndex  OBJECT-TYPE
+         SYNTAX                 InterfaceIndex
+         MAX-ACCESS       not-accessible
+         STATUS                  current
+         DESCRIPTION       "the port index on which the Link OAM is enabled. This
+                                            Value is similar to ifIndex in MIB2."
+         ::= { rcLinkOamPeerEntry 1}
+
+rcLinkOamPeerMacAddress OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "The MAC address of the peer OAM entity.  The MAC address is
+          derived from the most recently received OAMPDU.
+          "
+        ::= { rcLinkOamPeerEntry 2 }
+
+rcLinkOamPeerVendorOui OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "The OUI of the OAM peer as reflected in the latest
+          Information OAMPDU received with a Local Information TLV.  The
+          OUI can be used to identify the vendor of the remote OA
+          entity.  This value is initialized to three octets of zero
+          before any Local Information TLV is received.
+          "
+        ::= { rcLinkOamPeerEntry 3 }
+
+rcLinkOamPeerVendorInfo OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "The Vendor Info of the OAM peer as reflected in the latest
+          Information OAMPDU received with a Local Information TLV.
+          The semantics of the Vendor Information field is proprietary
+          and specific to the vendor (identified by the
+          rcLinkOamPeerVendorOui).  This information could, for example,
+          be used to identify a specific product or product family.
+          This value is initialized to zero before any Local
+          Information TLV is received.
+          "
+        ::= { rcLinkOamPeerEntry 4 }
+
+rcLinkOamPeerMode OBJECT-TYPE
+        SYNTAX      INTEGER {
+                      passive(1),
+                      active(2),
+                      unknown(3)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "The mode of the OAM peer as reflected in the latest
+          Information OAMPDU received with a Local Information TLV.  The
+          mode of the peer can be determined from the Configuration
+          field in the Local Information TLV of the last Information
+          OAMPDU received from the peer.  The value is unknown(3)
+          whenever no Local Information TLV has been received.  The
+          values of active(2) and passive(1) are returned when a Local
+          Information TLV has been received indicating that the peer is
+          in active or passive mode, respectively.
+          "
+	DEFVAL { passive }
+        ::= { rcLinkOamPeerEntry 5 }
+
+rcLinkOamPeerMaxOamPduSize OBJECT-TYPE
+        SYNTAX      Integer32 (0 | 64..2047)
+        UNITS       "octets"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "The maximum size of OAMPDU supported by the peer as reflected
+          in the latest Information OAMPDU received with a Local
+          Information TLV.  Ethernet OAM on this interface must not use
+          OAMPDUs that exceed this size.  The maximum OAMPDU size can be
+          determined from the PDU Configuration field of the Local
+          Information TLV of the last Information OAMPDU received from
+          the peer.  A value of zero is returned if no Local Information
+          TLV has been received.  Otherwise, the value of the OAM peer's
+          maximum OAMPDU size is returned in this value.
+          "
+        ::= { rcLinkOamPeerEntry 6 }
+
+rcLinkOamPeerConfigRevision OBJECT-TYPE
+        SYNTAX      Integer32(0..65535)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "The configuration revision of the OAM peer as reflected in
+          the latest OAMPDU.  This attribute is changed by the peer
+          whenever it has a local configuration change for Ethernet OA
+          on this interface.  The configuration revision can be
+          determined from the Revision field of the Local Information
+          TLV of the most recently received Information OAMPDU with
+          a Local Information TLV.  A value of zero is returned if
+          no Local Information TLV has been received.
+        "
+        ::= { rcLinkOamPeerEntry 7 }
+
+rcLinkOamPeerFunctionsSupported OBJECT-TYPE
+        SYNTAX      BITS {
+                      unidirectionalSupport (0),
+                      loopbackSupport(1),
+                      eventSupport(2),
+                      variableSupport(3)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "The OAM functions supported on this Ethernet-like interface.
+          OAM consists of separate functionality sets above the basic
+          discovery process.  This value indicates the capabilities of
+          the peer OAM entity with respect to these functions.  This
+          value is initialized so all bits are clear.
+
+          If unidirectionalSupport(0) is set, then the peer OAM entity
+          supports sending OAM frames on Ethernet interfaces when the
+          receive path is known to be inoperable.  If
+          loopbackSupport(1) is set, then the peer OAM entity can send
+          and receive OAM loopback commands.  If eventSupport(2) is set,
+          then the peer OAM entity can send and receive event OAMPDUs to
+          signal various error conditions.  If variableSupport(3) is
+          set, then the peer OAM entity can send and receive variable
+          requests to monitor the attribute value as described in Clause
+          57 of [802.3ah].
+
+          The capabilities of the OAM peer can be determined from the
+          configuration field of the Local Information TLV of the most
+          recently received Information OAMPDU with a Local Information
+          TLV.  All zeros are returned if no Local Information TLV has
+          yet been received.
+          "
+        ::= { rcLinkOamPeerEntry 8 }
+
+-- Ethernet OAM Loopback group
+--
+
+rcLinkOamLoopbackTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF RcLinkOamLoopbackEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+          "This table contains controls for the loopback state of the
+          local link as well as indicates the status of the loopback
+          function.  There is one entry in this table for each entry in
+          rcLinkOamTable that supports loopback functionality (where
+          rcLinkOamFunctionsSupported includes the loopbackSupport bit
+          set).
+
+          Loopback can be used to place the remote OAM entity in a state
+          where every received frame (except OAMPDUs) is echoed back
+          over the same interface on which they were received.  In this
+          state, at the remote entity, 'normal' traffic is disabled as
+          only the looped back frames are transmitted on the interface.
+          Loopback is thus an intrusive operation that prohibits normal
+          data flow and should be used accordingly.
+          "
+        ::= { rcLinkOam 3 }
+
+rcLinkOamLoopbackEntry OBJECT-TYPE
+        SYNTAX      RcLinkOamLoopbackEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+          "An entry in the table, containing information on the loopback
+          status for a single Ethernet-like interface.  Entries in the
+          table are automatically created whenever the local OAM entity
+          supports loopback capabilities.  The loopback status on the
+          interface can be determined from the rcLinkOamLoopbackStatus
+          object.
+          "
+        INDEX       { rcLinkOamLoopbackPortIndex }
+        ::= { rcLinkOamLoopbackTable 1 }
+
+RcLinkOamLoopbackEntry ::=
+        SEQUENCE {
+          rcLinkOamLoopbackPortIndex       InterfaceIndex,
+          rcLinkOamLoopbackStatus          INTEGER,
+          rcLinkOamLoopbackIgnoreRx        INTEGER,
+	  rcLinkOamLoopbackFrameCnt        Integer32,
+	  rcLinkOamLoopbackFrameSize       Integer32,
+	  rcLinkOamLoopbackResultOk        TruthValue,
+	  rcLinkOamLoopbackResult          DisplayString,
+	  rcLinkOamLoopbackState           INTEGER,
+	  rcLinkOamLoopbackStatsRx      Counter32,
+	  rcLinkOamLoopbackStatsTx	   Counter32
+        }
+
+rcLinkOamLoopbackPortIndex  OBJECT-TYPE
+         SYNTAX           InterfaceIndex
+         MAX-ACCESS       not-accessible
+         STATUS           current
+         DESCRIPTION      "the port index on which the Link OAM is enabled. This
+                           Value is similar to ifIndex in MIB2."
+         ::= { rcLinkOamLoopbackEntry 1}
+
+rcLinkOamLoopbackStatus OBJECT-TYPE
+        SYNTAX      INTEGER {
+                      -- all values, except where noted, can be read
+                      -- but cannot be written
+                      noLoopback (1),
+
+                      -- initiatingLoopback can be read or written
+                      initiatingLoopback (2),
+                      remoteLoopback (3),
+
+                      -- terminatingLoopback can be read or written
+                      terminatingLoopback (4),
+                      localLoopback (5),
+                      unknown (6)
+                    }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+          "The loopback status of the OAM entity.  This status is
+          determined by a combination of the local parser and
+          multiplexer states, the remote parser and multiplexer states,
+          as well as by the actions of the local OAM client.  When
+          operating in normal mode with no loopback in progress, the
+          status reads noLoopback(1).
+
+          The values initiatingLoopback(2) and terminatingLoopback(4)
+          can be read or written.  The other values can only be read -
+          they can never be written.  Writing initiatingLoopback causes
+          the local OAM entity to start the loopback process with its
+          peer.  This value can only be written when the status is
+          noLoopback(1).  Writing the value initiatingLoopback(2) in any
+          other state has no effect.  When in remoteLoopback(3), writing
+          terminatingLoopback(4) causes the local OAM entity to initiate
+          the termination of the loopback state.  Writing
+          terminatingLoopack(4) in any other state has no effect.
+
+          If the OAM client initiates a loopback and has sent a
+          Loopback OAMPDU and is waiting for a response, where the local
+          parser and multiplexer states are DISCARD (see [802.3ah,
+          57.2.11.1]), the status is 'initiatingLoopback'.  In this
+          case, the local OAM entity has yet to receive any
+          acknowledgment that the remote OAM entity has received its
+          loopback command request.
+          If the local OAM client knows that the remote OAM entity is in
+          loopback mode (via the remote state information as described
+          in [802.3ah, 57.2.11.1, 30.3.6.1.15]), the status is
+          remoteLoopback(3).  If the local OAM client is in the process
+          of terminating the remote loopback [802.3ah, 57.2.11.3,
+          30.3.6.1.14] with its local multiplexer and parser states in
+          DISCARD, the status is terminatingLoopback(4).  If the remote
+          OAM client has put the local OAM entity in loopback mode as
+          indicated by its local parser state, the status is
+          localLoopback(5).
+
+          The unknown(6) status indicates that the parser and
+          multiplexer combination is unexpected.  This status may be
+          returned if the OAM loopback is in a transition state but
+          should not persist.
+
+          The values of this attribute correspond to the following
+          values of the local and remote parser and multiplexer states.
+
+            value            LclPrsr   LclMux    RmtPrsr   RmtMux
+            noLoopback         FWD       FWD       FWD       FWD
+            initLoopback     DISCARD   DISCARD     FWD       FWD
+            rmtLoopback      DISCARD     FWD      LPBK    DISCARD
+            tmtngLoopback    DISCARD   DISCARD    LPBK    DISCARD
+            lclLoopback        LPBK    DISCARD   DISCARD     FWD
+            unknown            ***   any other combination   ***
+          "
+        ::= { rcLinkOamLoopbackEntry 2 }
+
+rcLinkOamLoopbackIgnoreRx OBJECT-TYPE
+        SYNTAX      INTEGER { ignore(1), process(2) }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+          "Since OAM loopback is a disruptive operation (user traffic
+          does not pass), this attribute provides a mechanism to provide
+          controls over whether received OAM loopback commands are
+          processed or ignored.  When the value is ignore(1), received
+          loopback commands are ignored.  When the value is process(2),
+          OAM loopback commands are processed.  The default value is to
+          ignore loopback commands (ignore(1)).
+          "
+        ::= { rcLinkOamLoopbackEntry 3 }
+
+rcLinkOamLoopbackFrameCnt OBJECT-TYPE
+	SYNTAX  	Integer32(1..10000)
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"The number of loopback messages to be transmitted."
+	DEFVAL {1}
+	::= { rcLinkOamLoopbackEntry 4 }
+
+rcLinkOamLoopbackFrameSize OBJECT-TYPE
+	SYNTAX  	Integer32(64..9600)
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"An artitrary size of data to be included in the remote 
+		         loopback PDU, if the frame size is selected to be sent."
+	DEFVAL {64}
+	::= { rcLinkOamLoopbackEntry 5 }
+
+rcLinkOamLoopbackResultOk OBJECT-TYPE
+	SYNTAX 		TruthValue
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Indicates the result of the operation:
+			-true.      The Loopback Message(s) will be (or have been) sent.
+			-false.   The Loopback Message(s) will not be sent."
+	DEFVAL {true}
+	::= { rcLinkOamLoopbackEntry 6}
+
+rcLinkOamLoopbackResult OBJECT-TYPE
+	SYNTAX 		DisplayString(SIZE (1..511))
+	MAX-ACCESS	read-only
+	STATUS	        current 	
+	DESCRIPTION	"Display the Loopback result."
+	::= { rcLinkOamLoopbackEntry 7 }
+
+rcLinkOamLoopbackState 	OBJECT-TYPE
+	SYNTAX 		INTEGER {
+				ready(1),
+				transmit(2),
+                                abort(3)
+			}
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"State of the transmit loopback service:
+			-ready.      The service is available.
+			-transmit.   The service is transmitting, or about to transmit, 
+				     the Loopback messages.
+			-abort.      The service is aborted, or about to abort the loopback message
+			This column will also be used to avoid concurrency or race condition 
+			problems that could occur if two or more management entities try to 
+			use the service at the same time. "
+	DEFVAL {ready}
+	::= { rcLinkOamLoopbackEntry 8 }
+
+rcLinkOamLoopbackStatsRx OBJECT-TYPE
+        SYNTAX      Counter32
+        UNITS       "frames"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "A count of the number of OAM frames received on
+          this interface during the most recent remote loopback test"
+        ::= { rcLinkOamLoopbackEntry 9 }
+
+rcLinkOamLoopbackStatsTx OBJECT-TYPE
+        SYNTAX      Counter32
+        UNITS       "frames"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "A count of the number of OAM frames transmitted on
+          this interface during the most recent remote loopback test"
+        ::= { rcLinkOamLoopbackEntry 10 }
+	  
+
+-- Ethernet OAM Statistics group
+--
+
+rcLinkOamStatsTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF RcLinkOamStatsEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+          "This table contains statistics for the OAM function on a
+          particular Ethernet-like interface.  There is an entry in the
+          table for every entry in the rcLinkOamTable.
+
+          The counters in this table are defined as 32-bit entries to
+          match the counter size as defined in [802.3ah].  Given that
+          the OA protocol is a slow protocol, the counters increment at
+          a slow rate.
+          "
+        ::= { rcLinkOam 4 }
+
+rcLinkOamStatsEntry OBJECT-TYPE
+        SYNTAX      RcLinkOamStatsEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+          "An entry in the table containing statistics information on
+          the Ethernet OAM function for a single Ethernet-like
+          interface.  Entries are automatically created for every entry
+          in the rcLinkOamTable.  Counters are maintained across
+          transitions in rcLinkOamOperStatus.
+          "
+        INDEX       { rcLinkOamStatsPortIndex }
+        ::= { rcLinkOamStatsTable 1 }
+
+RcLinkOamStatsEntry ::=
+        SEQUENCE {
+                  rcLinkOamStatsPortIndex                 InterfaceIndex,
+                  rcLinkOamInformationTx                Counter32,
+                  rcLinkOamInformationRx                Counter32,
+                  rcLinkOamLoopbackControlTx            Counter32,
+                  rcLinkOamLoopbackControlRx            Counter32,
+		  rcLinkOamClearStats      	        TruthValue
+                 }
+
+rcLinkOamStatsPortIndex  OBJECT-TYPE
+         SYNTAX           InterfaceIndex
+         MAX-ACCESS       not-accessible
+         STATUS           current
+         DESCRIPTION      "the port index on which the Link OAM is enabled. This
+                           Value is similar to ifIndex in MIB2."
+         ::= { rcLinkOamStatsEntry 1}
+
+rcLinkOamInformationTx OBJECT-TYPE
+        SYNTAX      Counter32
+        UNITS       "frames"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "A count of the number of Information OAMPDUs transmitted on
+          this interface.
+
+          Discontinuities of this counter can occur at re-initialization
+          of the management system, and at other times as indicated by
+          the value of the ifCounterDiscontinuityTime.  "
+        ::= { rcLinkOamStatsEntry 2 }
+
+rcLinkOamInformationRx OBJECT-TYPE
+        SYNTAX      Counter32
+        UNITS       "frames"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "A count of the number of Information OAMPDUs received on this
+          interface.
+
+          Discontinuities of this counter can occur at re-initialization
+          of the management system, and at other times as indicated by
+          the value of the ifCounterDiscontinuityTime.
+          "
+        ::= { rcLinkOamStatsEntry 3 }
+
+rcLinkOamLoopbackControlTx OBJECT-TYPE
+        SYNTAX      Counter32
+        UNITS       "frames"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "A count of the number of Loopback Control OAMPDUs transmitted
+          on this interface.
+
+          Discontinuities of this counter can occur at re-initialization
+          of the management system, and at other times as indicated by
+          the value of the ifCounterDiscontinuityTime.
+          "
+        ::= { rcLinkOamStatsEntry 4 }
+
+rcLinkOamLoopbackControlRx OBJECT-TYPE
+        SYNTAX      Counter32
+        UNITS       "frames"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+          "A count of the number of Loopback Control OAMPDUs received
+          on this interface.
+
+          Discontinuities of this counter can occur at re-initialization
+          of the management system, and at other times as indicated by
+          the value of the ifCounterDiscontinuityTime.
+          "
+        ::= { rcLinkOamStatsEntry 5 }
+
+rcLinkOamClearStats OBJECT-TYPE
+       SYNTAX        TruthValue
+       MAX-ACCESS    read-write
+       STATUS        current
+       DESCRIPTION   "Clear Link OAM Statistics"
+       ::= { rcLinkOamStatsEntry 6 }  
+
+
+-- Link OAM indication
+rcLinkOamTrap OBJECT IDENTIFIER ::= { rcLinkOam 5 } 
+
+rcLinkOamTrapIndication	OBJECT-TYPE
+        SYNTAX        	INTEGER { 
+       			set(1),
+			clear(2)
+       	   	      }	
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION  " Link OAM indication signifies whether the trap is set or cleared"
+                      
+        ::= { rcLinkOamTrap 1 }
+
+END 

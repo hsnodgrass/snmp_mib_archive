@@ -1,0 +1,1134 @@
+
+RC-OSPF-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, IpAddress, TimeTicks
+        FROM SNMPv2-SMI
+    DisplayString, RowStatus, TruthValue
+        FROM SNMPv2-TC
+    InterfaceIndexOrZero
+        FROM IF-MIB
+    rcOspf, rcStat
+        FROM RAPID-CITY
+    rcIpConf
+        FROM RC-IP-MIB;
+
+
+rcOspfMib MODULE-IDENTITY
+       LAST-UPDATED     "200509270000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200509270000Z" -- 27 Sep 2005
+       DESCRIPTION "Version 9: Reverted range of rcIpConfOspfAuthKey to maxsize 8"
+       REVISION "200505180000Z" -- 18 May 2005
+       DESCRIPTION "Version 8: Added rcIpConfOspfIfMtuIgnore to rcIpConfOspfTable, increased the range of rcIpConfOspfAuthKey, changed indentation of rcIpConfOspfAreaAggregateEffect"
+
+       REVISION "200502160000Z" -- 16 Feb 2005
+       DESCRIPTION "Version 7: Changed the range for rcIpConfOspfAuthKey"
+
+       REVISION "200502040000Z" -- 04 Feb 2005
+       DESCRIPTION "Version 6: Added rcIpConfOspfAreaAggregateEffect in rcIpConfOspfAreaAggregateTable"
+
+       REVISION "200410080000Z" -- 08 October 2004
+       DESCRIPTION "Version 5: Updated description for mib rcStatOspfSpfRuns ."
+       REVISION "200408180000Z" -- 18 August 2004
+       DESCRIPTION "Version 4: Added rcIpConfOspfRfc1583Compatibility in
+                    rcIpConfOspf" 
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcOspf 1 }
+
+-- Ospf Configuration Table
+ 
+rcIpConfOspfTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpConfOspfEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to maintain OSPF information
+                      for a particular interface."
+        ::= { rcIpConf 2 }
+ 
+rcIpConfOspfEntry OBJECT-TYPE
+        SYNTAX        RcIpConfOspfEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing OSPF information.  An entry is
+                      automatically created in this table when routing 
+		      is enabled for an interface -or- when an ip address 
+                      is configured on an interface." 
+        INDEX         { rcIpConfOspfIfIndex }
+        ::= { rcIpConfOspfTable 1 }
+ 
+RcIpConfOspfEntry ::= SEQUENCE {
+                rcIpConfOspfIfIndex           InterfaceIndexOrZero,
+                rcIpConfOspfRtrPriority       INTEGER,
+                rcIpConfOspfMetric            INTEGER,
+                rcIpConfOspfAuthKey           DisplayString,
+                rcIpConfOspfRowStatus         RowStatus,
+                rcIpConfOspfHelloInterval     INTEGER,
+                rcIpConfOspfRtrDeadInterval   INTEGER,
+                rcIpConfOspfIfAreaId          IpAddress,
+                rcIpConfOspfAuthType          INTEGER,
+                rcIpConfOspfPollInterval      INTEGER,
+                rcIpConfOspfIfMtuIgnore       INTEGER
+        }
+ 
+rcIpConfOspfIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndexOrZero (0..4094)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "An unique value to identify a physical interface 
+ 		      or a logical interface (VLAN)."
+        ::= { rcIpConfOspfEntry 1 }
+
+rcIpConfOspfRtrPriority OBJECT-TYPE
+        SYNTAX        INTEGER (0..'FF'h)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The priority of this interface.  Used in multi-
+                      access networks, this field is used in the
+                      designated router election algorithm.  The value 0
+                      signifies that the router is not eligible to become
+                      the designated router on this particular network.
+                      In the event of a tie in this value, routers will
+                      use their router id as a tie breaker."
+        DEFVAL        { 1 }
+        ::= { rcIpConfOspfEntry 2 }
+ 
+rcIpConfOspfMetric OBJECT-TYPE
+        SYNTAX        INTEGER (0..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The metric for this type of service (TOS) on this
+                      interface.  The default value of the TOS 0 Metric
+                      is (10^9 / ifSpeed). The value FFFF means 'no route 
+		      via this TOS'. A value of 0 means the interface speed 
+                      (rcIpConfOspfDefaultMetric) will be used as metric 
+		      value, when the state of the interface is up." 
+        DEFVAL        { 0 }
+        ::= { rcIpConfOspfEntry 3 }
+ 
+rcIpConfOspfAuthKey OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..8))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The Authentication Key.  If the Area's
+                      Authorization Type is simplePassword, and the key
+                      length is shorter than 8 octets, the agent will
+                      left adjust and zero fill to 8 octets.  
+                      
+                      Note that unauthenticated  interfaces  need  no
+                      authentication key, and simple password authen-
+                      tication cannot use a key of more  than  8  oc-
+                      tets.  Larger keys are useful only with authen-
+                      tication mechanisms not specified in this docu-
+                      ment.
+
+                      When read, ospfIfAuthKey always returns an Octet 
+                      String of length zero."
+        REFERENCE     "OSPF Version 2, Section 9 The Interface Data
+                      Structure"
+        ::= { rcIpConfOspfEntry 4 }
+
+rcIpConfOspfRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Row status for this entry."
+        ::= { rcIpConfOspfEntry 5 }
+
+rcIpConfOspfHelloInterval OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The length of time, in seconds, between the 
+                      Hello packets that the router sends on the 
+                      interface. This value must be the same for all
+                      routers attached to a common network."
+        DEFVAL        { 10 }
+        ::= { rcIpConfOspfEntry 6 }
+
+rcIpConfOspfRtrDeadInterval OBJECT-TYPE
+        SYNTAX        INTEGER (0..'7FFFFFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The number of seconds that a router's Hello 
+                      packets have not been seen before it's 
+                      neighbors declare the router down. This should
+                      be some multiple of the Hello interval. This 
+                      value must be the same for all routers attached
+                      to a common network."
+        DEFVAL        { 40 }
+        ::= { rcIpConfOspfEntry 7 }
+
+rcIpConfOspfIfAreaId OBJECT-TYPE
+         SYNTAX        IpAddress
+         MAX-ACCESS    read-write
+         STATUS        current
+         DESCRIPTION   "A 32-bit integer uniquely identifying the area to
+                       which the interface connects.  Area ID 0.0.0.0 is used
+                       for the OSPF backbone."
+         DEFVAL   { '00000000'H }    -- 0.0.0.0
+         ::= { rcIpConfOspfEntry 8 }
+
+rcIpConfOspfAuthType OBJECT-TYPE
+         SYNTAX        INTEGER {
+                           none (0),
+                           simplePassword (1),
+                           md5 (2)
+                       }
+        MAX-ACCESS     read-write
+        STATUS         current
+        DESCRIPTION    "The authentication type specified for  an  interface.   
+                       Additional  authentication types may be assigned locally."
+        REFERENCE      "OSPF Version 2, Appendix E Authentication"
+        DEFVAL { none }        -- no authentication, by default
+        ::= { rcIpConfOspfEntry 9 }
+
+rcIpConfOspfPollInterval OBJECT-TYPE
+        SYNTAX        INTEGER  (0..2147483647)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "OSPF NBMA Interface Poll Interval."
+        ::= { rcIpConfOspfEntry 10 }
+
+rcIpConfOspfIfMtuIgnore OBJECT-TYPE
+        SYNTAX       INTEGER {
+                        enable(1),
+                        disable(2)
+                     }
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Mtu-ignore flag is for ignoring the mtu checking in 
+                     ospf bdb"
+        DEFVAL       { disable }
+        ::= { rcIpConfOspfEntry 11 }
+ 
+-- Ospf Cost Grp
+
+rcIpConfOspfDefaultMetric   OBJECT IDENTIFIER       ::= { rcIpConf 3 }
+ 
+rcIpConfOspfDefaultMetric10MegPort OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the cost associated with
+                      10Meg Interface(Port)."
+        ::= { rcIpConfOspfDefaultMetric 1 }
+ 
+rcIpConfOspfDefaultMetric100MegPort OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the cost associated with
+                      100Meg Interface(Port)."
+        ::= { rcIpConfOspfDefaultMetric 2 }
+ 
+rcIpConfOspfDefaultMetric1000MegPort OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the cost associated with
+                      1000Meg Interface(Port)."
+        ::= { rcIpConfOspfDefaultMetric 3 }
+
+rcIpConfOspfDefaultMetric10000MegPort OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the cost associated with
+                      10000Meg Interface(Port)."
+        ::= { rcIpConfOspfDefaultMetric 4 }
+
+rcIpConfOspf   OBJECT IDENTIFIER       ::= { rcIpConf 4 }
+
+ 
+rcIpConfOspfTrapEnable  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether Ospf Traps should be sent."
+        ::= { rcIpConfOspf 1 }
+
+rcIpConfOspfAutoVirtLinkEnable  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate whether auto virtual link 
+                      creation is enabled or not. If set to true
+                      OSPF will create virtual links between 
+                      ABRs whether it is needed or not, but adjacency
+                      will established only when one of the ABR 
+                      losses connection to backbone area. If set to
+                      false then it is user resposibity to create
+                      virtual link whenever needed."
+	DEFVAL	      { false }
+        ::= { rcIpConfOspf 2 }
+
+rcIpConfOspfSpfHoldDownTime OBJECT-TYPE
+         SYNTAX   INTEGER (3..60)
+         MAX-ACCESS   read-write
+         STATUS   current
+         DESCRIPTION   "The SPF Hold Down Timer value. The SPF will run
+                        at most once per hold down timer value."
+         DEFVAL  { 10 }
+         ::= { rcIpConfOspf 3 }
+
+rcIpConfOspfAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+                           none(0),
+                           runSpf(1)
+                       }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcIpConfOspf 4 }
+
+rcIpConfOspfRfc1583Compatibility OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Controls the preference rules used when choosing
+                       among multiple AS-External-LSAs advertising the 
+                       same destination. When this is enabled, the 
+                       preference rule will be same as specified by 
+                       RFC1583. When disabled, the new preference rule 
+                       as described in RFC2328 will  be applicable, which
+                       potentially prevents the routing loops when 
+                       AS-External-LSAs for the same destination have 
+                       been originated from different areas."
+        DEFVAL        { false }
+        ::= { rcIpConfOspf 5 }
+
+
+-- Ospf Area Table
+
+rcIpConfOspfAreaTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpConfOspfAreaEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to maintain OSPF information
+                      for a particular Area."
+        ::= { rcIpConf 7 }
+
+rcIpConfOspfAreaEntry OBJECT-TYPE
+        SYNTAX        RcIpConfOspfAreaEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing OSPF Area configuration
+                      information.  An entry is automatically created
+                      in this table when an area is configured through
+                      ospfAreaTable in (rfc1253rcc.mib)."
+        INDEX         { rcIpConfOspfAreaId }
+        ::= { rcIpConfOspfAreaTable 1 }
+
+RcIpConfOspfAreaEntry ::= SEQUENCE {
+                rcIpConfOspfAreaId              IpAddress,
+                rcIpConfOspfAreaImportSummary   TruthValue,
+                rcIpConfOspfAreaActiveIfCount   Integer32
+        }
+
+rcIpConfOspfAreaId OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "An unique value to identify an area. Area ID
+                      0.0.0.0 is used for the OSPF backbone."
+        ::= { rcIpConfOspfAreaEntry 1 }
+
+rcIpConfOspfAreaImportSummary OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The area's support for importing Summary
+                      advertisements into a stub area. This field
+                      should be used only if ospfImportASExtern is
+                      set to FALSE"
+        DEFVAL        { true }
+        ::= { rcIpConfOspfAreaEntry 2 }
+
+rcIpConfOspfAreaActiveIfCount OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "This variable displays the number of active
+                      interfaces configured in this area. An area
+                      cannot be deleted if this value is > 0."
+        ::= { rcIpConfOspfAreaEntry 3 }
+
+-- Ospf Configuration Ip Interface Table
+
+rcIpConfOspfV2Table OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpConfOspfV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to maintain OSPF information
+                      for a particular interface."
+        ::= { rcIpConf 9 }
+
+rcIpConfOspfV2Entry OBJECT-TYPE
+        SYNTAX        RcIpConfOspfV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Entry containing OSPF information.  An entry is
+                      automatically created in this table when routing
+                      is enabled for an interface -or- when an ip address
+                      is configured on an interface."
+        INDEX         { rcIpConfOspfV2IfIndex, rcIpConfOspfV2IpAddr }
+        ::= { rcIpConfOspfV2Table 1 }
+
+RcIpConfOspfV2Entry ::= SEQUENCE {
+                rcIpConfOspfV2IfIndex           InterfaceIndexOrZero,
+                rcIpConfOspfV2IpAddr            IpAddress,
+                rcIpConfOspfV2RtrPriority       INTEGER,
+                rcIpConfOspfV2Metric            INTEGER,
+                rcIpConfOspfV2AuthKey           DisplayString,
+                rcIpConfOspfV2RowStatus         RowStatus,
+                rcIpConfOspfV2HelloInterval     INTEGER,
+                rcIpConfOspfV2RtrDeadInterval   INTEGER,
+                rcIpConfOspfV2IfAreaId          IpAddress,
+                rcIpConfOspfV2AuthType          INTEGER
+        }
+
+rcIpConfOspfV2IfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndexOrZero (0..4094)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "An unique value to identify a physical interface
+                      or a logical interface (VLAN)."
+        ::= { rcIpConfOspfV2Entry 1 }
+
+rcIpConfOspfV2IpAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "IpAddress of the IP interface."
+        ::= { rcIpConfOspfV2Entry 2 }
+
+rcIpConfOspfV2RtrPriority OBJECT-TYPE
+        SYNTAX        INTEGER (0..'FF'h)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The priority of this interface.  Used in multi-
+                      access networks, this field is used in the
+                      designated router election algorithm.  The value 0
+                      signifies that the router is not eligible to become
+                      the designated router on this particular network.
+                      In the event of a tie in this value, routers will
+                      use their router id as a tie breaker."
+        DEFVAL        { 1 }
+        ::= { rcIpConfOspfV2Entry 3 }
+
+rcIpConfOspfV2Metric OBJECT-TYPE
+        SYNTAX        INTEGER (0..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The metric for this type of service (TOS) on this
+                      interface.  The default value of the TOS 0 Metric
+                      is (10^9 / ifSpeed). The value FFFF means 'no route
+                      via this TOS'. A value of 0 means the interface speed
+                      (rcIpConfOspfV2DefaultMetric) will be used as metric
+                      value, when the state of the interface is up."
+        DEFVAL        { 0 }
+        ::= { rcIpConfOspfV2Entry 4 }
+
+rcIpConfOspfV2AuthKey OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(8))
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The Authentication Key.  If the Area's
+                      Authorization Type is simplePassword, and the key
+                      length is shorter than 8 octets, the agent will
+                      left adjust and zero fill to 8 octets.  When read,
+                      ospfIfAuthKey always returns an Octet String of
+                      length zero."
+        REFERENCE     "OSPF Version 2, Section 9 The Interface Data
+                      Structure"
+        ::= { rcIpConfOspfV2Entry 5 }
+
+rcIpConfOspfV2RowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "Row status for this entry."
+        ::= { rcIpConfOspfV2Entry 6 }
+
+rcIpConfOspfV2HelloInterval OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The length of time, in seconds, between the
+                      Hello packets that the router sends on the
+                      interface. This value must be the same for all
+                      routers attached to a common network."
+        DEFVAL        { 10 }
+        ::= { rcIpConfOspfV2Entry 7 }
+
+rcIpConfOspfV2RtrDeadInterval OBJECT-TYPE
+        SYNTAX        INTEGER (1..'7FFFFFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        deprecated
+        DESCRIPTION   "The number of seconds that a router's Hello
+                      packets have not been seen before it's
+                      neighbors declare the router down. This should
+                      be some multiple of the Hello interval. This
+                      value must be the same for all routers attached
+                      to a common network."
+        DEFVAL        { 40 }
+        ::= { rcIpConfOspfV2Entry 8 }
+
+rcIpConfOspfV2IfAreaId OBJECT-TYPE
+         SYNTAX        IpAddress
+         MAX-ACCESS    read-write
+         STATUS        deprecated
+         DESCRIPTION   "A 32-bit integer uniquely identifying the area to
+                       which the interface connects.  Area ID 0.0.0.0 is used
+                       for the OSPF backbone."
+         DEFVAL   { '00000000'H }    -- 0.0.0.0
+         ::= { rcIpConfOspfV2Entry 9 }
+
+rcIpConfOspfV2AuthType OBJECT-TYPE
+         SYNTAX        INTEGER {
+                           none (0),
+                           simplePassword (1),
+                           md5 (2)
+
+                       }
+        MAX-ACCESS     read-write
+        STATUS         deprecated
+        DESCRIPTION    "The authentication type specified for  an  interface.
+                       Additional  authentication types may be assigned locally.
+"
+        REFERENCE      "OSPF Version 2, Appendix E Authentication"
+        DEFVAL { none }        -- no authentication, by default
+        ::= { rcIpConfOspfV2Entry 10 }
+
+
+-- Ospf Area Aggregate Table
+
+rcIpConfOspfAreaAggregateTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcIpConfOspfAreaAggregateEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to maintain OSPF summary route
+                        metric parameter for a particular Area range.  "
+       ::= { rcIpConf 10 }
+
+rcIpConfOspfAreaAggregateEntry OBJECT-TYPE
+        SYNTAX        RcIpConfOspfAreaAggregateEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing OSPF summary route metric
+                        parameter for a particular Area range.
+                        An entry is automatically created in this
+                        table when an area range is configured through
+                        ospfAreaAggregateTable in rfc1850rcc.mib"
+        INDEX         { rcIpConfOspfAreaAggregateAreaID,
+                        rcIpConfOspfAreaAggregateLsdbType,
+                        rcIpConfOspfAreaAggregateNet,
+                        rcIpConfOspfAreaAggregateMask }
+        ::= { rcIpConfOspfAreaAggregateTable 1 }
+
+RcIpConfOspfAreaAggregateEntry ::= SEQUENCE {
+        rcIpConfOspfAreaAggregateAreaID
+            IpAddress,
+        rcIpConfOspfAreaAggregateLsdbType
+            INTEGER,
+        rcIpConfOspfAreaAggregateNet
+            IpAddress,
+        rcIpConfOspfAreaAggregateMask
+            IpAddress,
+        rcIpConfOspfAreaAggregateAdvertiseMetric
+            INTEGER,
+        rcIpConfOspfAreaAggregateEffect
+            INTEGER
+        }
+
+rcIpConfOspfAreaAggregateAreaID OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Area the Address Aggregate is to be  found
+           within."
+        REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+        ::= { rcIpConfOspfAreaAggregateEntry 1 }
+
+
+rcIpConfOspfAreaAggregateLsdbType OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    summaryLink (3),
+                    nssaExternalLink (7)
+                  }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The type of the Address Aggregate.  This field
+           specifies  the  Lsdb type that this Address Ag-
+           gregate applies to."
+        REFERENCE
+          "OSPF Version 2, Appendix A.4.1 The  Link  State
+          Advertisement header"
+        ::= { rcIpConfOspfAreaAggregateEntry 2 }
+
+
+rcIpConfOspfAreaAggregateNet OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The IP Address of the Net or Subnet  indicated
+           by the range."
+        REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+        ::= { rcIpConfOspfAreaAggregateEntry 3 }
+
+rcIpConfOspfAreaAggregateMask OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Subnet Mask that pertains to  the  Net  or
+           Subnet."
+        REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+        ::= { rcIpConfOspfAreaAggregateEntry 4 }
+
+rcIpConfOspfAreaAggregateAdvertiseMetric OBJECT-TYPE
+        SYNTAX        INTEGER(0 .. 65535)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to specify a metric for a Summary LSA (type
+                        3) generated by OSPF through an area range.
+                        If this metric is set to 0, OSPF uses the cost
+                        to the farthest point in the networks being
+                        summarized as the metric."
+        ::= { rcIpConfOspfAreaAggregateEntry 5 }
+
+rcIpConfOspfAreaAggregateEffect OBJECT-TYPE
+        SYNTAX      INTEGER    {
+                       advertiseMatching (1),
+                       doNotAdvertiseMatching (2),
+                       advertiseDoNotAggregate (3)
+                    }
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION  "Subnets subsumed by ranges either trigger  the
+                     advertisement  of  the indicated aggregate (ad-
+                     vertiseMatching), or result in the subnet's not
+                     being advertised at all outside the area."
+       DEFVAL        { advertiseMatching }
+       ::= { rcIpConfOspfAreaAggregateEntry 6 }
+
+
+rcStatOspf   OBJECT IDENTIFIER       ::= { rcStat 3}
+
+rcStatOspfBuffersAllocated OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of buffers
+                      allocated for OSPF."
+        ::= { rcStatOspf 1 }
+
+rcStatOspfBuffersFreed OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of buffers
+                      that are freed by the OSPF."
+        ::= { rcStatOspf 2 }
+
+rcStatOspfBufferAllocFailures OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of times
+                      that OSPF has failed to allocate buffers."
+        ::= { rcStatOspf 3 }
+
+rcStatOspfBufferFreeFailures OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of times
+                      that OSPF has failed to free buffers."
+        ::= { rcStatOspf 4 }
+
+rcStatOspfTxPackets OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of packets
+                      transmitted by OSPF."
+        ::= { rcStatOspf 5 }
+
+
+rcStatOspfRxPackets OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of packets
+                      received by OSPF."
+        ::= { rcStatOspf 6 }
+
+rcStatOspfTxDropPackets OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of packets
+                      dropped before transmitted by OSPF."
+        ::= { rcStatOspf 7 }
+
+
+rcStatOspfRxDropPackets OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of packets
+                      dropped before received by OSPF."
+        ::= { rcStatOspf 8 }
+
+rcStatOspfRxBadPackets OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of packets
+                      received by OSPF that are bad."
+        ::= { rcStatOspf 9 }
+
+rcStatOspfSpfRuns OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the total number of SPF
+                      calculatations performed by OSPF, which also
+	includes the number of partial route table calculation
+	for Incremental Updates."
+        ::= { rcStatOspf 10 }
+
+rcStatOspfLastSpfRun OBJECT-TYPE
+        SYNTAX        TimeTicks
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the time(SysUpTime) since
+                      the last spf calculated by OSPF."
+        ::= { rcStatOspf 11 }
+
+rcStatOspfLsdbTblSize OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number of entries in
+                      the linkstate database table."
+        ::= { rcStatOspf 12 }
+
+
+rcStatOspfIfTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcStatOspfIfEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to store OSPF interface
+                      statistics."
+        ::= { rcStat 5 }
+
+rcStatOspfIfEntry OBJECT-TYPE
+        SYNTAX        RcStatOspfIfEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Ospf interface statistics"
+        INDEX         { rcStatOspfIfIndex }
+        ::= { rcStatOspfIfTable 1 }
+
+RcStatOspfIfEntry ::= SEQUENCE {
+                rcStatOspfIfIndex                   InterfaceIndexOrZero,
+                rcStatOspfIfRxHellos                Counter32,
+                rcStatOspfIfRxDBDescrs              Counter32,
+                rcStatOspfIfRxLSUpdates             Counter32,
+                rcStatOspfIfRxLSReqs                Counter32,
+                rcStatOspfIfRxLSAcks                Counter32,
+                rcStatOspfIfTxHellos                Counter32,
+                rcStatOspfIfTxDBDescrs              Counter32,
+                rcStatOspfIfTxLSUpdates             Counter32,
+                rcStatOspfIfTxLSReqs                Counter32,
+                rcStatOspfIfTxLSAcks                Counter32,
+                rcStatOspfIfVersionMismatches       Counter32,
+                rcStatOspfIfAreaMismatches          Counter32,
+                rcStatOspfIfAuthTypeMismatches      Counter32,
+                rcStatOspfIfAuthFailures            Counter32,
+                rcStatOspfIfNetMaskMismatches       Counter32,
+                rcStatOspfIfHelloIntervalMismatches Counter32,
+                rcStatOspfIfDeadIntervalMismatches  Counter32,
+                rcStatOspfIfOptionMismatches        Counter32
+        }
+
+rcStatOspfIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndexOrZero (0..4094)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "An unique value that is used to identify a
+                      physical interface."
+        ::= { rcStatOspfIfEntry 1 }
+
+rcStatOspfIfRxHellos OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number hello packets
+                      received by this interface."
+        ::= { rcStatOspfIfEntry 2 }
+
+rcStatOspfIfRxDBDescrs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number database descriptor
+                      packets received by this interface."
+        ::= { rcStatOspfIfEntry 3 }
+
+rcStatOspfIfRxLSUpdates OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number Link state update
+                      packets received by this interface."
+        ::= { rcStatOspfIfEntry 4 }
+
+rcStatOspfIfRxLSReqs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number Link state request
+                      packets received by this interface."
+        ::= { rcStatOspfIfEntry 5 }
+
+rcStatOspfIfRxLSAcks OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number Link state acknowlege
+                      packets received by this interface."
+        ::= { rcStatOspfIfEntry 6 }
+
+rcStatOspfIfTxHellos OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number hello packets
+                      transmitted by this interface."
+        ::= { rcStatOspfIfEntry 7 }
+
+rcStatOspfIfTxDBDescrs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number database descriptor
+                      packets transmitted by this interface."
+        ::= { rcStatOspfIfEntry 8 }
+
+rcStatOspfIfTxLSUpdates OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number Link state update
+                      packets transmitted by this interface."
+        ::= { rcStatOspfIfEntry 9 }
+
+rcStatOspfIfTxLSReqs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number Link state request
+                      packets transmitted by this interface."
+        ::= { rcStatOspfIfEntry 10 }
+
+rcStatOspfIfTxLSAcks OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number Link state acknowlege
+                      packets transmitted by this interface."
+        ::= { rcStatOspfIfEntry 11 }
+
+rcStatOspfIfVersionMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number version
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfEntry 12 }
+
+rcStatOspfIfAreaMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number area
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfEntry 13 }
+
+rcStatOspfIfAuthTypeMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number AuthType
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfEntry 14 }
+
+rcStatOspfIfAuthFailures OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number Authentication
+                      failures."
+        ::= { rcStatOspfIfEntry 15 }
+
+rcStatOspfIfNetMaskMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number net mask
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfEntry 16 }
+
+rcStatOspfIfHelloIntervalMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number hello interval
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfEntry 17 }
+
+rcStatOspfIfDeadIntervalMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number dead interval
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfEntry 18 }
+
+rcStatOspfIfOptionMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the number options
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfEntry 19 }
+
+-- Stat Ospf Ip Interface Table
+-- replaces Stat Ospf Interface Table
+
+rcStatOspfIfV2Table OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcStatOspfIfV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "A table used to store OSPF interface
+                      statistics."
+        ::= { rcStat 7 }
+
+rcStatOspfIfV2Entry OBJECT-TYPE
+        SYNTAX        RcStatOspfIfV2Entry
+        MAX-ACCESS    not-accessible
+        STATUS        deprecated
+        DESCRIPTION   "Ospf interface statistics"
+        INDEX         { rcStatOspfIfV2Index, rcStatOspfIfV2Addr }
+        ::= { rcStatOspfIfV2Table 1 }
+
+RcStatOspfIfV2Entry ::= SEQUENCE {
+                rcStatOspfIfV2Index                   InterfaceIndexOrZero,
+                rcStatOspfIfV2Addr                    IpAddress,
+                rcStatOspfIfV2RxHellos                Counter32,
+                rcStatOspfIfV2RxDBDescrs              Counter32,
+                rcStatOspfIfV2RxLSUpdates             Counter32,
+                rcStatOspfIfV2RxLSReqs                Counter32,
+                rcStatOspfIfV2RxLSAcks                Counter32,
+                rcStatOspfIfV2TxHellos                Counter32,
+                rcStatOspfIfV2TxDBDescrs              Counter32,
+                rcStatOspfIfV2TxLSUpdates             Counter32,
+                rcStatOspfIfV2TxLSReqs                Counter32,
+                rcStatOspfIfV2TxLSAcks                Counter32,
+                rcStatOspfIfV2VersionMismatches       Counter32,
+                rcStatOspfIfV2AreaMismatches          Counter32,
+                rcStatOspfIfV2AuthTypeMismatches      Counter32,
+                rcStatOspfIfV2AuthFailures            Counter32,
+                rcStatOspfIfV2NetMaskMismatches       Counter32,
+                rcStatOspfIfV2HelloIntervalMismatches Counter32,
+                rcStatOspfIfV2DeadIntervalMismatches  Counter32,
+                rcStatOspfIfV2OptionMismatches        Counter32
+        }
+
+rcStatOspfIfV2Index OBJECT-TYPE
+        SYNTAX        InterfaceIndexOrZero (0..4094)
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "An unique value that is used to identify a
+                      physical interface."
+        ::= { rcStatOspfIfV2Entry 1 }
+
+rcStatOspfIfV2Addr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Ip Address"
+        ::= { rcStatOspfIfV2Entry 2 }
+
+rcStatOspfIfV2RxHellos OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number hello packets
+                      received by this interface."
+        ::= { rcStatOspfIfV2Entry 3 }
+
+rcStatOspfIfV2RxDBDescrs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number database descriptor
+                      packets received by this interface."
+        ::= { rcStatOspfIfV2Entry 4 }
+
+rcStatOspfIfV2RxLSUpdates OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number Link state update
+                      packets received by this interface."
+        ::= { rcStatOspfIfV2Entry 5 }
+
+rcStatOspfIfV2RxLSReqs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number Link state request
+                      packets received by this interface."
+        ::= { rcStatOspfIfV2Entry 6 }
+
+rcStatOspfIfV2RxLSAcks OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number Link state acknowlege
+                      packets received by this interface."
+        ::= { rcStatOspfIfV2Entry 7 }
+
+rcStatOspfIfV2TxHellos OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number hello packets
+                      transmitted by this interface."
+        ::= { rcStatOspfIfV2Entry 8 }
+
+rcStatOspfIfV2TxDBDescrs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number database descriptor
+                      packets transmitted by this interface."
+        ::= { rcStatOspfIfV2Entry 9 }
+
+rcStatOspfIfV2TxLSUpdates OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number Link state update
+                      packets transmitted by this interface."
+        ::= { rcStatOspfIfV2Entry 10 }
+
+rcStatOspfIfV2TxLSReqs OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number Link state request
+                      packets transmitted by this interface."
+        ::= { rcStatOspfIfV2Entry 11 }
+
+rcStatOspfIfV2TxLSAcks OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number Link state acknowlege
+                      packets transmitted by this interface."
+        ::= { rcStatOspfIfV2Entry 12 }
+
+rcStatOspfIfV2VersionMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number version
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfV2Entry 13 }
+
+rcStatOspfIfV2AreaMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number area
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfV2Entry 14 }
+
+rcStatOspfIfV2AuthTypeMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number AuthType
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfV2Entry 15 }
+
+rcStatOspfIfV2AuthFailures OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number Authentication
+                      failures."
+        ::= { rcStatOspfIfV2Entry 16 }
+
+rcStatOspfIfV2NetMaskMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number net mask
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfV2Entry 17 }
+
+rcStatOspfIfV2HelloIntervalMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number hello interval
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfV2Entry 18 }
+
+rcStatOspfIfV2DeadIntervalMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number dead interval
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfV2Entry 19 }
+
+rcStatOspfIfV2OptionMismatches OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        deprecated
+        DESCRIPTION   "Used to indicate the number options
+                      mismatches received by this interface."
+        ::= { rcStatOspfIfV2Entry 20 }
+
+
+
+END

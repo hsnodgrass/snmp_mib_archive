@@ -1,0 +1,4138 @@
+-- MIB created 6/25/98 14:39:52, by
+--   SMIC (the next generation) version 1.6.31, December 11, 1994.
+
+LAN-EMULATION-CLIENT-MIB DEFINITIONS ::= BEGIN
+
+-- From file: "aflec201.mi2"
+-- Compile options "G P A"
+
+IMPORTS
+    enterprises
+	    FROM RFC1155-SMI
+    Counter32, Integer32
+            FROM SNMPv2-SMI-v1
+    OBJECT-TYPE
+            FROM RFC-1212
+    MacAddress, RowStatus, TruthValue, DisplayString
+            FROM SNMPv2-TC-v1
+    InterfaceIndex
+            FROM IF-MIB
+    ifIndex
+            FROM RFC1213-MIB
+    OwnerString
+            FROM RMON-MIB;
+
+-- leClientMIB OBJECT IDENTIFIER ::= { atmfLanEmulation 1 }
+-- MODULE-IDENTITY
+--  LastUpdated
+--    9802230000Z
+--  OrgName
+--    ATM Forum LAN Emulation Sub-Working Group
+--  ContactInfo
+--    
+--      The ATM Forum
+--      2570 West El Camino Real, Suite 304
+--      Mountain View, CA  94040-1313
+--      Tel: +1-650-949-6700
+--      Fax: +1-650-949-6705
+--      E-mail: info@atmforum.com
+--      Web: http://www.atmforum.com/
+--                                         
+--  Descr
+--    This module defines a portion of the management 
+--     information base (MIB) for managing ATM LAN Emulation
+--     Client nodes.  It is meant to be used in connection with
+--     the AToM MIB and MIB-II / RFC 1573 'ifTable' entries
+--     for each LEC / emulated 802.x network interface.
+--  RevDate
+--    9505100000Z
+--  RevDescr
+--    The LAST-UPDATED date of the MIB in the Version 1.0 LAN
+--     Emulation Client management specification.
+--  RevDate
+--    9802230000Z
+--  RevDescr
+--    This MIB module now provides extensive support for LAN
+--     Emulation Version 2.0 clients, and the optional ability
+--     to query a proxy client (say, one attached to a bridge)
+--     to find out how it would respond to a LE_ARP request.
+
+atmForum        OBJECT IDENTIFIER ::= { enterprises 353 }
+atmForumNetworkManagement OBJECT IDENTIFIER ::= { atmForum 5 }
+atmfLanEmulation OBJECT IDENTIFIER ::= { atmForumNetworkManagement 3 }
+leClientMIB OBJECT IDENTIFIER ::= { atmfLanEmulation 1 }
+leClientMIBObjects OBJECT IDENTIFIER ::= { leClientMIB 1 }
+lecQueryObjects OBJECT IDENTIFIER ::= { leClientMIBObjects 12 }
+lecMacQueryObjects OBJECT IDENTIFIER ::= { lecQueryObjects 1 }
+lecRDQueryObjects OBJECT IDENTIFIER ::= { lecQueryObjects 2 }
+leClientMIBConformance OBJECT IDENTIFIER ::= { leClientMIB 2 }
+leClientMIBGroups OBJECT IDENTIFIER ::= { leClientMIBConformance 1 }
+leClientMIBCompliances OBJECT IDENTIFIER ::= { leClientMIBConformance 2 }
+
+AtmLaneAddress ::= OCTET STRING(SIZE(0..20))
+-- AtmLaneAddress ::= OCTET STRING(SIZE(0 | 20))
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A twenty-octet binary string, containing a standard
+--     ATM Forum address == or the zero-length string,
+--     indicating the absence of an address.
+--    
+--     For LAN Emulation purposes, the eight-octet address
+--     format is not used.
+
+VpiInteger ::= INTEGER(0..4095)
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An integer large enough to hold a VPI.  Objects that
+--     use this textual convention should contain either
+--    
+--       -  A value which conforms to the AtmVpIdentifier
+--          convention in the proposed ATM-TC-MIB, or
+--    
+--       -  Zero (if there is no circuit/path data).
+--    
+--     AtmVpIdentifier is currently defined as
+--    
+--          The VPI value for a VPL or VCL.  The value VPI=0
+--          is only allowed for a VCL.  For ATM UNIs supporting
+--          VPCs the VPI value ranges from 1 to 255.  For ATM
+--          UNIs supporting VCCs the VPI value ranges from 0
+--          to 255.  For ATM NNIs the VPI value ranges from 0
+--          to 4095.  The maximum VPI value cannot exceed the
+--          value allowable by atmInterfaceMaxVpiBits defined
+--          in ATM-MIB.
+--    
+--     To align the textual conventions, VpiInteger now ranges
+--     between 0 and 4095, instead of between 0 and 255.
+
+VciInteger ::= INTEGER(0..65535)
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An integer large enough to hold a VCI.  Objects that
+--     use this textual convention should contain either
+--    
+--        -  A value which conforms to the AtmVcIdentifier
+--           convention in the proposed ATM-TC-MIB, or
+--    
+--        -  Zero (if there is no circuit data).
+--    
+--     AtmVcIdentifier is currently defined as
+--    
+--          The VCI value for a VCL.  The maximum VCI value
+--          cannot exceed the value allowable by
+--          atmInterfaceMaxVciBits defined in ATM-MIB.
+
+LeConnectionInterface ::= INTEGER(0..2147483647)
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A combination flag and ifTable index, indicating
+--     whether a LAN Emulation circuit exists - and, if
+--     so, which interface is associated with it at the
+--     point where it connects to a LE Client.
+--    
+--     Objects of this type are always defined as part of
+--     a set that includes
+--    
+--             fooInterface   LeConnectionInterface
+--             fooVpi         VpiInteger
+--             fooVci         VciInteger
+--    
+--     The interpretation of these objects is as follows.
+--    
+--     1.  If no connection exists, 'fooInterface' has a
+--         value of 0.  Because Interfaces table entries
+--         always have 'ifIndex' values larger than 0,
+--         'fooInterface' reliably serves as a 'connection
+--         exists' flag.
+--    
+--         In this case, 'fooVpi' and 'fooVci' are
+--         meaningless, and have the value 0.
+--    
+--     2.  If a PVC or SVC exists, 'fooInterface' is defined
+--         to have the value of the MIB-II/RFC 1573 'ifIndex'
+--         of the 'atm' interface associated with the VCC.
+--         'fooVpi' and 'fooVci' will contain its VPI/VCI.
+--         Therefore, ('fooInterface', 'fooVpi', 'fooVci')
+--         give you an index into the AToM MIB which allows
+--         you to examine and play with the circuit further.
+--    
+--      3. If a proprietary connection (such as an internal
+--         data path between co-located components) exists,
+--         this specification does not mandate how it should
+--         be managed.  One option is to set 'fooInterface'
+--         to the value of the MIB-II/RFC 1573 'ifIndex' for
+--         the LAN Emulation Client.  This indicates that a
+--         connection exists, but is not being managed in the
+--         same fashion as an ATM VCC.
+
+LecState ::= INTEGER {
+        initialState(1),
+        lecsConnect(2),
+        configure(3),
+        join(4),
+        initialRegistration(5),
+        busConnect(6),
+        operational(7)
+        }
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An official protocol state of a LAN Emulation Client.
+--  Refer
+--    ATM Forum LAN Emulation Over ATM Specification, V1.0,
+--     Section 2.3.1
+
+LecDataFrameFormat ::= INTEGER {
+        unspecified(1),
+        aflane8023(2),
+        aflane8025(3)
+        }
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A 'LAN Type' value.
+--    
+--     C2  LAN Type.  The type of LAN that the LE Client is,
+--         or wishes to become, a member of.  This MUST be one
+--         of Ethernet/IEEE 802.3, IEEE 802.5, or Unspecified.
+--  Refer
+--    ATM Forum LAN Emulation Over ATM Specification, V1.0,
+--     Section 5.1.1
+
+LecDataFrameSize ::= INTEGER {
+        unspecified(1),
+        max1516(2),
+        max4544(3),
+        max9234(4),
+        max18190(5),
+        max1580(6)
+        }
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A 'Maximum Data Frame Size' value.
+--    
+--     C3  Maximum Data Frame Size.  The maximum AAL-5 SDU size
+--         of a data frame that the LE Client wishes to send on
+--         any Multicast Send VCC, or to receive on any
+--         Multicast Send VCC or Multicast Forward VCC.
+--    
+--         This parameter also specifies the maximum AAL-5 SDU
+--         on all of a LE Client's non-multiplexed Data Direct
+--         VCCs, and the maximum AAL-5 SDU - 12 (for overhead)
+--         on all of a LE Client's LLC-multiplexed Data Direct
+--         VCCs.
+--    
+--         This setting MUST be either 1516, 1580, 4544, 9234,
+--         or 18190 octets, or Unspecified.  The 1580 value is
+--         only available to 'V2 Capable' clients.
+--  Refer
+--    ATM Forum LAN Emulation V1 and V2 LUNI specifications,
+--     Section 5.1.1
+
+LeArpTableEntryType ::= INTEGER {
+        other(1),
+        learnedViaControl(2),
+        learnedViaData(3),
+        staticVolatile(4),
+        staticNonVolatile(5)
+        }
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    Indicates how a LE_ARP table entry was created and
+--     whether it is subject to aging.
+--    
+--         other(1)
+--             The LE_ARP entry does not fall into one of
+--             the categories defined below.
+--    
+--         learnedViaControl(2)
+--             This LE_ARP entry was learned by using the
+--             LE_ARP_REQUEST / LE_ARP_RESPONSE protocol,
+--             or by otherwise observing relevant traffic
+--             on Control VCCs.
+--    
+--             Entries of this type are aged.
+--    
+--         learnedViaData(3)
+--             This LE_ARP entry was learned by observing
+--             incoming traffic on Data VCCs.
+--    
+--             Entries of this type are aged.
+--    
+--         staticVolatile(4)
+--             This LE_ARP entry was created by management.
+--             It will not be aged.  On the other hand, it
+--             will not survive a restart of the client.
+--    
+--             If an agent permits LE_ARP entries of this
+--             type to be created, it may require that the
+--             LAN Emulation Client be in the 'operational'
+--             state at the time.
+--    
+--         staticNonVolatile(5)
+--             This LE_ARP entry was created by management.
+--             It will not be aged, and it will survive a
+--             restart of the client.
+--    
+--     The values 'learnedViaData' and 'learnedViaControl'
+--     can be read, but may not be written.
+
+lecConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecConfigEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A table describing all of the LAN Emulation Clients
+         implemented by this host.  Each LE Client has a row
+         in the MIB-II/RFC 1573 Interfaces table (describing
+         the emulated packet interface it presents to higher
+         layers).  Each LE Client also has a row in this and
+         other LEC MIB tables (describing its interface with
+         other LAN Emulation components).
+        
+         This table contains configuration variables.  Three
+         extension tables contain client status, performance
+         statistics, and information about control/multicast
+         VCCs.
+        
+         Unlike hardware ports, LE Clients can be created by
+         management.  However, the RFC 1573 Interfaces table
+         does not directly support row creation.  Therefore,
+         creating or deleting a row in the lecConfigTable is
+         defined to have the side effect of creating or
+         deleting corresponding rows in
+        
+             -  the MIB-II / RFC 1573 Interfaces table,
+             -  the 'lecMappingTable',
+             -  the 'lecStatusTable',
+             -  the 'lecServerVccTable',
+             -  the 'lecStatisticsTable', and
+             -  any other dependent tables
+        
+         New Interfaces table rows for LAN Emulation Clients
+         always have 'ifAdminStatus' set to 'down'.
+        
+         A Note On Indexing:
+         -------------------
+         Most of the tables in this MIB are indexed in whole
+         or in part by 'lecIndex' - not by 'ifIndex'.
+        
+         Why is there a separate index?
+        
+         Traditionally, ifIndex values are chosen by agents,
+         and are permitted to change across restarts.  Using
+         ifIndex to index lecConfigTable could complicate
+         row creation and/or cause interoperability problems
+         (if each agent had special restrictions on ifIndex).
+         Having a separate index avoids these problems.      "
+    ::= { leClientMIBObjects 1 }
+
+lecConfigEntry OBJECT-TYPE
+    SYNTAX LecConfigEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each table entry contains configuration information
+         for one LAN Emulation Client.
+        
+         Most of the objects are derived from Initial State
+         Parameters in the LAN Emulation specification."
+    INDEX { lecIndex }
+    ::= { lecConfigTable 1 }
+
+LecConfigEntry ::= SEQUENCE {
+    lecIndex INTEGER,
+    lecRowStatus RowStatus,
+    lecOwner OwnerString,
+    lecConfigMode INTEGER,
+    lecConfigLanType LecDataFrameFormat,
+    lecConfigMaxDataFrameSize LecDataFrameSize,
+    lecConfigLanName DisplayString,
+    lecConfigLesAtmAddress AtmLaneAddress,
+    lecControlTimeout INTEGER,
+    lecMaxUnknownFrameCount INTEGER,
+    lecMaxUnknownFrameTime INTEGER,
+    lecVccTimeoutPeriod Integer32,
+    lecMaxRetryCount INTEGER,
+    lecAgingTime INTEGER,
+    lecForwardDelayTime INTEGER,
+    lecExpectedArpResponseTime INTEGER,
+    lecFlushTimeOut INTEGER,
+    lecPathSwitchingDelay INTEGER,
+    lecLocalSegmentID INTEGER,
+    lecMulticastSendType INTEGER,
+    lecMulticastSendAvgRate Integer32,
+    lecMulticastSendPeakRate Integer32,
+    lecConnectionCompleteTimer INTEGER,
+    lecConfigLecsAtmAddress AtmLaneAddress,
+    lecInitialControlTimeout INTEGER,
+    lecControlTimeoutMultiplier INTEGER,
+    lecV2MaxUnknownFrameCount INTEGER,
+    lecConfigLocalSegmentID INTEGER,
+    lecConfigV2Capable TruthValue,
+    lecConfigSelectiveMulticast TruthValue,
+    lecForwardDisconnectTimeout INTEGER,
+    lecConfigLLCMultiplexCapable TruthValue,
+    lecMinReconfigureDelay INTEGER,
+    lecMaxReconfigureDelay INTEGER,
+    lecMaxBusConnectRetries INTEGER,
+    lecTokenRingExplorerExclude TruthValue
+    }
+
+lecIndex OBJECT-TYPE
+    SYNTAX INTEGER(1..2147483647)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A value which uniquely identifies this conceptual
+         row in the lecConfigTable.
+        
+         If the conceptual row identified by this value of
+         lecIndex is recreated following an agent restart,
+         the same value of lecIndex must be used to identify
+         the recreated row.  (However, the Interfaces table
+         index associated with the client may change.)"
+    ::= { lecConfigEntry 1 }
+
+lecRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object lets network managers create and delete
+         LAN Emulation Clients, on systems that support this
+         optional capability.
+        
+         It does not control Joins and Terminations; they are
+         controlled by 'ifAdminStatus'.  However, taking rows
+         out of service will have the side effect of changing
+         their 'ifAdminStatus' values to 'down', thus causing
+         any active emulated LAN connections to be terminated.
+        
+         Within each conceptual lecConfigTable row, objects
+         which are writable may be modified regardless of the
+         value of lecRowStatus.  It is not necessary to set a
+         row's status to 'notInService' first.
+        
+         When creating a LAN Emulation Client, it is up to the
+         management station to determine a suitable 'lecIndex'.
+         To facilitate interoperability, agents should not put
+         any restrictions on the 'lecIndex' beyond the obvious
+         ones that it be valid and unused.
+        
+         If you create a LAN Emulation Client via this object,
+         it will initially have
+        
+             'ifAdminStatus' = 'down'
+             'ifOperStatus' = 'down'
+             'lecInterfaceState' = 'initialState'            "
+    ::= { lecConfigEntry 2 }
+
+lecOwner OBJECT-TYPE
+    SYNTAX OwnerString(SIZE(0..127))
+--    Rsyntax OCTET STRING(SIZE(0..127))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The entity that configured this entry and is therefore
+         using the resources assigned to it."
+    ::= { lecConfigEntry 3 }
+
+lecConfigMode OBJECT-TYPE
+    SYNTAX INTEGER {
+        automatic(1),
+        manual(2)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates whether this LAN Emulation Client should
+         auto-configure the next time it is (re)started.
+        
+         In automatic(1) mode, a client uses a LAN Emulation
+         Configuration Server to learn the ATM address of its
+         LAN Emulation Server, and to obtain other parameters.
+        
+         lecConfig{ LanType, MaxDataFrameSize, LanName } are
+         used in the Configure request.  lecConfigLesAtmAddress
+         is ignored.
+        
+         In manual(2) mode, management tells the client the
+         ATM address of its LAN Emulation Server and the
+         values of other parameters.
+        
+         lecConfig{ LanType, MaxDataFrameSize, LanName } are
+         used in the Join request.  lecConfigLesAtmAddress
+         tells the client which LES to call."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Sections 3.4.1.1 and 5.3"
+    DEFVAL { automatic }
+    ::= { lecConfigEntry 4 }
+
+lecConfigLanType OBJECT-TYPE
+    SYNTAX LecDataFrameFormat
+--    Rsyntax INTEGER {
+--        unspecified(1),
+--        aflane8023(2),
+--        aflane8025(3)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C2c  LAN Type (configured).
+        
+         The data frame format which this client will use the
+         next time it returns to the Initial State.
+        
+         Auto-configuring clients use this parameter in their
+         Configure requests.  Manually-configured clients use
+         it in their Join requests.
+        
+         This MIB object will not be overwritten with the new
+         value from a LE_{JOIN,CONFIGURE}_RESPONSE.  Instead,
+         lecActualLanType will be."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { unspecified }
+    ::= { lecConfigEntry 5 }
+
+lecConfigMaxDataFrameSize OBJECT-TYPE
+    SYNTAX LecDataFrameSize
+--    Rsyntax INTEGER {
+--        unspecified(1),
+--        max1516(2),
+--        max4544(3),
+--        max9234(4),
+--        max18190(5),
+--        max1580(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C3c  Maximum Data Frame Size (configured).
+        
+         The maximum data frame size which this client will
+         use the next time it returns to the Initial State.
+        
+         Auto-configuring clients use this parameter in their
+         Configure requests.  Manually-configured clients use
+         it in their Join requests.
+        
+         This MIB object will not be overwritten with the new
+         value from a LE_{JOIN,CONFIGURE}_RESPONSE.  Instead,
+         lecActualMaxDataFrameSize will be."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { unspecified }
+    ::= { lecConfigEntry 6 }
+
+lecConfigLanName OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..32))
+--    Rsyntax OCTET STRING(SIZE(0..32))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C5c  ELAN Name (configured).
+        
+         The ELAN Name this client will use the next time it
+         returns to the Initial State.
+        
+         Auto-configuring clients use this parameter in their
+         Configure requests.  Manually-configured clients use
+         it in their Join requests.
+        
+         This MIB object will not be overwritten with the new
+         value from a LE_{JOIN,CONFIGURE}_RESPONSE.  Instead,
+         lecActualLanName will be."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecConfigEntry 7 }
+
+lecConfigLesAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C9  LE Server ATM Address.
+        
+         The LAN Emulation Server which this client will use
+         the next time it is started in manual configuration
+         mode.
+        
+         When lecConfigMode is 'automatic', there is no need
+         to set this address, and no advantage to doing so.
+         The client will use the LECS to find a LES, putting
+         the auto-configured address in lecActualLesAtmAddress
+         while leaving lecConfigLesAtmAddress alone."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecConfigEntry 8 }
+
+lecControlTimeout OBJECT-TYPE
+    SYNTAX INTEGER(10..300)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C7  Control Time-out.  Time out period used for
+             timing out most request/response control frame
+             interactions, as specified elsewhere [in the
+             LAN Emulation specification].
+        
+             In LANE V2.0, this value specifies the maximum
+             cumulative timeout for an exponential backoff
+             algorithm.
+        
+         This time value is expressed in seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 30 }
+    ::= { lecConfigEntry 9 }
+
+lecMaxUnknownFrameCount OBJECT-TYPE
+    SYNTAX INTEGER(1..10)
+--  Units
+--    frames
+    ACCESS read-write
+    STATUS deprecated
+    DESCRIPTION
+        "This is the LANE V1.0 version of 'C10 Maximum Unknown
+         Frame Count'.  It should not be implemented except as
+         required for backwards compatibility.
+        
+         It has been deprecated because LANE V2.0 permits this
+         parameter to take values up to 20 -- a revision which
+         doesn't seem to be allowed under rules in RFC 1902."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 5.1.1"
+    DEFVAL { 1 }
+    ::= { lecConfigEntry 10 }
+
+lecMaxUnknownFrameTime OBJECT-TYPE
+    SYNTAX INTEGER(1..60)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C11 Maximum Unknown Frame Time.  Within the period of
+             time defined by the Maximum Unknown Frame Time, a
+             LE Client will send no more than Maximum Unknown
+             Frame Count frames to the BUS for a given unicast
+             LAN Destination, and it must also initiate the
+             address resolution protocol to resolve that LAN
+             Destination.
+        
+             LANE V2.0 changes this to 'will send no more than
+             Maximum Unknown Frame Count frames to the BUS ...
+             without initiating the [LE_ARP]', implying that a
+             LANE V2.0 client is not always required to send a
+             LE_ARP_REQUEST along with the unknown frames.
+        
+         This time value is expressed in seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 1 }
+    ::= { lecConfigEntry 11 }
+
+lecVccTimeoutPeriod OBJECT-TYPE
+    SYNTAX Integer32
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C12 VCC Time-out Period.  A LE Client SHOULD release
+             any Data Direct VCC that it has not used to
+             transmit or receive any data frames for the
+             length of the VCC Time-out Period.  This parameter
+             is only meaningful for SVC Data Direct VCCs
+             signalled with the Ethernet/IEEE 802.3 LE Data
+             Direct VCC B-LLI value or the IEEE 802.5 LE Data
+             Direct VCC B-LLI value.  It should not be used for
+             any SVC signalled with the LLC-Multiplexed B-LLI
+             value.
+        
+         This time value is expressed in seconds.  The default
+         value is 20 minutes.  A value of 0 seconds means that
+         the timeout period is infinite.  Negative values will
+         be rejected by the agent."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 1200 }
+    ::= { lecConfigEntry 12 }
+
+lecMaxRetryCount OBJECT-TYPE
+    SYNTAX INTEGER(0..2)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C13 Maximum Retry Count.  A LE CLient MUST not retry
+             a LE_ARP_REQUEST for a given frame's LAN
+             destination more than Maximum Retry Count times,
+             after the first LE_ARP_REQUEST for that same
+             frame's LAN destination."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 1 }
+    ::= { lecConfigEntry 13 }
+
+lecAgingTime OBJECT-TYPE
+    SYNTAX INTEGER(10..300)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C17 Aging Time.  The maximum time that a LE Client
+             will maintain an entry for a unicast LAN
+             Destination in its LE_ARP cache in the absence
+             of a verification of that relationship.
+        
+         This time value is expressed in seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 300 }
+    ::= { lecConfigEntry 14 }
+
+lecForwardDelayTime OBJECT-TYPE
+    SYNTAX INTEGER(4..30)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C18 Forward Delay Time.  The maximum time that a LE
+             Client will maintain an entry for a non-local MAC
+             address in its LE_ARP cache in the absence of a
+             verification of that relationship, as long as the
+             Topology Change flag C19 is true.
+        
+         lecForwardDelayTime SHOULD BE less than lecAgingTime.
+         When it is not, lecAgingTime governs LE_ARP aging.
+        
+         This time value is expressed in seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 15 }
+    ::= { lecConfigEntry 15 }
+
+lecExpectedArpResponseTime OBJECT-TYPE
+    SYNTAX INTEGER(1..30)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C20 Expected LE_ARP Reponse Time.  The maximum time
+             that the LEC expects an LE_ARP_REQUEST/
+             LE_ARP_RESPONSE cycle to take.  Used for retries
+             and verifies.
+        
+         This time value is expressed in seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 1 }
+    ::= { lecConfigEntry 16 }
+
+lecFlushTimeOut OBJECT-TYPE
+    SYNTAX INTEGER(1..4)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C21 Flush Time-out.  Time limit to wait to receive a
+             LE_FLUSH_RESPONSE after the LE_FLUSH_REQUEST has
+             been sent before taking recovery action.
+        
+         This time value is expressed in seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 4 }
+    ::= { lecConfigEntry 17 }
+
+lecPathSwitchingDelay OBJECT-TYPE
+    SYNTAX INTEGER(1..8)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C22 Path Switching Delay.  The time since sending a
+             frame to the BUS after which the LE Client may
+             assume that the frame has been either discarded
+             or delivered to the recipient.  May be used to
+             bypass the Flush protocol.
+        
+         This time value is expressed in seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 6 }
+    ::= { lecConfigEntry 18 }
+
+lecLocalSegmentID OBJECT-TYPE
+    SYNTAX INTEGER(0..4095)
+    ACCESS read-write
+    STATUS deprecated
+    DESCRIPTION
+        "C23 Local Segment ID.  The segment ID of the emulated
+             LAN.  This is only required for IEEE 802.5 clients
+             that are Source Routing bridges.
+        
+         This object has been deprecated and replaced by a pair
+         of Config/Actual objects.  It shouldn't be implemented
+         except as required for backwards compatibility."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 5.1.1"
+    ::= { lecConfigEntry 19 }
+
+lecMulticastSendType OBJECT-TYPE
+    SYNTAX INTEGER {
+        bestEffort(1),
+        variableBitRate(2),
+        constantBitRate(3)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C24 Multicast Send VCC Type.  Signalling parameter
+             that SHOULD be used by the LE Client when
+             establishing the Multicast Send VCC.
+        
+             This is the method to be used by the LE Client
+             when specifying traffic parameters when it sets
+             up the Multicast Send VCC for this emulated LAN."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecConfigEntry 20 }
+
+lecMulticastSendAvgRate OBJECT-TYPE
+    SYNTAX Integer32
+--  Units
+--    cells per second
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C25 Multicast Send VCC AvgRate.  Signalling parameter
+             that SHOULD be used by the LE Client when
+             establishing the Multicast Send VCC.
+        
+             Forward and Backward Sustained Cell Rate to be
+             requested by LE Client when setting up Multicast
+             Send VCC, if using Variable bit rate codings."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecConfigEntry 21 }
+
+lecMulticastSendPeakRate OBJECT-TYPE
+    SYNTAX Integer32
+--  Units
+--    cells per second
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C26 Multicast Send VCC PeakRate.  Signalling parameter
+             that SHOULD be used by the LE Client when
+             establishing the Multicast Send VCC.
+        
+             Forward and Backward Peak Cell Rate to be
+             requested by LE Client when setting up the
+             Multicast Send VCC when using either Variable or
+             Constant bit rate codings."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecConfigEntry 22 }
+
+lecConnectionCompleteTimer OBJECT-TYPE
+    SYNTAX INTEGER(1..10)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C28 Connection Complete Timer.  Optional.  In
+             Connection Establishment this is the time period
+             in which data or a READY_IND message is expected
+             from a Calling Party.
+        
+         This time value is expressed in seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    DEFVAL { 4 }
+    ::= { lecConfigEntry 23 }
+
+lecConfigLecsAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "LE Configuration Server ATM address.
+        
+         A manually-configured LECS address that this client
+         may use in its attempts at auto-configuration."
+    REFERENCE
+        "LANE 1.0 addendum"
+    ::= { lecConfigEntry 24 }
+
+lecInitialControlTimeout OBJECT-TYPE
+    SYNTAX INTEGER(1..10)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C7i  Initial Control Time-out.
+        
+         In LANE V2.0, control time-out consists of an initial
+         time-out of C7i seconds, a retry multiplier (or
+         logarithmic back-off base) of C7x, and a cumulative
+         maximum time-out of C7 seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    DEFVAL { 5 }
+    ::= { lecConfigEntry 25 }
+
+lecControlTimeoutMultiplier OBJECT-TYPE
+    SYNTAX INTEGER(2..5)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C7x  Control Time-out Multiplier.
+        
+         In LANE V2.0, control time-out consists of an initial
+         time-out of C7i seconds, a retry multiplier (or
+         logarithmic back-off base) of C7x, and a cumulative
+         maximum time-out of C7 seconds."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    DEFVAL { 2 }
+    ::= { lecConfigEntry 26 }
+
+lecV2MaxUnknownFrameCount OBJECT-TYPE
+    SYNTAX INTEGER(1..20)
+--  Units
+--    frames
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C10 Maximum Unknown Frame Count.  See the description
+             of lecMaxUnknownFrameTime above.
+        
+         This object may be used with both LANE V1.0 clients &
+         LANE V2.0 clients.  For LANE V1.0 clients, this value
+         should be in the range 1..10, with a default of 1."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    DEFVAL { 10 }
+    ::= { lecConfigEntry 27 }
+
+lecConfigLocalSegmentID OBJECT-TYPE
+    SYNTAX INTEGER(0..4095)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C23c Local Segment ID (configured).  The segment ID of
+              the emulated LAN.  This is only required for IEEE
+              802.5 clients that are Source Routing bridges.
+        
+         A setting which this client will use the next time it
+         returns to the Initial State.
+        
+         This MIB object will not be overwritten with the new
+         value from a LE_{JOIN,CONFIGURE}_RESPONSE.  Instead,
+         lecActualLocalSegmentID will be."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecConfigEntry 28 }
+
+lecConfigV2Capable OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C29c  V2 Capable (configured).
+        
+         A setting which this client will use the next time it
+         returns to the Initial State.
+        
+         Indicates whether this client is set up to behave as
+         a LANE V2 client.
+        
+         This MIB object will not be overwritten with the new
+         value from a LE_{JOIN,CONFIGURE}_RESPONSE.  Instead,
+         lecActualV2Capable will be."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecConfigEntry 29 }
+
+lecConfigSelectiveMulticast OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C32c  Selective Multicast (configured).
+        
+         A setting which this client will use the next time it
+         returns to the Initial State.
+        
+         Indicates if this client is configured to register to
+         receive specific multicast destination MAC addresses.
+         Must not be 'true' if lecConfigV2Capable is 'false'.
+        
+         This MIB object will not be overwritten with the new
+         value from a LE_{JOIN,CONFIGURE}_RESPONSE.  Instead,
+         lecActualSelectiveMulticast will be."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecConfigEntry 30 }
+
+lecForwardDisconnectTimeout OBJECT-TYPE
+    SYNTAX INTEGER(10..300)
+--  Units
+--    seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C33  Forward Disconnect Time-out
+        
+         If the LE Client detects that the BUS has had no
+         Multicast Forward VCCs to the LE Client for time
+         Forward Disconnect Time-out, the LE Client MUST
+         disconnect from the BUS and try to re-establish
+         a new connection."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    DEFVAL { 60 }
+    ::= { lecConfigEntry 31 }
+
+lecConfigLLCMultiplexCapable OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C34c  LLC Multiplex Capable (configured).
+        
+         A setting which this client will use the next time it
+         returns to the Initial State.
+        
+         Gives a network manager an optional method to disable
+         LLC multiplexing on a LANE V2 client that supports it.
+         Cannot be used to enable LLC multiplexing on products
+         that do not support it.
+        
+         This MIB object will not be overwritten with the new
+         value from a LE_{JOIN,CONFIGURE}_RESPONSE.  Instead,
+         lecActualLLCMultiplexCapable will be."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecConfigEntry 32 }
+
+lecMinReconfigureDelay OBJECT-TYPE
+    SYNTAX INTEGER(1..10000)
+--  Units
+--    milliseconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C37  Minimum Reconfigure Delay.
+        
+         The minimum time that a LE client must wait before
+         retrying reconfiguration.  This setting must be
+         less than or equal to lecMaxReconfigureDelay."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    DEFVAL { 1 }
+    ::= { lecConfigEntry 33 }
+
+lecMaxReconfigureDelay OBJECT-TYPE
+    SYNTAX INTEGER(1..10000)
+--  Units
+--    milliseconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C38  Maximum Reconfigure Delay.
+        
+         The maximum time that a LE client must wait before
+         retrying reconfiguration.  This setting must be
+         greater than or equal to lecMinReconfigureDelay."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    DEFVAL { 5000 }
+    ::= { lecConfigEntry 34 }
+
+lecMaxBusConnectRetries OBJECT-TYPE
+    SYNTAX INTEGER(0..2)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C39  Maximum BUS Connect Retries.
+        
+         The maximum number of times that a LE Client can try
+         to establish the Default Multicast Send VCC before
+         returning to the configuration procedure."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    DEFVAL { 1 }
+    ::= { lecConfigEntry 35 }
+
+lecTokenRingExplorerExclude OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "C40  Token Ring Explorer Frame Exclude.
+        
+         This indicates whether or not the LE Client wishes to
+         receive Token Ring explorer frames other than those
+         directed to one of its registered MAC addresses.
+         Normally, only bridges need to receive such explorer
+         frames.  This parameter only applies to token-ring
+         ELANs.  This parameter MUST NOT change without
+         restarting the Configure phase."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecConfigEntry 36 }
+
+lecStatusTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecStatusEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A read-only table containing identification, status,
+         and operational information about the LAN Emulation
+         Clients this agent manages."
+    ::= { leClientMIBObjects 2 }
+
+lecStatusEntry OBJECT-TYPE
+    SYNTAX LecStatusEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each table entry contains information about one LAN
+         Emulation Client."
+    INDEX { lecIndex }
+-- Augments lecConfigEntry
+    ::= { lecStatusTable 1 }
+
+LecStatusEntry ::= SEQUENCE {
+    lecIfIndex InterfaceIndex,
+    lecPrimaryAtmAddress AtmLaneAddress,
+    lecID INTEGER,
+    lecInterfaceState LecState,
+    lecLastFailureRespCode INTEGER,
+    lecLastFailureState LecState,
+    lecProtocol INTEGER,
+    lecVersion INTEGER,
+    lecTopologyChange TruthValue,
+    lecConfigServerAtmAddress AtmLaneAddress,
+    lecConfigSource INTEGER,
+    lecActualLanType LecDataFrameFormat,
+    lecActualMaxDataFrameSize LecDataFrameSize,
+    lecActualLanName DisplayString,
+    lecActualLesAtmAddress AtmLaneAddress,
+    lecProxyClient TruthValue,
+    lecActualLocalSegmentID INTEGER,
+    lecActualV2Capable TruthValue,
+    lecElanID Integer32,
+    lecActualSelectiveMulticast TruthValue,
+    lecActualLLCMultiplexCapable TruthValue,
+    lecPreferredLesAddress AtmLaneAddress,
+    lecStoresServiceCategories TruthValue
+    }
+
+lecIfIndex OBJECT-TYPE
+    SYNTAX InterfaceIndex
+--    Rsyntax Integer32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "This object identifies the logical interface number
+         ('ifIndex') assigned to this client, and is used to
+         identify corresponding rows in the Interfaces MIB.
+        
+         Note that re-initialization of the management agent
+         may cause a client's 'lecIfIndex' to change."
+    ::= { lecStatusEntry 1 }
+
+lecPrimaryAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C1  LE Client's ATM Addresses.
+        
+         The primary ATM address of this LAN Emulation Client.
+         This address is used to establish the Control Direct
+         and Multicast Send VCCs, and may also be used to set
+         up Data Direct VCCs.
+        
+         A client may have additional ATM addresses for use
+         with Data Direct VCCs.  These addresses are readable
+         via the lecAtmAddressTable."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecStatusEntry 2 }
+
+lecID OBJECT-TYPE
+    SYNTAX INTEGER(0..65279)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C14 LE Client Identifier.  Each LE Client requires a
+             LE Client Identifier (LECID) assigned by the LE
+             Server during the Join phase.  The LECID is placed
+             in control requests by the LE Client and MAY be
+             used for echo suppression on multicast data frames
+             sent by that LE Client.  This value MUST NOT
+             change without terminating the LE Client and
+             returning to the Initial state.  A valid LECID
+             MUST be in the range X'0001' through X'FEFF'.
+        
+         The value of this object is only meaningful for a LEC
+         that is connected to a LES.  For a LEC which does not
+         belong to an emulated LAN, the value of this object
+         is defined to be 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecStatusEntry 3 }
+
+lecInterfaceState OBJECT-TYPE
+    SYNTAX LecState
+--    Rsyntax INTEGER {
+--        initialState(1),
+--        lecsConnect(2),
+--        configure(3),
+--        join(4),
+--        initialRegistration(5),
+--        busConnect(6),
+--        operational(7)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The current state of the LAN Emulation Client.
+        
+         Note that 'ifOperStatus' is defined to be 'up' when,
+         and only when, 'lecInterfaceState' is 'operational'."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.3.1"
+    ::= { lecStatusEntry 4 }
+
+lecLastFailureRespCode OBJECT-TYPE
+    SYNTAX INTEGER {
+        none(1),
+        timeout(2),
+        undefinedError(3),
+        versionNotSupported(4),
+        invalidRequestParameters(5),
+        duplicateLanDestination(6),
+        duplicateAtmAddress(7),
+        insufficientResources(8),
+        accessDenied(9),
+        invalidRequesterId(10),
+        invalidLanDestination(11),
+        invalidAtmAddress(12),
+        noConfiguration(13),
+        leConfigureError(14),
+        insufficientInformation(15),
+        tlvNotFound(16)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Status code from the last failed Configure response
+         or Join response.  Failed responses are those for
+         which the LE_CONFIGURE_RESPONSE / LE_JOIN_RESPONSE
+         frame contains a non-zero code, or fails to arrive
+         within a timeout period.
+        
+         If none of this client's requests have failed, this
+         object has the value 'none'.
+        
+         If the failed response contained a STATUS code that
+         is not defined in the LAN Emulation specification,
+         this object has the value 'undefinedError'.
+        
+         The value 'timeout' is self-explanatory.
+        
+         Other failure codes correspond to those defined in
+         the specification, although they may have different
+         numeric values."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 4.2, Table 13"
+    ::= { lecStatusEntry 5 }
+
+lecLastFailureState OBJECT-TYPE
+    SYNTAX LecState
+--    Rsyntax INTEGER {
+--        initialState(1),
+--        lecsConnect(2),
+--        configure(3),
+--        join(4),
+--        initialRegistration(5),
+--        busConnect(6),
+--        operational(7)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The state this client was in when it updated the
+         'lecLastFailureRespCode'.
+        
+         If 'lecLastFailureRespCode' is 'none', this object
+         has the value initialState(1)."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.3.1"
+    ::= { lecStatusEntry 6 }
+
+lecProtocol OBJECT-TYPE
+    SYNTAX INTEGER(1..255)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The LAN Emulation protocol which this client supports,
+         and specifies in its LE_JOIN_REQUESTs."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 4.2"
+    ::= { lecStatusEntry 7 }
+
+lecVersion OBJECT-TYPE
+    SYNTAX INTEGER(1..255)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The LAN Emulation protocol version which this client
+         supports, and specifies in its LE_JOIN_REQUESTs."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 4.2"
+    ::= { lecStatusEntry 8 }
+
+lecTopologyChange OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C19 Topology Change.  Boolean indication that the LE
+             Client is using the Forward Delay Time C18,
+             instead of the Aging Time C17, to age non-local
+             entries in its LE_ARP cache C16.
+        
+         For a client which is not connected to the LES, this
+         object is defined to have the value 'false'."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecStatusEntry 9 }
+
+lecConfigServerAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address of the LAN Emulation Configuration
+         Server (if known) or the empty string (otherwise)."
+    ::= { lecStatusEntry 10 }
+
+lecConfigSource OBJECT-TYPE
+    SYNTAX INTEGER {
+        gotAddressViaIlmi(1),
+        usedWellKnownAddress(2),
+        usedLecsPvc(3),
+        didNotUseLecs(4),
+        usedConfiguredAddress(5),
+        configInProgress(6)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates whether this LAN Emulation Client used the
+         LAN Emulation Configuration Server, and, if so, what
+         method it used to establish the Configuration Direct
+         VCC.
+        
+         The value 'configInProgress' indicates configuration
+         is in progress, and may be used to troubleshoot LECs
+         that get stuck in the configuration phase."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 5.2; LANE 1.0 and LEC MIB 1.0 addendums"
+    ::= { lecStatusEntry 11 }
+
+lecActualLanType OBJECT-TYPE
+    SYNTAX LecDataFrameFormat
+--    Rsyntax INTEGER {
+--        unspecified(1),
+--        aflane8023(2),
+--        aflane8025(3)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C2  LAN Type.
+        
+         The data frame format that this LAN Emulation Client
+         is using right now.  This may come from
+        
+             *  lecConfigLanType,
+             *  the LAN Emulation Configuration Server, or
+             *  the LAN Emulation Server
+        
+         This value is related to 'ifMtu' and 'ifType'.  See
+         the LEC management specification for more details."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecStatusEntry 12 }
+
+lecActualMaxDataFrameSize OBJECT-TYPE
+    SYNTAX LecDataFrameSize
+--    Rsyntax INTEGER {
+--        unspecified(1),
+--        max1516(2),
+--        max4544(3),
+--        max9234(4),
+--        max18190(5),
+--        max1580(6)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C3  Maximum Data Frame Size.
+        
+         The maximum data frame size that this LAN Emulation
+         client is using right now.  This may come from
+        
+             *  lecConfigMaxDataFrameSize,
+             *  the LAN Emulation Configuration Server, or
+             *  the LAN Emulation Server                     "
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecStatusEntry 13 }
+
+lecActualLanName OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..32))
+--    Rsyntax OCTET STRING(SIZE(0..32))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C5  ELAN Name.
+        
+         The identity of the emulated LAN which this client
+         last joined, or wishes to join.  This may come from
+        
+             *  lecConfigLanName,
+             *  the LAN Emulation Configuration Server, or
+             *  the LAN Emulation Server                     "
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecStatusEntry 14 }
+
+lecActualLesAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C9  LE Server ATM Address.
+        
+         The LAN Emulation Server address currently in use or
+         most recently attempted.
+        
+         If no LAN Emulation Server attachment has been tried,
+         this object's value is the zero-length string."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecStatusEntry 15 }
+
+lecProxyClient OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C4  Proxy.
+        
+         Indicates whether this client is acting as a proxy.
+        
+         Proxy clients are allowed to represent unregistered
+         MAC addresses and route descriptors, and receive
+         copies of LE_ARP_REQUEST frames for such LAN
+         Destinations."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { lecStatusEntry 16 }
+
+lecActualLocalSegmentID OBJECT-TYPE
+    SYNTAX INTEGER(0..4095)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C23 Local Segment ID.  The segment ID of the emulated
+             LAN.  This is only required for IEEE 802.5 clients
+             that are Source Routing bridges."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecStatusEntry 17 }
+
+lecActualV2Capable OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C29  V2 Capable.
+        
+         If set, the LE Client must exhibit LANE v2 behavior
+         where it differs in its requirements from LANE v1
+         behavior.  If clear, the LE Client must exhibit LANE
+         v1 behavior in those cases.  This variable is set or
+         cleared according to the presence or absence of the
+         V2 Required FLAGS bit in the LE_JOIN_RESPONSE."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecStatusEntry 18 }
+
+lecElanID OBJECT-TYPE
+    SYNTAX Integer32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C31  ELAN-ID.
+        
+         The ELAN-ID to be used in all LANE LLC-multiplexed
+         data frames sent or received by this client.  This
+         object takes the value 0 if the LES is a LANE V1.0
+         LES.  The initial value of this object is 0."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecStatusEntry 19 }
+
+lecActualSelectiveMulticast OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C32  Selective Multicast.
+        
+         This indicates whether or not the LE Client will
+         register to receive specific multicast destination
+         MAC addresses.  If this flag is set, the LE Client
+         MUST issue a LE_REGISTER_REQUEST for all of the
+         multicast or group MAC adddresses in C15, except
+         for the broadcast MAC address.  If this variable is
+         clear, the LE Client MUST NOT issue a
+         LE_REGISTER_REQUEST for any multicast MAC address,
+         and can expect to receive all multicast frames from
+         the BUS."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecStatusEntry 20 }
+
+lecActualLLCMultiplexCapable OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C34  LLC Multiplex Capable.
+        
+         If set, this variable indicates that the LE Client
+         can accept and process LLC-multiplexed Data Direct
+         VCCs.  If clear, it indicates that the LE Client
+         will refuse to accept LLC-multiplexed Data Direct
+         VCCs.  This variable MUST be clear if the LE Client
+         is connected to a LANE v1 LES."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecStatusEntry 21 }
+
+lecPreferredLesAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "C35  Preferred LES Address.
+        
+         The ATM address of the preferred LE Server.  This
+         variable is set during the Configuration phase by
+         copying the contents of the Preferred LES TLV
+         received in the LE_CONFIGURE_RESPONSE."
+    REFERENCE
+        "ATM Forum LAN Emulation V2.0 LUNI specification,
+         Section 5.1.1"
+    ::= { lecStatusEntry 22 }
+
+lecStoresServiceCategories OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates whether or not the client saves Service
+         Category TLV data from LE_ARP_RESPONSEs and makes
+         it available through leArpTable and leRDArpTable."
+    REFERENCE
+        "LAN Emulation Over ATM Version 2 - LUNI Specification,
+         Annex A (LAN Emulation Control Frame TLVs)"
+    ::= { lecStatusEntry 23 }
+
+lecMappingTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecMappingEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A table mapping the 'ifIndex' values of 'aflane8023'
+         and 'aflane8025' interfaces to the 'lecIndex' values
+         of the corresponding LAN Emulation Clients."
+    ::= { leClientMIBObjects 3 }
+
+lecMappingEntry OBJECT-TYPE
+    SYNTAX LecMappingEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each row describes one ifIndex --> lecIndex mapping."
+    INDEX { ifIndex }
+    ::= { lecMappingTable 1 }
+
+LecMappingEntry ::= SEQUENCE {
+    lecMappingIndex INTEGER
+    }
+
+lecMappingIndex OBJECT-TYPE
+    SYNTAX INTEGER(1..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The 'lecIndex' of the client which implements the
+         specified interface."
+    ::= { lecMappingEntry 1 }
+
+lecStatisticsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecStatisticsEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An extension table containing traffic statistics for
+         all the LAN Emulation Clients this host implements."
+    ::= { leClientMIBObjects 4 }
+
+lecStatisticsEntry OBJECT-TYPE
+    SYNTAX LecStatisticsEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each row in this table contains traffic statistics
+         for one LAN Emulation client."
+    INDEX { lecIndex }
+-- Augments lecConfigEntry
+    ::= { lecStatisticsTable 1 }
+
+LecStatisticsEntry ::= SEQUENCE {
+    lecArpRequestsOut Counter32,
+    lecArpRequestsIn Counter32,
+    lecArpRepliesOut Counter32,
+    lecArpRepliesIn Counter32,
+    lecControlFramesOut Counter32,
+    lecControlFramesIn Counter32,
+    lecSvcFailures Counter32,
+    lecFlowFailures Counter32,
+    lecEchoDiscards Counter32,
+    lecFilteredMulticasts Counter32
+    }
+
+lecArpRequestsOut OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of LE_ARP_REQUESTs sent over the LUNI by
+         this LAN Emulation Client."
+    ::= { lecStatisticsEntry 1 }
+
+lecArpRequestsIn OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of LE_ARP_REQUESTs received over the LUNI
+         by this LAN Emulation Client.
+        
+         Requests may arrive on the Control Direct VCC or on
+         the Control Distribute VCC, depending upon how the
+         LES is implemented and the chances it has had for
+         learning.  This counter covers both VCCs."
+    ::= { lecStatisticsEntry 2 }
+
+lecArpRepliesOut OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of LE_ARP_RESPONSEs sent over the LUNI by
+         this LAN Emulation Client."
+    ::= { lecStatisticsEntry 3 }
+
+lecArpRepliesIn OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of LE_ARP_RESPONSEs received over the LUNI
+         by this LAN Emulation Client.  This count includes
+         all such replies, whether solicited or not.
+        
+         Replies may arrive on the Control Direct VCC or on
+         the Control Distribute VCC, depending upon how the
+         LES is implemented.  This counter covers both VCCs."
+    ::= { lecStatisticsEntry 4 }
+
+lecControlFramesOut OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The total number of control packets sent by this
+         LAN Emulation Client over the LUNI."
+    ::= { lecStatisticsEntry 5 }
+
+lecControlFramesIn OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The total number of control packets received by this
+         LAN Emulation Client over the LUNI."
+    ::= { lecStatisticsEntry 6 }
+
+lecSvcFailures OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The total number of
+        
+             *  outgoing LAN Emulation SVCs which this client
+                tried, but failed, to open;
+        
+             *  incoming LAN Emulation SVCs which this client
+                tried, but failed to establish; and
+        
+             *  incoming LAN Emulation SVCs which this client
+                rejected for protocol or security reasons.
+        
+         It does not include SVC failures for LLC-multiplexed
+         connections."
+    ::= { lecStatisticsEntry 7 }
+
+lecFlowFailures OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The total number of
+        
+             *  outgoing LLC-multiplexed LAN Emulation flows
+                which this client tried, but failed, to open;
+        
+             *  incoming LLC-multiplexed LAN Emulation flows
+                which this client did not accept / establish.
+        
+         Only failures of which the LEC is aware and which are
+         clearly LANE-related need to be counted."
+    ::= { lecStatisticsEntry 8 }
+
+lecEchoDiscards OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of incoming data frames which were thrown
+         away because they were echo frames (e. g., copies of
+         this client's own outgoing traffic).
+        
+         Such discards are a normal part of LAN Emulation and
+         not a cause for alarm.  So this counter is mainly of
+         interest for helping to estimate average frame size.
+        
+         Frames that are included in this count should not be
+         included in ifInDiscards, so as to avoid setting off
+         false alarms."
+    ::= { lecStatisticsEntry 9 }
+
+lecFilteredMulticasts OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of incoming data frames which were thrown
+         away by the client because they were for a multicast
+         (or group) address upper-layer software didn't want.
+        
+         If this counter indicates that a LEC is being loaded
+         down with an excessive number of unwanted multicasts,
+         one possible solution is to install LECs and LES/BUS
+         pairs with better support for selective multicasting.
+        
+         Frames that are included in this count should not be
+         included in ifInDiscards, so as to avoid setting off
+         false alarms."
+    ::= { lecStatisticsEntry 10 }
+
+lecServerVccTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecServerVccEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A table identifying the Control VCCs and Multicast
+         VCCs for each LAN Emulation Client which this host
+         implements.
+        
+         For LANE 2.0 clients, the table identifies Control
+         VCCs and Default Multicast Send VCCs."
+    ::= { leClientMIBObjects 5 }
+
+lecServerVccEntry OBJECT-TYPE
+    SYNTAX LecServerVccEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each row in this table describes the Control VCCs
+         and Multicast VCCs for one LEC."
+    INDEX { lecIndex }
+-- Augments lecConfigEntry
+    ::= { lecServerVccTable 1 }
+
+LecServerVccEntry ::= SEQUENCE {
+    lecConfigDirectInterface LeConnectionInterface,
+    lecConfigDirectVpi VpiInteger,
+    lecConfigDirectVci VciInteger,
+    lecControlDirectInterface LeConnectionInterface,
+    lecControlDirectVpi VpiInteger,
+    lecControlDirectVci VciInteger,
+    lecControlDistributeInterface LeConnectionInterface,
+    lecControlDistributeVpi VpiInteger,
+    lecControlDistributeVci VciInteger,
+    lecMulticastSendInterface LeConnectionInterface,
+    lecMulticastSendVpi VpiInteger,
+    lecMulticastSendVci VciInteger,
+    lecMulticastForwardInterface LeConnectionInterface,
+    lecMulticastForwardVpi VpiInteger,
+    lecMulticastForwardVci VciInteger
+    }
+
+lecConfigDirectInterface OBJECT-TYPE
+    SYNTAX LeConnectionInterface
+--    Rsyntax INTEGER(0..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The interface associated with the Configuration
+         Direct VCC.  If no Configuration Direct VCC exists,
+         this object has the value 0.  Otherwise, the objects
+        
+             ( lecConfigDirectInterface,
+               lecConfigDirectVpi, lecConfigDirectVci )
+        
+         identify the circuit."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.1.1"
+    ::= { lecServerVccEntry 1 }
+
+lecConfigDirectVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..4095)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "If the Configuration Direct VCC exists, this object
+         contains the VPI which identifies that VCC at
+         the point where it connects to this LE client.
+        
+         Otherwise, this object has the value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.1.1"
+    ::= { lecServerVccEntry 2 }
+
+lecConfigDirectVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "If the Configuration Direct VCC exists, this object
+         contains the VCI which identifies that VCC at
+         the point where it connects to this LE client.
+        
+         Otherwise, this object has the value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.1.1"
+    ::= { lecServerVccEntry 3 }
+
+lecControlDirectInterface OBJECT-TYPE
+    SYNTAX LeConnectionInterface
+--    Rsyntax INTEGER(0..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The interface associated with the Control Direct VCC.
+         If no Control Direct VCC exists, this object has the
+         value 0.  Otherwise, the objects
+        
+             ( lecControlDirectInterface,
+               lecControlDirectVpi, lecControlDirectVci )
+        
+         identify the circuit."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.1.2"
+    ::= { lecServerVccEntry 4 }
+
+lecControlDirectVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..4095)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "If the Control Direct VCC exists, this object
+         contains the VPI which identifies that VCC at
+         the point where it connects to this LE client.
+        
+         Otherwise, this object has the value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.1.2"
+    ::= { lecServerVccEntry 5 }
+
+lecControlDirectVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "If the Control Direct VCC exists, this object
+         contains the VCI which identifies that VCC at
+         the point where it connects to this LE client.
+        
+         Otherwise, this object has the value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.1.2"
+    ::= { lecServerVccEntry 6 }
+
+lecControlDistributeInterface OBJECT-TYPE
+    SYNTAX LeConnectionInterface
+--    Rsyntax INTEGER(0..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The interface associated with the Control Distribute
+         VCC.  If no Control Distribute VCC has been set up to
+         this client, this object has the value 0.  Otherwise,
+         the objects
+        
+             ( lecControlDistributeInterface,
+               lecControlDistributeVpi,
+               lecControlDistributeVci )
+        
+         identify the circuit."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.1.3"
+    ::= { lecServerVccEntry 7 }
+
+lecControlDistributeVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..4095)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "If the Control Distribute VCC exists, this object
+         contains the VPI which identifies that VCC at the
+         point where it connects to this LE client.
+        
+         Otherwise, this object has the value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.1.3"
+    ::= { lecServerVccEntry 8 }
+
+lecControlDistributeVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "If the Control Distribute VCC exists, this object
+         contains the VCI which identifies that VCC at the
+         point where it connects to this LE client.
+        
+         Otherwise, this object contains the value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.1.3"
+    ::= { lecServerVccEntry 9 }
+
+lecMulticastSendInterface OBJECT-TYPE
+    SYNTAX LeConnectionInterface
+--    Rsyntax INTEGER(0..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The interface associated with the Multicast Send
+         VCC.  If no Multicast Send VCC exists, this object
+         has the value 0.  Otherwise, the objects
+        
+             ( lecMulticastSendInterface,
+               lecMulticastSendVpi, lecMulticastSendVci )
+        
+         identify the circuit."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.2.2"
+    ::= { lecServerVccEntry 10 }
+
+lecMulticastSendVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..4095)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "If the Multicast Send VCC exists, this object
+         contains the VPI which identifies that VCC at
+         the point where it connects to this LE client.
+        
+         Otherwise, this object has the value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.2.2"
+    ::= { lecServerVccEntry 11 }
+
+lecMulticastSendVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "If the Multicast Send VCC exists, this object
+         contains the VCI which identifies that VCC at
+         the point where it connects to this LE client.
+        
+         Otherwise, this object has the value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.2.2"
+    ::= { lecServerVccEntry 12 }
+
+lecMulticastForwardInterface OBJECT-TYPE
+    SYNTAX LeConnectionInterface
+--    Rsyntax INTEGER(0..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "For a LANE V1.0 client:
+         -----------------------
+         The interface associated with the Multicast Forward
+         VCC.  If no Multicast Forward VCC has been set up to
+         this client, this object has the value 0.  Otherwise,
+         the objects
+        
+             ( lecMulticastForwardInterface,
+               lecMulticastForwardVpi,
+               lecMulticastForwardVci )
+        
+         identify the circuit.
+        
+         For a LANE V2.0 client in LANE 2.0 mode:
+         ----------------------------------------
+         The value 0.  There may not be a single VCC that can
+         be identified as the 'default'."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.2.3"
+    ::= { lecServerVccEntry 13 }
+
+lecMulticastForwardVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..4095)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "For a LANE V1.0 client:
+         -----------------------
+         If the Multicast Forward VCC exists, this object
+         contains the VPI which identifies that VCC at the
+         point where it connects to this LE client.
+        
+         Otherwise, this object has the value 0.
+        
+         For a LANE V2.0 client in LANE 2.0 mode:
+         ----------------------------------------
+         The value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.2.3"
+    ::= { lecServerVccEntry 14 }
+
+lecMulticastForwardVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "For a LANE V1.0 client:
+         -----------------------
+         If the Multicast Forward VCC exists, this object
+         contains the VCI which identifies that VCC at the
+         point where it connects to this LE client.
+        
+         Otherwise, this object has the value 0.
+        
+         For a LANE V2.0 client in LANE 2.0 mode:
+         ----------------------------------------
+         The value 0."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 2.2.2.2.3"
+    ::= { lecServerVccEntry 15 }
+
+lecAtmAddressTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecAtmAddressEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A table listing all of the ATM addresses belonging
+         to this host's LAN Emulation Clients."
+    ::= { leClientMIBObjects 6 }
+
+lecAtmAddressEntry OBJECT-TYPE
+    SYNTAX LecAtmAddressEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each row in this table describes one of a client's
+         ATM addresses."
+    INDEX { lecIndex, lecAtmAddress }
+    ::= { lecAtmAddressTable 1 }
+
+LecAtmAddressEntry ::= SEQUENCE {
+    lecAtmAddress AtmLaneAddress,
+    lecAtmAddressStatus RowStatus,
+    lecAtmAddressMuxed INTEGER
+    }
+
+lecAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address this row describes.  This could be
+         either a primary address or a secondary address."
+    ::= { lecAtmAddressEntry 1 }
+
+lecAtmAddressStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Used to create and delete rows in this table.
+        
+         A management station may not change the status of a
+         primary ATM address to 'notInService' or 'destroy'
+         unless the client's ifAdminStatus is 'down', and the
+         client's lecInterfaceState is 'initialState'.
+        
+         Secondary ATM addresses may be destroyed at any time
+         permitted by the agent."
+    ::= { lecAtmAddressEntry 2 }
+
+lecAtmAddressMuxed OBJECT-TYPE
+    SYNTAX INTEGER {
+        muxed(1),
+        notMuxed(2),
+        both(3),
+        none(4)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates what type(s) of connections the LEC is
+         willing to establish at this ATM address."
+    ::= { lecAtmAddressEntry 3 }
+
+lecMacAddressTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecMacAddressEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains entries for all of the registered
+         MAC addresses belonging to this agent's LE clients.
+        
+         For all LANE clients, this includes
+        
+         C6  Local Unicast MAC Address(es).  Each LE Client has
+             zero or more local unicast MAC addresses.  In an
+             operational LE Client, every address in this
+             variable MUST have been registered with the LE
+             Server.  Two LE CLients joined to the same
+             emulated LAN MUST NOT have the same local unicast
+             MAC address.  A LE Client's MAC addresses may
+             change during normal operations.  When answering
+             a LE_ARP_REQUEST for any address in this list, the
+             'Remote Address' bit in the FLAGS field of the
+             LE_ARP_RESPONSE MUST be clear.
+        
+        For a LANE V2.0 client, this also includes <registered>
+        multicast MAC addresses in C15."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { leClientMIBObjects 7 }
+
+lecMacAddressEntry OBJECT-TYPE
+    SYNTAX LecMacAddressEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each table row describes a (MAC address, ATM address)
+         pair registered for a particular client."
+    INDEX { lecIndex, lecMacAddress }
+    ::= { lecMacAddressTable 1 }
+
+LecMacAddressEntry ::= SEQUENCE {
+    lecMacAddress MacAddress,
+    lecMacAddressAtmBinding AtmLaneAddress,
+    lecMacAddressMuxedAtmBinding AtmLaneAddress,
+    lecMacAddressServiceCategory INTEGER
+    }
+
+lecMacAddress OBJECT-TYPE
+    SYNTAX MacAddress
+--    Rsyntax OCTET STRING(SIZE(6))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A unicast or multicast MAC address that this LEC has
+         registered with its LES.
+        
+         Note that the LANE V1.0 specification does not allow
+         V1.0 clients to register multicast addresses."
+    ::= { lecMacAddressEntry 1 }
+
+lecMacAddressAtmBinding OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The non-multiplexed ATM address, if any, registered
+         for 'lecMacAddress'."
+    ::= { lecMacAddressEntry 2 }
+
+lecMacAddressMuxedAtmBinding OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The LLC-multiplexed ATM address, if any, registered
+         for 'lecMacAddress'."
+    ::= { lecMacAddressEntry 3 }
+
+lecMacAddressServiceCategory OBJECT-TYPE
+    SYNTAX INTEGER(0..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "A bitmap describing the service categories which the
+         LEC supports for this MAC address.
+        
+         The bitmap is larger than the LANE 2.0 specification
+         requires, in case room is ever needed for expansion."
+    REFERENCE
+        "LAN Emulation Over ATM Version 2 - LUNI Specification,
+         Annex A (LAN Emulation Control Frame TLVs)"
+    ::= { lecMacAddressEntry 4 }
+
+lecRouteDescrTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecRouteDescrEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table lists all of the Local Route Descriptors
+         which are registered by this host's LAN Emulation
+         Clients.
+        
+         C8  Local Route Descriptor(s).  Local Route
+             Descriptors exist only for source-routed IEEE
+             802.5 LE Clients that are Source-Route Bridges.
+             All Local Route Descriptors in any given emulated
+             LAN MUST be unique.  A LE Client MAY have zero or
+             more Local Route Descriptors and these Local Route
+             Descriptors MAY change during normal operation.
+             In an operational LE Client, every Local Route
+             Descriptor in C8 MUST have been registered with
+             the LE Server.  When answering a LE_ARP_REQUEST
+             for any address in this list, the 'Remote Address'
+             bit in the FLAGS field of the LE_ARP_RESPONSE MUST
+             be clear."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0
+         and V2.0, Section 5.1.1"
+    ::= { leClientMIBObjects 8 }
+
+lecRouteDescrEntry OBJECT-TYPE
+    SYNTAX LecRouteDescrEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each table row describes a (Route Descriptor, ATM
+         address) pair registered for a particular client."
+    INDEX { lecIndex, lecRouteDescrSegmentID, lecRouteDescrBridgeNumber }
+    ::= { lecRouteDescrTable 1 }
+
+LecRouteDescrEntry ::= SEQUENCE {
+    lecRouteDescrSegmentID INTEGER,
+    lecRouteDescrBridgeNumber INTEGER,
+    lecRouteDescrAtmBinding AtmLaneAddress,
+    lecRouteDescrMuxedAtmBinding AtmLaneAddress,
+    lecRouteDescrServiceCategory INTEGER
+    }
+
+lecRouteDescrSegmentID OBJECT-TYPE
+    SYNTAX INTEGER(0..4095)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The LAN ID portion of the IEEE 802.5 route descriptor
+         associated with this conceptual row."
+    ::= { lecRouteDescrEntry 1 }
+
+lecRouteDescrBridgeNumber OBJECT-TYPE
+    SYNTAX INTEGER(0..15)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The Bridge Number portion of the IEEE 802.5 route
+         descriptor associated with this conceptual row."
+    ::= { lecRouteDescrEntry 2 }
+
+lecRouteDescrAtmBinding OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The non-multiplexed ATM address, if any, registered
+         for the IEEE 802.5 route descriptor
+         ('lecRouteDescrSegmentID',
+          'lecRouteDescrBridgeNumber')."
+    ::= { lecRouteDescrEntry 3 }
+
+lecRouteDescrMuxedAtmBinding OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The LLC-multiplexed ATM address, if any, registered
+         for the IEEE 802.5 route descriptor
+         ('lecRouteDescrSegmentID',
+          'lecRouteDescrBridgeNumber')."
+    ::= { lecRouteDescrEntry 4 }
+
+lecRouteDescrServiceCategory OBJECT-TYPE
+    SYNTAX INTEGER(0..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "A bitmap describing the service categories which the
+         LEC supports for this route descriptor.
+        
+         The bitmap is larger than the LANE 2.0 specification
+         requires, in case room is ever needed for expansion."
+    REFERENCE
+        "LAN Emulation Over ATM Version 2 - LUNI Specification,
+         Annex A (LAN Emulation Control Frame TLVs)"
+    ::= { lecRouteDescrEntry 5 }
+
+leArpTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LeArpEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table provides access to an ATM LAN Emulation
+         Client's MAC-to-ATM ARP cache.  It contains entries
+         for unicast addresses and for the broadcast address.
+        
+         For LANE V2.0 clients whose C32 Selective Multicast
+         flag is set, this table will also contain multicast
+         address entries.
+        
+         C16 LE_ARP Cache.  A table of entries, each of which
+             establishes a relationship between a LAN
+             Destination external to the LE Client and the
+             ATM address to which data frames for that LAN
+             Destination will be sent."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification,
+         Section 5.1.1"
+    ::= { leClientMIBObjects 9 }
+
+leArpEntry OBJECT-TYPE
+    SYNTAX LeArpEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An ATM LAN Emulation ARP cache entry containing
+         information about the binding of one MAC address
+         to one ATM address."
+    INDEX { lecIndex, leArpMacAddress }
+    ::= { leArpTable 1 }
+
+LeArpEntry ::= SEQUENCE {
+    leArpMacAddress MacAddress,
+    leArpAtmAddress AtmLaneAddress,
+    leArpIsRemoteAddress TruthValue,
+    leArpEntryType LeArpTableEntryType,
+    leArpRowStatus RowStatus,
+    leArpMuxedAtmAddress AtmLaneAddress,
+    leArpServiceCategory INTEGER
+    }
+
+leArpMacAddress OBJECT-TYPE
+    SYNTAX MacAddress
+--    Rsyntax OCTET STRING(SIZE(6))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The MAC address for which this cache entry provides
+         a translation.  Since ATM LAN Emulation uses an ARP
+         protocol to locate the Broadcast and Unknown Server,
+         the value of this object could be the broadcast MAC
+         address.  Starting with LANE Version 2.0, the value
+         could also be a multicast or group MAC address.
+        
+         Unicast MAC addresses should be unique within any
+         given ATM Emulated LAN.  However, there's no
+         requirement that they be unique across disjoint
+         emulated LANs."
+    ::= { leArpEntry 1 }
+
+leArpAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The non-multiplexed LE Client or Broadcast/Multicast
+         Service ATM address corresponding to the MAC address
+         'leArpMacAddress'.
+        
+         This value may be determined through the use of the
+         LE_ARP procedure, through source address learning,
+         or through other mechanisms.
+        
+         Some agents may provide write access to this object,
+         as part of their support for 'static' LE_ARP entries.
+         The effect of attempting to write an ATM address to
+         a 'learned' row is explicitly undefined.  Agents may
+         disallow the write, accept the write and change the
+         row's type, or even accept the write as-is."
+    ::= { leArpEntry 2 }
+
+leArpIsRemoteAddress OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates whether this entry is for a local or remote
+         MAC address.
+        
+         In this context, 'local' means 'a MAC address that is
+         local to the remote client', as opposed to 'one of my
+         addresses'.
+        
+             true(1)
+                 The address is believed to be remote - or its
+                 local/remote status is unknown.
+        
+                 For an entry created via the LE_ARP mechanism,
+                 this corresponds to the 'Remote address' flag
+                 being set in the LE_ARP_RESPONSE.
+        
+                 During Topology Change periods, remote LE_ARP
+                 entries generally age out faster than others.
+                 Specifically, they are subject to the Forward
+                 Delay Time as well as to the Aging Time.
+        
+             false(2)
+                 The address is believed to be local - that is
+                 to say, registered with the LES by the client
+                 whose ATM address is leArpAtmAddress (and/or
+                 leArpMuxedAtmAddress).
+        
+                 For an entry created via the LE_ARP mechanism,
+                 this corresponds to the 'Remote address' flag
+                 being cleared in the LE_ARP_RESPONSE."
+    ::= { leArpEntry 3 }
+
+leArpEntryType OBJECT-TYPE
+    SYNTAX LeArpTableEntryType
+--    Rsyntax INTEGER {
+--        other(1),
+--        learnedViaControl(2),
+--        learnedViaData(3),
+--        staticVolatile(4),
+--        staticNonVolatile(5)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates how this LE_ARP table entry was created and
+         whether it is aged."
+    DEFVAL { staticVolatile }
+    ::= { leArpEntry 4 }
+
+leArpRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Lets users create and delete LE_ARP cache entries,
+         on systems that support this capability.
+        
+         Normally clients will maintain their LE_ARP caches
+         automatically.  However, managers may occasionally
+         want to create 'static' LE_ARP cache entries.
+        
+         Rules
+        
+           1.  Before a new row can become 'active', values
+               must be supplied for the columnar objects
+               leArpAtmAddress and leArpEntryType.
+        
+               The value for leArpAtmAddress may be a zero-
+               length address if there is an ATM address in
+               the leArpMuxedAtmAddress, and the LE_ARP row
+               belongs to a LEC running LANE 2.0 or higher.
+        
+           2.  It is not necessary to set leArpRowStatus to
+               'notInService' in order to modify a writable
+               object in the same conceptual row.
+        
+           3.  LE_ARP entries whose status is 'notReady' or
+               'notInService' will not be used to translate
+               LAN Destinations to ATM Addresses.  However,
+               clients may overwrite such entries with data
+               obtained from other sources.  For example, a
+               client which needed to transmit a data frame
+               to a given MAC address (or via a given Route
+               Descriptor) might find that its LE_ARP entry
+               for the LAN Destination is 'notInService' or
+               'notReady'.  The client might then act as if
+               the LAN Destination was unknown - generating
+               a LE_ARP_REQUEST, flooding the data frame to
+               the BUS, and creating a new, 'active' LE_ARP
+               cache entry based on the LE_ARP_RESPONSE."
+    ::= { leArpEntry 5 }
+
+leArpMuxedAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The LLC-multiplexed LE Client or Broadcast/Multicast
+         Service ATM address corresponding to the MAC address
+         'leArpMacAddress'.
+        
+         This value may be determined through the use of the
+         LE_ARP procedure, through source address learning,
+         or through other mechanisms.
+        
+         Some agents may provide write access to this object,
+         as part of their support for 'static' LE_ARP entries.
+         The effect of attempting to write an ATM address to
+         a 'learned' row is explicitly undefined.  Agents may
+         disallow the write, accept the write and change the
+         row's type, or even accept the write as-is."
+    ::= { leArpEntry 6 }
+
+leArpServiceCategory OBJECT-TYPE
+    SYNTAX INTEGER(0..2147483647)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "A bitmap describing the service categories which the
+         LEC 'lecIndex' supports.
+        
+         This value normally comes from the optional 'Service-
+         Category' TLV in LANE 2.0 LE_ARP_RESPONSEs.
+        
+         The bitmap is larger than the LANE 2.0 specification
+         requires, in case room is ever needed for expansion.
+        
+         If service categories aren't applicable, aren't known,
+         or the implementor does not want to provide memory to
+         store them (e.g., because they would only be used for
+         SNMP), this object should be set to the value 0.
+        
+         See also the object 'lecStoresServiceCategories'."
+    REFERENCE
+        "LAN Emulation Over ATM Version 2 - LUNI Specification,
+         Annex A (LAN Emulation Control Frame TLVs)"
+    ::= { leArpEntry 7 }
+
+leRDArpTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LeRDArpEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table provides access to an ATM LAN Emulation
+         Client's Route Descriptor-to-ATM ARP cache.
+        
+         Implementation of this table is optional for hosts
+         that do not support emulated IEEE 802.5 Token Ring
+         LANs, and mandatory for hosts which do.
+        
+         C16 LE_ARP Cache.  A table of entries, each of which
+             establishes a relationship between a LAN
+             Destination external to the LE Client and the
+             ATM address to which data frames for that LAN
+             Destination will be sent."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification,
+         Section 5.1.1"
+    ::= { leClientMIBObjects 10 }
+
+leRDArpEntry OBJECT-TYPE
+    SYNTAX LeRDArpEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An ATM LAN Emulation ARP cache entry containing
+         information about the binding of one IEEE 802.5
+         route descriptor to one ATM address."
+    INDEX { lecIndex, leRDArpSegmentID, leRDArpBridgeNumber }
+    ::= { leRDArpTable 1 }
+
+LeRDArpEntry ::= SEQUENCE {
+    leRDArpSegmentID INTEGER,
+    leRDArpBridgeNumber INTEGER,
+    leRDArpAtmAddress AtmLaneAddress,
+    leRDArpEntryType LeArpTableEntryType,
+    leRDArpRowStatus RowStatus,
+    leRDArpMuxedAtmAddress AtmLaneAddress,
+    leRDArpServiceCategory INTEGER,
+    leRDArpIsRemoteDescriptor TruthValue
+    }
+
+leRDArpSegmentID OBJECT-TYPE
+    SYNTAX INTEGER(0..4095)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The LAN ID portion of the IEEE 802.5 route descriptor
+         associated with this ARP cache entry."
+    ::= { leRDArpEntry 1 }
+
+leRDArpBridgeNumber OBJECT-TYPE
+    SYNTAX INTEGER(0..15)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The Bridge Number portion of the IEEE 802.5 route
+         descriptor associated with this ARP cache entry."
+    ::= { leRDArpEntry 2 }
+
+leRDArpAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The non-multiplexed ATM address of the LAN Emulation
+         Client which is associated with the route descriptor
+         ('leRDArpSegmentID', 'leRDArpBridgeNumber').
+        
+         This value may be determined through the use of the
+         LE_ARP procedure, through source address learning,
+         or through other mechanisms.
+        
+         Some agents may provide write access to this object,
+         as part of their support for 'static' LE_ARP entries.
+         The effect of attempting to write an ATM address to
+         a 'learned' row is explicitly undefined.  Agents may
+         disallow the write, accept the write and change the
+         row's type, or even accept the write as-is."
+    ::= { leRDArpEntry 3 }
+
+leRDArpEntryType OBJECT-TYPE
+    SYNTAX LeArpTableEntryType
+--    Rsyntax INTEGER {
+--        other(1),
+--        learnedViaControl(2),
+--        learnedViaData(3),
+--        staticVolatile(4),
+--        staticNonVolatile(5)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates how this LE_ARP table entry was created and
+         whether it is aged."
+    DEFVAL { staticVolatile }
+    ::= { leRDArpEntry 4 }
+
+leRDArpRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Lets users create and delete LE_ARP cache entries,
+         on systems that support this capability.
+        
+         Normally clients will maintain their LE_ARP caches
+         automatically.  However, managers may occasionally
+         want to create 'static' LE_ARP cache entries.
+        
+         Rules
+        
+           1.  Before a new row can become 'active', values
+               must be supplied for the columnar objects
+               leRDArpAtmAddress and leRDArpEntryType.
+        
+           2.  It is not necessary to set leRDArpRowStatus to
+               'notInService' in order to modify a writable
+               object in the same conceptual row.
+        
+           3.  LE_ARP entries whose status is 'notReady' or
+               'notInService' will not be used to translate
+               LAN Destinations to ATM Addresses.  However,
+               clients may overwrite such entries with data
+               obtained from other sources.  For example, a
+               client which needed to transmit a data frame
+               to a given MAC address (or via a given Route
+               Descriptor) might find that its LE_ARP entry
+               for the LAN Destination is 'notInService' or
+               'notReady'.  The client might then act as if
+               the LAN Destination was unknown - generating
+               a LE_ARP_REQUEST, flooding the data frame to
+               the BUS, and creating a new, 'active' LE_ARP
+               cache entry based on the LE_ARP_RESPONSE."
+    ::= { leRDArpEntry 5 }
+
+leRDArpMuxedAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The LLC-multiplexed ATM address of the LAN Emulation
+         Client which is associated with the route descriptor
+         ('leRDArpSegmentID', 'leRDArpBridgeNumber').
+        
+         This value may be determined through the use of the
+         LE_ARP procedure, through source address learning,
+         or through other mechanisms.
+        
+         Some agents may provide write access to this object,
+         as part of their support for 'static' LE_ARP entries.
+         The effect of attempting to write an ATM address to
+         a 'learned' row is explicitly undefined.  Agents may
+         disallow the write, accept the write and change the
+         row's type, or even accept the write as-is."
+    ::= { leRDArpEntry 6 }
+
+leRDArpServiceCategory OBJECT-TYPE
+    SYNTAX INTEGER(0..2147483647)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "A bitmap describing the service categories which the
+         LEC 'lecIndex'supports.
+        
+         This value normally comes from the optional 'Service-
+         Category' TLV in LANE 2.0 LE_ARP_RESPONSEs.
+        
+         The bitmap is larger than the LANE 2.0 specification
+         requires, in case room is ever needed for expansion.
+        
+         If service categories aren't applicable, aren't known,
+         or the implementor does not want to provide memory to
+         store them (e.g., because they would only be used for
+         SNMP), this object should be set to the value 0.
+        
+         See also the object 'lecStoresServiceCategories'."
+    REFERENCE
+        "LAN Emulation Over ATM Version 2 - LUNI Specification,
+         Annex A (LAN Emulation Control Frame TLVs)"
+    ::= { leRDArpEntry 7 }
+
+leRDArpIsRemoteDescriptor OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates whether this entry is for a local or remote
+         route descriptor.
+        
+         In this context, 'local' means 'a route descriptor
+         that is local to the remote client', as opposed to
+         'one of my route descriptors'.
+        
+             true(1)
+                 The route descriptor is believed to be remote
+                 - or its local/remote status is unknown.
+        
+                 For an entry created via the LE_ARP mechanism,
+                 this corresponds to the 'Remote address' flag
+                 being set in the LE_ARP_RESPONSE.
+        
+             false(2)
+                 The route descriptor is believed to be local
+                 - that is to say, registered with the LES by
+                 the client whose address is leRDArpAtmAddress
+                 (and/or leRDArpMuxedATMAddress).
+        
+                 For an entry created via the LE_ARP mechanism,
+                 this corresponds to the 'Remote address' flag
+                 being cleared in the LE_ARP_RESPONSE."
+    ::= { leRDArpEntry 8 }
+
+lecMcForwardTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecMcForwardEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A table identifying Multicast Forward VCCs for LAN
+         Emulation Version 2.0 clients."
+    ::= { leClientMIBObjects 11 }
+
+lecMcForwardEntry OBJECT-TYPE
+    SYNTAX LecMcForwardEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each row represents one Multicast Forward VCC."
+    INDEX { lecIndex, lecMcForwardInterface, lecMcForwardVpi, lecMcForwardVci }
+    ::= { lecMcForwardTable 1 }
+
+LecMcForwardEntry ::= SEQUENCE {
+    lecMcForwardInterface LeConnectionInterface,
+    lecMcForwardVpi VpiInteger,
+    lecMcForwardVci VciInteger,
+    lecMcForwardVerification INTEGER
+    }
+
+lecMcForwardInterface OBJECT-TYPE
+    SYNTAX LeConnectionInterface
+--    Rsyntax INTEGER(0..2147483647)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The interface associated with the Multicast Forward
+         VCC."
+    ::= { lecMcForwardEntry 1 }
+
+lecMcForwardVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..4095)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The VPI which identifies the Multicast Forward VCC
+         at the point where it connects to the LANE client."
+    ::= { lecMcForwardEntry 2 }
+
+lecMcForwardVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The VCI which identifies the Multicast Forward VCC
+         at the point where it connects to the LANE client."
+    ::= { lecMcForwardEntry 3 }
+
+lecMcForwardVerification OBJECT-TYPE
+    SYNTAX INTEGER {
+        none(1),
+        implicit(2),
+        explicit(3)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates whether the calling address for this VCC
+         has been verified.
+        
+             none      -  No verification
+        
+             implicit  -  Calling party address was same as
+                          BUS address
+        
+             explicit  -  Client used LE_VERIFY protocol
+        
+         Also serves double-duty as a 'row exists' flag."
+    ::= { lecMcForwardEntry 4 }
+
+lecMacQueryLecIndex OBJECT-TYPE
+    SYNTAX INTEGER(0..2147483647)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The 'lecIndex' of the LEC whose MAC address binding
+         the network management station wants to look up.
+        
+         When written:  Triggers a new query.
+        
+         When read:  Identifies the last LEC queried.  (This
+         value may be 0 if there have been no queries, or if
+         a LEC has been deleted.)"
+    ::= { lecMacQueryObjects 1 }
+
+lecMacQueryAddress OBJECT-TYPE
+    SYNTAX MacAddress
+--    Rsyntax OCTET STRING(SIZE(6))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The MAC address whose binding the network management
+         station wants to look up.
+        
+         When written:  Triggers a new query.  (Note that the
+         SNMP agent is free to reject multicast and broadcast
+         addresses with a 'badValue' error.)
+        
+         When read:  Returns the last MAC address queried, or
+         all zeroes if lecMacQueryLecIndex is 0."
+    ::= { lecMacQueryObjects 2 }
+
+lecMacQueryStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        none(1),
+        unsupported(2),
+        local(3),
+        remote(4),
+        unknown(5)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The status of the last query - one of the following:
+        
+             none(1)
+                No queries have been made; therefore, other
+                results values are invalid.
+        
+             unsupported(2)
+                Queries are not supported for this LEC.
+        
+             local(3)
+                The MAC address is one of the client's local
+                MAC addresses.
+        
+             remote(4)
+                The MAC address is one of the client's remote
+                MAC addresses.
+        
+             unknown(5)
+                The MAC address does not belong (is not known
+                to belong) to the client."
+    ::= { lecMacQueryObjects 3 }
+
+lecMacQueryAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The non-multiplexed ATM address which this client --
+         i.e., client 'lecMacQueryLecIndex' -- would use in a
+         LE_ARP_RESPONSE for 'lecMacQueryAddress'.
+        
+         This object is only meaningful when lecMacQueryStatus
+         is 'localMacAddress' or 'remoteMacAddress'."
+    ::= { lecMacQueryObjects 4 }
+
+lecMacQueryMuxedAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The LLC-multiplexed ATM address which this client --
+         i.e., client 'lecMacQueryLecIndex' -- would use in a
+         LE_ARP_RESPONSE for 'lecMacQueryAddress'.
+        
+         This object is only meaningful when lecMacQueryStatus
+         is 'localMacAddress' or 'remoteMacAddress'."
+    ::= { lecMacQueryObjects 5 }
+
+lecMacQueryServiceCategory OBJECT-TYPE
+    SYNTAX INTEGER(0..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The Service Category TLV that this client would use
+         in a LE_ARP_RESPONSE for 'lecMacQueryAddress'.
+        
+         If this client wouldn't return a Service Category TLV
+         in the LE_ARP_RESPONSE, this object should be set to
+         zero.
+        
+         The bitmap is larger than the LANE 2.0 specification
+         requires, in case room is ever needed for expansion.
+        
+         This object is only meaningful when lecMacQueryStatus
+         is 'localMacAddress' or 'remoteMacAddress'."
+    REFERENCE
+        "LAN Emulation Over ATM Version 2 - LUNI Specification,
+         Annex A (LAN Emulation Control Frame TLVs)"
+    ::= { lecMacQueryObjects 6 }
+
+lecRDQueryLecIndex OBJECT-TYPE
+    SYNTAX INTEGER(0..2147483647)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The 'lecIndex' of the LEC whose route descriptor to
+         ATM address binding the network management station
+         wants to look up.
+        
+         When written:  Triggers a new query.
+        
+         When read:  Identifies the last LEC queried.  (This
+         value may be 0 if there have been no queries, or if
+         a LEC has been deleted.)"
+    ::= { lecRDQueryObjects 1 }
+
+lecRDQuerySegmentID OBJECT-TYPE
+    SYNTAX INTEGER(0..4095)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The LAN ID portion of the IEEE 802.5 route descriptor
+         whose binding the network management station wants to
+         look up.
+        
+         When written:  Triggers a new query.
+        
+         When read:  Returns the LAN ID portion of the last RD
+         queried, or 0 if lecRDQueryLecIndex is 0."
+    ::= { lecRDQueryObjects 2 }
+
+lecRDQueryBridgeNumber OBJECT-TYPE
+    SYNTAX INTEGER(0..15)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The bridge number portion of the IEEE 802.5 route
+         descriptor whose binding the network management
+         station wants to look up.
+        
+         When written:  Triggers a new query.
+        
+         When read:  Returns the bridge number portion of the
+         last RD queried, or 0 if lecRDQueryLecIndex is 0."
+    ::= { lecRDQueryObjects 3 }
+
+lecRDQueryStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        none(1),
+        unsupported(2),
+        local(3),
+        remote(4),
+        unknown(5)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The status of the last query - one of the following:
+        
+            none(1)
+                No queries have been made; therefore, other
+                results values are invalid.
+        
+            unsupported(2)
+                Queries are not supported for this LEC.
+        
+            local(3)
+                The route descriptor is one of the client's
+                local route descriptors.
+        
+            remote(4)
+                The route descriptor is one of the client's
+                remote route descriptors.
+        
+            unknown(5)
+                The route descriptor does not belong (is not
+                known to belong) to the client."
+    ::= { lecRDQueryObjects 4 }
+
+lecRDQueryAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The non-multiplexed ATM address which this client --
+         i.e., client 'lecRDQueryLecIndex' -- would use in a
+         LE_ARP_RESPONSE for the route descriptor
+         ('lecRDQuerySegmentID', 'lecRDQueryBridgeNumber').
+        
+         This object is only meaningful when lecRDQueryStatus
+         is 'local' or 'remote'."
+    ::= { lecRDQueryObjects 5 }
+
+lecRDQueryMuxedAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The LLC-multiplexed ATM address which this client --
+         i.e., client 'lecRDQueryLecIndex' -- would use in a
+         LE_ARP_RESPONSE for the route descriptor
+         ('lecRDQuerySegmentID', 'lecRDQueryBridgeNumber').
+        
+         This object is only meaningful when lecRDQueryStatus
+         is 'local' or 'remote'."
+    ::= { lecRDQueryObjects 6 }
+
+lecRDQueryServiceCategory OBJECT-TYPE
+    SYNTAX INTEGER(0..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The Service Category TLV that this client would use
+         in a LE_ARP_RESPONSE for the route descriptor
+         ('lecRDQuerySegmentID', 'lecRDQueryBridgeNumber').
+        
+         If this client wouldn't return a Service Category TLV
+         in the LE_ARP_RESPONSE, this object should be set to
+         zero.
+        
+         The bitmap is larger than the LANE 2.0 specification
+         requires, in case room is ever needed for expansion.
+        
+         This object is only meaningful when lecRDQueryStatus
+         is 'local' or 'remote'."
+    REFERENCE
+        "LAN Emulation Over ATM Version 2 - LUNI Specification,
+         Annex A (LAN Emulation Control Frame TLVs)"
+    ::= { lecRDQueryObjects 7 }
+
+lecTlvTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecTlvEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table provides a place for an agent to store
+         interesting TLVs associated with
+        
+             o  Registered LAN destinations
+        
+             o  LE_ARP entries
+        
+             o  Query results from the LE_ARP response group
+        
+             o  Initialization / configuration
+        
+         and any other categories the ATM Forum adds.
+        
+         Unless otherwise stated,
+        
+             o  Entries in this table are completely optional.
+        
+             o  An implementation may choose to keep only the
+                TLVs which are 'interesting' to its designers,
+                such as MPOA TLVs in LE_ARP_RESPONSEs.
+        
+             o  TLVs which already have their own MIB objects
+                should not be duplicated here.
+        
+             o  Where write / create access is allowed, it is
+                not mandatory.
+        
+         Implementors should document the specific lecTlvTable
+         features of their agent."
+    REFERENCE
+        "LAN Emulation Over ATM Version 2 - LUNI Specification,
+         Annex A (LAN Emulation Control Frame TLVs)"
+    ::= { leClientMIBObjects 13 }
+
+lecTlvEntry OBJECT-TYPE
+    SYNTAX LecTlvEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each table row describes one TLV of a related set."
+    INDEX { lecIndex, lecTlvSetIndex, lecTlvLanDestination, lecTlvIndex }
+    ::= { lecTlvTable 1 }
+
+LecTlvEntry ::= SEQUENCE {
+    lecTlvSetIndex INTEGER,
+    lecTlvLanDestination OCTET STRING,
+    lecTlvIndex INTEGER,
+    lecTlvType OCTET STRING,
+    lecTlvValue OCTET STRING,
+    lecTlvRowStatus RowStatus
+    }
+
+lecTlvSetIndex OBJECT-TYPE
+    SYNTAX INTEGER {
+        layer3Tlvs(1),
+        actualRegTlvs(2),
+        configRegTlvs(3),
+        leArpTlvs(4),
+        queryTlvs(5)
+        }
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An index which helps to identify a set of TLVs, and to
+         indicate their purpose.
+        
+         The value of this index defines the interpretation and
+         use of corresponding table rows as follows:
+        
+             layer3Tlvs(1)
+             -------------
+                 This index provides access to Layer-3-Address
+                 TLVs (Initial State variable C36) used during
+                 the Initialization phase.
+        
+                 TLVs are stored in rows
+        
+                     ( lecIndex, 1,
+                       LAN_Destination( all '00's ),
+                       * )
+        
+                 These rows may be read / created / written /
+                 deleted.
+        
+             actualRegTlvs(2)
+             ----------------
+                 This index provides access to TLVs which were
+                 used to register LAN Destinations.
+        
+                 These TLVs are associated with entries in the
+                 lecMacAddressTable and lecRouteDescrTable and
+                 stored in rows
+        
+                     ( lecIndex, 2,
+                       LAN_Destination( lecMacAddress ),
+                       * )
+        
+                     ( lecIndex, 2,
+                       LAN_Destination(
+                           lecRouteDescrSegmentID,
+                           lecRouteDescrBridgeNumber ),
+                       * )
+        
+                 These rows may be read or deleted, but cannot
+                 be created or modified.  Most implementations
+                 are expected to make them read-only.
+        
+                 Note that TLVs that have their own objects in
+                 the associated tables SHOULD NOT appear here.
+                 LLC-Muxed-ATM-Address & Service-Category TLVs
+                 are two examples.
+        
+             configRegTlvs(3)
+             ----------------
+                 This index provides a way to set registration
+                 TLVs for unregistered LAN Destinations.
+        
+                 Hopefully this is not something that managers
+                 will need to do a lot.
+        
+                 TLVs are stored in rows
+        
+                     ( lecIndex, 3,
+                       LAN_Destination( the_LAN_destination ),
+                       * )
+        
+                 Note that the agent might restrict the set of
+                 LAN Destinations and TLVs that it allows; for
+                 instance, to screen out the 'V2 Capable' TLV.
+        
+             leArpTlvs(4)
+             ------------
+                 This index provides access to TLVs associated
+                 with the LE_ARP cache.
+        
+                 These TLVs are associated with leArpTable and
+                 leRDArpTable, and stored in rows
+        
+                     ( lecIndex, 4,
+                       LAN_Destination( leArpMacAddress ),
+                       * )
+        
+                     ( lecIndex, 4,
+                       LAN_Destination(
+                               leRDArpSegmentID,
+                               leRDArpBridgeNumber ),
+                       * )
+        
+                 Agents may allow write/create access to TLVs
+                 when the type of the associated LE_ARP entry
+                 is 'staticVolatile', 'staticNonVolatile', or
+                 'other'.
+        
+                 Note that TLVs that have their own objects in
+                 the associated tables SHOULD NOT appear here.
+                 LLC-Muxed-ATM-Address & Service-Category TLVs
+                 are two examples.
+        
+             queryTlvs(5)
+             ------------
+                 This index provides access to TLVs associated
+                 with the last MAC Address or Route Descriptor
+                 query.
+        
+                 TLVs are associated with lecMacQueryObjects &
+                 lecRDQueryObjects, and stored in rows
+        
+                     ( lecIndex, 5,
+                       LAN_Destination( lecMacQueryAddress ),
+                       * )
+        
+                     ( lecIndex, 5,
+                       LAN_Destination(
+                               lecRDQuerySegmentID,
+                               lecRDQueryBridgeNumber ),
+                       * )
+        
+                 Note that TLVs that have their own objects in
+                 the associated tables SHOULD NOT appear here.
+                 LLC-Muxed-ATM-Address & Service-Category TLVs
+                 are two examples.
+        
+         Additional indices may be defined by the ATM Forum as
+         needed."
+    ::= { lecTlvEntry 1 }
+
+lecTlvLanDestination OBJECT-TYPE
+    SYNTAX OCTET STRING(SIZE(8))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The MAC address or route descriptor associated with
+         the TLV (see the description of the lecTlvSetIndex),
+         encoded in the fashion defined in the LANE 2.0 LUNI
+         specification (Table 16).  To recap:
+        
+         The first two octets indicate the LAN Destination's
+         type:  00, 01 for a MAC address; 00, 02 for a route
+         descriptor; 00, 00 for 'no LAN Destination'.
+        
+         The next six octets contain either the MAC address,
+         or four 00 octets followed by the route descriptor,
+         or six nulls.
+        
+         Note:
+         -----
+         In the future, the ATM Forum may extend this field
+         for use with other types of index values, provided
+         that each new type of index value has a unique tag.
+         Such extensions are NOT to be considered a 'change
+         in semantics' that requires the deprecation of the
+         index object and the table.
+        
+         Network management system implementors are advised
+         to display values whose tags they do not recognize
+         as (formatted) hexadecimal strings."
+    ::= { lecTlvEntry 2 }
+
+lecTlvIndex OBJECT-TYPE
+    SYNTAX INTEGER(1..65535)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An arbitrary index which allows a set to contain
+         multiple TLVs."
+    ::= { lecTlvEntry 3 }
+
+lecTlvType OBJECT-TYPE
+    SYNTAX OCTET STRING(SIZE(4))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "A four-octet string indicating this item's type.
+         It consists of a three-octet OUI, followed by an
+         octet identifying one of the organization's TLVs."
+    ::= { lecTlvEntry 4 }
+
+lecTlvValue OBJECT-TYPE
+    SYNTAX OCTET STRING(SIZE(0..255))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The value - and, implicitly, the length - of the
+         TLV."
+    ::= { lecTlvEntry 5 }
+
+lecTlvRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Provides a way for network managers to create and
+         delete rows in the TLV table."
+    ::= { lecTlvEntry 6 }
+
+leClientConfigGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 1 }
+-- OBJECT-GROUP
+--  Status
+--    deprecated
+--  Descr
+--    A collection of objects used for creating and
+--     configuring LAN Emulation Clients.
+--    
+--     This group is deprecated because some objects
+--     in it have been replaced by newer ones.
+--  objects
+--    lecRowStatus, lecOwner, lecConfigMode, lecConfigLanType, 
+--    lecConfigMaxDataFrameSize, lecConfigLanName, 
+--    lecConfigLesAtmAddress, lecControlTimeout, 
+--    lecMaxUnknownFrameCount, lecMaxUnknownFrameTime, 
+--    lecVccTimeoutPeriod, lecMaxRetryCount, lecAgingTime, 
+--    lecForwardDelayTime, lecExpectedArpResponseTime, 
+--    lecFlushTimeOut, lecPathSwitchingDelay, lecLocalSegmentID, 
+--    lecMulticastSendType, lecMulticastSendAvgRate, 
+--    lecMulticastSendPeakRate, lecConnectionCompleteTimer
+
+leClientStatusGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 2 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects describing the status
+--     and operational parameters of the managed LAN
+--     Emulation Clients.
+--  objects
+--    lecIfIndex, lecPrimaryAtmAddress, lecID, lecInterfaceState, 
+--    lecLastFailureRespCode, lecLastFailureState, lecProtocol, 
+--    lecVersion, lecTopologyChange, lecConfigServerAtmAddress, 
+--    lecConfigSource, lecActualLanType, lecActualMaxDataFrameSize, 
+--    lecActualLanName, lecActualLesAtmAddress, lecProxyClient
+
+leClientMappingGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 3 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which map a LAN Emulation
+--     Client's 'ifIndex' to its 'lecIndex'.
+--  objects
+--    lecMappingIndex
+
+leClientStatisticsGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 4 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which act as an extension
+--     to the lecConfigTable.
+--    
+--     These objects provide statistics on LAN Emulation
+--     control traffic and SVC establishment.
+--  objects
+--    lecArpRequestsOut, lecArpRequestsIn, lecArpRepliesOut, 
+--    lecArpRepliesIn, lecControlFramesOut, lecControlFramesIn, 
+--    lecSvcFailures
+
+leClientServerVccGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 5 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which act as an extension
+--     to the lecConfigTable.
+--    
+--     These objects identify Configuration Direct,
+--     Control, and Multicast VCCs for each client,
+--     making it easier to locate their entries in the
+--     AToM MIB.
+--  objects
+--    lecConfigDirectInterface, lecConfigDirectVpi, 
+--    lecConfigDirectVci, lecControlDirectInterface, 
+--    lecControlDirectVpi, lecControlDirectVci, 
+--    lecControlDistributeInterface, lecControlDistributeVpi, 
+--    lecControlDistributeVci, lecMulticastSendInterface, 
+--    lecMulticastSendVpi, lecMulticastSendVci, 
+--    lecMulticastForwardInterface, lecMulticastForwardVpi, 
+--    lecMulticastForwardVci
+
+leClientAtmAddressesGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 6 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which describe all of the
+--     ATM addresses belonging to each client.
+--  objects
+--    lecAtmAddressStatus
+
+leClientMacAddressesGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 7 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which describe all of the
+--     MAC addresses registered for each client.
+--  objects
+--    lecMacAddressAtmBinding
+
+leClientRouteDescriptorsGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 8 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which describe all of the
+--     Route Descriptors registered for each client.
+--  objects
+--    lecRouteDescrAtmBinding
+
+leClientArpGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 9 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which describe the MAC-
+--     to-ATM address mappings that this LAN Emulation
+--     Client has learned.
+--  objects
+--    leArpAtmAddress, leArpIsRemoteAddress, leArpEntryType, 
+--    leArpRowStatus
+
+leClientRDArpGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 10 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which describe the IEEE
+--     802.5 Route Descriptor-to-ATM address mappings
+--     that this LAN Emulation Client has learned.
+--  objects
+--    leRDArpAtmAddress, leRDArpEntryType, leRDArpRowStatus
+
+leClientConfigGroupV1 OBJECT IDENTIFIER ::= { leClientMIBGroups 11 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects used for creating and
+--     configuring both V1 and V2 LE Clients.
+--    
+--     It is the same as leClientConfigGroup, except
+--     that the deprecated objects lecLocalSegmentID
+--     and lecMaxUnknownFrameCount have been removed
+--     and replaced by lecV2MaxUnknownFrameCount and
+--     lecConfigLocalSegmentID.
+--    
+--     Also, lecConfigLecsAtmAddress has been added.
+--  objects
+--    lecRowStatus, lecOwner, lecConfigMode, lecConfigLanType, 
+--    lecConfigMaxDataFrameSize, lecConfigLanName, 
+--    lecConfigLesAtmAddress, lecControlTimeout, 
+--    lecMaxUnknownFrameTime, lecVccTimeoutPeriod, lecMaxRetryCount, 
+--    lecAgingTime, lecForwardDelayTime, lecExpectedArpResponseTime, 
+--    lecFlushTimeOut, lecPathSwitchingDelay, lecMulticastSendType, 
+--    lecMulticastSendAvgRate, lecMulticastSendPeakRate, 
+--    lecConnectionCompleteTimer, lecConfigLecsAtmAddress, 
+--    lecV2MaxUnknownFrameCount, lecConfigLocalSegmentID
+
+leClientConfigGroupV2 OBJECT IDENTIFIER ::= { leClientMIBGroups 12 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which extend the LEC
+--     configuration table to deal with LANE V2.0.
+--  objects
+--    lecInitialControlTimeout, lecControlTimeoutMultiplier, 
+--    lecConfigV2Capable, lecConfigSelectiveMulticast, 
+--    lecForwardDisconnectTimeout, lecConfigLLCMultiplexCapable, 
+--    lecMinReconfigureDelay, lecMaxReconfigureDelay, 
+--    lecMaxBusConnectRetries, lecTokenRingExplorerExclude
+
+leClientStatusGroupV2 OBJECT IDENTIFIER ::= { leClientMIBGroups 13 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which extend the LEC
+--     status table to deal with LANE V2.0.
+--  objects
+--    lecActualLocalSegmentID, lecActualV2Capable, lecElanID, 
+--    lecActualSelectiveMulticast, lecActualLLCMultiplexCapable, 
+--    lecPreferredLesAddress, lecStoresServiceCategories
+
+leClientStatisticsGroupV2 OBJECT IDENTIFIER ::= { leClientMIBGroups 14 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which provide statistics
+--     on LLC-multiplexed flow establishment, and count
+--     harmless discards separately from ifInDiscards.
+--  objects
+--    lecFlowFailures, lecEchoDiscards, lecFilteredMulticasts
+
+leClientAtmAddressesGroupV2 OBJECT IDENTIFIER ::= { leClientMIBGroups 15 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    An object which extends the lecAtmAddressTable to
+--     provide information about LANE V2.0 multiplexing.
+--  objects
+--    lecAtmAddressMuxed
+
+leClientMacAddressesGroupV2 OBJECT IDENTIFIER ::= { leClientMIBGroups 16 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    Objects which extend the lecMacAddressTable to
+--     provide information about LANE V2.0 multiplexing
+--     and TLVs.
+--  objects
+--    lecMacAddressMuxedAtmBinding, lecMacAddressServiceCategory
+
+leClientRouteDescriptorsGroupV2 OBJECT IDENTIFIER ::= { leClientMIBGroups 17 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    An object which extends the lecRouteDescrTable to
+--     provide information about LANE V2.0 multiplexing.
+--  objects
+--    lecRouteDescrMuxedAtmBinding, lecRouteDescrServiceCategory
+
+leClientArpGroupV2 OBJECT IDENTIFIER ::= { leClientMIBGroups 18 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which provide additional
+--     LE-ARP information for LANE Version 2.0.
+--  objects
+--    leArpMuxedAtmAddress, leArpServiceCategory
+
+leClientRDArpGroupV2 OBJECT IDENTIFIER ::= { leClientMIBGroups 19 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects which provide additional
+--     LE-ARP information for LANE Version 2.0.
+--  objects
+--    leRDArpMuxedAtmAddress, leRDArpServiceCategory, 
+--    leRDArpIsRemoteDescriptor
+
+leClientMcForwardGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 20 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects that provide information
+--     on Multicast Forward VCCs belonging to LANE V2.0
+--     clients.
+--  objects
+--    lecMcForwardVerification
+
+leClientMacQueryGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 21 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects that allow a network
+--     manager to find out ATM bindings for a proxy
+--     client's remote MAC address(es).
+--  objects
+--    lecMacQueryLecIndex, lecMacQueryAddress, lecMacQueryStatus, 
+--    lecMacQueryAtmAddress, lecMacQueryMuxedAtmAddress, 
+--    lecMacQueryServiceCategory
+
+leClientRDQueryGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 22 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects that allow a network
+--     manager to find out ATM bindings for a proxy
+--     client's remote route descriptor(s).
+--  objects
+--    lecRDQueryLecIndex, lecRDQuerySegmentID, 
+--    lecRDQueryBridgeNumber, lecRDQueryStatus, 
+--    lecRDQueryAtmAddress, lecRDQueryMuxedAtmAddress, 
+--    lecRDQueryServiceCategory
+
+leClientTlvGroup OBJECT IDENTIFIER ::= { leClientMIBGroups 23 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects that allow a network
+--     manager to see 'interesting' TLV information.
+--  objects
+--    lecTlvType, lecTlvValue, lecTlvRowStatus
+
+leClientMIBCompliance OBJECT IDENTIFIER ::= { leClientMIBCompliances 1 }
+-- MODULE-COMPLIANCE
+--  Status
+--    deprecated
+--  Descr
+--    The original compliance statement for SNMP
+--     entities which supported ATM LAN Emulation
+--     Clients.
+--    
+--     See leClientMIBCompliance2 for the updated
+--     statement.
+--    
+--    For a host to conform to this MIB, it must also implement
+--    
+--    - RFC 1213 - MIB II.
+--    
+--    - Interfaces table entries for each LE Client, as per the
+--    LAN Emulation Client management specification.
+--    
+--    - The AToM MIB (RFC 1695 - Definitions of Managed Objects
+--    for ATM Management), according to the conformance
+--    statements defined in that RFC.
+--    
+--    Optionally, a host may implement
+--    
+--    - RFC 1573 - Evolution of the Interfaces Group of MIB-II.
+--    
+--    - The 'ifRcvAddressGroup' from RFC 1573, which provides a
+--    way to represent and configure interfaces with multiple
+--    addresses.
+--    
+--    See the LAN Emulation Client management specification for
+--    interpretations of RFC 1573 / MIB-II as they apply to LAN
+--    Emulation Clients.
+--  Module
+--    >>current<<
+--   MandGroup
+--    leClientConfigGroup
+--   MandGroup
+--    leClientStatusGroup
+--   MandGroup
+--    leClientMappingGroup
+--   MandGroup
+--    leClientStatisticsGroup
+--   MandGroup
+--    leClientServerVccGroup
+--   MandGroup
+--    leClientAtmAddressesGroup
+--   MandGroup
+--    leClientMacAddressesGroup
+--   MandGroup
+--    leClientArpGroup
+--   OptGroup
+--    leClientRouteDescriptorsGroup
+--   OptGroup
+--    leClientRDArpGroup
+--   ObjVar
+--    lecRowStatus
+--   ObjVar
+--    lecOwner
+--   ObjVar
+--    lecConfigMode
+--   ObjVar
+--    lecConfigLanType
+--   ObjVar
+--    lecConfigMaxDataFrameSize
+--   ObjVar
+--    lecConfigLanName
+--   ObjVar
+--    lecConfigLesAtmAddress
+--   ObjVar
+--    lecControlTimeout
+--   ObjVar
+--    lecMaxUnknownFrameCount
+--   ObjVar
+--    lecMaxUnknownFrameTime
+--   ObjVar
+--    lecVccTimeoutPeriod
+--   ObjVar
+--    lecMaxRetryCount
+--   ObjVar
+--    lecAgingTime
+--   ObjVar
+--    lecForwardDelayTime
+--   ObjVar
+--    lecExpectedArpResponseTime
+--   ObjVar
+--    lecFlushTimeOut
+--   ObjVar
+--    lecPathSwitchingDelay
+--   ObjVar
+--    lecLocalSegmentID
+--   ObjVar
+--    lecMulticastSendType
+--   ObjVar
+--    lecMulticastSendAvgRate
+--   ObjVar
+--    lecMulticastSendPeakRate
+--   ObjVar
+--    lecConnectionCompleteTimer
+--   ObjVar
+--    lecAtmAddressStatus
+--   ObjVar
+--    leArpAtmAddress
+--   ObjVar
+--    leArpEntryType
+--   ObjVar
+--    leArpRowStatus
+--   ObjVar
+--    leRDArpAtmAddress
+--   ObjVar
+--    leRDArpEntryType
+--   ObjVar
+--    leRDArpRowStatus
+
+leClientMIBCompliance2 OBJECT IDENTIFIER ::= { leClientMIBCompliances 2 }
+-- MODULE-COMPLIANCE
+--  Status
+--    mandatory
+--  Descr
+--    The compliance statement for SNMP entities
+--     that support LECs and Version 2 of the LEC
+--     management specification.
+--    
+--    For a host to conform to this MIB, it must also implement
+--    
+--    - RFC 1213 - MIB II.
+--    
+--    - Interfaces table entries for each LE Client, as per the
+--    LAN Emulation Client management specification.
+--    
+--    - The AToM MIB (RFC 1695 - Definitions of Managed Objects
+--    for ATM Management), according to the conformance
+--    statements defined in that RFC.
+--    
+--    Optionally, a host may implement
+--    
+--    - RFC 1573 - Evolution of the Interfaces Group of MIB-II.
+--    
+--    - The 'ifRcvAddressGroup' from RFC 1573, which provides a
+--    way to represent and configure interfaces with multiple
+--    addresses.
+--    
+--    See the LAN Emulation Client management specification for
+--    interpretations of RFC 1573 / MIB-II as they apply to LAN
+--    Emulation Clients.
+--  Module
+--    >>current<<
+--   MandGroup
+--    leClientStatusGroup
+--   MandGroup
+--    leClientMappingGroup
+--   MandGroup
+--    leClientStatisticsGroup
+--   MandGroup
+--    leClientServerVccGroup
+--   MandGroup
+--    leClientAtmAddressesGroup
+--   MandGroup
+--    leClientMacAddressesGroup
+--   MandGroup
+--    leClientArpGroup
+--   MandGroup
+--    leClientConfigGroupV1
+--   MandGroup
+--    leClientConfigGroupV2
+--   MandGroup
+--    leClientStatusGroupV2
+--   MandGroup
+--    leClientStatisticsGroupV2
+--   MandGroup
+--    leClientAtmAddressesGroupV2
+--   MandGroup
+--    leClientMacAddressesGroupV2
+--   MandGroup
+--    leClientArpGroupV2
+--   MandGroup
+--    leClientMcForwardGroup
+--   OptGroup
+--    leClientRouteDescriptorsGroup
+--   OptGroup
+--    leClientRouteDescriptorsGroupV2
+--   OptGroup
+--    leClientRDArpGroup
+--   OptGroup
+--    leClientRDArpGroupV2
+--   OptGroup
+--    leClientMacQueryGroup
+--   OptGroup
+--    leClientRDQueryGroup
+--   OptGroup
+--    leClientTlvGroup
+--   ObjVar
+--    lecRowStatus
+--   ObjVar
+--    lecOwner
+--   ObjVar
+--    lecConfigMode
+--   ObjVar
+--    lecConfigLanType
+--   ObjVar
+--    lecConfigMaxDataFrameSize
+--   ObjVar
+--    lecConfigLanName
+--   ObjVar
+--    lecConfigLesAtmAddress
+--   ObjVar
+--    lecControlTimeout
+--   ObjVar
+--    lecMaxUnknownFrameTime
+--   ObjVar
+--    lecVccTimeoutPeriod
+--   ObjVar
+--    lecMaxRetryCount
+--   ObjVar
+--    lecAgingTime
+--   ObjVar
+--    lecForwardDelayTime
+--   ObjVar
+--    lecExpectedArpResponseTime
+--   ObjVar
+--    lecFlushTimeOut
+--   ObjVar
+--    lecPathSwitchingDelay
+--   ObjVar
+--    lecMulticastSendType
+--   ObjVar
+--    lecMulticastSendAvgRate
+--   ObjVar
+--    lecMulticastSendPeakRate
+--   ObjVar
+--    lecConnectionCompleteTimer
+--   ObjVar
+--    lecConfigLecsAtmAddress
+--   ObjVar
+--    lecInitialControlTimeout
+--   ObjVar
+--    lecControlTimeoutMultiplier
+--   ObjVar
+--    lecV2MaxUnknownFrameCount
+--   ObjVar
+--    lecConfigLocalSegmentID
+--   ObjVar
+--    lecConfigV2Capable
+--   ObjVar
+--    lecConfigSelectiveMulticast
+--   ObjVar
+--    lecForwardDisconnectTimeout
+--   ObjVar
+--    lecConfigLLCMultiplexCapable
+--   ObjVar
+--    lecMinReconfigureDelay
+--   ObjVar
+--    lecMaxReconfigureDelay
+--   ObjVar
+--    lecMaxBusConnectRetries
+--   ObjVar
+--    lecTokenRingExplorerExclude
+--   ObjVar
+--    lecAtmAddressStatus
+--   ObjVar
+--    lecAtmAddressMuxed
+--   ObjVar
+--    leArpAtmAddress
+--   ObjVar
+--    leArpEntryType
+--   ObjVar
+--    leArpRowStatus
+--   ObjVar
+--    leArpMuxedAtmAddress
+--   ObjVar
+--    leArpServiceCategory
+--   ObjVar
+--    leRDArpAtmAddress
+--   ObjVar
+--    leRDArpEntryType
+--   ObjVar
+--    leRDArpRowStatus
+--   ObjVar
+--    leRDArpMuxedAtmAddress
+--   ObjVar
+--    leRDArpServiceCategory
+--   ObjVar
+--    lecTlvType
+--   ObjVar
+--    lecTlvValue
+--   ObjVar
+--    lecTlvRowStatus
+
+
+END
+

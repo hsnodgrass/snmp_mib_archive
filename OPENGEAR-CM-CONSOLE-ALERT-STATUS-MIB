@@ -1,0 +1,304 @@
+-- =====================================================================
+-- == OPENGEAR-CM-CONSOLE-SIGNAL-MIB :                                ==
+-- == Opengear port signal notification Management Information Base   ==
+-- ==                                                                 ==
+-- == (c) Copyright 2005-2009 Opengear Inc.                           ==
+-- =====================================================================
+
+OPENGEAR-CM-CONSOLE-ALERT-STATUS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS 
+	signal FROM OPENGEAR-SMI
+	OBJECT-TYPE FROM SNMPv2-SMI
+	MODULE-IDENTITY FROM SNMPv2-SMI
+	Integer32 FROM SNMPv2-SMI
+	MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+	DisplayString FROM SNMPv2-TC;
+
+ogAlertStatus MODULE-IDENTITY
+       LAST-UPDATED "200912210000Z"
+       ORGANIZATION "Opengear Inc."
+       CONTACT-INFO
+               "Opengear Inc.
+                630 West 9560 South, Suite A,
+                Sandy, UT 84070
+                support@opengear.com"
+       DESCRIPTION
+               "Opengear console connection MIB"
+       REVISION "200912210000Z"
+       DESCRIPTION
+		"Initial revision"
+       ::= { signal 20 }
+
+
+-- === + Textual Conventions + ===========================================
+
+-- DisplayString ::= OCTET STRING
+
+-- =======================================================================
+
+ogSignalAlertStatusTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF SignalAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's serial port signal table."
+	::= { ogAlertStatus 1 }
+
+ogSignalAlertStatusEntry OBJECT-TYPE
+	SYNTAX SignalAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"A console signal entry"
+	INDEX { ogSignalAlertStatusIndex }
+	::= { ogSignalAlertStatusTable 1 }
+
+
+SignalAlertStatusEntry ::= SEQUENCE {
+ 	ogSignalAlertStatusIndex	Integer32,
+ 	ogSignalAlertStatusPort		Integer32,
+ 	ogSignalAlertStatusLabel	DisplayString,
+ 	ogSignalAlertStatusSignalName	DisplayString,
+ 	ogSignalAlertStatusState	Integer32
+
+}
+
+ogSignalAlertStatusIndex OBJECT-TYPE
+	SYNTAX Integer32(0..65535)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index within the table of this alert"
+	::= { ogSignalAlertStatusEntry 1 }
+
+ogSignalAlertStatusPort OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Serial port number on which the signal change occurred"
+	::= { ogSignalAlertStatusEntry 2 }
+
+ogSignalAlertStatusLabel OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The label for the serial port where the signal applies."
+	::= { ogSignalAlertStatusEntry 3 }
+
+ogSignalAlertStatusSignalName OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+	        "The particular signal which changed"
+	::= { ogSignalAlertStatusEntry 4 }
+
+ogSignalAlertStatusState OBJECT-TYPE
+	SYNTAX	INTEGER {
+			off(0),
+			on(1)
+		}
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+	        "The current signal state"
+	::= { ogSignalAlertStatusEntry 5 }
+
+
+ogEnvAlertStatusTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF EnvAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's serial port signal table."
+	::= { ogAlertStatus 2 }
+
+ogEnvAlertStatusEntry OBJECT-TYPE
+	SYNTAX EnvAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"A console environment entry"
+	INDEX { ogEnvAlertStatusIndex }
+	::= { ogEnvAlertStatusTable 1 }
+
+
+EnvAlertStatusEntry ::= SEQUENCE {
+        ogEnvAlertStatusIndex	Integer32,
+ 	ogEnvAlertStatusDevice	DisplayString,
+ 	ogEnvAlertStatusSensor	DisplayString,
+ 	ogEnvAlertStatusOutlet	Integer32,
+ 	ogEnvAlertStatusValue	Integer32,
+ 	ogEnvAlertStatusOldValue	Integer32,
+ 	ogEnvAlertStatusStatus	Integer32
+}
+
+ogEnvAlertStatusIndex OBJECT-TYPE
+	SYNTAX Integer32(0..65535)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index of the environment alert status"
+	::= { ogEnvAlertStatusEntry 1 }
+
+
+ogEnvAlertStatusDevice OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The device the environment alert occurred on."
+	::= { ogEnvAlertStatusEntry 2 }
+
+ogEnvAlertStatusSensor OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The sensor the environment alert occurred on."
+	::= { ogEnvAlertStatusEntry 3 }
+
+ogEnvAlertStatusOutlet OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Outlet of the environment status"
+	::= { ogEnvAlertStatusEntry 4 }
+
+ogEnvAlertStatusValue OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Value of the environment status"
+	::= { ogEnvAlertStatusEntry 5 }
+
+ogEnvAlertStatusOldValue OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Previous value of the environment status"
+	::= { ogEnvAlertStatusEntry 6 }
+
+ogEnvAlertStatusStatus OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"status value of the environment status"
+	::= { ogEnvAlertStatusEntry 7 }
+
+ogNutAlertStatusTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF NutAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's nut (ups) alert table."
+	::= { ogAlertStatus 3 }
+
+ogNutAlertStatusEntry OBJECT-TYPE
+	SYNTAX NutAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"A NUT (ups) entry"
+	INDEX { ogNutAlertStatusIndex }
+	::= { ogNutAlertStatusTable 1 }
+
+NutAlertStatusEntry ::= SEQUENCE {
+        ogNutAlertStatusIndex	Integer32,
+        ogNutAlertStatusPort	Integer32,
+ 	ogNutAlertStatusName	DisplayString,
+ 	ogNutAlertStatusHost	DisplayString,
+ 	ogNutAlertStatusStatus	DisplayString
+}
+
+ogNutAlertStatusIndex OBJECT-TYPE
+	SYNTAX Integer32(0..65535)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index of the nut alert status"
+	::= { ogNutAlertStatusEntry 1 }
+
+ogNutAlertStatusPort OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Serial port of the nut alert"
+	::= { ogNutAlertStatusEntry 2 }
+
+ogNutAlertStatusName OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The UPS name of the nut alert."
+	::= { ogNutAlertStatusEntry 3 }
+
+ogNutAlertStatusHost OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The host of the nut alert."
+	::= { ogNutAlertStatusEntry 4 }
+
+ogNutAlertStatusStatus OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The status of the nut alert."
+	::= { ogNutAlertStatusEntry 5 }
+
+
+-- conformance information
+
+ogAlertStatusConformance OBJECT IDENTIFIER ::= { ogAlertStatus 65535 }
+ogAlertStatusCompliances OBJECT IDENTIFIER ::= { ogAlertStatusConformance 1 }
+ogAlertStatusGroups OBJECT IDENTIFIER ::= { ogAlertStatusConformance 2 }
+
+-- compliance statements
+
+ogAlertStatusCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for the Opengear alert status MIB."
+    MODULE  -- this module
+    MANDATORY-GROUPS { ogBasicAlertStatusGroup  }
+
+   ::= { ogAlertStatusCompliances 1 }
+
+-- units of conformance
+
+ogBasicAlertStatusGroup OBJECT-GROUP
+    OBJECTS { 
+    	ogSignalAlertStatusPort,
+	ogSignalAlertStatusLabel,
+	ogSignalAlertStatusSignalName,
+	ogSignalAlertStatusState,
+	ogEnvAlertStatusDevice,
+	ogEnvAlertStatusSensor,
+	ogEnvAlertStatusOutlet,
+	ogEnvAlertStatusValue,
+	ogEnvAlertStatusOldValue,
+	ogEnvAlertStatusStatus,
+	ogNutAlertStatusPort,
+	ogNutAlertStatusName,
+	ogNutAlertStatusHost,
+	ogNutAlertStatusStatus
+    }
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects to retrieve Opengear alert status."
+    ::= { ogAlertStatusGroups 1 }
+
+
+END

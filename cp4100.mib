@@ -1,0 +1,1270 @@
+--   %Z% %W%  %I%   %G%  %U% */
+--
+-- Copyright 1997 by Crossroads Systems, Inc.
+--
+-- PROPRIETARY RIGHTS of Crossroads Systems, Inc. are involved in the
+-- subject matter of this material.  All manufacturing, reproduction,
+-- use, and sales rights pertaining to this subject matter are
+-- governed by the license agreement.  The buyer or recipient of this
+-- package, implicitly accepts the terms of the license.
+--
+--
+-- Crossroads Storage Bridges and Routers
+
+-- MIB Definitions	SNMPV1
+-- Oct. 7, 1998 Revision 2.2
+
+	Crossroads
+
+--FORCE-INCLUDE <mib.h>
+--FORCE-INCLUDE <snmpdefs.h>
+--FORCE-INCLUDE "mibhand.h"
+
+	DEFINITIONS ::= BEGIN
+
+	IMPORTS
+		enterprises, Counter
+			FROM RFC1155-SMI
+		Integer32, MODULE-IDENTITY
+			FROM SNMPv2-SMI
+		OBJECT-TYPE
+			FROM RFC-1212;
+
+	crossroads MODULE-IDENTITY
+		LAST-UPDATED "9708010000Z"
+		ORGANIZATION "Crossroads Systems, Inc."
+		CONTACT-INFO
+			"Crossroads SUPPORT"
+		DESCRIPTION
+			"Crossroads private mib for 4100 and 4200
+			 Fibre Channel to SCSI Router."
+	::= { enterprises 2512 }
+
+	-- textual conventions
+
+	Boolean ::= INTEGER {
+		true (1),
+		false (2)
+	}
+
+	WorldwideName ::= OCTET STRING (SIZE (9))
+		-- Worldwide Name associated with an FC entity.  It's
+		-- a Network_Destination_ID or Network_Source_ID
+		-- composed of a value up to 60 bits wide, occupying
+		-- the remaining 8 octets while the first octet
+		-- is reserved.  In a future release, the first byte
+		-- will reflect the Network_Address_Authority (NAA)
+
+	NodeWorldwideName ::= WorldwideName
+		-- Node Worldwide Name.
+		-- Each node shall provide a unique WWN
+
+	AddressIdentifier ::= OCTET STRING (SIZE (3))
+		-- Address Identifier. A 24-bit value
+		-- unique on the fabric or FC-AL
+
+	SourceID ::= AddressIdentifier
+
+	FC0Speed ::= INTEGER {
+		oneHundredMegaByte (1),		-- 100 MB/sec
+		twoHundredMegaByte (2),		-- 200 MB/sec
+		fourHundredMegaByte (4)		-- 400 MB/sec
+	}
+
+	-- Transmission rate
+
+	FC0Media ::= INTEGER {
+		single-mode 	(1),
+		multimode-50um	(2),
+		multimode-625um (3),
+		video-cable	(4),
+		miniature-cable	(5),
+		twisted-pair	(6)
+	}
+
+	FC0TransmitterType ::= INTEGER {
+		long-wave-laser		(1),
+		short-wave-laser	(2),
+		long-wave-LED		(3),
+		electrical 		(4)
+	}
+
+	FC0Distance ::= INTEGER {
+		long-distance		(1),
+		intermediate-distance	(2),
+		short-distance		(3)
+	}
+
+	TransmitterState ::= INTEGER {
+		fibre-opened (1),	-- (FC-PH(REV4.3(12.3.1)))
+		not-enabled (2),	-- (FC-PH(REV4.3(12.3.1.1, 5.2.1)))
+		enabling (3),		-- (FC-PH(REV4.3(5.2.1)))
+		working (4),		-- (FC-PH(REV4.3(12.3.2, 5.2.1)))
+		looped (5),		-- (FC-PH(REV4.3(13)))
+		failed (6)		-- (FC-PH(REV4.3(5.2.1, 12.3.5)))
+	}
+
+	-- FC-0, FC-1 Transmitter State (FC-PH(REV4.3(5.2.1, 12.3))).
+
+	ReceiverState ::= INTEGER {
+		synchronization-acquired (1),
+		synchronization-lost (2),
+		reset (3)
+	}
+
+	-- FC-1 Receiver State (FC-PH(REV4.3(12.1))).
+
+	TopologyModel ::= INTEGER {
+		unknown (1),			-- unknown at this point
+		fabric (2),			-- N_Port (old-port)
+		point-to-point (3),		-- N_Port (old-port)
+		arbitrated-loop (4)		-- NL_Port
+	}
+
+	MilliSeconds ::= INTEGER
+
+	ReceiverTransmitterTimeoutValue ::= MilliSeconds
+		-- R_T_TOV (FC-PH(REV4.3(28.2.1))).
+
+
+
+-- Crossroads Systems Private MIB
+
+	crossroads4000series OBJECT IDENTIFIER ::= { crossroads 1 }
+	crossroads4100 OBJECT IDENTIFIER ::= { crossroads4000series 1 }
+
+
+-- Fibre Channel Configuration Group
+
+
+	fcConfigNodeName OBJECT-TYPE
+		SYNTAX  WorldwideName
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Worldwide name of a collection
+			 of N_Ports that comprise a Node."
+	::= { crossroads4100 1 }
+
+	fcConfigNodeNumNPorts OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Number of N_Ports that
+			 comprise the named Node."
+	::= { crossroads4100 2}
+
+
+	fcConfig OBJECT IDENTIFIER ::= { crossroads4100 3 }
+
+	fcConfigEnableReset OBJECT-TYPE
+		SYNTAX  Boolean
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Toggle for software reset.
+			 True indicates that ressetting the
+			 product via SNMP is allowed.
+			 NOTE: each time the product is
+			 initialized this object is set to
+			 FALSE (i.e. it is not sticky)."
+	::= { fcConfig 1}
+
+	fcConfigUseHardAddress OBJECT-TYPE
+		SYNTAX  Boolean
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Toggle for address configuration.
+			 True indicates that configuration
+			 of the source ID is allowed.
+			 False indicates that the source ID
+			 may not be changed."
+	::= { fcConfig 2}
+
+	fcConfigSourceID OBJECT-TYPE
+		SYNTAX  SourceID
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"3 byte Source address.
+			 For arbitrated loop, this will be the
+			 Hard Assigned AL_PA (preceeded by 2 0 bytes).
+			 ex. 0.0.EF"
+	::= { fcConfig 3}
+
+	fcConfigSCSIMode OBJECT-TYPE
+		SYNTAX  INTEGER {
+			scc (1),
+			indexed (2),
+			auto-LUN (3),
+			auto-TGT (4),
+			auto-BUS (5),
+			extender (6),
+			other1 (7),
+			other2 (8)
+		}
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Fibre Channel to SCSI mapping mode."
+	::= { fcConfig 4}
+
+	fcConfigTraceMask OBJECT-TYPE
+		SYNTAX  INTEGER (0 .. 255)
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Trace Level."
+	::= { fcConfig 5}
+
+	fcConfigReset OBJECT-TYPE
+		SYNTAX  Boolean
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Reset the product.  Setting this object
+			 to TRUE will re-start all the software
+			 (similar to powering the product off, then
+			 on).  The reset will only take place if
+			 fcConfigResetEnable is also TRUE.
+			 NOTE: resetting the product will disconnect
+			 all current Fibre Channel connections."
+	::= { fcConfig 6}
+
+	fcConfigCommit OBJECT-TYPE
+		SYNTAX  Boolean
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Commit the configuration values
+			 to the flash memory."
+	::= { fcConfig 7}
+
+	fcConfigFirmwareRevLevel OBJECT-TYPE
+		SYNTAX  OCTET STRING (SIZE (20))	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			" Firmware revision level."
+	::= { fcConfig 8}
+
+	mi OBJECT IDENTIFIER ::= { crossroads4100 4 }
+
+	miSerialBaudRate OBJECT-TYPE
+		SYNTAX  INTEGER {
+			baud-9600 (1),
+			baud-19200 (2),
+			baud-38400 (3),
+			baud-57600 (4),
+			baud-11520 (5)
+		}
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"The baud rate for the serial interface."
+	::= { mi 1 }
+
+	miMACAddress OBJECT-TYPE
+		SYNTAX  OCTET STRING (SIZE (6))
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Physical address (MAC address)."
+	::= { mi 2 }
+
+	miethernetIPAddr OBJECT-TYPE
+		SYNTAX  OCTET STRING (SIZE (4))
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+		"The IP address for this device."
+	::= { mi 3 }
+
+	miethernetIPNetmask OBJECT-TYPE
+		SYNTAX  OCTET STRING (SIZE (4))
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Ethernet Net Mask."
+	::= { mi 4 }
+
+	miTrapIPAddr OBJECT-TYPE
+		SYNTAX  OCTET STRING (SIZE (4))
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"The IP address used for sending traps.
+			 Typically this is the IP address of the
+			 machine which has a network management
+			 program and/or MIB browser."
+	::= { mi 5 }
+
+	miTrapEnable OBJECT-TYPE
+		SYNTAX  Boolean
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Enable/Disable Traps.
+			 If TRUE, traps are sent to the specified
+			 Trap IP Address.
+			 If disabled, no traps will be sent to
+		         the SNMP manager."
+	::= { mi 6 }
+
+	miTrapPriority OBJECT-TYPE
+		SYNTAX  INTEGER {
+			low	(1),
+			medium	(2),
+			high	(3)
+			}
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"The Trap Priority.
+			 All SNMP Events (traps) of this
+		 	 priority (or higher) will be sent
+			 to the specified Trap IP Address."
+	::= { mi 7 }
+
+
+	scsiConfigTable OBJECT-TYPE
+		SYNTAX	SEQUENCE OF SCSIConfigEntry
+		ACCESS	not-accessible
+		STATUS	mandatory
+		DESCRIPTION
+			"A Table containing SCSI Configuration parameters."
+	::= { crossroads4100 5 }
+
+	scsiConfigEntry OBJECT-TYPE
+		SYNTAX	SCSIConfigEntry
+		ACCESS	not-accessible
+		STATUS	mandatory
+		DESCRIPTION
+			"An entry in the SCSI Configuration Table."
+		INDEX { scsiConfigIndex }
+	::= { scsiConfigTable 1 }
+
+	SCSIConfigEntry ::=
+		SEQUENCE {
+			scsiConfigIndex
+				INTEGER,
+			scsiConfigInitID
+				INTEGER,
+			scsiConfigTargetIDAdd
+				INTEGER,
+			scsiConfigTargetIDRemove
+				INTEGER
+	}
+
+	scsiConfigIndex OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+		"Index into the SCSI Configuration Table."
+	::= { scsiConfigEntry 1 }
+
+	scsiConfigInitID OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Initiator SCSI ID."
+	::= { scsiConfigEntry 2 }
+
+	scsiConfigTargetIDAdd OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Get will return a mask of SCSI
+			 target ID's.  A mask has a bit set for
+			 each target ID which is in use.  Example:
+			 Get returns 133 = 0x0085 = 0000 0000 1000 0101
+			 indicating target ID's are 7, 2 and 0.
+			 Set allows you to set SCSI target ID's,
+			 by setting the appropriate bit in the mask.
+			 NOTE: this object only allows you to Add targets,
+			 a 0 in the mask will not remove a target."
+	::= { scsiConfigEntry 3}
+
+	scsiConfigTargetIDRemove OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Get will return a mask of SCSI
+			 target ID's.  A mask has a bit set for
+			 each target ID which is in use.  Example:
+			 Get returns 133 = 0x0085 = 0000 0000 1000 0101
+			 indicating target ID's are 7, 2 and 0.
+			 Set allows you to remove SCSI target ID's,
+			 by setting the appropriate bit in the mask.
+			 The SCSI ID you set in the mask will no
+			 longer be a target."
+	::= { scsiConfigEntry 4}
+
+	fctoSCSIMapTable OBJECT-TYPE
+		SYNTAX  SEQUENCE OF FCtoSCSIMapEntry
+		ACCESS  not-accessible
+		STATUS  mandatory
+		DESCRIPTION
+			"A Table containing the Fibre Channel to SCSI Map."
+	::= { crossroads4100 6 }
+
+	fctoSCSIMapEntry OBJECT-TYPE
+		SYNTAX  FCtoSCSIMapEntry
+		ACCESS  not-accessible
+		STATUS  mandatory
+		DESCRIPTION
+			"An entry in the Fibre Channel to SCSI Map Table."
+		INDEX { fctoSCSIMapIndex }
+	::= { fctoSCSIMapTable 1 }
+
+	FCtoSCSIMapEntry ::=
+		SEQUENCE {
+			fctoSCSIMapIndex
+				INTEGER,
+			fctoSCSIbus
+				INTEGER,
+			fctoSCSItarget
+				INTEGER,
+			fctoSCSILUN
+				INTEGER
+		}
+
+	fctoSCSIMapIndex OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Index into the Fibre Channel to SCSI Map (FC LUN)."
+	::= { fctoSCSIMapEntry 1 }
+
+	fctoSCSIbus OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"SCSI bus number."
+	::= { fctoSCSIMapEntry 2 }
+
+	fctoSCSItarget OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"SCSI ID."
+	::= { fctoSCSIMapEntry 3}
+
+	fctoSCSILUN OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"SCSI LUN."
+	::= { fctoSCSIMapEntry 4 }
+
+
+	scsitoFCMappingTable OBJECT-TYPE
+		SYNTAX  SEQUENCE OF SCSItoFCMappingEntry
+		ACCESS	not-accessible
+		STATUS  mandatory
+		DESCRIPTION
+			"A Table containing information
+			 describing how SCSI channels
+	 		 are mapped to the Fibre Channel."
+		::= { crossroads4100 7 }
+
+	scsitoFCMapEntry OBJECT-TYPE
+		SYNTAX	SCSItoFCMappingEntry
+		ACCESS	not-accessible
+		STATUS	mandatory
+		DESCRIPTION
+			"An entry in the SCSI to FC Mapping Table."
+		INDEX {
+			scsitoFCMapIndexBus,
+			scsitoFCMapIndexSCSIID,
+			scsitoFCMapIndexLUN
+		}
+	::= { scsitoFCMappingTable 1 }
+
+	SCSItoFCMappingEntry ::=
+		SEQUENCE {
+			scsitoFCMapIndexBus
+				INTEGER,
+			scsitoFCMapIndexSCSIID
+				INTEGER,
+			scsitoFCMapIndexLUN
+				INTEGER,
+			scsitoFCMapDestID
+				INTEGER,
+			scsitoFCMapLUNlo
+				Integer32,
+			scsitoFCMapLUNhi
+				Integer32
+			}
+
+
+	scsitoFCMapIndexBus OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Index into the SCSItoFC Map.  SCSI bus number."
+	::= { scsitoFCMapEntry 1 }
+
+	scsitoFCMapIndexSCSIID OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Index into the SCSItoFC Map.  SCSI ID."
+	::= { scsitoFCMapEntry 2 }
+
+	scsitoFCMapIndexLUN OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Index into the SCSItoFC Map.  SCSI LUN."
+	::= { scsitoFCMapEntry 3 }
+
+	scsitoFCMapDestID OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"The Fibre Channel Node number
+			 for the destination."
+	::= { scsitoFCMapEntry 4 }
+
+
+	scsitoFCMapLUNlo OBJECT-TYPE
+		SYNTAX  Integer32
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"SCSI LUN low bytes."
+	::= { scsitoFCMapEntry 5 }
+
+	scsitoFCMapLUNhi OBJECT-TYPE
+		SYNTAX  Integer32
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"SCSI LUN high bytes."
+	::= { scsitoFCMapEntry 6 }
+
+	fcNPortPhysTable OBJECT-TYPE
+		SYNTAX		SEQUENCE OF FcNPortPhysEntry
+		ACCESS		not-accessible
+		STATUS		mandatory
+		DESCRIPTION
+			" A Table containing N_Port
+			physical characteristics and status."
+		::= { crossroads4100 8}
+
+	fcNPortPhysEntry OBJECT-TYPE
+		SYNTAX	FcNPortPhysEntry
+		ACCESS	not-accessible
+		STATUS	mandatory
+		DESCRIPTION
+			" An entry in the N_Port
+			Physical Characteristics Table."
+		INDEX { fcNPortPhysNPortIndex }
+		::= {fcNPortPhysTable 1 }
+
+	FcNPortPhysEntry ::=
+		SEQUENCE {
+			fcNPortPhysNPortIndex
+				INTEGER,
+			fcNPortSpeed
+				FC0Speed,
+			fcNPortMedia
+				FC0Media,
+			fcNPortTransmitterType
+				FC0TransmitterType,
+			fcNPortDistance
+				FC0Distance,
+			fcNPortLinkState
+				INTEGER,
+			fcNPortRTTOV
+				ReceiverTransmitterTimeoutValue,
+			fcNPortTopologyModel
+				TopologyModel
+		}
+
+	fcNPortPhysNPortIndex OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"A unique number that identifies
+			 an N_Port/NL_Port.  This number
+			 ranges from 1 to the value
+			 of fcNodeNumNPorts and its value
+			 remains constant for the identified
+			 N_Port/NL_Port until the management
+			 agent of the Node is re-initialized."
+	::= { fcNPortPhysEntry 1 }
+
+	fcNPortSpeed OBJECT-TYPE
+		SYNTAX  FC0Speed
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"The transmission rate,
+			 an FC-0 physical characteristic."
+	::= { fcNPortPhysEntry 2 }
+
+	fcNPortMedia OBJECT-TYPE
+		SYNTAX  FC0Media
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Type of media, an FC-0 physical characteristics."
+	::= { fcNPortPhysEntry 3 }
+
+	fcNPortTransmitterType OBJECT-TYPE
+		SYNTAX  FC0TransmitterType
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Type of transmitter,
+			 an FC-0 physical characteristics."
+	::= { fcNPortPhysEntry 4 }
+
+	fcNPortDistance OBJECT-TYPE
+		SYNTAX  FC0Distance
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"The maximum distance,
+			 an FC-0 physical characteristics."
+	::= { fcNPortPhysEntry 5 }
+
+	fcNPortLinkState OBJECT-TYPE
+		SYNTAX  INTEGER {
+			pending	(1),
+			failed	(2),
+			successful (3)
+		}
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"The state of the FC link.
+			 Pending indicates that the initialization
+			 is still pending.  Failed indicates that
+			 link initialization has failed.
+			 Successful indicates that the FC Link has
+			 initialized successfully."
+	::= { fcNPortPhysEntry 6 }
+
+	fcNPortRTTOV OBJECT-TYPE
+		SYNTAX  ReceiverTransmitterTimeoutValue
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Receiver_Transmitter timeout value,
+			 used by the receiver logic to detect
+			 Loss of Synchronization."
+	::= { fcNPortPhysEntry 7 }
+
+	fcNPortTopologyModel OBJECT-TYPE
+		SYNTAX  TopologyModel
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"The topology model on the Link.
+			 The N_Port/NL_Port may be attached
+			 to a Fabric, or attached to another
+			 N_Port or to FC-AL (Arbitrated Loop).
+			 This value is only meaningful if the FC
+			 Link has initialized successfully.
+			 (i.e. fcNportLinkState = Successful)"
+	::= { fcNPortPhysEntry 8 }
+
+	scsiStatisticsTable OBJECT-TYPE
+		SYNTAX  SEQUENCE OF SCSIStatisticsEntry
+		ACCESS	not-accessible
+		STATUS  mandatory
+		DESCRIPTION
+			"A Table containing SCSI Statistics."
+	::= { crossroads4100 9}
+
+	scsiStatsEntry OBJECT-TYPE
+		SYNTAX  SCSIStatisticsEntry
+		ACCESS	not-accessible
+		STATUS  mandatory
+		DESCRIPTION
+			"An entry in the SCSI Statistics Table."
+		INDEX { scsiStatsIndex }
+	::= {scsiStatisticsTable 1 }
+
+	SCSIStatisticsEntry ::=
+		SEQUENCE {
+			scsiStatsIndex			
+				INTEGER,
+			scsiStatsIOs
+				Counter,
+			scsiStatsDisconnects
+				Counter,
+			scsiStatsAbortCount
+				Counter,
+			scsiStatsBusResets
+				Counter
+		}
+
+	scsiStatsIndex OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Index into the SCSI Statistics Table.
+			 The SCSI bus number."
+	::= { scsiStatsEntry 1 }
+
+	scsiStatsIOs OBJECT-TYPE
+		SYNTAX  Counter
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"The number of IOs on the SCSI bus."
+	::= { scsiStatsEntry 2 }
+
+	scsiStatsDisconnects OBJECT-TYPE
+		SYNTAX  Counter
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"The number of Disconnects on the SCSI bus."
+	::= { scsiStatsEntry 3 }
+
+	scsiStatsAbortCount OBJECT-TYPE
+		SYNTAX  Counter
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"The of SCSI bus termination messages
+			 (i.e. ABORT, ABORT TAG, CLEAR QUEUE,
+			 BUS DEVICE RESET) which have terminated
+			 I/O processes."
+	::= { scsiStatsEntry 4 }
+
+	scsiStatsBusResets OBJECT-TYPE
+		SYNTAX  Counter
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"The count of SCSI bus resets."
+	::= { scsiStatsEntry 5 }
+
+	scsiCfg OBJECT IDENTIFIER ::= { crossroads4100 10 }
+
+	scsiCfgResetFlag OBJECT-TYPE
+		SYNTAX  Boolean
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Toggle SCSI Reset Operation.  TRUE indicates
+			 that the SCSI bus will be reset on boot."
+	::= { scsiCfg 1 }
+
+	scsiCfgDiscDelay OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-write
+		STATUS  mandatory
+		DESCRIPTION
+			"Initial Discovery Delay.
+			 The amount of time (in msec) the system will
+			 wait before beginning the SCSI Discovery process."
+	::= { scsiCfg 2 }
+
+	scsiProductDataTable OBJECT-TYPE
+		SYNTAX  SEQUENCE OF SCSIPDEntry
+		ACCESS  not-accessible
+		STATUS  mandatory
+		DESCRIPTION
+			"A Table containing SCSI Product Data."
+	::= { crossroads4100 11}
+
+	scsiPDEntry OBJECT-TYPE
+		SYNTAX  SCSIPDEntry
+		ACCESS  not-accessible
+		STATUS  mandatory
+		DESCRIPTION
+			"An entry in the SCSI Product Data Table."
+		INDEX { scsiPDIndex }
+	::= {scsiProductDataTable 1 }
+
+	SCSIPDEntry ::=
+		SEQUENCE {
+			scsiPDIndex			
+				INTEGER,
+			scsiPDBus
+				INTEGER,
+			scsiPDTarget
+				INTEGER,
+			scsiPDLun
+				INTEGER,
+			scsiPDVendorID
+				OCTET STRING (SIZE (8) ),
+			scsiPDProductID
+				OCTET STRING (SIZE (16)),
+			scsiPDRevLevel
+				OCTET STRING (SIZE (4) ),
+			scsiPDDeviceCode
+				INTEGER,
+			scsiPDQualifier
+				INTEGER,
+			scsiPDRemoveableMedia
+				Boolean,
+			scsiPDANSIVersion
+				INTEGER,
+			scsiPDECMAVersion
+				INTEGER,
+			scsiPDISOVersion
+				INTEGER,
+			scsiPDRespFormat
+				INTEGER,
+			scsiPDLength
+				INTEGER,
+			scsiPDSoftReset
+				Boolean,
+			scsiPDCommandQing
+				Boolean,
+			scsiPDLinkedCommands
+				Boolean,
+			scsiPDSyncTransfer
+				Boolean,
+			scsiPD16Bit
+				Boolean,
+			scsiPD32Bit
+				Boolean,
+			scsiPDRelativeAddr
+				Boolean
+		}
+		
+	scsiPDIndex OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Index into the SCSI Product Data Table.
+			 The SCSI LUN."
+	::= { scsiPDEntry 1 }
+
+	scsiPDBus OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"SCSI Bus number.
+			 Always 0 if your unit only has one SCSI Bus. "
+	::= { scsiPDEntry 2 }
+
+	scsiPDTarget OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"SCSI Target ID."
+	::= { scsiPDEntry 3 }
+
+	scsiPDLun OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"SCSI Target Lun."
+	::= { scsiPDEntry 4 }
+
+	scsiPDVendorID OBJECT-TYPE
+		SYNTAX  OCTET STRING (SIZE (8))	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Vendor ID."	
+	::= { scsiPDEntry 5 }
+
+	scsiPDProductID OBJECT-TYPE
+		SYNTAX  OCTET STRING (SIZE (16))	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Product ID."	
+	::= { scsiPDEntry 6 }
+
+	scsiPDRevLevel OBJECT-TYPE
+		SYNTAX  OCTET STRING (SIZE (4))	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Revision Level."	
+	::= { scsiPDEntry 7 }
+
+	scsiPDDeviceCode OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Device type code."	
+	::= { scsiPDEntry 8 }
+
+	scsiPDQualifier OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Device type qualifier."	
+	::= { scsiPDEntry 9 }
+
+	scsiPDRemoveableMedia OBJECT-TYPE
+		SYNTAX  Boolean
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Removeable Media."	
+	::= { scsiPDEntry 10 }
+
+	scsiPDANSIVersion OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Device type version."	
+	::= { scsiPDEntry 11 }
+
+	scsiPDECMAVersion OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Device type version."	
+	::= { scsiPDEntry 12 }
+
+	scsiPDISOVersion OBJECT-TYPE
+		SYNTAX  INTEGER
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Device type version."	
+	::= { scsiPDEntry 13 }
+
+	scsiPDRespFormat OBJECT-TYPE
+		SYNTAX  INTEGER	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Response Format."	
+	::= { scsiPDEntry 14 }
+
+	scsiPDLength OBJECT-TYPE
+		SYNTAX  INTEGER	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Additional data length."	
+	::= { scsiPDEntry 15 }
+
+	scsiPDSoftReset OBJECT-TYPE
+		SYNTAX  Boolean	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Support for Soft reset."	
+	::= { scsiPDEntry 16 }
+	
+	scsiPDCommandQing OBJECT-TYPE
+		SYNTAX  Boolean	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Support for Command Queuing."	
+	::= { scsiPDEntry 17 }
+
+	scsiPDLinkedCommands OBJECT-TYPE
+		SYNTAX  Boolean	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Support for Linked Commands."	
+	::= { scsiPDEntry 18 }
+	
+	scsiPDSyncTransfer OBJECT-TYPE
+		SYNTAX  Boolean	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Support for Sync transfer."	
+	::= { scsiPDEntry 19 }
+	
+	scsiPD16Bit OBJECT-TYPE
+		SYNTAX  Boolean	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"16 bit wide SCSI support."	
+	::= { scsiPDEntry 20 }
+	
+	scsiPD32Bit OBJECT-TYPE
+		SYNTAX  Boolean	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"32 bit wide SCSI support."	
+	::= { scsiPDEntry 21 }
+	
+	scsiPDRelativeAddr OBJECT-TYPE
+		SYNTAX  Boolean	
+		ACCESS  read-only
+		STATUS  mandatory
+		DESCRIPTION
+			"Support for Relative address."	
+	::= { scsiPDEntry 22 }
+
+
+
+	fcNPortStatisticsTable OBJECT-TYPE
+		SYNTAX	SEQUENCE OF FcNPSEntry
+		ACCESS not-accessible
+		STATUS	mandatory
+		DESCRIPTION
+			"A table of NPort statistics."
+		::= { crossroads4100 12}
+
+	fcNPSEntry OBJECT-TYPE
+		SYNTAX	FcNPSEntry
+		ACCESS not-accessible
+		STATUS	mandatory
+		DESCRIPTION
+			"An entry in the NPort statistics table."
+		INDEX {fcNPSIndex }
+		::= {fcNPortStatisticsTable 1}
+
+	FcNPSEntry ::=
+		SEQUENCE {
+			fcNPSIndex
+				INTEGER,
+			fcNPSInDeviceDataSeqs
+				Counter,
+			fcNPSOutDeviceDataSeqs
+				Counter,
+			fcNPSInLinkDataSeqs
+				Counter,
+			fcNPSOutLinkDataSeqs
+				Counter,
+			fcNPSInPBSYFrames
+				Counter,
+			fcNPSOutPBSYFrames
+				Counter,
+			fcNPSInFBSYFrames
+				Counter,
+			fcNPSInPRJTFrames
+				Counter,
+			fcNPSOutPRJTFrames
+				Counter,
+			fcNPSLinkDown
+				Counter,
+			fcNPSInAborts
+				Counter,
+			fcNPSOutAborts
+				Counter,
+			fcNPSLaserFaults
+				Counter,
+			fcNPSLOS
+				Counter,
+			fcNPSSync
+				Counter,
+			fcNPSBadRXChars
+				Counter,
+			fcNPSLinkFail
+				Counter,
+			fcNPSBadCRC
+				Counter,
+			fcNPSProtoErrors
+				Counter
+		}
+
+        fcNPSIndex OBJECT-TYPE
+            SYNTAX  INTEGER
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "A unique number that identifies
+			an N_Port. This number
+                     	ranges from 1 to the value
+			of fcNodeNumNPorts and
+                     	its value remains constant
+			for the identified N_Port
+                     	until the management agent
+			of the Node is re-initialized."
+            ::= { fcNPSEntry 1 }
+
+        fcNPSInDeviceDataSeqs OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "The number of Device Data sequences
+			received by this N_Port/NL_Port."
+            ::= { fcNPSEntry 2 }
+
+        fcNPSOutDeviceDataSeqs OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "The number of Device Data sequences
+			transmitted by this N_Port/NL_Port."
+      	  ::= { fcNPSEntry 3 }
+
+        fcNPSInLinkDataSeqs OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "The number of Link Data sequences
+			received by this N_Port/NL_Port."
+            ::= { fcNPSEntry 4 }
+
+        fcNPSOutLinkDataSeqs OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "The number of Link Data sequences
+			transmitted by this N_Port/NL_Port."
+            ::= { fcNPSEntry 5 }
+
+        fcNPSInPBSYFrames OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "The number of P_BSY frames received
+			by this N_Port/NL_Port."
+            ::= { fcNPSEntry 6 }
+
+        fcNPSOutPBSYFrames OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "The number of P_BSY frames transmitted
+			by this N_Port/NL_Port."
+            ::= { fcNPSEntry 7 }
+
+        fcNPSInFBSYFrames OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "The number of F_BSY frames received
+			by this N_Port/NL_Port."
+            ::= { fcNPSEntry 8 }
+
+        fcNPSInPRJTFrames OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "The number of P_RJT frames
+			received by this N_Port/NL_Port."
+            ::= { fcNPSEntry 9}
+
+	fcNPSOutPRJTFrames OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "The number of P_RJT frames
+			transmitted by this N_Port."
+	::= { fcNPSEntry 10 }
+
+	fcNPSLinkDown OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of Link down conditions detected."
+	::= { fcNPSEntry 11 }
+
+	fcNPSInAborts OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of ABTS frames received."
+	::= { fcNPSEntry 12 }
+
+	fcNPSOutAborts OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of ABTS frames sent."
+	::= { fcNPSEntry 13 }
+
+	fcNPSLaserFaults OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of laser faults."
+	::= { fcNPSEntry 14 }
+
+	fcNPSLOS OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of times Loss of Signal
+			was detected."
+	::= { fcNPSEntry 15 }
+
+	fcNPSSync OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of times Loss of Sync.
+			was detected."
+	::= { fcNPSEntry 16 }
+
+	fcNPSBadRXChars OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of bad characters received."
+	::= { fcNPSEntry 17 }
+
+	fcNPSLinkFail OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of Link Failure conditions."
+	::= { fcNPSEntry 18 }
+
+	fcNPSBadCRC OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of frames received with a bad CRC."
+	::= { fcNPSEntry 19 }
+
+	fcNPSProtoErrors OBJECT-TYPE
+            SYNTAX  Counter
+            ACCESS  read-only
+            STATUS  mandatory
+            DESCRIPTION
+                    "Number of protocol errors detected."
+	::= { fcNPSEntry 20 }
+
+END

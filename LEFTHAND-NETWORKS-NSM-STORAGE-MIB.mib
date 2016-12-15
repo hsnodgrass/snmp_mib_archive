@@ -1,0 +1,767 @@
+-- ****************************************************************************
+-- LEFTHAND-NETWORKS-NSM-STORAGE-MIB
+-- Management Information Base for SNMP Network Management
+--
+-- This MIB provides storage (disk, RAID) information for a storage node.
+
+-- This MIB must be loaded after:
+--                                LEFTHAND-NETWORKS-GLOBAL-REG-MIB.mib
+--                                LEFTHAND-NETWORKS-NSM-MIB.mib
+--
+-- The LeftHand Networks Enterprise number is 9804.
+-- The ASN.1 prefix to, and including the LeftHand Networks Enterprise is:
+--     1.3.6.1.4.1.9804
+-- ****************************************************************************
+-- Copyright 2009,2010 Hewlett-Packard Development Company, L.P.
+-- Copyright 2008,2009 LeftHand Networks, Inc.
+-- All Rights Reserved.
+--
+-- Hewlett-Packard Company shall not be liable for technical or
+-- editorial errors or omissions contained herein. The information in
+-- this document is provided "as is" without warranty of any kind and
+-- is subject to change without notice. The warranties for HP products
+-- are set forth in the express limited warranty statements
+-- accompanying such products. Nothing herein should be construed as
+-- constituting an additional warranty.
+--
+-- Confidential computer software. Valid license from HP required for
+-- possession, use or copying. Consistent with FAR 12.211 and 12.212,
+-- Commercial Computer Software, Computer Software Documentation, and
+-- Technical Data for Commercial Items are licensed to the U.S.
+-- Government under vendor's standard commercial license.
+-- ****************************************************************************
+
+-- ****************************************************************************
+-- The HP Insight Manager MIBs contain more information
+--
+-- CPQHOST-MIB: .1.3.6.1.4.1.232
+-- ****************************************************************************
+
+LEFTHAND-NETWORKS-NSM-STORAGE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32, Gauge32, Counter64
+		FROM SNMPv2-SMI
+	OBJECT-GROUP, MODULE-COMPLIANCE
+		FROM SNMPv2-CONF
+	TEXTUAL-CONVENTION, DisplayString, RowStatus, TruthValue
+		FROM SNMPv2-TC
+	CounterBasedGauge64
+		FROM HCNUM-TC
+	lhnModules, lhnNsm
+		FROM LEFTHAND-NETWORKS-GLOBAL-REG-MIB
+	lhnNsmStorage
+		FROM LEFTHAND-NETWORKS-NSM-MIB;
+
+-- lhnNsm is imported but never used, this will create a smilint warning
+-- however, it's necessary for some MIB compilers
+
+--
+-- Module definition and a brief description about this mib.
+--
+lhnNsmStorageModule MODULE-IDENTITY
+    LAST-UPDATED        "201006230000Z"
+    ORGANIZATION        "Hewlett Packard Company, StorageWorks Division"
+    CONTACT-INFO        "Product Support
+                         Product URL: www.hp.com/go/p4000
+                         Support URL: www.itrc.hp.com
+                         Product Phone: www.hp.com/go/contact
+                                        1-800-786-7967 (US only)
+                         Support Phone: www.hp.com/go/contact
+                                        1-800-334-5144 (US only)"
+    DESCRIPTION         "HP StorageWorks P4000 Storage Information"
+    REVISION            "201006230000Z"
+    DESCRIPTION         "SAN/iQ 7.0, SAN/iQ 8.0, SAN/iQ 8.1, SAN/iQ 8.5"
+
+	::= { lhnModules 5 }
+
+--******************************************************************************
+--
+-- Conformance
+--
+--******************************************************************************
+
+lhnNsmStorageModuleConformance OBJECT IDENTIFIER
+	::= { lhnNsmStorageModule 1 }
+
+lhnNsmStorageModuleCompliances OBJECT IDENTIFIER
+	::= { lhnNsmStorageModuleConformance 1 }
+
+lhnNsmStorageModuleGroups OBJECT IDENTIFIER
+	::= { lhnNsmStorageModuleConformance 2 }
+
+lefthandNetworksNsmStorageMibCompliance MODULE-COMPLIANCE
+	STATUS current
+	DESCRIPTION "The compliance statement."
+	MODULE
+	MANDATORY-GROUPS {
+			lefthandNetworksNsmStorageGroup
+		}
+	::= { lhnNsmStorageModuleCompliances 1 }
+
+lefthandNetworksNsmStorageGroup OBJECT-GROUP
+	OBJECTS {           
+					storageDeviceCount,
+					storageDeviceModel,
+					storageDeviceClass,
+					storageDeviceMode,
+					storageDeviceSerialNumber,
+					storageDeviceTemperature,
+					storageDeviceTemperatureCritical,
+					storageDeviceTemperatureLimit,
+					storageDeviceTemperatureStatus,
+					storageDeviceLabel,
+					storageDeviceName,
+					storageDeviceRaidDevice,
+					storageDeviceFirmwareVersion,
+					storageDeviceSmartHealth,
+					storageDeviceSmartHealthStatus,
+					storageDeviceCapacity,
+					storageDeviceHotRemovable,
+					storageDeviceState,
+					storageDeviceStatus,
+					storageRaidCount,
+					storageRaidDeviceName,
+					storageRaidLevel,
+					storageRaidDiskCount,
+					storageRaidDisks,
+					storageRaidDevice,
+					storageRaidDeviceCapacity,
+					storageRaidDeviceParityInitState,
+					storageRaidRebuildPercent,
+					storageRaidRebuildTime,
+					storageRaidDeviceState,
+					storageRaidDeviceStatus,
+					storageRaidDescription,
+					storageRaidMode,
+					storageRaidCapacity,
+					storageRaidStatus,
+					storageRaidState,
+					storageRaidMinimumSpeed,
+					storageRaidMaximumSpeed,
+					storageRaidStatsIOsRead,
+					storageRaidStatsIOsWrite,
+					storageRaidStatsKbytesRead,
+					storageRaidStatsKbytesWrite,
+					storageRaidStatsQDepthTotal,
+					storageRaidStatsIoLatencyRead,
+					storageRaidStatsIoLatencyWrite,
+					storageOsRaidCount,
+					storageOsRaidName,
+					storageOsRaidDevice,
+					storageOsRaidMode,
+					storageOsRaidSize,
+					storageOsRaidState
+			}
+	STATUS              current
+	DESCRIPTION         "The default group for all NSM Storage objects."
+	::= { lhnNsmStorageModuleGroups 1 }
+
+lefthandNetworksNsmStorageGroupObsolete OBJECT-GROUP
+	OBJECTS {           
+					storageDeviceCapacityInBytes,
+					storageDeviceChain,
+					storageDeviceRowStatus,
+					storageRaidSpareDiskCount,
+					storageRaidSuperBlock,
+					storageRaidChunkSize,
+					storageRaidParityInitState,
+					storageRaidDeviceRowStatus,
+					storageOsRaidRowStatus
+			}
+	STATUS              obsolete
+	DESCRIPTION         "The group for all obsolete NSM Storage objects."
+	::= { lhnNsmStorageModuleGroups 2 }
+
+--******************************************************************************
+--
+-- Storage Module Objects
+--
+--******************************************************************************
+
+--
+-- Device Table Definitions
+--
+
+storageDeviceCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of storage devices."
+	::= { lhnNsmStorage 1 }
+
+storageDeviceTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF StorageDeviceEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of storage devices for the NSM. The
+						number of devices is given by storageDeviceCount."
+	::= { lhnNsmStorage 2 }
+
+storageDeviceEntry OBJECT-TYPE
+	SYNTAX              StorageDeviceEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A row of storage device information."
+	INDEX               {
+							storageDeviceIndex
+						}
+	::= { storageDeviceTable 1 }
+
+	StorageDeviceEntry ::= SEQUENCE {
+		storageDeviceIndex					Unsigned32,
+		storageDeviceModel					DisplayString,
+		storageDeviceClass					DisplayString,
+		storageDeviceCapacityInBytes		CounterBasedGauge64,
+		storageDeviceMode					DisplayString,
+		storageDeviceChain					DisplayString,
+		storageDeviceSerialNumber			DisplayString,
+		storageDeviceTemperature			Gauge32,
+		storageDeviceTemperatureCritical	Integer32,
+		storageDeviceTemperatureLimit		Integer32,
+		storageDeviceTemperatureStatus		INTEGER,
+		storageDeviceLabel					DisplayString,
+		storageDeviceName					DisplayString,
+		storageDeviceRaidDevice				DisplayString,
+		storageDeviceFirmwareVersion		DisplayString,
+		storageDeviceSmartHealth			DisplayString,
+		storageDeviceSmartHealthStatus		INTEGER,
+		storageDeviceCapacity				Integer32,
+		storageDeviceHotRemovable			TruthValue,
+		storageDeviceState					DisplayString,
+		storageDeviceStatus					INTEGER,
+		storageDeviceRowStatus				RowStatus
+	}
+
+	storageDeviceIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the storageDeviceTable table."
+		::= { storageDeviceEntry 1 }
+
+	storageDeviceModel OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device model."
+		::= { storageDeviceEntry 2 }
+
+	storageDeviceClass OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device class describes the interface type and speed."
+		::= { storageDeviceEntry 3 }
+
+	storageDeviceCapacityInBytes OBJECT-TYPE
+		SYNTAX              CounterBasedGauge64
+		UNITS               "Blocks (512 bytes)"
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The capacity of the device. Obsolete in SAN/iQ 8.5. Use 'storageDeviceCapacity'."
+		::= { storageDeviceEntry 4 }
+
+	storageDeviceMode OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device mode. Posible modes are: active, inactive, hot spare, rebuilding, uninitialized, foreign"
+		::= { storageDeviceEntry 5 }
+
+    storageDeviceChain OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              obsolete
+        DESCRIPTION         "The storage device chain. Obsolete in SAN/iQ 8.5."
+        ::= { storageDeviceEntry 6 }
+
+	storageDeviceSerialNumber OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device serial number."
+		::= { storageDeviceEntry 7 }
+
+	storageDeviceTemperature OBJECT-TYPE
+		SYNTAX              Gauge32
+		UNITS               "Celsius"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device temperature."
+		::= { storageDeviceEntry 9 }
+
+	storageDeviceTemperatureCritical OBJECT-TYPE
+		SYNTAX              Integer32
+		UNITS               "Celsius"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The value where the temperature becomes critical."
+		::= { storageDeviceEntry 10 }
+
+	storageDeviceTemperatureLimit OBJECT-TYPE
+		SYNTAX              Integer32
+		UNITS               "Celsius"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The maximum temperature that can be tolerated."
+		::= { storageDeviceEntry 11 }
+
+	storageDeviceTemperatureStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device temperature status."
+		::= { storageDeviceEntry 12 }
+
+	storageDeviceLabel OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The the device bay/slot label."
+		::= { storageDeviceEntry 13 }
+
+	storageDeviceName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device name."
+		::= { storageDeviceEntry 14 }
+
+	storageDeviceRaidDevice OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID device LUN for the storage device."
+		::= { storageDeviceEntry 15 }
+
+	storageDeviceFirmwareVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device firmware version."
+		::= { storageDeviceEntry 16 }
+
+	storageDeviceSmartHealth OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device SMART health status. Possible values are: normal, marginal, faulty"
+		::= { storageDeviceEntry 17 }
+
+	storageDeviceSmartHealthStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device SMART health status."
+		::= { storageDeviceEntry 18 }
+
+	storageDeviceCapacity OBJECT-TYPE
+		SYNTAX              Integer32
+		UNITS               "MB"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The capacity of the device."
+		::= { storageDeviceEntry 19 }
+
+	storageDeviceHotRemovable OBJECT-TYPE
+		SYNTAX              TruthValue
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The hot removable status of the device."
+		::= { storageDeviceEntry 20 }
+
+	storageDeviceState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device (presence) state. Possible values are: on_and_secured, off_and_secured, off_or_removed"
+		::= { storageDeviceEntry 90 }
+
+	storageDeviceStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The device status."
+		::= { storageDeviceEntry 91 }
+
+	storageDeviceRowStatus OBJECT-TYPE
+		SYNTAX         RowStatus
+		MAX-ACCESS     read-only
+		STATUS         obsolete
+		DESCRIPTION    "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { storageDeviceEntry 99 }
+
+--
+-- RAID Table Definitions
+--
+
+storageRaidCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of RAID devices (controllers)."
+	::= { lhnNsmStorage 3 }
+
+storageRaidTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF StorageRaidEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of RAID devices (controllers) for the NSM. The
+						number of devices is given by storageRaidCount."
+	::= { lhnNsmStorage 4 }
+
+storageRaidEntry OBJECT-TYPE
+	SYNTAX              StorageRaidEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A row of RAID device (controller) information."
+	INDEX               {
+							storageRaidIndex
+						}
+	::= { storageRaidTable 1 }
+
+	StorageRaidEntry ::= SEQUENCE {
+		storageRaidIndex					Unsigned32,
+		storageRaidDeviceName				DisplayString,
+		storageRaidLevel					DisplayString,
+		storageRaidDiskCount				Integer32,
+		storageRaidSpareDiskCount			Integer32,
+		storageRaidSuperBlock				TruthValue,
+		storageRaidChunkSize				Integer32,
+		storageRaidDisks					DisplayString,
+		storageRaidDevice					DisplayString,
+		storageRaidDeviceCapacity			Integer32,
+		storageRaidDeviceParityInitState	DisplayString,
+		storageRaidRebuildPercent			Gauge32,
+		storageRaidRebuildTime				Gauge32,
+		storageRaidDeviceState				DisplayString,
+		storageRaidDeviceStatus				INTEGER,
+		storageRaidDeviceRowStatus			RowStatus
+	}
+
+	storageRaidIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the storageRAIDTable table."
+		::= { storageRaidEntry 1 }
+
+	storageRaidDeviceName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID device (controller) name."
+		::= { storageRaidEntry 2 }
+
+	storageRaidLevel OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID level."
+		::= { storageRaidEntry 3 }
+
+	storageRaidDiskCount OBJECT-TYPE
+		SYNTAX              Integer32
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The number of storage devices this RAID device (controller) has."
+		::= { storageRaidEntry 4 }
+
+	storageRaidSpareDiskCount OBJECT-TYPE
+		SYNTAX              Integer32
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The number of spare disks the RAID (controller) has."
+		::= { storageRaidEntry 5 }
+
+    storageRaidSuperBlock OBJECT-TYPE
+        SYNTAX              TruthValue
+        MAX-ACCESS          read-only
+        STATUS              obsolete
+        DESCRIPTION         "The RAID device (controller) spare super block status. Obsolete in SAN/iQ 8.5."
+        ::= { storageRaidEntry 6 }
+
+    storageRaidChunkSize OBJECT-TYPE
+        SYNTAX              Integer32
+        UNITS               "Kbytes"
+        MAX-ACCESS          read-only
+        STATUS              obsolete
+        DESCRIPTION         "The RAID device (controller) chunk size. Obsolete in SAN/iQ 8.5."
+        ::= { storageRaidEntry 7 }
+
+	storageRaidDisks OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID device (controller) disk list."
+		::= { storageRaidEntry 8 }
+
+	storageRaidDevice OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The LUN for the RAID device (controller)."
+		::= { storageRaidEntry 9 }
+
+	storageRaidDeviceCapacity OBJECT-TYPE
+		SYNTAX              Integer32
+		UNITS				"MB"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The capacity of the RAID device (controller.)"
+		::= { storageRaidEntry 10 }
+
+	storageRaidDeviceParityInitState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID device (controller) parity initilization status. Possible values: normal, rebuilding, degraded"
+		::= { storageRaidEntry 11 }
+
+	storageRaidRebuildPercent OBJECT-TYPE
+		SYNTAX              Gauge32
+		UNITS				"%"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID device (controller) rebuild percent complete."
+		::= { storageRaidEntry 12 }
+
+	storageRaidRebuildTime OBJECT-TYPE
+		SYNTAX              Gauge32
+		UNITS				"minutes"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID device (controller) rebuild time remaining."
+		::= { storageRaidEntry 13 }
+
+	storageRaidDeviceState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID device (controller) state.  Possible values are: normal, rebuilding, degraded"
+		::= { storageRaidEntry 90 }
+
+	storageRaidDeviceStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID device (Controller) status."
+		::= { storageRaidEntry 91 }
+
+	storageRaidDeviceRowStatus OBJECT-TYPE
+		SYNTAX         RowStatus
+		MAX-ACCESS     read-only
+		STATUS         obsolete
+		DESCRIPTION    "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { storageRaidEntry 99 }
+
+--
+-- Raid Configuration and Status
+--
+
+storageRaidDescription OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "A description of the RAID configuration."
+	::= { lhnNsmStorage 5 }
+
+storageRaidMode OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The RAID mode."
+	::= { lhnNsmStorage 7 }
+
+storageRaidCapacity OBJECT-TYPE
+	SYNTAX              Integer32
+	UNITS				"MB"
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The capacity available for SAN storage."
+	::= { lhnNsmStorage 8 }
+
+storageRaidStatus OBJECT-TYPE
+	SYNTAX              INTEGER { pass(1), fail(2) }
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The RAID status."
+	::= { lhnNsmStorage 11 }
+
+storageRaidState OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The system RAID state. Possible values are: normal, rebuilding, degraded"
+	::= { lhnNsmStorage 12 }
+
+storageRaidMinimumSpeed OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The minimum RAID rebuild speed."
+	::= { lhnNsmStorage 13 }
+
+storageRaidMaximumSpeed OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The maximum RAID rebuild speed."
+	::= { lhnNsmStorage 14 }
+
+storageRaidParityInitState OBJECT-TYPE
+	SYNTAX              INTEGER { complete(1), inProgress(2), notApplicable(3) }
+	MAX-ACCESS          read-only
+	STATUS              obsolete
+	DESCRIPTION         "The RAID parity initilization status. Obsolete in SAN/iQ 8.5. Replaced with storageRaidDeviceParityInitState."
+	::= { lhnNsmStorage 15 }
+
+storageRaidStatsIOsRead OBJECT-TYPE
+	SYNTAX              Counter64
+	UNITS               "operations"
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "A counter of IO read operations on the NSM."
+	::= { lhnNsmStorage 16 }
+
+storageRaidStatsIOsWrite OBJECT-TYPE
+	SYNTAX              Counter64
+	UNITS               "operations"
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "A counter of IO write operations on the NSM."
+	::= { lhnNsmStorage 17 }
+
+storageRaidStatsKbytesRead OBJECT-TYPE
+	SYNTAX              Counter64
+	UNITS               "kB"
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of kB read from the NSM."
+	::= { lhnNsmStorage 19 }
+
+storageRaidStatsKbytesWrite OBJECT-TYPE
+	SYNTAX              Counter64
+	UNITS               "kB"
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of kB written to the NSM."
+	::= { lhnNsmStorage 20 }
+
+storageRaidStatsQDepthTotal OBJECT-TYPE
+	SYNTAX              Gauge32
+	UNITS               "operations"
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of pending read and write operations on the NSM."
+	::= { lhnNsmStorage 22 }
+
+storageRaidStatsIoLatencyRead OBJECT-TYPE
+	SYNTAX              Counter64
+	UNITS               "ms"
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The total time spent waiting for read operations to complete on the NSM."
+	::= { lhnNsmStorage 23 }
+
+storageRaidStatsIoLatencyWrite OBJECT-TYPE
+	SYNTAX              Counter64
+	UNITS               "ms"
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The total time spent waiting for write operations to complete on the NSM."
+	::= { lhnNsmStorage 24 }
+
+--
+-- OS Raid Configuration and Status
+--
+
+storageOsRaidCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of OS RAID devices."
+	::= { lhnNsmStorage 50 }
+
+storageOsRaidTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF StorageOsRaidEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of OS RAID devices in the system. The number of entries
+						is given by storageOsRaidCount."
+	::= { lhnNsmStorage 51 }
+
+storageOsRaidEntry OBJECT-TYPE
+	SYNTAX              StorageOsRaidEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A row of OS RAID device information."
+	INDEX               {
+							storageOsRaidIndex
+						}
+	::= { storageOsRaidTable 1 }
+
+	StorageOsRaidEntry ::= SEQUENCE {
+		storageOsRaidIndex		Unsigned32,
+		storageOsRaidName		DisplayString,
+		storageOsRaidDevice		DisplayString,
+		storageOsRaidMode		DisplayString,
+		storageOsRaidSize		Integer32,
+		storageOsRaidState		DisplayString,
+		storageOsRaidRowStatus	RowStatus
+	}
+
+	storageOsRaidIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the storageOsRaidTable table."
+		::= { storageOsRaidEntry 1 }
+
+	storageOsRaidName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The OS RAID name."
+		::= { storageOsRaidEntry 2 }
+
+	storageOsRaidDevice OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The LUN for the OS RAID."
+		::= { storageOsRaidEntry 3 }
+
+	storageOsRaidMode OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The OS RAID mode."
+		::= { storageOsRaidEntry 4 }
+
+	storageOsRaidSize OBJECT-TYPE
+		SYNTAX              Integer32
+		UNITS				"MB"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The OS RAID size."
+		::= { storageOsRaidEntry 5 }
+
+	storageOsRaidState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The OS RAID state."
+		::= { storageOsRaidEntry 90 }
+
+	storageOsRaidRowStatus OBJECT-TYPE
+		SYNTAX              RowStatus
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { storageOsRaidEntry 99 }
+
+END
+
+-- END: some MIB compilers require a CR/LF after the END statement --

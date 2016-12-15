@@ -1,0 +1,1868 @@
+
+RC-2K-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Gauge32, Integer32, IpAddress
+        FROM SNMPv2-SMI
+    RowStatus, TruthValue, MacAddress, DisplayString
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    Ipv6Address
+        FROM IPV6-TC
+    rc2k
+        FROM RAPID-CITY;
+
+rc2kMib MODULE-IDENTITY
+       LAST-UPDATED "200512210000Z"
+       ORGANIZATION 	"Bay Networks, Rapid-City Group"
+       CONTACT-INFO 	"Yu-Ten Lee
+                	 Postal: 	Nortel Networks, Inc. 
+                       	4655 Great America Parkway 
+                       	Santa Clara, CA 95052-8185 
+
+                   	 Tel: 	408-495-2560
+                   	 Fax: 	408-495-6680
+                	 E-mail:	ylee@nortelnetworks.com"
+
+       DESCRIPTION 	"Enterprise MIB for the rc2k."
+
+       REVISION "200512210000Z" -- 21 Dec 2005
+       DESCRIPTION "Version 22: Changed the INTEGER value for rc2kCPUTypeGeneralGroup"
+
+       REVISION "200510200000Z" -- 20 Oct 2005
+       DESCRIPTION "Version 21: Changed the range of rc2kDeviceGlobalSlot, rc2kDeviceFlashFileSlot & rc2kBootConfigSlot"
+       REVISION "200510170000Z" -- 17 Oct 2005
+       DESCRIPTION "Version 20: Added card types rc2kPP8300-48x1000BaseTX-4B & rc2kPP8300-48x1000BaseTXPOE-4B for Rainier"
+
+       REVISION "200510121800Z" -- 12 Oct 2005
+       DESCRIPTION "Version 19: Updated the range from 0..64 to 0..255 for 		                          		rc2kBootConfigPrimaryBackupConfigSource,
+		rc2kBootConfigSecondaryBackupConfigSource,
+		rc2kBootConfigTertiaryBackupConfigSource,
+		rc2kBootConfigMezzImageSource"
+       REVISION "200510120000Z" -- 12 Oct 2005
+       DESCRIPTION "Version 18: Updated the range from 0..64 to 0..255 for 		                                                                  rc2kBootConfigLastBootConfigSource,
+                                        rc2kBootConfigLastRuntimeImageSource, 		                                                                                       rc2kBootConfigLastRuntimeConfigSource, 		                                                                                       rc2kBootConfigPrimaryImageSource, 
+	                   rc2kBootConfigPrimaryConfigSource, 				                                            rc2kBootConfigSecondaryImageSource, 				                                            rc2kBootConfigSecondaryConfigSource, 				                                            rc2kBootConfigTertiaryImageSource, 
+	                   rc2kBootConfigTertiaryConfigSource"
+       REVISION "200509140000Z" -- 14 Sep 2005
+       DESCRIPTION "Version 17: Updated rc2kPR48X1000BaseTX"
+       REVISION "200509090000Z" -- 09 Sep 2005
+       DESCRIPTION "Version 16: Added rc2kCpuEthernetPortIpv6RouteTable"
+       REVISION "200508300000Z" -- 30 Aug 2005
+       DESCRIPTION "Version 15: Added objects under rc2kCPUTypeGeneralGroup"
+       REVISION "200508150000Z" -- 15 Aug 2005
+       DESCRIPTION "Version 14: Updating the range for 2k device objects"
+       REVISION "200505230000Z" -- 23 May 2005
+       DESCRIPTION "Version 13: Undoing version #12 in order to be consistent with the code"
+       REVISION "200502211200Z" -- 21 February 2005
+       DESCRIPTION "Version 12: Now using rc2kPP8300-48x100BaseTXPOL instead of POE"  
+       REVISION "200412100000Z" -- 12 December 2004
+       DESCRIPTION "Version 11: Added rc2kBootConfigEnableMezz."  
+       REVISION "200410280000Z" -- 28 October 2004
+       DESCRIPTION "Version 10: Replaced rc2kPR3X10GBaseGbic(607346947) with
+                                rc2kPR3X10GBaseGbic(607338755) and added
+                                rc2kPR3X10GBaseXZW(607346947) in rc2kCardFrontType."
+       REVISION "200408250001Z" -- 25 August 2004
+       DESCRIPTION "Version 7: Added rc2kBootConfigMezzImageSource."
+       REVISION "200408250000Z" -- 25 August 2004
+       DESCRIPTION "Version 6: Added rc2kPP8300-24X100BaseFX(1345388824) in
+                               rc2kCardFrontType.
+                               Fix typos for rc2kPP8300-48x1000BaseTXPOE" 
+       REVISION "200408090000Z" -- 09 August 2004
+       DESCRIPTION "Version 6: Added rc2kPR48X1000BaseT(606208304) in
+                               rc2kCardFrontType.
+                               Added rc2kDPM2(613351682) in rc2kCardBackType" 
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 5: Added version info"  
+
+       ::= { rc2k 0 }
+
+
+-- rc2k Group
+
+rc2kChassis     OBJECT IDENTIFIER ::= { rc2k 1 }
+
+rc2kChassisPortOperStatus  OBJECT-TYPE
+        SYNTAX          OCTET STRING (SIZE(256))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "A bit array that contains the oper-status
+                        of the ports in the device.  2 bits are used
+                        for each port.  The high order 2 bits of the
+                        first octet represent port #0, the next two
+                        bits are used for port #1, etc.  The status
+                        is encoded with the following scheme :
+
+                        value   meaning
+                        -----   -------
+                          0     no-link (admin=up, oper=down)
+                          1     up	(admin=up, oper=up)
+                          2     down	(admin=down, oper=down)
+                          3     testing	(admin=test, oper=test)
+                        "
+        ::= { rc2kChassis 1 }
+
+rc2kChassisTemperature OBJECT-TYPE
+        SYNTAX          Gauge32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Used to indicate the core operating temperature
+                        of the chassis.  This value represents the degree
+			in celsius of the air inside the chassis."
+        ::= { rc2kChassis 2 }
+
+rc2kChassisAmbientLowerTemperature OBJECT-TYPE
+        SYNTAX          Gauge32
+        MAX-ACCESS      read-only
+        STATUS          obsolete
+        DESCRIPTION     "Used to indicate the temperature of the air
+                        entering the fan at the lower half of the chassis."
+        ::= { rc2kChassis 3 }
+
+rc2kChassisAmbientUpperTemperature OBJECT-TYPE 
+        SYNTAX          Gauge32 
+        MAX-ACCESS      read-only 
+        STATUS          obsolete 
+        DESCRIPTION     "Used to indicate the temperature of the air
+                        entering the fan at the upper half of the chassis." 
+        ::= { rc2kChassis 4 }
+
+rc2kChassisBaseMacAddr OBJECT-TYPE 
+        SYNTAX          MacAddress 
+        MAX-ACCESS      read-only 
+        STATUS          current 
+        DESCRIPTION     "base mac addr"
+        ::= { rc2kChassis 5 }
+
+rc2kChassisMacAddrCapacity OBJECT-TYPE
+        SYNTAX          Integer32
+	MAX-ACCESS      read-only
+	STATUS          current
+	DESCRIPTION     "Mac Address Capacity"
+	::= { rc2kChassis 6 }
+
+-- 2k CPU Ethernet Port table
+
+rc2kCpuEthernetPortTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kCpuEthernetPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2k CPU Ethernet Port table"
+        ::= { rc2k 2 }
+
+rc2kCpuEthernetPortEntry OBJECT-TYPE
+        SYNTAX        Rc2kCpuEthernetPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of 2k CPU Ethernet Port"
+        INDEX         { rc2kCpuEthernetPortIfIndex }
+        ::= { rc2kCpuEthernetPortTable 1 }
+
+Rc2kCpuEthernetPortEntry ::= SEQUENCE {
+                rc2kCpuEthernetPortIfIndex       InterfaceIndex,
+		rc2kCpuEthernetPortDescr	 DisplayString,
+                rc2kCpuEthernetPortAdminStatus   INTEGER,
+                rc2kCpuEthernetPortOperStatus    INTEGER,
+                rc2kCpuEthernetPortAddr          IpAddress,
+                rc2kCpuEthernetPortMask          IpAddress,
+                rc2kCpuEthernetPortGateway       IpAddress,
+                rc2kCpuEthernetPortNetwork       IpAddress,
+                rc2kCpuEthernetPortAutoNegotiate TruthValue,
+                rc2kCpuEthernetPortAdminDuplex   INTEGER,
+                rc2kCpuEthernetPortOperDuplex    INTEGER,
+                rc2kCpuEthernetPortAdminSpeed    INTEGER,
+                rc2kCpuEthernetPortOperSpeed     INTEGER,
+                rc2kCpuEthernetPortEnableBootp   TruthValue,
+                rc2kCpuEthernetPortMgmtMacAddr   MacAddress
+        }
+
+rc2kCpuEthernetPortIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "IfIndex of the port."
+        ::= { rc2kCpuEthernetPortEntry 1 }
+
+rc2kCpuEthernetPortDescr OBJECT-TYPE 
+        SYNTAX        DisplayString (SIZE (0..128)) 
+        MAX-ACCESS    read-only 
+        STATUS        current 
+        DESCRIPTION   "Port description" 
+        ::= { rc2kCpuEthernetPortEntry 2 } 
+
+rc2kCpuEthernetPortAdminStatus OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            up(1),
+                            down(2),
+                            unknown(3)
+                      	}
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION  	"Used to configure the admininstrative status
+			of the port."
+        ::= { rc2kCpuEthernetPortEntry 3 }
+
+rc2kCpuEthernetPortOperStatus OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            up(1),
+                            down(2),
+                            unknown(3)
+                      	}
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate the administrative status
+			of the port."
+        ::= { rc2kCpuEthernetPortEntry 4 }
+
+rc2kCpuEthernetPortAddr OBJECT-TYPE
+        SYNTAX        	IpAddress
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the port's IP address"
+        ::= { rc2kCpuEthernetPortEntry 5 }
+
+rc2kCpuEthernetPortMask OBJECT-TYPE
+        SYNTAX        	IpAddress
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the port's net mask"
+        ::= { rc2kCpuEthernetPortEntry 6 }
+
+rc2kCpuEthernetPortGateway OBJECT-TYPE
+        SYNTAX        	IpAddress
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the the IP address of the
+			gateway that should be used to forward IP
+			traffic."  
+        ::= { rc2kCpuEthernetPortEntry 7 }
+
+rc2kCpuEthernetPortNetwork OBJECT-TYPE
+        SYNTAX        	IpAddress
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the network that can be
+			used to remotely manage this device."
+        ::= { rc2kCpuEthernetPortEntry 8 }
+
+rc2kCpuEthernetPortAutoNegotiate OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure auto-negotiation on this
+			port."
+	DEFVAL	      	{ true }
+        ::= { rc2kCpuEthernetPortEntry 9 }
+
+rc2kCpuEthernetPortAdminDuplex OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            half(1),
+                            full(2)
+                      	}
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the administrative duplex
+			setting for this port."
+        ::= { rc2kCpuEthernetPortEntry 10 }
+
+rc2kCpuEthernetPortOperDuplex OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            half(1),
+                            full(2)
+                      	}
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate the operational duplex
+			setting for this port."
+        ::= { rc2kCpuEthernetPortEntry 11 }
+
+rc2kCpuEthernetPortAdminSpeed OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            none(0),
+                            mbps10(1),      -- 10Mb/s
+                            mbps100(2)      -- 100Mb/s
+                      	}
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the administrative speed
+			setting for this port."
+        ::= { rc2kCpuEthernetPortEntry 12 }
+
+rc2kCpuEthernetPortOperSpeed OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            none(0),
+                            mbps10(1),      -- 10Mb/s
+                            mbps100(2)      -- 100Mb/s
+                      	}
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate the operational duplex
+			setting for this port."
+        ::= { rc2kCpuEthernetPortEntry 13 }
+
+rc2kCpuEthernetPortEnableBootp OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to enable/disable the Bootp feature
+			on this port."
+	DEFVAL	      	{ false }
+        ::= { rc2kCpuEthernetPortEntry 14 }
+
+rc2kCpuEthernetPortMgmtMacAddr OBJECT-TYPE
+        SYNTAX          MacAddress 
+        MAX-ACCESS      read-only 
+        STATUS          current 
+        DESCRIPTION     "Used to indicate the mac addr for this port."
+        ::= { rc2kCpuEthernetPortEntry 15 }
+
+
+-- 2k CPU Serial Port table
+
+rc2kCpuSerialPortTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kCpuSerialPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2k CPU Serial Port table"
+        ::= { rc2k 3 }
+
+rc2kCpuSerialPortEntry OBJECT-TYPE
+        SYNTAX        Rc2kCpuSerialPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of 2k CPU Serial Port"
+        INDEX         { rc2kCpuSerialPortIfIndex }
+        ::= { rc2kCpuSerialPortTable 1 }
+
+Rc2kCpuSerialPortEntry ::= SEQUENCE {
+                rc2kCpuSerialPortIfIndex          InterfaceIndex,
+		rc2kCpuSerialPortDescr		  DisplayString,
+                rc2kCpuSerialPortMode             INTEGER,
+                rc2kCpuSerialPortAdminStatus      INTEGER,
+                rc2kCpuSerialPortOperStatus       INTEGER,
+                rc2kCpuSerialPortBaudRate         INTEGER,
+                rc2kCpuSerialPortDataBits         INTEGER,
+                rc2kCpuSerialPortMyAddr           IpAddress,
+                rc2kCpuSerialPortPeerAddr         IpAddress,
+                rc2kCpuSerialPortSlipMtu          INTEGER,
+                rc2kCpuSerialPortSlipTxRxCompress TruthValue,
+                rc2kCpuSerialPortSlipRxCompress   TruthValue,
+                rc2kCpuSerialPortPppConfigFile    OCTET STRING
+        }
+
+rc2kCpuSerialPortIfIndex OBJECT-TYPE
+        SYNTAX        	InterfaceIndex
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"IfIndex for this port."
+        ::= { rc2kCpuSerialPortEntry 1 }
+
+rc2kCpuSerialPortDescr OBJECT-TYPE
+        SYNTAX        	DisplayString (SIZE (0..128))
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Port description."
+        ::= { rc2kCpuSerialPortEntry 2 }
+
+rc2kCpuSerialPortMode OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            cli(1),
+                            slip(2),
+                            ppp(3)
+                     	 }
+        MAX-ACCESS        	read-write
+        STATUS       	 current
+        DESCRIPTION   	"Used to configure the mode this port should
+			operate in."
+        ::= { rc2kCpuSerialPortEntry 3 }
+
+rc2kCpuSerialPortAdminStatus OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            up(1),
+                            down(2),
+                            unknown(3)
+                      	}
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION     "Used to configure the administrative status
+                        setting for this port."
+        ::= { rc2kCpuSerialPortEntry 4 }
+
+rc2kCpuSerialPortOperStatus OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            up(1),
+                            down(2),
+                            unknown(3)
+                      	}
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION     "Used to indicate the operational status
+                        setting for this port."
+        ::= { rc2kCpuSerialPortEntry 5 }
+
+rc2kCpuSerialPortBaudRate OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            baud2400(2400),
+                            baud4800(4800),
+                            baud9600(9600),
+                            baud19200(19200),
+                            baud38400(38400),
+                            baud57600(57600),
+                            baud115200(115200)
+                      	}
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the baud rate of this port."
+        ::= { rc2kCpuSerialPortEntry 6 }
+
+rc2kCpuSerialPortDataBits OBJECT-TYPE
+        SYNTAX        	INTEGER
+                      	{
+                            seven(1),
+                            eight(2)
+                      	}
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the number of data bits, per
+			byte of data, this port should send/receive."
+        ::= { rc2kCpuSerialPortEntry 7 }
+
+rc2kCpuSerialPortMyAddr OBJECT-TYPE
+        SYNTAX        	IpAddress
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure this port's IP address.
+			Used for both 'slip' and 'ppp' modes."
+        ::= { rc2kCpuSerialPortEntry 8 }
+
+rc2kCpuSerialPortPeerAddr OBJECT-TYPE
+        SYNTAX        	IpAddress
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the peer's IP address.
+			Used for both 'slip' and 'ppp' modes."
+        ::= { rc2kCpuSerialPortEntry 9 }
+
+rc2kCpuSerialPortSlipMtu OBJECT-TYPE
+        SYNTAX        	INTEGER (0..224)
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the MTU for this port.
+			Used for slip only."
+        ::= { rc2kCpuSerialPortEntry 10 }
+
+rc2kCpuSerialPortSlipTxRxCompress OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to enable/disable compression of TCP/IP
+			packet headers on this port.  Used for slip only."
+	DEFVAL	      	{ true }
+        ::= { rc2kCpuSerialPortEntry 11 }
+
+rc2kCpuSerialPortSlipRxCompress OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to enable/disable compression for receiving
+			packets on this port.  Used for slip only."	
+	DEFVAL	      	{ true }
+        ::= { rc2kCpuSerialPortEntry 12 }
+
+rc2kCpuSerialPortPppConfigFile OBJECT-TYPE
+        SYNTAX        	OCTET STRING (SIZE(256))
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to configure the configuration file to use
+			for PPP."
+        ::= { rc2kCpuSerialPortEntry 13 }
+
+
+-- 2k Device Group
+
+rc2kDevice     OBJECT IDENTIFIER ::= { rc2k 4 }
+
+rc2kDeviceGlobalTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kDeviceGlobalEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2k CPU Ethernet Port table"
+        ::= { rc2kDevice 1 }
+
+rc2kDeviceGlobalEntry OBJECT-TYPE
+        SYNTAX        Rc2kDeviceGlobalEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of 2k CPU Ethernet Port"
+        INDEX         { rc2kDeviceGlobalSlot }
+        ::= { rc2kDeviceGlobalTable 1 }
+
+Rc2kDeviceGlobalEntry ::= SEQUENCE {
+		rc2kDeviceGlobalSlot		INTEGER,
+		rc2kDeviceGlobalFlashBytesUsed 	Integer32,
+		rc2kDeviceGlobalFlashBytesFree 	Integer32,
+		rc2kDeviceGlobalFlashNumFiles 	Integer32,
+		rc2kDeviceGlobalPcmciaBytesUsed	Integer32,
+		rc2kDeviceGlobalPcmciaBytesFree	Integer32,
+		rc2kDeviceGlobalPcmciaNumFiles 	Integer32,
+		rc2kDeviceGlobalAction 		INTEGER,
+		rc2kDeviceGlobalResult 		INTEGER
+	}
+
+rc2kDeviceGlobalSlot OBJECT-TYPE
+        SYNTAX        INTEGER (1..6)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "slot number"
+        ::= { rc2kDeviceGlobalEntry 1 }
+
+rc2kDeviceGlobalFlashBytesUsed OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "bytes used"
+        ::= { rc2kDeviceGlobalEntry 2 }
+
+rc2kDeviceGlobalFlashBytesFree OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "bytes free"
+        ::= { rc2kDeviceGlobalEntry 3 }
+
+rc2kDeviceGlobalFlashNumFiles OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "# files in flash"
+        ::= { rc2kDeviceGlobalEntry 4 }
+
+rc2kDeviceGlobalPcmciaBytesUsed OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "bytes used"
+        ::= { rc2kDeviceGlobalEntry 5 }
+
+rc2kDeviceGlobalPcmciaBytesFree OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "bytes free"
+        ::= { rc2kDeviceGlobalEntry 6 }
+
+rc2kDeviceGlobalPcmciaNumFiles OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "# files in pcmcia"
+        ::= { rc2kDeviceGlobalEntry 7 }
+ 
+rc2kDeviceGlobalAction OBJECT-TYPE
+        SYNTAX        INTEGER
+                      {
+                            none(1),
+                            resetPcmcia(2),
+                            pcmciaStop(3)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "none(1), resetPcmcia(2), .."
+        ::= { rc2kDeviceGlobalEntry 8 }
+
+rc2kDeviceGlobalResult OBJECT-TYPE
+        SYNTAX        INTEGER {
+                            none(1),
+                            inProgress(2),
+                            success(3),
+                            fail(4)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the result of the last action
+                      performed on one of the system's device."
+        ::= { rc2kDeviceGlobalEntry 9 }
+
+-- 2k Device Separator1 
+ 
+rc2kDeviceSeparator1 OBJECT-TYPE
+        SYNTAX        	Integer32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"This leaf is used to provide a separation between
+			tables.  No meaningful information is stored in this
+			variable." 
+        ::= { rc2kDevice 2 }
+
+ 
+-- 2k Device Flash File table
+
+rc2kDeviceFlashFileTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kDeviceFlashFileEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2k Flash table"
+        ::= { rc2kDevice 3 }
+
+rc2kDeviceFlashFileEntry OBJECT-TYPE
+        SYNTAX        Rc2kDeviceFlashFileEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of 2k CPU Serial Port"
+        INDEX         { rc2kDeviceFlashFileSlot, rc2kDeviceFlashFileName }
+        ::= { rc2kDeviceFlashFileTable 1 }
+
+Rc2kDeviceFlashFileEntry ::= SEQUENCE {
+                rc2kDeviceFlashFileSlot	INTEGER,
+                rc2kDeviceFlashFileName DisplayString,
+                rc2kDeviceFlashFileDate DisplayString,
+                rc2kDeviceFlashFileSize Integer32
+        }
+
+rc2kDeviceFlashFileSlot OBJECT-TYPE
+        SYNTAX        INTEGER (1..6) 
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "slot number"
+        ::= { rc2kDeviceFlashFileEntry 1 }
+
+rc2kDeviceFlashFileName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "name of file"
+        ::= { rc2kDeviceFlashFileEntry 2 }
+
+rc2kDeviceFlashFileDate OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..32))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "date"
+        ::= { rc2kDeviceFlashFileEntry 3 }
+
+rc2kDeviceFlashFileSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "size in bytes"
+        ::= { rc2kDeviceFlashFileEntry 4 }
+
+-- 2k Device Pcmcia present
+
+rc2kDevicePcmciaPresent OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "pcmcia is a slower device. This leaf is used to
+                       stop the access into pcmcia file table when it
+                       got the end of flash file table."
+        ::= { rc2kDevice 4 }
+
+-- 2k Device Pcmcia File table
+
+rc2kDevicePcmciaFileTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kDevicePcmciaFileEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2k PCMCIA table"
+        ::= { rc2kDevice 5 }
+
+rc2kDevicePcmciaFileEntry OBJECT-TYPE
+        SYNTAX        Rc2kDevicePcmciaFileEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of 2k CPU Serial Port"
+        INDEX         { rc2kDevicePcmciaFileSlot, rc2kDevicePcmciaFileName }
+        ::= { rc2kDevicePcmciaFileTable 1 }
+
+Rc2kDevicePcmciaFileEntry ::= SEQUENCE {
+                rc2kDevicePcmciaFileSlot INTEGER,
+                rc2kDevicePcmciaFileName DisplayString,
+                rc2kDevicePcmciaFileDate DisplayString,
+                rc2kDevicePcmciaFileSize Integer32
+        }
+
+rc2kDevicePcmciaFileSlot OBJECT-TYPE
+        SYNTAX        INTEGER (3 | 5..6)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "slot number"
+        ::= { rc2kDevicePcmciaFileEntry 1 }
+
+rc2kDevicePcmciaFileName OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "name of file"
+        ::= { rc2kDevicePcmciaFileEntry 2 }
+
+rc2kDevicePcmciaFileDate OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..32))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "date"
+        ::= { rc2kDevicePcmciaFileEntry 3 }
+
+rc2kDevicePcmciaFileSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "size in bytes"
+        ::= { rc2kDevicePcmciaFileEntry 4 }
+
+-- 2k Device Separator2
+
+rc2kDeviceSeparator2 OBJECT-TYPE 
+        SYNTAX          Integer32
+        MAX-ACCESS      read-only 
+        STATUS          current 
+        DESCRIPTION     "This leaf is used to provide a separation between 
+                        tables.  No meaningful information is stored in this
+                        variable."
+        ::= { rc2kDevice 6 } 
+
+
+-- 2k Boot Config Table
+
+rc2kBootConfigTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kBootConfigEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2k Boot Configuration table"
+        ::= { rc2k 5 }
+
+rc2kBootConfigEntry OBJECT-TYPE
+        SYNTAX        Rc2kBootConfigEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing boot configuration information."
+        INDEX         { rc2kBootConfigSlot }
+        ::= { rc2kBootConfigTable 1 }
+
+Rc2kBootConfigEntry ::= SEQUENCE {
+		rc2kBootConfigSlot 			INTEGER,
+		rc2kBootConfigLastBootConfigSource	DisplayString,
+		rc2kBootConfigLastRuntimeImageSource	DisplayString,
+		rc2kBootConfigLastRuntimeConfigSource	DisplayString,
+		rc2kBootConfigPrimaryImageSource	DisplayString,
+		rc2kBootConfigPrimaryConfigSource	DisplayString,
+		rc2kBootConfigSecondaryImageSource	DisplayString,
+		rc2kBootConfigSecondaryConfigSource	DisplayString,
+		rc2kBootConfigTertiaryImageSource	DisplayString,
+		rc2kBootConfigTertiaryConfigSource	DisplayString,
+		rc2kBootConfigEnableAutoBoot		TruthValue,
+		rc2kBootConfigEnableFactoryDefaults	TruthValue,
+		rc2kBootConfigEnableDebugMode	TruthValue,
+		rc2kBootConfigEnableHwWatchDogTimer	TruthValue,
+		rc2kBootConfigEnableRebootOnError	TruthValue,
+		rc2kBootConfigEnableTelnetServer	TruthValue,
+		rc2kBootConfigEnableRloginServer	TruthValue,
+		rc2kBootConfigEnableFtpServer	TruthValue,
+		rc2kBootConfigEnableTftpServer	TruthValue,
+		rc2kBootConfigSwVersion		DisplayString,
+		rc2kBootConfigMulticastConfigProfile    	INTEGER,
+		rc2kBootConfigEnableSshServer	TruthValue,
+	                     rc2kBootConfigEnableAltLed              	TruthValue,
+	                     rc2kBootConfigPrimaryBackupConfigSource   DisplayString,
+                		rc2kBootConfigSecondaryBackupConfigSource DisplayString,
+                		rc2kBootConfigTertiaryBackupConfigSource  DisplayString,
+                		rc2kBootConfigEnable8616ReAutoneg	TruthValue,
+                		rc2kBootConfigMezzImageSource	DisplayString,
+                		rc2kBootConfigEnableMezz               	TruthValue
+        }
+
+rc2kBootConfigSlot OBJECT-TYPE
+        SYNTAX        INTEGER (1..6)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "slot number, tattoo use 3 as cpu slot, 4 
+                       is not valid cpu slot number"
+        ::= { rc2kBootConfigEntry 1 }
+
+rc2kBootConfigLastBootConfigSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "boot config source"
+        ::= { rc2kBootConfigEntry 2 }
+
+rc2kBootConfigLastRuntimeImageSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "runtime image source"
+        ::= { rc2kBootConfigEntry 3 }
+
+rc2kBootConfigLastRuntimeConfigSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "runtime config source"
+        ::= { rc2kBootConfigEntry 4 }
+
+rc2kBootConfigPrimaryImageSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "image source"
+        ::= { rc2kBootConfigEntry 5 }
+
+rc2kBootConfigPrimaryConfigSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "config source"
+        ::= { rc2kBootConfigEntry 6 }
+
+rc2kBootConfigSecondaryImageSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "image source"
+        ::= { rc2kBootConfigEntry 7 }
+
+rc2kBootConfigSecondaryConfigSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "config source"
+        ::= { rc2kBootConfigEntry 8 }
+ 
+rc2kBootConfigTertiaryImageSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "image source"
+        ::= { rc2kBootConfigEntry 9 }
+ 
+rc2kBootConfigTertiaryConfigSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "config source"
+        ::= { rc2kBootConfigEntry 10 }
+ 
+rc2kBootConfigEnableAutoBoot OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "auto boot mode"
+        ::= { rc2kBootConfigEntry 11 }
+
+rc2kBootConfigEnableFactoryDefaults OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "use factory default"
+        ::= { rc2kBootConfigEntry 12 }
+
+rc2kBootConfigEnableDebugMode OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "debug mode"
+        ::= { rc2kBootConfigEntry 13 }
+
+rc2kBootConfigEnableHwWatchDogTimer OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "hw watch dog timer"
+        ::= { rc2kBootConfigEntry 14 }
+
+rc2kBootConfigEnableRebootOnError OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "reboot on error"
+        ::= { rc2kBootConfigEntry 15 }
+
+rc2kBootConfigEnableTelnetServer OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "telnet server"
+        ::= { rc2kBootConfigEntry 16 }
+
+rc2kBootConfigEnableRloginServer OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "rlogin server"
+        ::= { rc2kBootConfigEntry 17 }
+
+rc2kBootConfigEnableFtpServer OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "ftp server"
+        ::= { rc2kBootConfigEntry 18 }
+
+rc2kBootConfigEnableTftpServer OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "tftp server"
+        ::= { rc2kBootConfigEntry 19 }
+
+rc2kBootConfigSwVersion OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "current sw version"
+        ::= { rc2kBootConfigEntry 20 }
+ 
+rc2kBootConfigMulticastConfigProfile OBJECT-TYPE
+        SYNTAX        INTEGER (1..6)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "multicast config"
+        DEFVAL        { 1 }
+        ::= { rc2kBootConfigEntry 21 }
+
+rc2kBootConfigEnableSshServer OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "ssh server"
+        ::= { rc2kBootConfigEntry 22 }
+
+rc2kBootConfigEnableAltLed OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Boot flag for enableing Alternate LED"
+        ::= { rc2kBootConfigEntry 23 }
+
+rc2kBootConfigPrimaryBackupConfigSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "primary backup config source (save config)"
+        ::= { rc2kBootConfigEntry 24 }
+
+rc2kBootConfigSecondaryBackupConfigSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "secondary backup config source (save config)"
+        ::= { rc2kBootConfigEntry 25 }
+
+rc2kBootConfigTertiaryBackupConfigSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "tertiary backup config source (save config)"
+        ::= { rc2kBootConfigEntry 26 }
+
+rc2kBootConfigEnable8616ReAutoneg OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable re-autoneg for 8616SX Cards (Intel GMAC fix)"
+        ::= { rc2kBootConfigEntry 27 }
+
+rc2kBootConfigMezzImageSource OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE(0..255))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Mezz image source"
+        ::= { rc2kBootConfigEntry 28 }
+
+rc2kBootConfigEnableMezz OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable/disable Mezz Flag"
+        ::= { rc2kBootConfigEntry 29 }
+
+-- 2k Card table
+
+rc2kCardTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kCardEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2k Card table"
+        ::= { rc2k 6 }
+
+rc2kCardEntry OBJECT-TYPE
+        SYNTAX        Rc2kCardEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing information of 2k Card"
+        INDEX         { rc2kCardIndex }
+        ::= { rc2kCardTable 1 }
+
+Rc2kCardEntry ::= SEQUENCE {
+                rc2kCardIndex            INTEGER,
+                rc2kCardFrontType        INTEGER,
+                rc2kCardFrontDescription DisplayString,
+                rc2kCardFrontAdminStatus INTEGER,
+                rc2kCardFrontOperStatus  INTEGER,
+                rc2kCardFrontSerialNum   DisplayString,
+                rc2kCardFrontHwVersion   DisplayString,
+                rc2kCardFrontPartNumber  DisplayString,
+                rc2kCardFrontDateCode    DisplayString,
+                rc2kCardFrontDeviations  DisplayString,
+                rc2kCardFrontMacAddr     MacAddress,    --excluded
+                rc2kCardBackType         INTEGER,
+                rc2kCardBackDescription  DisplayString,
+                rc2kCardBackSerialNum    DisplayString,
+                rc2kCardBackHwVersion    DisplayString,
+                rc2kCardBackPartNumber   DisplayString,
+                rc2kCardBackDateCode     DisplayString,
+                rc2kCardBackDeviations   DisplayString,
+		rc2kCardPCMCIAType	 INTEGER,
+		rc2kCardPCMCIADescr	 DisplayString,
+		rc2kCardASICDescr	 DisplayString,
+		rc2kCardFrontMasterIO	 TruthValue,
+                rc2kCardSmltOnSingleCpSupported   TruthValue,
+                rc2kCardMezzCard         INTEGER,
+                rc2kCardFrontPoeOperStatus        INTEGER
+        }
+
+rc2kCardIndex OBJECT-TYPE
+        SYNTAX        INTEGER (1..10)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "slot number."
+        ::= { rc2kCardEntry 1 }
+
+rc2kCardFrontType OBJECT-TYPE
+        SYNTAX        INTEGER
+                      {
+        other(1),                        -- no card installed
+        rc2kCPU(537788672),              -- 0010 0000 0000 1110 0000 0001 0000 0000
+        rc2k48x100BaseTX(539033904),     -- 0010 0000 0010 0001 0000 0001 0011 0000
+        rc2k24x100BaseTX(539033880),     -- 0010 0000 0010 0001 0000 0001 0001 1000
+        rc2k32x100BaseTX(539033888),     -- 0010 0000 0010 0001 0000 0001 0010 0000
+        rc2k8x1000BaseT(539099400),      -- 0010 0000 0010 0010 0000 0001 0000 1000  
+        rc2k16x1000BaseT(539099408),     -- 0010 0000 0010 0010 0000 0001 0001 0000  
+        rc2k24x100BaseFX(540082456),     -- 0010 0000 0011 0001 0000 0001 0001 1000
+        rc2k8x1000BaseSXBB(540147976),   -- 0010 0000 0011 0010 0000 0001 0000 1000
+        rc2k16x1000BaseSXBB(540147984),  -- 0010 0000 0011 0010 0000 0001 0001 0000 
+        rc2k8x1000BaseLXBB(540156168),   -- 0010 0000 0011 0010 0010 0001 0000 1000
+        rc2k8x1000BaseXDBB(540164360),   -- 0010 0000 0011 0010 0100 0001 0000 1000
+        rc2k4x1000BaseOPM(540168452),    -- 0010 0000 0011 0010 0101 0001 0000 0100 
+-- OM 2.0 place holder
+--      rc2k8x1000BaseOPM(40168456),    
+-- 0000 0010 0110 0100 1110 1100 0000 1000
+        rc2k8x1000BaseIC(540168456),     -- 0010 0000 0011 0010 0101 0001 0000 1000 
+        rc2k16x1000BaseIC(540168464),    -- 0010 0000 0011 0010 0101 0001 0001 0000
+        rc2k8x1000BaseSXRBB(540180744),  -- 0010 0000 0011 0010 1000 0001 0000 1000
+        rc2k8x1000BaseLXRBB(540188936),  -- 0010 0000 0011 0010 1010 0001 0000 1000
+        rc2k8xOC3(541327624),            -- 0010 0000 0100 0100 0000 0001 0000 1000
+        rc2k2xOC12(541393154),           -- 0010 0000 0100 0101 0000 0001 0000 0010
+        rc2k6xPOS(541401350),            -- 0010 0000 0100 0101 0010 0001 0000 0110
+        rc2k4xATM(542441732),            -- 0010 0000 0101 0101 0000 0001 0000 0100
+        rc2k8xATM(542441736),            -- 0010 0000 0101 0101 0000 0001 0000 1000
+        rc2kRMON(545128704),             -- 0010 0000 0111 1110 0000 0001 0000 0000
+        rc2k1x10GBaseLW(573767937),      -- 0010 0000 0011 0011 0000 0001 0000 0001
+        rc2k1x10GBaseLR(573784321),      -- 0010 0000 0011 0011 0100 0001 0000 0001
+        rc2k32x100BaseTXM(572588320),    -- 0010 0010 0010 0001 0000 0001 0010 0000
+        rc2k48x100BaseTXM(572588336),    -- 0010 0010 0010 0001 0000 0001 0011 0000
+        rc2k8x1000BaseTM(572653832),     -- 0010 0010 0010 0010 0000 0001 0000 1000
+        rc2k8x1000BaseSXBBM(573702408),  -- 0010 0010 0011 0010 0000 0001 0000 1000
+        rc2k8x1000BaseICM(573722888),    -- 0010 0010 0011 0010 0101 0001 0000 1000
+        rc2k6xPOSM(574955782),           -- 0010 0010 0100 0101 0010 0001 0000 0110
+        rc2k8xATMM(575996168),           -- 0010 0010 0101 0101 0000 0001 0000 1000
+        rc2kPR48X1000BaseTX(606208304),  -- 0010 0100 0010 0010 0000 0001 0011 0000
+        rc2kPR30X1000BaseSXBB(607277342),-- 0010 0100 0011 0010 0101 0001 0001 1110
+        rc2kPR3X10GBaseGbic(607338755),  -- 0010 0100 0011 0011 0100 0001 0000 0011 
+        rc2kPR3X10GBaseXZW(607346947),   -- 0010 0100 0011 0011 0110 0001 0000 0011 
+        rc2kMg48x100BaseTX(807469360),   -- 0011 0000 0010 0001 0000 0001 0011 0000
+        rc2kMg32x100BaseTX(807473440),   -- 0011 0000 0010 0001 0001 0001 0010 0000
+        rc2kMg16x100BaseFX(808522000),   -- 0011 0000 0011 0001 0001 0001 0001 0000
+        rc2kMg8x1000BaseTX(808583432),   -- 0011 0000 0011 0010 0000 0001 0000 1000
+        rc2kMg8x1000BaseIC(808603912),   -- 0011 0000 0011 0010 0101 0001 0000 1000
+        rc2kMg48x100BaseTC(817955120),   -- 0011 0000 1100 0001 0000 0001 0011 0000
+        -- Cobra card types --
+        rc2kCobra48x100BaseT(1073807408), -- 0100 0000 0000 0001 0000 0000 0011 0000
+        rc2kCobra24x1000BaseG(1073872920), -- 0100 0000 0000 0010 0000 0000 0001 1000
+        rc2kCobra12x1000BaseG(1073872908), -- 0100 0000 0000 0010 0000 0000 0000 1100
+        -- PP8300 card types
+        rc2kPP8300-CPU8x1000BaseSFP(1342316808), -- 0101 0000 0000 0010 0010 0001 0000 0000 0x50022108
+        rc2kPP8300-24x1000BaseTX(1344405784),    -- 0101 0000 0010 0010 0000 0001 0001 1000 0x50220118
+        rc2kPP8300-48x100BaseTX(1344340272),     -- 0101 0000 0010 0001 0000 0001 0011 0000 0x50210130
+        rc2kPP8300-48x100BaseTXPOE(1344344368),   -- 0101 0000 0010 0001 0001 0001 0011 0000 0x50211130
+        rc2kPP8300-24x100BaseFX(1345388824),     -- 0101 0000 0011 0001 0000 0001 0001 1000 0x50310118
+        rc2kPP8300-48x1000BaseTX-4B(1344422192),    -- 0101 0000 0010 0010 0100 0001 0011 0000 0x50224130
+        rc2kPP8300-48x1000BaseTXPOE-4B(1344426288), -- 0101 0000 0010 0010 0101 0001 0011 0000 0x50225130
+        rc2k61AlteonSAM(1926365441),     -- 0111 0010 1101 0010 0000 0001 0000 0001
+        rc2k62AlteonSAM(1926369537),     -- 0111 0010 1101 0010 0001 0001 0000 0001
+        rc2kAlteonLP(1893859592),        -- 0111 0000 1110 0010 0000 0001 0000 1000
+        rc2kAlteonWSM(1899102468),       -- 0111 0001 0011 0010 0000 0001 0000 0100
+        rc2kAlteonASFM(1899106564),      -- 0111 0001 0011 0010 0001 0001 0000 0100
+        -- Thunderbolt card types
+        rc2kThunderboltCPU(1074659584),             -- 0100 0000 0000 1110 0000 0001 0000 0000 0x400e0100
+        rc2kThunderbolt24x100BaseFX(1076953368),    -- 0100 0000 0011 0001 0000 0001 0001 1000 0x40310118
+        rc2kThunderbolt48x100BaseTX(1075904816),    -- 0100 0000 0010 0001 0000 0001 0011 0000 0x40210130
+        rc2kThunderbolt32x100BaseTX(1075904800),    -- 0100 0000 0010 0001 0000 0001 0010 0000 0x40210120
+        rc2kThunderbolt8x1000BaseSXBB(1077018888),  -- 0100 0000 0011 0010 0000 0001 0000 1000 0x40320108
+        rc2kThunderbolt8x1000BaseIC(1077039368),    -- 0100 0000 0011 0010 0101 0001 0000 1000 0x40325108
+        rc2kThunderbolt16x1000BaseT(1075970320),    -- 0100 0000 0010 0010 0000 0001 0001 0000 0x40220110
+        rc2kThunderbolt16x1000BaseSXBB(1077018896)  -- 0100 0000 0011 0010 0000 0001 0001 0000 0x40320110
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION     "Used to indicate card types in the Accelar
+                        8000 product families.
+
+			For Accelar 8000 devices, all cards use
+		      	an encoded value according to the following rule:
+
+        |   6  |   1   |   5   |   4   |  1 |   3   |  4   |      8      |
+        +------+-------+-------+-------+------------+------+------+------+
+bits  : |31-26 |    25 | 24-20 | 19-16 | 15 | 14-12 | 11-8 |     7-0     |
+        +------+-------+-------+-------+----+-------+------+------+------+
+field : |  a   |   b   |   c   |   d   |  e |    f  |  g   |      h      |
+        +------+-------+-------+-------+----+-------+------+------+------+
+
+     a : Family type/Product line (6 bits (5 bits usuable) (was 4 bits))
+            MSB bit31 should not be used (MIB compiler fails)
+
+            0x0-00 = 0000-00 = Reserved
+            0x1-00 = 0001-00 = Monoploy non specific (e.g backplane, psu, fans)
+            0x2-00 = 0010-00 = Boardwalk
+            0x2-01 = 0010-01 = Power Ranger
+            0x3-00 = 0011-00 = Marvin Gardens
+            0x4-00 = 0100-00 = Cobra (was Thunderbolt (was Pacific))
+            0x5-00 = 0101-00 = PP8300 (was ParkPlace)
+            0x6-00 = 0110-00 = Central Office (only used in chassis)
+            0x7-00 = 0111-00 = Alteon WebSystems
+
+     b : Interface / Device type variation: 1 bit (was 3 bits, 2 bits were stolen by faimly)
+            MSB bit31 should not be used (MIB compiler fails)
+
+            0x0-00 = 0000-00 = Reserved
+            0x1-00 = 0001-00 = Monoploy non specific (e.g backplane, psu, fans)
+            0x2-00 = 0010-00 = Boardwalk
+            0x2-01 = 0010-01 = Power Ranger
+            0x3-00 = 0011-00 = Marvin Gardens
+            0x4-00 = 0100-00 = Thunderbolt (was Pacific)
+            0x5-00 = 0101-00 = PP8300 (was ParkPlace)
+            0x6-00 = 0110-00 = Central Office (only used in chassis)
+            0x7-00 = 0111-00 = Alteon WebSystems
+
+     b : Interface / Device type variation: (Were 3 bits, 2 bits taken by family)
+            0x1 = 1 = M-module (128K RARU records)
+
+     c : Interface / device type:
+            0x0 = 00000 = CPU
+            0x1 = 00001 = Switch fabric
+            0x2 = 00010 = Copper Ethernet
+            0x3 = 00011 = Fiber Ethernet
+            0x4 = 00100 = Sonet (Packets)
+            0x5 = 00101 = ATM
+            0x6 = 00110 = Token Ring
+            0x7 = 00111 = RMON
+            0x8 = 01000 = BFM (Frame or cells indicated by field 'a' above)
+            0x9 = 01001 = PSU
+            0xa = 01010 = Fan Tray
+            0xb = 01011 = Chassis/Backplane
+            0xc = 01100 = CPU Mezz
+            0xd = 01101 = SSL
+            0xe = 01110 = reserved for future
+            0xf = 01111 = reserved for future
+            0x10 = 10000 = reserved for future
+            0x11 = 10001 = reserved for future
+            0x12 = 10010 = reserved for future
+            0x13 = 10011 = WSM Fiber Ethernet
+
+     d : Maximum speed (highest negotiable speed)
+            0x0 = 0000 = 10 Mbit  
+            0x1 = 0001 = 100 Mbit  
+            0x2 = 0010 = 1 Gbit
+            0x3 = 0011 = 10 Gbit
+            0x4 = 0100 = OC-3
+            0x5 = 0101 = OC-12
+            0x6 = 0110 = OC-48
+            0x7 = 0111 = OC-92
+            0x8 = 1000 = OC-192
+            0x9 = 1001 = 4 Mbit (TR)
+            0xa = 1010 = 16 Mbit (TR)
+            0xb = 1011 = E3 
+            0xc = 1100 = DS1
+            0xd = 1101 = DS3
+            0xe = 1110 = none (no PHY interfaces on board)
+            0xf = 1111 = Max speed indicated implicitly in field (c) (for expansion)
+  
+     e : 0=non-redundant,  (1 bit)
+         1=redundant
+
+     f : Card specific info. (3 bits)
+             For Gigabit used as follows:
+		 000=short-haul (SX)
+		 010=long-haul (LX)
+		 100=extra-distance (DX)
+                 101=GBIC
+	     For 10 Gigabit used as follws
+	         000 = 10GE WAN serial 1310nm (XLW)
+		 001 = 10GE WAN serial 1550nm (XEW)
+		 100 = 10GE LAN serial 1310nm (XLR)
+		 101 = 10GE LAN serial 1550nm (XER)
+	     For ATM/Sonet used as follows
+                 000 = multi mode
+                 001 = single mode
+                 010 = single or multimode
+		 011 = not applicable (e.g., copper has no mode)
+             For Marvin Gardens, indicates number of MDA slots
+                 000 = none
+                 001 = one option slots
+                 010 = two option slots
+                 011 = three option slots
+            For Power Supplies:
+                 000 = AC PSU
+                 001 = DC PSU
+            For CPU Mezz:
+                 000 = MPC755/MPC107 Mezz
+            For SSL:
+                 000 = server offloading
+                 001 = end to end encryption
+            For WSM:
+                 000 = WSM mode
+                 001 = ASFM mode
+
+            For PP8300 I/O or CP:
+                 000: PP8300 48TX, 10/100/1000 without POL
+                 001: PP8300 48TX, 10/100/1000 with POL
+                 010: SFP
+                 000: non SFP
+            For Cobra Chassis:
+                 001: 12G
+                 010: 24G
+                 100: 48T
+
+
+     g : Chassis type (4 bits, possibly MSB 2 bits are extension of field b)
+         0x0 = 0000 = work-group (single card switches, etc)
+         0x1 = 0001 = back-bone (chassis based products)
+         0x2 = 0010 = MDA (option modules)
+
+     h : Number of ports (binary representation obmited)
+         (for ACIM/BFM cards, this is number of octapids/blackbirds/dea)
+               0x00 =  no ports (cpus, switch fabrics)
+               0x01 =  1-port, 
+               0x02 =  2-port, 
+               0x04 =  4-port,
+               0x06 =  6-port,
+               0x08 =  8-port,
+               0x0c = 12-port,
+               0x10 = 16-port,
+               0x18 = 24-port,
+               0x22 = 36-port,
+               0x30 = 48-port,
+               0x40 = 64-port.
+
+		"
+        ::= { rc2kCardEntry 2 }
+
+rc2kCardFrontDescription OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "description"
+        ::= { rc2kCardEntry 3 }
+
+rc2kCardFrontAdminStatus OBJECT-TYPE
+        SYNTAX       INTEGER {
+                         up(1),
+                         down(2),
+                         testing(3)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to indicate the administrative status of this
+                       card"
+        ::= { rc2kCardEntry 4 }
+
+rc2kCardFrontOperStatus OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         up(1),
+                         down(2),
+                         testing(3),
+                         unknown(4),
+                         dormant(5)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the operational status of this card."
+        ::= { rc2kCardEntry 5 }
+
+rc2kCardFrontSerialNum OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "serial number of card"
+        ::= { rc2kCardEntry 6 }
+
+rc2kCardFrontHwVersion OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "hardware version"
+        ::= { rc2kCardEntry 7 }
+
+rc2kCardFrontPartNumber OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "part number"
+        ::= { rc2kCardEntry 8 }
+
+rc2kCardFrontDateCode OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "date code"
+        ::= { rc2kCardEntry 9 }
+
+rc2kCardFrontDeviations OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "deviations"
+        ::= { rc2kCardEntry 10 }
+
+rc2kCardFrontMacAddr OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        obsolete
+        DESCRIPTION   "base mac address"
+        ::= { rc2kCardEntry 11 }
+
+rc2kCardBackType OBJECT-TYPE
+        SYNTAX        INTEGER {
+        other(1),                  -- no card installed
+        rc2kBackplane(536969472),  -- 0010 0000 0000 0001 1000 0001 0000 0000
+        rc2kSFM(538837248),        -- 0010 0000 0001 1111 0000 0001 0000 0000
+        rc2kBFM0(546177280),       -- 0010 0000 1000 1111 0000 0001 0000 0000
+        rc2kBFM2(546177282),       -- 0010 0000 1000 1111 0000 0001 0000 0010
+        rc2kBFM3(546177283),       -- 0010 0000 1000 1111 0000 0001 0000 0011
+        rc2kBFM4(1888354564),      -- 0111 0000 1000 1110 0000 0001 0000 0100
+        rc2kBFM6(546177286),       -- 0010 0000 1000 1111 0000 0001 0000 0100
+        rc2kBFM8(546177288),       -- 0010 0000 1000 1111 0000 0001 0000 1000
+        rc2kMGSFM(807272704),      -- 0011 0000 0001 1110 0000 0001 0000 0000
+        rc2kFSFM(605946112),       -- 0010 0100 0001 1110 0000 0001 0000 0000
+        rc2kDPM2(613351682),       -- 0010 0100 1000 1111 0000 0001 0000 0010
+        rc2kDPM1(613351861),       -- 0010 0100 1000 1111 0000 0001 1011 0101
+        rc2kDPM3(613351863)        -- 0010 0100 1000 1111 0000 0001 1011 0111
+			}
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Refer to rc2kCardFrontType for the encoding scheme"
+        ::= { rc2kCardEntry 12 }
+
+rc2kCardBackDescription OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "description"
+        ::= { rc2kCardEntry 13 }
+
+rc2kCardBackSerialNum OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "serial number of card"
+        ::= { rc2kCardEntry 14 }
+
+rc2kCardBackHwVersion OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "hardware version"
+        ::= { rc2kCardEntry 15 }
+
+rc2kCardBackPartNumber OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "part number"
+        ::= { rc2kCardEntry 16 }
+
+rc2kCardBackDateCode OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "date code"
+        ::= { rc2kCardEntry 17 }
+
+rc2kCardBackDeviations OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "deviations"
+        ::= { rc2kCardEntry 18 }
+
+rc2kCardPCMCIAType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         none(1),
+			 modemCard(2),
+                         ethernetCard(3),
+                         ataDisk(4)
+                      }  
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the type of PCMCIA card currently
+                      installed in this CPU card, if any.
+
+                      For non-CPU cards, this variable has no meaning and
+                      will always be set to none(1)."
+        DEFVAL        { none }
+        ::= { rc2kCardEntry 19 }
+
+rc2kCardPCMCIADescr OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..128))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "PCMCIA descriptor"
+        ::= { rc2kCardEntry 20 }
+
+rc2kCardASICDescr OBJECT-TYPE
+        SYNTAX        	DisplayString (SIZE (0..128))
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"ASIC descriptor"
+        ::= { rc2kCardEntry 21 }
+
+rc2kCardFrontMasterIO OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate whether an IO card in a 8100 device
+		       	is operating in the 'master' mode.
+
+			This variable is not meaningful for non-IO cards and
+			non-8100 devices."
+	DEFVAL	      { false }
+        ::= { rc2kCardEntry 22 }
+
+rc2kCardSmltOnSingleCpSupported OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Used to indicate whether an IO card is updated to
+                         support SMLT on single Cp feature or not."
+        DEFVAL        { false }
+        ::= { rc2kCardEntry 23 }
+
+rc2kCardMezzCard OBJECT-TYPE
+        SYNTAX          INTEGER {
+                        unsupported(1),
+                        notpresent(2),
+                        present(3),
+                        running(4)
+                        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Used to indicate the CPU Mezz card"
+        ::= { rc2kCardEntry 24 }
+
+rc2kCardFrontPoeOperStatus OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         up(1),
+                         down(2),
+                         testing(3),
+                         unknown(4),
+                         dormant(5),
+                         failure(6)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate the operational status of this card."
+        ::= { rc2kCardEntry 25 }
+
+-- 2k copy file
+
+rc2kCopyFile     OBJECT IDENTIFIER ::= { rc2k 7 }
+
+rc2kCopyFileSource OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(0..256))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "source file"
+        ::= { rc2kCopyFile 1 }
+
+rc2kCopyFileDestination OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE(0..256))
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "dest file"
+        ::= { rc2kCopyFile 2 }
+
+rc2kCopyFileAction OBJECT-TYPE
+        SYNTAX        INTEGER
+                      {
+                            none(1),
+                            start(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "start or cancell"
+        ::= { rc2kCopyFile 3 }
+
+rc2kCopyFileResult OBJECT-TYPE
+        SYNTAX        INTEGER
+                      {
+                            none(1),
+                            inProgress(2),
+                            success(3),
+                            fail(4),
+                            invalidSource(5),
+                            invalidDestination(6),
+                            outOfMemory(7),
+                            outOfSpace(8),
+                            fileNotFound(9)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "result"
+        ::= { rc2kCopyFile 4 }
+
+rc2kQos OBJECT IDENTIFIER ::= { rc2k 8 } -- defined in rc2kQosXXX.mib
+
+rc2kAtm OBJECT IDENTIFIER ::= { rc2k 9 } -- defined in rc2kAtmXXX.mib
+
+-- 2k Mda
+
+rc2kMdaCardTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kMdaCardEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Mda card table"
+        ::= { rc2k 10 }
+
+rc2kMdaCardEntry OBJECT-TYPE
+        SYNTAX        Rc2kMdaCardEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Mda card"
+        INDEX         { rc2kMdaCardSlotNum, rc2kMdaCardMdaNum }
+        ::= { rc2kMdaCardTable 1 }
+
+Rc2kMdaCardEntry ::= SEQUENCE {
+                rc2kMdaCardSlotNum INTEGER,
+                rc2kMdaCardMdaNum INTEGER,
+                rc2kMdaCardType INTEGER,
+                rc2kMdaCardDescription DisplayString,
+                rc2kMdaCardAdminStatus INTEGER,
+                rc2kMdaCardOperStatus INTEGER,
+                rc2kMdaCardSerialNum DisplayString,
+                rc2kMdaCardHwVersion DisplayString,
+                rc2kMdaCardPartNumber DisplayString,
+                rc2kMdaCardDateCode DisplayString,
+                rc2kMdaCardDeviations DisplayString,
+                rc2kMdaCardMacAddr MacAddress,
+                rc2kMdaCardNumPorts Integer32,
+                rc2kMdaCardFirstIfIndex InterfaceIndex,
+                rc2kMdaCardLastIfIndex InterfaceIndex
+        }
+
+rc2kMdaCardSlotNum OBJECT-TYPE
+        SYNTAX        INTEGER (1..10)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Slot number"
+        ::= { rc2kMdaCardEntry 1 }
+
+rc2kMdaCardMdaNum OBJECT-TYPE
+        SYNTAX          INTEGER (1..4)
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "MDA number within slot.  MDAs are numbered
+                        from left to right."
+        ::= { rc2kMdaCardEntry 2 }
+
+rc2kMdaCardType OBJECT-TYPE
+        SYNTAX          INTEGER
+                        {
+        other(1),                        -- no card installed
+        rc2k4x100BaseTX(807469572),      -- 0011 0000 0010 0001 0000 0010 0000 0100
+        rc2k2x100BaseFX(808518146),      -- 0011 0000 0011 0001 0000 0010 0000 0010
+        rc2k4x100BaseFX(808518148),      -- 0011 0000 0011 0001 0000 0010 0000 0100
+        rc2k1x1000BaseSXBB(808583681),   -- 0011 0000 0011 0010 0000 0010 0000 0001
+        rc2k1x1000BaseSXRBB(808616449),  -- 0011 0000 0011 0010 1000 0010 0000 0001
+        rc2k1x1000BaseLXBB(808591873),   -- 0011 0000 0011 0010 0010 0010 0000 0001
+        rc2k1x1000BaseLXRBB(808624641),  -- 0011 0000 0011 0010 1010 0010 0000 0001
+        rc2k4xOc3cBaseSM(542380548),     -- 0010 0000 0101 0100 0001 0010 0000 0100
+        rc2k4xOc3cBaseMM(542376452),     -- 0010 0000 0101 0100 0000 0010 0000 0100
+        rc2k4xOc3cBaseCOPPER(542388740), -- 0010 0000 0101 0100 0011 0010 0000 0100
+        rc2k1x0c12cBaseSM(542446081),    -- 0010 0000 0101 0101 0001 0010 0000 0001
+        rc2k1x0c12cBaseMM(542441985),    -- 0010 0000 0101 0101 0000 0010 0000 0001
+        rc2k2xDs3(542970370),            -- 0010 0000 0101 1101 0001 0010 0000 0010
+        rc2k2xE3(542839298),             -- 0010 0000 0101 1011 0001 0010 0000 0010
+        rc2k2xOc3PosBaseMMF(541327874),  -- 0010 0000 0100 0100 0000 0010 0000 0010
+        rc2k2xOc3PosBaseSMF(541331970),  -- 0010 0000 0100 0100 0001 0010 0000 0010
+        rc2k1xOc12PosBaseMMF(541393409), -- 0010 0000 0100 0101 0000 0010 0000 0001
+        rc2k1xOc12PosBaseSMF(541397505)  -- 0010 0000 0100 0101 0001 0010 0000 0001
+
+                        }
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "Refer to rc2kCardFrontType for the encoding scheme"
+        ::= { rc2kMdaCardEntry 3 }
+
+rc2kMdaCardDescription OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "description of mda card"
+        ::= { rc2kMdaCardEntry 4 }
+
+rc2kMdaCardAdminStatus OBJECT-TYPE
+        SYNTAX        INTEGER {
+                            up(0),
+                            down(1),
+                            testing(2),
+                            unknown(3)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "administration status of mda card"
+        ::= { rc2kMdaCardEntry 5 }
+
+rc2kMdaCardOperStatus OBJECT-TYPE
+        SYNTAX        INTEGER {
+                            up(0),
+                            down(1),
+                            testing(2),
+                            unknown(3)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "operation status of mda card."
+        ::= { rc2kMdaCardEntry 6 }
+
+rc2kMdaCardSerialNum OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "serial number of mad card"
+        ::= { rc2kMdaCardEntry 7 }
+
+rc2kMdaCardHwVersion OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "hardware version of mda card"
+        ::= { rc2kMdaCardEntry 8 }
+
+rc2kMdaCardPartNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "part number of mda card"
+        ::= { rc2kMdaCardEntry 9 }
+
+rc2kMdaCardDateCode OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "date code of mda card"
+        ::= { rc2kMdaCardEntry 10 }
+
+rc2kMdaCardDeviations OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "hardware deviation infomation of mda card"
+        ::= { rc2kMdaCardEntry 11 }
+
+rc2kMdaCardMacAddr OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "base mac address of mda card"
+        ::= { rc2kMdaCardEntry 12 }
+
+rc2kMdaCardNumPorts OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "number of ports on mda card"
+        ::= { rc2kMdaCardEntry 13 }
+
+rc2kMdaCardFirstIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "first ifindex number on mda card"
+        ::= { rc2kMdaCardEntry 14 }
+
+rc2kMdaCardLastIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "last ifindex number on mda card"
+        ::= { rc2kMdaCardEntry 15 }
+
+-- 2k CPU Ethernet Port Route table
+
+rc2kCpuEthernetPortRouteTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kCpuEthernetPortRouteEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2k CPU Ethernet Port Route table"
+        ::= { rc2k 11 }
+
+rc2kCpuEthernetPortRouteEntry OBJECT-TYPE
+        SYNTAX        Rc2kCpuEthernetPortRouteEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of 2k CPU Ethernet Port"
+        INDEX         { rc2kCpuEthernetPortRouteNetwork, rc2kCpuEthernetPortRouteGateway}
+        ::= { rc2kCpuEthernetPortRouteTable 1 }
+
+Rc2kCpuEthernetPortRouteEntry ::= SEQUENCE {
+                rc2kCpuEthernetPortRouteNetwork       IpAddress,
+                rc2kCpuEthernetPortRouteGateway       IpAddress,
+                rc2kCpuEthernetPortRouteRowStatus     RowStatus
+        }
+
+rc2kCpuEthernetPortRouteNetwork OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to configure the network that can be
+                        used to remotely manage this device."
+        ::= { rc2kCpuEthernetPortRouteEntry 1 }
+
+rc2kCpuEthernetPortRouteGateway OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to configure the the IP address of the
+                        gateway that should be used to forward IP
+                        traffic."
+        ::= { rc2kCpuEthernetPortRouteEntry 2 }
+
+rc2kCpuEthernetPortRouteRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "row status"
+        ::= { rc2kCpuEthernetPortRouteEntry 3 }
+
+-- 2k CPU card types
+rc2kCPUTypeGeneralGroup OBJECT IDENTIFIER ::= { rc2k 12 }
+
+rc2kCPUTypePrimary OBJECT-TYPE
+           SYNTAX        INTEGER {
+                                  cpu8690Default(1),
+                                  cpu8690Upgrade(2),
+                                  cpu8691Default(3),
+                                  cpu8691Upgrade(4),
+                                  cpu8692Default(5),
+                                  cpu8692SuperMezz(6),
+                                  undefined(255)
+                                 }
+           MAX-ACCESS     read-only
+           STATUS               current
+           DESCRIPTION   "This enum type will distinguish one CPU type from the other."
+           ::= { rc2kCPUTypeGeneralGroup 1 }
+
+rc2kCPUTypeSecondary OBJECT-TYPE
+           SYNTAX          INTEGER {
+                                  cpu8690Default(1),
+                                  cpu8690Upgrade(2),
+                                  cpu8691Default(3),
+                                  cpu8691Upgrade(4),
+                                  cpu8692Default(5),
+                                  cpu8692SuperMezz(6),
+                                  undefined(255)
+                                 }
+           MAX-ACCESS     read-only
+           STATUS               current
+           DESCRIPTION   "This type will distinguish one Secondary CPU type from the other."
+           ::= { rc2kCPUTypeGeneralGroup 2 }
+
+rc2kCPUTypePrimaryMemory OBJECT-TYPE
+           SYNTAX              INTEGER {
+                                      mem64MB(1),
+                                      mem128MB(2),
+                                      mem256MB(3),
+                                      undefined(255)
+                                       }
+          MAX-ACCESS     read-only
+          STATUS               current
+          DESCRIPTION   "This gives the memory size of the Primary CPU type."
+          ::= { rc2kCPUTypeGeneralGroup 3 }
+
+rc2kCPUTypeSecondaryMemory OBJECT-TYPE
+           SYNTAX                INTEGER {
+                                      mem64MB(1),
+                                      mem128MB(2),
+                                      mem256MB(3),
+                                      undefined(255)
+                                       }
+           MAX-ACCESS      read-only
+           STATUS                current
+           DESCRIPTION    "This gives the memory size of the Secondary CPU type."
+           ::= { rc2kCPUTypeGeneralGroup 4 }
+
+rc2kCpuEthernetPortIpv6RouteTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF Rc2kCpuEthernetPortIpv6RouteEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "2k CPU Ethernet Port Route table for Ipv6"
+        ::= { rc2k 13 }
+
+rc2kCpuEthernetPortIpv6RouteEntry OBJECT-TYPE
+        SYNTAX        Rc2kCpuEthernetPortIpv6RouteEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing information of 2k CPU Ethernet Port Ipv6"
+        INDEX         { rc2kCpuEthernetPortIpv6RouteNetwork,
+                                 rc2kCpuEthernetPortIpv6RoutePrefixLength,
+                                 rc2kCpuEthernetPortIpv6RouteGateway}
+        ::= { rc2kCpuEthernetPortIpv6RouteTable 1 }
+
+Rc2kCpuEthernetPortIpv6RouteEntry ::= SEQUENCE {
+                rc2kCpuEthernetPortIpv6RouteNetwork       Ipv6Address,
+                rc2kCpuEthernetPortIpv6RoutePrefixLength  INTEGER,
+                rc2kCpuEthernetPortIpv6RouteGateway       Ipv6Address,
+                rc2kCpuEthernetPortIpv6RouteRowStatus     RowStatus
+        }
+
+rc2kCpuEthernetPortIpv6RouteNetwork OBJECT-TYPE
+        SYNTAX          Ipv6Address
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Used to configure the ipv6 network that can be used to remotely manage this device."
+        ::= { rc2kCpuEthernetPortIpv6RouteEntry 1 }
+
+rc2kCpuEthernetPortIpv6RoutePrefixLength OBJECT-TYPE
+     SYNTAX         INTEGER (0..128)
+     MAX-ACCESS     not-accessible
+     STATUS         current
+     DESCRIPTION    "The length of the prefix (in bits)."
+     ::= { rc2kCpuEthernetPortIpv6RouteEntry 2 }
+
+rc2kCpuEthernetPortIpv6RouteGateway OBJECT-TYPE
+        SYNTAX          Ipv6Address
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Used to configure the the IPv6 address of the gateway that should be used to forward IPv6 traffic."
+        ::= { rc2kCpuEthernetPortIpv6RouteEntry 3 }
+
+rc2kCpuEthernetPortIpv6RouteRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-create
+        STATUS        current
+        DESCRIPTION   "row status"
+        ::= { rc2kCpuEthernetPortIpv6RouteEntry 4 }
+
+END

@@ -1,0 +1,1645 @@
+MRV-IR-CHAR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Counter32, Integer32, IpAddress
+            FROM SNMPv2-SMI
+    DisplayString
+            FROM SNMPv2-TC
+    mrvLx, TrapSeverity
+            FROM MRV-IR-SYSTEM-MIB;
+
+irCharMib MODULE-IDENTITY
+    LAST-UPDATED "200711180000Z"        -- 18 Nov 2007 (LX v5.2.1)
+    ORGANIZATION "MRV Communications - BPD Division"
+    CONTACT-INFO
+            "Postal: MRV Communications, Inc.
+                     295 Foster Street
+                     Littleton, MA 01460"
+    DESCRIPTION
+        "This is the MRV LX Character MIB module."
+    ::= { mrvLx 2 }
+
+--
+-- Textual conventions.
+--
+IrContactState ::= INTEGER {
+        open(1),
+        closed(2)
+        }
+
+--
+-- Textual conventions.
+--
+IrControlState ::= INTEGER {
+        deassert(1),
+        assert(2)
+        }
+
+
+--
+-- Port AccessType values.
+--
+PortAccessType ::= INTEGER {
+        local(1),
+        remote(2),
+        dynamic(3),
+        power(4),
+        sensor(5),
+        apd(6),
+        dataBuffer(7),
+        tcpPipe(8),
+        control(9),
+        master(10),                     -- read-only
+        slave(11),                      -- read-only
+        ppp(12),                        -- read-only
+        notify(13),                     -- read-only
+        none(14),
+--      edap(15), 
+        hdam(16),
+        ldam(17),
+        lpd(18),
+        ups(19)
+        }
+
+--
+-- Port speed values.
+--
+PortSpeed ::= INTEGER {
+        sp134(1),
+        sp200(2),
+        sp300(3),
+        sp600(4),
+        sp1200(5),
+        sp2400(6),
+        sp4800(7),
+        sp9600(8),
+        sp19200(9),
+        sp38400(10),
+        sp57600(11),
+        sp115200(12),
+        sp230400(13),
+        sp460800(14),
+        sp921600(15)
+        }
+
+
+--
+-- Port AuthType values.
+--
+PortAuthType ::= INTEGER {
+        none(1),
+        securid(2),
+        radius(3),
+        tacacs(4),
+        ldap(5),
+        local(6)
+        }
+
+--
+-- Signal Status Values.
+--
+SignalStatus ::= INTEGER {
+        up(1),
+        down(2)
+        }
+
+--
+-- Generic Group
+--
+
+irCharNumber OBJECT-TYPE
+    SYNTAX       Integer32
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The number of entries in irCharPortTable."
+    ::= { irCharMib 1 }
+
+
+--
+-- Character Port Table.
+--
+
+irCharPortTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrCharPortEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of character port entries."
+    ::= { irCharMib 2 }
+
+irCharPortEntry OBJECT-TYPE
+    SYNTAX IrCharPortEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A character port entry."
+    INDEX { irCharPortIndex }
+    ::= { irCharPortTable 1 }
+
+IrCharPortEntry ::= SEQUENCE {
+    irCharPortIndex 
+        INTEGER,
+    irCharPortAccessType 
+        PortAccessType,
+    irCharPortFlowControl 
+        INTEGER,
+    irCharPortStopBits 
+        INTEGER,
+    irCharPortParity 
+        INTEGER,
+    irCharPortBitsPerChar 
+        INTEGER,
+    irCharPortAutoDial 
+        INTEGER,
+    irCharPortAutoHangup 
+        INTEGER,
+    irCharPortAutobaud 
+        INTEGER,
+    irCharPortAutobaudRetry
+        INTEGER,
+    irCharPortInSignalCts 
+        SignalStatus,
+    irCharPortInSignalDsr 
+        SignalStatus,
+    irCharPortInSignalDcd 
+        SignalStatus,
+    irCharPortOutSignalRts 
+        SignalStatus,
+    irCharPortOutSignalDtr 
+        SignalStatus,
+    irCharPortSpeed 
+        PortSpeed,
+    irCharPortPrompt 
+        DisplayString,
+    irCharPortBreak
+        INTEGER,
+    irCharPortSpecialBreakString
+        DisplayString,
+    irCharPortSpecialBreak
+        INTEGER,
+    irCharPortInboundAuth
+        PortAuthType,
+    irCharPortOutboundAuth
+        PortAuthType,
+    irCharPortAuthFallback
+        INTEGER,
+    irCharPortRadiusAcct
+        INTEGER,
+    irCharPortTacacsAcct
+        INTEGER,
+    irCharPortTransparent
+        INTEGER,
+    irCharPortDataBufferSize
+        INTEGER,
+    irCharPortDataBufferSyslog
+        INTEGER,
+    irCharPortDataBufferDisplay
+        INTEGER,
+    irCharPortDataBufferTimeStamp
+        INTEGER,
+    irCharPortTelnetPort
+        INTEGER,
+    irCharPortSshPort
+        INTEGER
+    }
+
+irCharPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An index value that uniquely identifies a port."
+    ::= { irCharPortEntry 1 }
+
+irCharPortAccessType OBJECT-TYPE
+    SYNTAX      PortAccessType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The access type value for the port."
+    ::= { irCharPortEntry 2 }
+
+irCharPortFlowControl OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    none(1),
+                    xon(2),
+                    cts(3)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The flow control mechanism configured for the port."
+    ::= { irCharPortEntry 3 }
+
+irCharPortStopBits OBJECT-TYPE
+    SYNTAX      INTEGER(1..2)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The number of stop bits configured for the port."
+    ::= { irCharPortEntry 4 }
+
+irCharPortParity OBJECT-TYPE
+    SYNTAX      INTEGER {
+                none(1),
+                odd(2),
+                even(3),
+                mark(4),
+                space(5)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The parity configured for the port."
+    ::= { irCharPortEntry 5 }
+
+irCharPortBitsPerChar OBJECT-TYPE
+    SYNTAX      INTEGER(7..8)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The number of bits per character."
+    ::= { irCharPortEntry 6 }
+
+irCharPortAutoDial OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-only
+    STATUS      deprecated
+    DESCRIPTION
+        "The auto dial setting for the port. This object has been deprecated
+         and will be removed in the next release."
+    ::= { irCharPortEntry 7 }
+
+irCharPortAutoHangup OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The auto hangup setting for the port."
+    ::= { irCharPortEntry 8 }
+
+irCharPortAutobaud OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The autobaud status for the port."
+    ::= { irCharPortEntry 9 }
+
+irCharPortAutobaudRetry OBJECT-TYPE
+    SYNTAX      INTEGER(0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The autobaud retry interval (in secods)."
+    ::= { irCharPortEntry 10 }
+
+irCharPortInSignalCts OBJECT-TYPE
+    SYNTAX      SignalStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current value of the input CTS signal."
+    ::= { irCharPortEntry 11 }
+
+irCharPortInSignalDsr OBJECT-TYPE
+    SYNTAX      SignalStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current value of the input DSR signal."
+    ::= { irCharPortEntry 12 }
+
+irCharPortInSignalDcd OBJECT-TYPE
+    SYNTAX      SignalStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current value of the input DCD signal."
+    ::= { irCharPortEntry 13 }
+
+irCharPortOutSignalRts OBJECT-TYPE
+    SYNTAX      SignalStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The current value of the output RTS signal."
+    ::= { irCharPortEntry 14 }
+
+irCharPortOutSignalDtr OBJECT-TYPE
+    SYNTAX      SignalStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The current value of the output DTR signal."
+    ::= { irCharPortEntry 15 }
+
+irCharPortSpeed OBJECT-TYPE
+    SYNTAX      PortSpeed
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The port speed in bits per second."
+    ::= { irCharPortEntry 16 }
+
+irCharPortPrompt OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "An administratively assigned prompt for the port."
+    ::= { irCharPortEntry 17 }
+
+irCharPortBreak OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The break status for the port."
+    ::= { irCharPortEntry 18 }
+
+irCharPortSpecialBreakString OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..7))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "An administratively assigned special break string for the port."
+    ::= { irCharPortEntry 19 }
+
+irCharPortSpecialBreak OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The special break status for the port."
+    ::= { irCharPortEntry 20 }
+
+irCharPortInboundAuth OBJECT-TYPE
+    SYNTAX      PortAuthType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The inbound authentication status for the port."
+    ::= { irCharPortEntry 21 }
+
+irCharPortOutboundAuth OBJECT-TYPE
+    SYNTAX      PortAuthType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The outbound authentication status for the port."
+    ::= { irCharPortEntry 22 }
+
+irCharPortAuthFallback OBJECT-TYPE
+    SYNTAX      INTEGER (0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Authentication fallback attempts for the port."
+    ::= { irCharPortEntry 23 }
+
+irCharPortRadiusAcct OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Radius accounting status for the port."
+    ::= { irCharPortEntry 24 }
+
+irCharPortTacacsAcct OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Tacacs accounting status for the port."
+    ::= { irCharPortEntry 25 }
+
+irCharPortTransparent OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The transparent status for the port."
+    ::= { irCharPortEntry 26 }
+
+irCharPortDataBufferSize OBJECT-TYPE
+    SYNTAX      INTEGER (1024..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "An administratively assigned data buffer log size"
+    ::= { irCharPortEntry 27 }
+
+irCharPortDataBufferSyslog OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The data buffer syslog status for the port."
+    ::= { irCharPortEntry 28 }
+
+irCharPortDataBufferDisplay OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2),
+      prompt(3)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The data buffer display status for the port."
+    ::= { irCharPortEntry 29 }
+
+irCharPortDataBufferTimeStamp OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The data buffer time stamp status for the port."
+    ::= { irCharPortEntry 30 }
+
+irCharPortTelnetPort OBJECT-TYPE
+    SYNTAX      INTEGER 
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The configured port used to telnet to the device attached to this 
+         port."
+    ::= { irCharPortEntry 31 }
+
+irCharPortSshPort OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The configured port used to SSH to the device attached to this 
+         port."
+    ::= { irCharPortEntry 32 }
+
+--
+-- Character Port Stats Table.
+--
+
+irCharPortStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrCharPortStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of character port stats entries."
+    ::= { irCharMib 3 }
+
+irCharPortStatsEntry OBJECT-TYPE
+    SYNTAX      IrCharPortStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A character port stats entry."
+    AUGMENTS { irCharPortEntry }
+    ::= { irCharPortStatsTable 1 }
+
+IrCharPortStatsEntry ::= SEQUENCE {
+    irCharPortTransmitBytes 
+        Counter32,
+    irCharPortReceiveBytes 
+        Counter32,
+    irCharPortFrameErrors 
+        Counter32,
+    irCharPortOverrunErrors 
+        Counter32,
+    irCharPortParityErrors 
+        Counter32
+    }
+
+irCharPortTransmitBytes OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+           "The number of bytes transmitted on the port."
+    ::= { irCharPortStatsEntry 1 }
+
+irCharPortReceiveBytes OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+           "The number of bytes received on the port."
+    ::= { irCharPortStatsEntry 2 }
+
+irCharPortFrameErrors OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+           "The number of frame errors on the port."
+    ::= { irCharPortStatsEntry 3 }
+
+irCharPortOverrunErrors OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+           "The number of overrun errors on the port."
+    ::= { irCharPortStatsEntry 4 }
+
+irCharPortParityErrors OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+           "The number of parity errors on the port."
+    ::= { irCharPortStatsEntry 5 }
+
+--
+-- Temp. Sensor Table
+--
+
+irTempSensorTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrTempSensorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "List of temperature sensor entries."
+    ::= { irCharMib 4 }
+
+irTempSensorEntry OBJECT-TYPE
+    SYNTAX      IrTempSensorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A temp sensor entry."
+    INDEX { irTempPortIndex, irTempSensorIndex }
+    ::= { irTempSensorTable 1 }
+
+IrTempSensorEntry ::= SEQUENCE {
+    irTempPortIndex 
+        INTEGER,
+    irTempSensorIndex 
+        INTEGER,
+    irTempValue
+        INTEGER,
+    irTempValueUnits
+        INTEGER,
+    irTempThresholdHigh 
+        INTEGER,
+    irTempThresholdLow 
+        INTEGER,
+    irTempTrapSeverity 
+        TrapSeverity,
+    irTempHysteresis 
+        INTEGER
+    }
+
+irTempPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port on which the temp sensor is configured."
+    ::= { irTempSensorEntry 1 }
+
+irTempSensorIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A unique value that identifies a specific configured temp sensor."
+    ::= { irTempSensorEntry 2 }
+
+irTempValue OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current temperature value."
+    ::= { irTempSensorEntry 3 }
+
+irTempValueUnits OBJECT-TYPE
+    SYNTAX      INTEGER {
+                celsius(1),
+                fahrenheit(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the units for the temperature value." 
+    ::= { irTempSensorEntry 4 }
+
+irTempThresholdHigh OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The high temperature threhsold value."
+    ::= { irTempSensorEntry 5 }
+
+irTempThresholdLow OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The low temperature threhsold value."
+    ::= { irTempSensorEntry 6 }
+
+irTempTrapSeverity OBJECT-TYPE
+    SYNTAX      TrapSeverity
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The severity value to be sent in the threshold trap."
+    ::= { irTempSensorEntry 7 }
+
+irTempHysteresis OBJECT-TYPE
+    SYNTAX      INTEGER (0..10)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "After crossing a threshold, the delta by which the caliberated 
+         value must drop within the normal range before the alarm
+         condition is cleared (i.e. a cleared alarm is generated)."
+    ::= { irTempSensorEntry 8 }
+
+
+--
+-- Humidity Sensor Table.
+--
+
+irHumiditySensorTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrHumiditySensorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of humidity sensor entries."
+    ::= { irCharMib 5 }
+
+irHumiditySensorEntry OBJECT-TYPE
+    SYNTAX      IrHumiditySensorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A humidity sensor entry."
+    INDEX { irHumidityPortIndex, irHumiditySensorIndex }
+    ::= { irHumiditySensorTable 1 }
+
+IrHumiditySensorEntry ::= SEQUENCE {
+    irHumidityPortIndex 
+        INTEGER,
+    irHumiditySensorIndex 
+        INTEGER,
+    irHumidityValue 
+        INTEGER,
+    irHumidityThresholdHigh 
+        INTEGER,
+    irHumidityThresholdLow 
+        INTEGER,
+    irHumidityTrapSeverity 
+        TrapSeverity,
+    irHumidityHysteresis 
+        INTEGER
+    }
+
+irHumidityPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port on which the humidity sensor is configured."
+    ::= { irHumiditySensorEntry 1 }
+
+irHumiditySensorIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A unique value that identifies a specific configured humidity 
+         sensor."
+    ::= { irHumiditySensorEntry 2 }
+
+irHumidityValue OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current humidity value (as a percentage)."
+    ::= { irHumiditySensorEntry 3 }
+
+irHumidityThresholdHigh OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The high humidity threhsold value."
+    ::= { irHumiditySensorEntry 4 }
+
+irHumidityThresholdLow OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The low humidity threhsold value."
+    ::= { irHumiditySensorEntry 5 }
+
+irHumidityTrapSeverity OBJECT-TYPE
+    SYNTAX      TrapSeverity
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The severity value to be sent in the threshold trap."
+    ::= { irHumiditySensorEntry 6 }
+
+irHumidityHysteresis OBJECT-TYPE
+    SYNTAX      INTEGER (0..10)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "After crossing a threshold, the delta by which the caliberated 
+         value must drop within the normal range before the alarm
+         condition is cleared (i.e. a cleared alarm is generated)."
+    ::= { irHumiditySensorEntry 7 }
+
+
+--
+-- Power Port Table.
+--
+
+irPowerTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrPowerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of power port entries."
+    ::= { irCharMib 6 }
+
+irPowerEntry OBJECT-TYPE
+    SYNTAX      IrPowerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A power port config entry."
+    AUGMENTS { irCharPortEntry }
+    ::= { irPowerTable 1 }
+
+IrPowerEntry ::= SEQUENCE {
+    irPowerModuleType 
+        INTEGER,
+    irPowerCurrentLoad 
+        DisplayString,
+    irPowerOutletCount 
+        INTEGER,
+    irPowerCurrentLoadA 
+        DisplayString,
+    irPowerCurrentLoadB 
+        DisplayString,
+    irPowerCurrentLoadC 
+        DisplayString
+    }
+
+irPowerModuleType OBJECT-TYPE
+    SYNTAX INTEGER {
+        module5150(1),
+        module4800(2),
+        module5250(3),
+        moduleOther(4),
+        module5210(5)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The type of power module attached to the power port."
+    ::= { irPowerEntry 1 }
+
+irPowerCurrentLoad OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An Ascii string indicating the total unit current load, in Amps."
+    ::= { irPowerEntry 2 }
+
+    -- ::= { irPowerEntry 3 } not used
+
+irPowerOutletCount OBJECT-TYPE
+    SYNTAX INTEGER(0..32)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of power outlets on the module."
+    ::= { irPowerEntry 4 }
+    
+irPowerCurrentLoadA OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An Ascii string indicating the current load, in Amps, of input 
+         feed A. Note that this info is available only on certain models.
+         A value of 'N/A' indicates that this information is not available."
+    ::= { irPowerEntry 5 }
+
+irPowerCurrentLoadB OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An Ascii string indicating the current load, in Amps, of input 
+         feed B. Note that this info is available only on certain models.
+         A value of 'N/A' indicates that this information is not available."
+    ::= { irPowerEntry 6 }
+
+irPowerCurrentLoadC OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An Ascii string indicating the current load, in Amps, of input 
+         feed C. Note that this info is available only on certain models.
+         A value of 'N/A' indicates that this information is not available."
+    ::= { irPowerEntry 7 }
+
+--
+-- Power Outlet Table.
+--
+
+irPowerOutletTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrPowerOutletEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of Power Outlet entries."
+    ::= { irCharMib 7 }
+
+irPowerOutletEntry OBJECT-TYPE
+    SYNTAX      IrPowerOutletEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A power outlet entry."
+    INDEX { irPowerPortIndex, irPowerOutletIndex }
+    ::= { irPowerOutletTable 1 }
+
+IrPowerOutletEntry ::= SEQUENCE {
+    irPowerPortIndex 
+        INTEGER,
+    irPowerOutletIndex 
+        INTEGER,
+    irPowerOutletName 
+        DisplayString,
+    irPowerOutletStatus 
+        INTEGER,
+    irPowerOutletAction 
+        INTEGER,
+    irPowerOutletCurrentLoad 
+        DisplayString
+    }
+
+irPowerPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An index which uniquely identifies a physical power port."
+    ::= { irPowerOutletEntry 1 }
+
+irPowerOutletIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An index which uniquely identifies an outlet on a power outlet port."
+    ::= { irPowerOutletEntry 2 }
+
+irPowerOutletName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A name used to identify this power outlet."
+    ::= { irPowerOutletEntry 3 }
+
+irPowerOutletStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+            on(1),
+            off(2)
+            }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The status of the power outlet."
+    ::= { irPowerOutletEntry 4 }
+
+irPowerOutletAction OBJECT-TYPE
+    SYNTAX INTEGER {
+            other(1),
+            on(2),
+            off(3),
+            reboot(4)
+            }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "A read of this object always returns the value other(1).
+         Setting it to one of the other values causes the corresponding
+         action to take place."
+    ::= { irPowerOutletEntry 5 }
+
+irPowerOutletCurrentLoad OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An Ascii string indicating the current load, in Amps, for this
+         outlet. A value of 'N/A' indicates that this information is not
+         available."
+    ::= { irPowerOutletEntry 6 }
+
+--
+-- TcpPipe Port Table.
+--
+
+irTcpPipeTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrTcpPipeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of TcpPipe port entries."
+    ::= { irCharMib 8 }
+
+irTcpPipeEntry OBJECT-TYPE
+    SYNTAX      IrTcpPipeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A TcpPipe port config entry."
+    AUGMENTS { irCharPortEntry }
+    ::= { irTcpPipeTable 1 }
+
+IrTcpPipeEntry ::= SEQUENCE {
+    irTcpPipeRemoteIpAddress
+        IpAddress,
+    irTcpPipeRemoteTcpPort 
+        INTEGER,
+    irTcpPipeWindowSize 
+        INTEGER,
+    irTcpPipeConnRetryCount 
+        INTEGER,
+    irTcpPipeConnStatus 
+        INTEGER
+    }
+
+irTcpPipeRemoteIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress 
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The IP address of the remote end of the TCP connection."
+    ::= { irTcpPipeEntry 1 }
+
+irTcpPipeRemoteTcpPort OBJECT-TYPE
+    SYNTAX      INTEGER (2001..9999)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The TCP port number for the remote end of the TCP connection."
+    ::= { irTcpPipeEntry 2 }
+
+irTcpPipeWindowSize OBJECT-TYPE
+    SYNTAX      INTEGER (128..1400)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The TCP window size to use for the TCP connection."
+    ::= { irTcpPipeEntry 3 }
+
+irTcpPipeConnRetryCount OBJECT-TYPE
+    SYNTAX      INTEGER (0..60)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The TCP connection retry count to use for the TCP connection."
+    ::= { irTcpPipeEntry 4 }
+
+irTcpPipeConnStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    idle(0),
+                    connecting(1),
+                    connected(2),
+                    suspended(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The TCP connection status."
+    ::= { irTcpPipeEntry 5 }
+
+--
+-- Modem Group.
+--
+irModem         OBJECT IDENTIFIER ::= { irCharMib 9 }
+
+
+-- Modem Config Table.
+--
+
+irModemCfgTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrModemCfgEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of modem config entries."
+    ::= { irModem 1 }
+
+irModemCfgEntry OBJECT-TYPE
+    SYNTAX IrModemCfgEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A modem config entry."
+    INDEX { irModemIndex }
+    ::= { irModemCfgTable 1 }
+
+IrModemCfgEntry ::= SEQUENCE {
+    irModemIndex 
+        INTEGER,
+    irModemTimeout 
+        INTEGER,
+    irModemRetry 
+        INTEGER,
+    irModemState 
+        INTEGER,
+    irModemPooling 
+        INTEGER,
+    irModemDialNumber 
+        DisplayString,
+    irModemInitString 
+        DisplayString
+    }
+
+irModemIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An index value that uniquely identifies a modem."
+    ::= { irModemCfgEntry 1 }
+
+irModemTimeout OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The number of seconds to wait to detect remote end setting DSR 
+         signal high before giving up trying to establish a call."
+    ::= { irModemCfgEntry 2 }
+
+irModemRetry OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The number of times to try establishing a call."
+    ::= { irModemCfgEntry 3 }
+
+irModemState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    disabled(1),
+                    enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This indicates whether the modem is enabled or disabled on a port."
+    ::= { irModemCfgEntry 4 }
+
+irModemPooling OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    disabled(1),
+                    enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This indicates whether modem pooling is enabled or disabled."
+    ::= { irModemCfgEntry 5 }
+
+irModemDialNumber OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The phone number to dial when setting up a call."
+    ::= { irModemCfgEntry 6 }
+
+irModemInitString OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The modem initialisation string."
+    ::= { irModemCfgEntry 7 }
+
+irInternalModemPort OBJECT-TYPE
+    SYNTAX      INTEGER 
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The physical port to which an internal modem is attached.
+         A value of 0 indicates there is no internal modem present."
+    ::= { irModem 2 }
+
+irInternalModemType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    none(1),
+                    v90(2),
+                    rs485(3),
+                    gsmGprs(4)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The type of modem module installed in the system."
+    ::= { irModem 3 }
+
+--
+-- LD Alarm Config Table.
+--
+
+irLdAlarmConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrLdAlarmConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of ldam alarm port config entries."
+    ::= { irCharMib 10 }
+
+irLdAlarmConfigEntry OBJECT-TYPE
+    SYNTAX IrLdAlarmConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "An ldam alarm port config entry."
+    INDEX { irLdAlarmPortIndex, 
+            irLdAlarmPointIndex }
+    ::= { irLdAlarmConfigTable 1 }
+
+IrLdAlarmConfigEntry ::= SEQUENCE {
+    irLdAlarmPortIndex 
+        INTEGER,
+    irLdAlarmPointIndex 
+        INTEGER,
+    irLdAlarmName
+        DisplayString,
+    irLdAlarmDescription 
+        DisplayString,
+    irLdAlarmContactState 
+        IrContactState,
+    irLdAlarmContactFaultState 
+        IrContactState,
+    irLdAlarmTrapStatus 
+        INTEGER,
+    irLdAlarmTrapSeverity 
+        TrapSeverity,
+    irLdAlarmCount
+        Counter32,
+    irLdAlarmTimestamp 
+        DisplayString
+    }
+
+irLdAlarmPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..48)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The alarm port index."
+    ::= { irLdAlarmConfigEntry 1 }
+
+irLdAlarmPointIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..2)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An integer which uniquely identifies an alarm point on this port."
+    ::= { irLdAlarmConfigEntry 2 }
+
+irLdAlarmName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name assigned to the alarm point."
+    ::= { irLdAlarmConfigEntry 3 }
+
+irLdAlarmDescription OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A user configurable alarm point description string."
+    ::= { irLdAlarmConfigEntry 4 }
+
+irLdAlarmContactState OBJECT-TYPE
+    SYNTAX      IrContactState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current state of the alarm point contacts."
+    ::= { irLdAlarmConfigEntry 5 }
+
+irLdAlarmContactFaultState OBJECT-TYPE
+    SYNTAX      IrContactState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The contact state (open or closed) which indicates the fault
+         condition. If the value of this object and irLdAlarmContactState
+         is the same, then the alarm point has been triggered."
+    ::= { irLdAlarmConfigEntry 6 }
+
+irLdAlarmTrapStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               disabled(1),
+               enabled(2)
+            }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This indicates whether an snmp trap will be generated when this 
+         alarm point is generated."
+    ::= { irLdAlarmConfigEntry 7 }
+
+irLdAlarmTrapSeverity OBJECT-TYPE
+    SYNTAX      TrapSeverity 
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The trap severity assigned to this alarm point. This value will 
+         be sent when an alarm fires and an snmp trap is generated."
+    ::= { irLdAlarmConfigEntry 8 }
+
+irLdAlarmCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times the alarm point has been generated since the 
+         LX was started."
+    ::= { irLdAlarmConfigEntry 9 }
+
+irLdAlarmTimestamp OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A timestamp string indicating the time the last alarm was generated.
+         A null string indicates that the alarm point has not been triggered."
+    ::= { irLdAlarmConfigEntry 10 }
+
+
+--
+-- LD Control Config Table.
+--
+
+irLdControlConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrLdControlConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of ldam control port config entries."
+    ::= { irCharMib 11 }
+
+irLdControlConfigEntry OBJECT-TYPE
+    SYNTAX IrLdControlConfigEntry 
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "An ldam control port config entry."
+    INDEX { irLdControlPortIndex, 
+            irLdControlPointIndex }
+    ::= { irLdControlConfigTable 1 }
+
+IrLdControlConfigEntry ::= SEQUENCE {
+    irLdControlPortIndex 
+        INTEGER,
+    irLdControlPointIndex 
+        INTEGER,
+    irLdControlName
+        DisplayString,
+    irLdControlDescription 
+        DisplayString,
+    irLdControlState 
+        IrControlState,
+    irLdControlEnergizedState 
+        IrControlState
+    }
+
+irLdControlPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..48)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The control port index."
+    ::= { irLdControlConfigEntry 1 }
+
+irLdControlPointIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An integer which uniquely identifies a control point on this port."
+    ::= { irLdControlConfigEntry 2 }
+
+irLdControlName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name assigned to the control point."
+    ::= { irLdControlConfigEntry 3 }
+
+irLdControlDescription OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A user configurable control point description string."
+    ::= { irLdControlConfigEntry 4 }
+
+irLdControlState OBJECT-TYPE
+    SYNTAX      IrControlState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The configured control state (deassert or assert)."
+    ::= { irLdControlConfigEntry 5 }
+
+irLdControlEnergizedState OBJECT-TYPE
+    SYNTAX      IrControlState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The configured energized state (deassert or assert). 
+         If the value of this object and irLdControlState is the same, 
+         then the operational state will be on."
+    ::= { irLdControlConfigEntry 6 }
+
+
+--
+-- RS485 Port Table.
+--
+
+irRs485PortTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrRs485PortEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of RS485 character port entries."
+    ::= { irCharMib 12 }
+
+irRs485PortEntry OBJECT-TYPE
+    SYNTAX IrRs485PortEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An RS485 character port entry."
+    INDEX { irRs485PortIndex }
+    ::= { irRs485PortTable 1 }
+
+IrRs485PortEntry ::= SEQUENCE {
+    irRs485PortIndex 
+        INTEGER,
+    irRs485PortDuplexMode
+        INTEGER,
+    irRs485PortEchoMode
+        INTEGER,
+    irRs485PortTransmitter
+        INTEGER
+    }
+
+irRs485PortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An index value that uniquely identifies an RS485 port. This value 
+         maps to the same index in the irCharPortTable."
+    ::= { irRs485PortEntry 1 }
+
+irRs485PortDuplexMode OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    full(1),
+                    half(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The duplex mode for this RS485 port."
+    ::= { irRs485PortEntry 2 }
+
+irRs485PortEchoMode OBJECT-TYPE
+    SYNTAX      INTEGER {
+                disabled(1),
+                enabled(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The echo mode for this RS4585 port. This is used when 
+         irRs485PortDuplexMode object is set to half(2)."
+    ::= { irRs485PortEntry 3 }
+
+irRs485PortTransmitter OBJECT-TYPE
+    SYNTAX      INTEGER {
+                always(1),
+                rts(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The transmitter setting for this RS4585 port.  This is used when 
+         irRs485PortDuplexMode object is set to full(1)."
+    ::= { irRs485PortEntry 4 }
+
+--
+-- GSM/GPRS Port Table.
+--
+
+irGsmPortTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrGsmPortEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of GSM/GPRS port entries."
+    ::= { irCharMib 13 }
+
+irGsmPortEntry OBJECT-TYPE
+    SYNTAX IrGsmPortEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An GSM/GPRS port entry."
+    INDEX { irGsmPortIndex }
+    ::= { irGsmPortTable 1 }
+
+IrGsmPortEntry ::= SEQUENCE {
+    irGsmPortIndex 
+        INTEGER,
+    irGsmPortRcvSigStrength
+        INTEGER,
+    irGsmPortBitErrorRate
+        INTEGER
+    }
+
+irGsmPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An index value that uniquely identifies an GSM/GPRS port. This value 
+         maps to the same index in the irCharPortTable."
+    ::= { irGsmPortEntry 1 }
+
+irGsmPortRcvSigStrength OBJECT-TYPE
+    SYNTAX      INTEGER (0..31)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The received signal strenth."
+    ::= { irGsmPortEntry 2 }
+
+irGsmPortBitErrorRate OBJECT-TYPE
+    SYNTAX      INTEGER (0..7)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port bit error rate."
+    ::= { irGsmPortEntry 3 }
+
+--
+-- UPS Table.
+--
+
+irUpsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrUpsEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of ups entries."
+    ::= { irCharMib 14 }
+
+irUpsEntry OBJECT-TYPE
+    SYNTAX IrUpsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A ups entry."
+    AUGMENTS { irCharPortEntry }
+    ::= { irUpsTable 1 }
+
+IrUpsEntry ::= SEQUENCE {
+    irUpsType
+        INTEGER,
+    irUpsStatus
+        INTEGER,
+    irUpsModel
+        DisplayString,
+    irUpsCharge
+        DisplayString,
+    irUpsLoad
+        DisplayString,
+    irUpsLife
+        DisplayString
+    }
+
+irUpsType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                smart(1),
+                simple(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ups type. It indicates the protocol used to communicate with 
+         the ups. A value of smart(1) means use Ascii based commands. 
+         A value of simple(2) means use RS232 signals (DTR, CTS).
+         Note that, when irUpsType is simple, only irUpsStatus info is
+         available."
+    ::= { irUpsEntry 1 }
+
+irUpsStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                offline(1),
+                online(2)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ups status. A value of offline(1) indicates the ups is not 
+         providing power to the attached devices.
+         A value of online(2) indicates the ups is providing power to the 
+         attached devices."
+    ::= { irUpsEntry 2 }
+
+irUpsModel OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ups model."
+    ::= { irUpsEntry 3 }
+
+irUpsCharge OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..3))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ups charge, as a percentage."
+    ::= { irUpsEntry 4 }
+
+irUpsLoad OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..3))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current load, as a percentage."
+    ::= { irUpsEntry 5 }
+
+irUpsLife OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..4))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ups life (time remaining), in minutes."
+    ::= { irUpsEntry 6 }
+
+END
+

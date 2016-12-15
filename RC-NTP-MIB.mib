@@ -1,0 +1,246 @@
+
+RC-NTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Counter32, IpAddress
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, RowStatus
+        FROM SNMPv2-TC
+    rcNtp
+        FROM RAPID-CITY;
+
+
+rcNtpMib MODULE-IDENTITY
+       LAST-UPDATED     "200411300000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+       REVISION "200411300000Z" -- 30 November 2004
+       DESCRIPTION "Version 4: Modified the default value for rcNtpServerKeyId"
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcNtp 0 }
+
+-- Ntp Group
+-- Ntp Global Information
+
+rcNtpGlobal   OBJECT IDENTIFIER        ::= { rcNtp 1 }
+
+rcNtpGlobalEnable OBJECT-TYPE
+     SYNTAX       TruthValue
+     MAX-ACCESS	 read-write
+     STATUS       current
+     DESCRIPTION  "Enable/disable NTP feature"
+     DEFVAL       { false }
+     ::= { rcNtpGlobal 1 }
+
+rcNtpGlobalInterval OBJECT-TYPE
+     SYNTAX       INTEGER (10..1440)
+     MAX-ACCESS	 read-write
+     STATUS       current
+     DESCRIPTION  "Time interval between successive NTP updates in minutes."
+     DEFVAL       { 15 }
+     ::= { rcNtpGlobal 2 }		
+
+
+-- Ntp Server Table Information
+
+rcNtpServerTable OBJECT-TYPE
+     SYNTAX       SEQUENCE OF RcNtpServerEntry
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "The NTP server table. This table lists the information
+                   of a NTP server"
+     ::= { rcNtp 2 }
+
+rcNtpServerEntry OBJECT-TYPE
+        SYNTAX        RcNtpServerEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A NTP server table entry."
+        INDEX         { rcNtpServerAddress }
+        ::= { rcNtpServerTable 1 }
+
+RcNtpServerEntry ::=
+     SEQUENCE {
+             rcNtpServerAddress IpAddress,
+             rcNtpServerEnable TruthValue,
+             rcNtpServerAuthentication TruthValue,
+             rcNtpServerKeyId INTEGER,
+             rcNtpServerAccessAttempts Counter32,
+             rcNtpServerAccessSuccess Counter32,
+             rcNtpServerAccessFailure Counter32,
+             rcNtpServerRowStatus RowStatus,
+             rcNtpServerStratum DisplayString,
+             rcNtpServerVersion DisplayString,
+             rcNtpServerRootDelay DisplayString,
+             rcNtpServerPrecision DisplayString,
+             rcNtpServerReachable DisplayString,
+             rcNtpServerSynchronized DisplayString
+     }
+
+rcNtpServerAddress OBJECT-TYPE
+     SYNTAX         IpAddress
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "Server IP address of NTP time source referred to in 
+                     this table entry." 
+     ::= { rcNtpServerEntry 1 }
+
+rcNtpServerEnable OBJECT-TYPE
+     SYNTAX         TruthValue
+     MAX-ACCESS     read-write
+     STATUS         current
+     DESCRIPTION    "Enable or disable this server for participation in
+                     time update."
+     DEFVAL         { true }  
+     ::= { rcNtpServerEntry 2 }
+
+rcNtpServerAuthentication OBJECT-TYPE
+     SYNTAX         TruthValue
+     MAX-ACCESS     read-write
+     STATUS         current
+     DESCRIPTION    "Enable or disable the MD5 Authentication on this
+                     serve."
+     DEFVAL         { false }  
+     ::= { rcNtpServerEntry 3 }
+
+rcNtpServerKeyId OBJECT-TYPE
+     SYNTAX         INTEGER (0..2147483647)
+     MAX-ACCESS     read-write
+     STATUS         current
+     DESCRIPTION    "Public Key used to generate MD5 digest for this 
+                     server."
+     DEFVAL         { 1 }  
+     ::= { rcNtpServerEntry 4 }
+
+rcNtpServerAccessAttempts OBJECT-TYPE
+     SYNTAX         Counter32
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "The number of NTP requests sent to this server"
+     ::= { rcNtpServerEntry 5 }
+
+rcNtpServerAccessSuccess OBJECT-TYPE
+     SYNTAX         Counter32
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "The number of times this server was selected to
+                     update the time"
+     ::= { rcNtpServerEntry 6 }
+
+rcNtpServerAccessFailure OBJECT-TYPE
+     SYNTAX         Counter32
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "The number of times this server was rejected from
+                     updating the time"
+     ::= { rcNtpServerEntry 7 }
+
+rcNtpServerRowStatus OBJECT-TYPE
+        SYNTAX        RowStatus
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to create/delete entries."
+        ::= { rcNtpServerEntry 8 }
+
+rcNtpServerStratum OBJECT-TYPE
+     SYNTAX         DisplayString (SIZE (0..16))
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "Stratum of this server"
+     ::= { rcNtpServerEntry 9 }
+
+rcNtpServerVersion OBJECT-TYPE
+     SYNTAX         DisplayString (SIZE (0..16))
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "NTP version of this server"
+     ::= { rcNtpServerEntry 10 }
+
+rcNtpServerRootDelay OBJECT-TYPE
+     SYNTAX         DisplayString (SIZE (0..32))
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "Root Delay of this server"
+     ::= { rcNtpServerEntry 11 }
+
+rcNtpServerPrecision OBJECT-TYPE
+     SYNTAX         DisplayString (SIZE (0..32))
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "NTP precision of this server in seconds"
+     ::= { rcNtpServerEntry 12 }
+
+rcNtpServerReachable OBJECT-TYPE
+     SYNTAX         DisplayString (SIZE (0..16))
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "NTP Reachability of this server"
+     ::= { rcNtpServerEntry 13 }
+
+rcNtpServerSynchronized OBJECT-TYPE
+     SYNTAX         DisplayString (SIZE (0..16))
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "Status of synchronization with this server"
+     ::= { rcNtpServerEntry 14 }
+
+-- Ntp Key Table Information
+
+rcNtpKeyTable OBJECT-TYPE
+     SYNTAX       SEQUENCE OF RcNtpKeyEntry
+     MAX-ACCESS   not-accessible
+     STATUS       current
+     DESCRIPTION  "The NTP key table. This table lists the private key
+                   of the public key Id"
+     ::= {rcNtp 3 }
+
+rcNtpKeyEntry OBJECT-TYPE
+        SYNTAX        RcNtpKeyEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A NTP key table entry."
+        INDEX         { rcNtpKeyId }
+        ::= { rcNtpKeyTable 1 }
+
+RcNtpKeyEntry ::=
+     SEQUENCE {
+             rcNtpKeyId INTEGER,
+             rcNtpKeySecret DisplayString,
+             rcNtpKeyRowStatus RowStatus
+     }
+
+rcNtpKeyId OBJECT-TYPE
+     SYNTAX         INTEGER (1..2147483647)
+     MAX-ACCESS     read-only
+     STATUS         current
+     DESCRIPTION    "Public Key used to generate MD5 digest"
+     ::= { rcNtpKeyEntry 1 }
+
+rcNtpKeySecret OBJECT-TYPE
+     SYNTAX         DisplayString (SIZE (0..8))
+     MAX-ACCESS     read-write
+     STATUS         current
+     DESCRIPTION    "Private Key used to generate MD5 Digest"
+     ::= { rcNtpKeyEntry 2 }
+
+rcNtpKeyRowStatus OBJECT-TYPE
+     SYNTAX        RowStatus
+     MAX-ACCESS    read-write
+     STATUS        current
+     DESCRIPTION   "Used to create/delete entries."
+     ::= { rcNtpKeyEntry 3 }
+
+
+END

@@ -1,0 +1,463 @@
+NOKIA-ENHANCED-SNMP-SOLUTION-SUITE-PM-IRP DEFINITIONS ::= BEGIN
+
+-- ===============================================================
+--     Copyright (C) Nokia Networks 2001 - 2002
+-- ===============================================================
+--
+--
+-- Description:  MIB file for the Nokia SNMP solution set for
+--               PM Integration Reference Point
+--               Purpose is to specify the Performance Management
+--               interface for Nokia NetAct.
+--               Further information can be found in the Interface
+--               specification 
+--                    Enhanced SNMP Solution Suite - Performance Management
+--               Intranet: NET/OSS/EMS Web Pages
+--
+-- 
+-- Protocol:     SNMPv2c MIB (Simple network management protocol,
+--               version 2c, Management Information Base  )
+-- Format:       SMIv2
+--   
+-- Version 
+-- 0.1         : Initial Version
+-- 0.2         : noiMeasurementActivationError added
+--               syntax correction
+-- 0.3         : noiPmFileTransferProtocol, noiPmResultTransfer added
+-- 0.4         : Changes in names of objects and TC
+-- 1.0         : noiPMResultFileStoringPeriod
+-- 1.0.2       : noiPmIrpVersion 5 digits
+--               Verson synchronized with Versio of intzerafce specification
+-- 1.0.3       : NE3S OID Registration MIB File has been renamed,
+--               to avoid naming conflict with Nokia general OID 
+--               registration MIB.
+-- 1.0.4       : noiOpenInterfaceModule imported from 
+--               NOKIA-NE3S-REGISTRATION-MIB
+--               Previous Version wrong
+-- 1.0.5       ; No semantical changes. Version update only
+-- 1.0.6       ; No semantical changes. Version update only
+--
+-- ===============================================================
+-- Author      : M.Grosse-Kreul et. all.
+-- Version     : 1.0.6
+-- Last Update : 27.2.2002
+--================================================================
+
+--======================================================================
+-- NAMING CONVENTION
+-- 
+-- All Objects are prefixed with 'noi'
+-- noi shall represent the abbreviation 
+--         Nokia  Open  Interface
+--======================================================================
+
+
+IMPORTS
+        Integer32,OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+                FROM SNMPv2-SMI
+
+        MODULE-COMPLIANCE, NOTIFICATION-GROUP, OBJECT-GROUP
+                FROM SNMPv2-CONF
+
+        NoiMeasurementResultTransfer, NoiMeasurementFileName, 
+        NoiMeasurementFileDirectory,
+        NoiMeasurementResultIdentifier, NoiMeasurementFileTransfer, 
+        NoiMeasurementJobStatus, NoiMeasurementActivationError
+                FROM NOKIA-ENHANCED-SNMP-SOLUTION-SUITE-PM-COMMON-DEFINITION
+
+        NoiAlarmTableCount, NoiAdditionalText, NoiEventTime
+                FROM NOKIA-ENHANCED-SNMP-SOLUTION-SUITE-COMMON-DEFINITION
+
+
+        noiOpenInterfaceModule,  noiPmVariable, noiPmNotification,
+        noiPmTable , noiPmCompliance
+                FROM NOKIA-NE3S-REGISTRATION-MIB;
+
+
+noiSnmpPmIrp MODULE-IDENTITY
+        LAST-UPDATED "200202270000Z"
+        ORGANIZATION "Nokia Networks"
+        CONTACT-INFO 
+                     "e-mail: NET-OSS-OPEN-SNMP DL (Microsoft Outlook,
+                              Nokia internal)
+                              DL.NET-OSS-OPEN-SNMP-DL@nokia.com"
+        DESCRIPTION "This SNMP MIB-module specifies the SNMP Solution Set 
+                     of the PM Integration Reference Point (IRP)
+                     also known as Enhanced SNMP Solution Suite.
+                     The purpose of this IRP is to define an interface 
+                     though which a network element manager or a network 
+                     element) can communicate PM information for its 
+                     managed objects to Nokia OS, NetAct."
+        REVISION "200202270000Z"
+        DESCRIPTION "Version 1.0.6"
+::= { noiOpenInterfaceModule 4 }
+
+
+
+--======================================================================
+-- IRP VERSION INFORMATION
+--======================================================================
+
+
+noiPmIrpVersion OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(5))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "This object represents the version of the PM IRP
+                 supported by the agent. The format is 'n.m,o', where 'n' 
+                 is the main version number of the interface model and 'm' 
+                 and 'o' the release number within the main version.
+                 This version is 1.0.6"
+        ::= { noiPmVariable 1 }
+
+
+--======================================================================
+-- General Object Types
+--
+--======================================================================
+
+noiPmFileTransferProtocol OBJECT-TYPE
+        SYNTAX      NoiMeasurementFileTransfer
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                "Contains the supported file transfer mechanism
+                 for various files within NE3S.
+                 NetAct does not modify this object, but it shall be 
+                 the responsibility of the agent to set the appropriate 
+                 values. From a NetAct perspective, this object is treated
+                 as it would be specified as read-only.
+                 The object has been declared as read-write, to allow 
+                 for instance configuring this value by an EM."
+::= { noiPmVariable 2 }
+
+
+noiPmResultTransfer OBJECT-TYPE
+        SYNTAX      NoiMeasurementResultTransfer
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                "Contains the supported transfer mechanism
+                 for measurement result, e.g. notification based
+                 or polling based.
+                 NetAct does not modify this object, but it shall be 
+                 the responsibility of the agent to set the appropriate 
+                 values. From a NetAct perspective, this object is treated
+                 as it would be specified as read-only.
+                 The object has been declared as read-write, to allow 
+                 for instance configuring this value by an EM."
+::= { noiPmVariable 3 }
+
+
+noiMeasurementScheduleFileDirectory  OBJECT-TYPE
+        SYNTAX      NoiMeasurementFileDirectory
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                "Contains the directory where the measurement schedule file
+                 is stored within the agent. The manager polls the value
+                 before downloading the measurement file.
+                 NetAct does not modify this object, but it shall be 
+                 the responsibility of the agent to set the appropriate 
+                 values. From a NetAct perspective, this object is treated
+                 as it would be specified as read-only.
+                 The object has been declared as read-write, to allow 
+                 for instance configuring this value by an EM."
+::= { noiPmVariable 4 }
+
+
+noiMeasurementRepositoryDirectory OBJECT-TYPE
+        SYNTAX      NoiMeasurementFileDirectory
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                "Contains the directory where the measurement repository 
+                 file is stored within the agent. The manager polls the value
+                 before retrieving the repository file.
+                 NetAct does not modify this object, but it shall be 
+                 the responsibility of the agent to set the appropriate 
+                 values. From a NetAct perspective, this object is treated
+                 as it would be specified as read-only.
+                 The object has been declared as read-write, to allow 
+                 for instance configuring this value by an EM."
+::= { noiPmVariable 5 }
+
+
+noiMeasurementRepositoryFile OBJECT-TYPE
+        SYNTAX      NoiMeasurementFileName
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                "Contains the file name of the repository file.
+                 The manager polls the value before retrieving
+                 the repository file.
+                 NetAct does not modify this object, but it shall be 
+                 the responsibility of the agent to set the appropriate 
+                 values. From a NetAct perspective, this object is treated
+                 as it would be specified as read-only.
+                 The object has been declared as read-write, to allow 
+                 for instance configuring this value by an EM."
+::= { noiPmVariable 6 }
+
+
+noiMeasurementJobStatus OBJECT-TYPE
+        SYNTAX      NoiMeasurementJobStatus
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                 "This object represent the measurement job status.
+                  The agent will update the value according to the state
+                  model defined in the interface specification."
+::= { noiPmVariable 7 }
+
+
+noiMeasurementActivationError OBJECT-TYPE
+        SYNTAX      NoiMeasurementActivationError
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Contains the error code in case of failure in 
+                 measurement administration."
+::= { noiPmVariable 8 }
+
+
+noiPmAdditionalText OBJECT-TYPE
+        SYNTAX      NoiAdditionalText
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Contains additional text and is used in conjunction
+                 with the notification noiMeasurementResultTableRebuild 
+                 and in case of failure in measurement administration."
+::= { noiPmVariable 9 }
+
+
+noiPmFileStoringPeriod OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+                " Contains the storage duraion for the measurement file
+                 in the agent. Duration in minutes.
+                 NetAct does not modify this object, but it shall be 
+                 the responsibility of the agent to set the appropriate 
+                 values. From a NetAct perspective, this object is treated
+                 as it would be specified as read-only.
+                 The object has been declared as read-write, to allow 
+                 for instance configuring this value by an EM."
+::= { noiPmVariable 10 }
+
+
+--======================================================================
+-- MEASUREMENT RESULT TABLE
+-- 
+-- The measurement result table is a mandatory feature of the Enhanced SNMP
+-- Solution Suite 
+-- 
+--======================================================================
+noiMeasurementResultTableCount  OBJECT-TYPE
+        SYNTAX      NoiAlarmTableCount
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Contains the number or current active entries 
+                 in the measurement table.
+                 When the table is empty, the value of this
+                 object is zero (0)."
+::= { noiPmTable 1 }
+
+
+noiMeasurementResultTableMaxCount  OBJECT-TYPE
+        SYNTAX      NoiAlarmTableCount
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Contains the maximum number of entries in the 
+                 in the measurement table."
+::= { noiPmTable 2 }
+
+
+noiPmLastMeasurementResultId OBJECT-TYPE
+        SYNTAX      NoiMeasurementResultIdentifier
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                 "This object represent the measurement identifier
+                 of last send notification noiMeasurementResultReady
+                 The manager can retrieve the current value of this
+                 object to detect lost notifications. This mechanism
+                 can be used by the manager when no notification 
+                 is received for a certain time (e.g. 30 minutes)
+                 to evaluate whether an retrieval of of entries from
+                 the measurement table shall be performed"
+::= { noiPmTable 3  }
+
+
+
+noiMeasurementResultTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF NoiMeasurementResultEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+                "Table containing information about the measurement files
+                 that are currently stored in the Network Element and 
+                 accessible for the manager.
+                 Agent will create a new entry, whenever a new measurement file 
+                 has been created.
+                 When removing a measurement file, the corresponding entry 
+                 in the table must be removed."
+::= { noiPmTable 4 }
+
+
+
+noiMeasurementResultEntry OBJECT-TYPE
+        SYNTAX       NoiMeasurementResultEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+                "One entry in the measurement table, containing the information
+                of one measurement file."
+        INDEX { noiMeasurementResultIdentifier }
+::= { noiMeasurementResultTable 1 }
+
+
+NoiMeasurementResultEntry ::= SEQUENCE {
+                 noiMeasurementResultIdentifier       NoiMeasurementResultIdentifier,
+                 noiMeasurementFileDirectory          NoiMeasurementFileDirectory,
+                 noiMeasurementFileName               NoiMeasurementFileName,
+                 noiPmEventTime                       NoiEventTime }
+
+
+--======================================================================
+-- 
+-- The following objects are used in the measurement table and notification
+--
+--======================================================================
+
+noiMeasurementResultIdentifier OBJECT-TYPE
+        SYNTAX      NoiMeasurementResultIdentifier
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "This object represents the measurement identifier of an 
+                 entry in the measurement table. It uniquely identifies an 
+                 entry in the table."
+::= { noiMeasurementResultEntry 1 }
+
+
+noiMeasurementFileName OBJECT-TYPE
+        SYNTAX      NoiMeasurementFileName
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "This object represents the file name 
+                 of a measurement result file."
+::= { noiMeasurementResultEntry 2 }
+
+
+noiMeasurementFileDirectory OBJECT-TYPE
+        SYNTAX      NoiMeasurementFileDirectory
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "This object represents the full path of a measurement 
+                 resulta file."
+::= { noiMeasurementResultEntry 3 }
+
+
+noiPmEventTime OBJECT-TYPE
+        SYNTAX      NoiEventTime
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "This object represents the time the event occured."
+::= { noiMeasurementResultEntry 4 }
+
+
+--======================================================================
+-- NOTIFICATIONS
+-- 
+--======================================================================
+
+noiMeasurementResultReady NOTIFICATION-TYPE
+         OBJECTS {   
+                    noiMeasurementResultIdentifier,
+                    noiMeasurementFileDirectory,
+                    noiMeasurementFileName,
+                    noiPmEventTime }
+        STATUS      current
+        DESCRIPTION 
+                "This notification is used when a new measurement data 
+                 file has been created and a new entry in the 
+                 measurement table has been inserted."
+::= { noiPmNotification 1 }
+
+
+noiMeasurementResultTableRebuild NOTIFICATION-TYPE
+        OBJECTS {   
+                    noiPmAdditionalText,
+                    noiPmEventTime }
+        STATUS      current
+        DESCRIPTION 
+                "This notification is used when the measurement table
+                 in the agent has been rebuild. The notification will be 
+                 emitted after the measurement table has been dropped
+                 and all previously stored entries have been removed"
+::= { noiPmNotification 2 }
+
+
+--======================================================================
+-- COMPLIANCE STATEMENTS
+--======================================================================
+
+noiPmIRPCompliance MODULE-COMPLIANCE
+        STATUS current
+        DESCRIPTION 
+                "This specifies the objects that are required to claim 
+                 compliance to NE3S PM Fragment."
+        MODULE 
+           MANDATORY-GROUPS {noiPmMandatoryGroup}
+
+           GROUP noiPmNotificationOptionalGroup
+           DESCRIPTION
+                   "This group is not required. A SNMP agent may 
+                    support the concept of PM Notifications."
+        ::= { noiPmCompliance 1 }
+
+
+--======================================================================
+-- GROUP DEFINITION
+--======================================================================
+
+
+noiPmMandatoryGroup OBJECT-GROUP
+        OBJECTS {   
+                    noiPmIrpVersion,
+                    noiPmLastMeasurementResultId,
+                    noiMeasurementScheduleFileDirectory,
+                    noiMeasurementResultTableCount,
+                    noiMeasurementResultTableMaxCount,
+                    noiMeasurementResultIdentifier,
+                    noiMeasurementFileDirectory,
+                    noiMeasurementFileName,
+                    noiPmEventTime,
+                    noiPmFileStoringPeriod }
+        STATUS      current
+        DESCRIPTION 
+                 "A collection of objects that represents mandatory 
+                 PM attributes."
+        ::= { noiPmCompliance 2 }
+
+
+noiPmNotificationOptionalGroup NOTIFICATION-GROUP
+        NOTIFICATIONS { noiMeasurementResultReady,
+                        noiMeasurementResultTableRebuild}
+        STATUS      current
+        DESCRIPTION 
+                "A collection of optional measurement notifications."
+        ::= { noiPmCompliance 3 }
+
+
+END
+

@@ -1,0 +1,141 @@
+-- ****************************************************************************
+--
+--                          Recovery Server
+--      Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 2002 Compaq Information Technologies Group, L.P.
+--
+--      Compaq and the Compaq logo are trademarks of Compaq Information
+--      Technologies Group, L.P. in the U.S. and/or other countries.  All
+--      other product names mentioned herein may be trademarks of their
+--      respective companies.
+--
+--      Compaq shall not be liable for technical or editorial errors or
+--      omissions contained herein. The information in this document is
+--      provided "as is" without warranty of any kind and is subject to
+--      change without notice.  The warranties for Compaq products are set
+--      forth in the express limited warranty statements accompanying such
+--      products. Nothing herein should be construed as constituting an
+--      additional warranty.
+--
+--      Refer to the READMIB.RDM file for more information about the
+--      organization of the information in the Compaq Enterprise.
+--
+--      The Compaq Enterprise number is 232.
+--      The ASN.1 prefix to, and including the Compaq Enterprise is:
+--           1.3.6.1.4.1.232
+--
+-- ****************************************************************************
+
+CPQRECOV-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        compaq                  FROM CPQHOST-MIB
+        enterprises             FROM RFC1155-SMI
+        TRAP-TYPE               FROM RFC-1215
+        sysName                 FROM RFC1213-MIB
+        cpqHoTrapFlags          FROM CPQHOST-MIB;
+
+--  compaq                  OBJECT IDENTIFIER ::= { enterprises 232 }
+
+    cpqRecovery             OBJECT IDENTIFIER ::= { compaq 13 }
+
+-- ****************************************************************************
+--  Recovery Server Trap Definitions
+--  ================================
+-- ****************************************************************************
+
+    cpqRsPartnerFailed TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "Recovery Server partner server failure.
+
+             The Recovery Agent reports that the partner server has failed.  This
+             server has taken over the partner's operations."
+
+              --#TYPE "Recovery Server Failure (13001)"
+              --#SUMMARY "The partner server has failed and this server has taken over operations."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   DEGRADED
+
+        ::= 13001
+
+    cpqRsStandbyCableFailure TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "Recovery Server serial interconnect failure.
+
+             The Standby Recovery Agent reports that the local serial interconnect is not
+             connected or has failed.  The primary server is being shutdown in anticipation
+             of the startup of the standby server."
+
+              --#TYPE "Standby Recovery Server Interconnect Failure (13002)"
+              --#SUMMARY "Standby Recovery Server reports the local serial interconnect has failed."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE DEGRADED
+
+        ::= 13002
+
+    cpqRsStandbyFailure TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "Recovery Server standby server failure.
+
+             The Recovery Agent reports that the standby server has failed or the standby's serial
+             interconnect is not connected."
+
+              --#TYPE "Recovery Server Failure (13003)"
+              --#SUMMARY "Recovery Server reports the standby server has failed."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE DEGRADED
+
+        ::= 13003
+
+    cpqRsOnlineCableFailure TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "On-Line Recovery Server serial interconnect failure.
+
+             The On-Line Recovery Agent reports that the local serial interconnect is not
+             connected or has failed.  However, network operations confirm that the partner
+             is still operating correctly."
+
+              --#TYPE "On-Line Recovery Server Interconnect Failure (13004)"
+              --#SUMMARY "On-Line Recovery Server reports the local serial interconnect has failed."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE DEGRADED
+
+        ::= 13004
+
+    cpqRsFailoverFailed TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "On-Line Recovery Server Failover failure.
+
+             The On-Line Recovery Agent reports that an attempt to take on the operations
+             of the partner server was attempted and failed."
+
+              --#TYPE "On-Line Recovery Server Failover Failure (13005)"
+              --#SUMMARY "On-Line Recovery Server reports the failover attempt has failed."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE DEGRADED
+
+        ::= 13005
+
+END

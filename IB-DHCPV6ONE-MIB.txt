@@ -1,0 +1,222 @@
+--
+-- Copyright (c) 2010-2011, Infoblox, Inc
+-- All rights reserved.
+
+IB-DHCPV6ONE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+   OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, enterprises
+        FROM SNMPv2-SMI
+   TEXTUAL-CONVENTION FROM SNMPv2-TC
+   Counter64, Unsigned32 FROM SNMPv2-SMI
+   Counter FROM RFC1155-SMI
+   ibDHCPOne, IbString, IbIpv6Addr FROM IB-SMI-MIB;
+
+-- DNSOne DHCPv6 Subnet Definition
+
+ibDhcpv6Module MODULE-IDENTITY
+    LAST-UPDATED "201012290000Z"  --  Dec 29, 2010
+    ORGANIZATION "Infoblox"
+    CONTACT-INFO "See IB-SMI-MIB for information."
+    DESCRIPTION "This module defines the Infoblox DHCPv6 One MIB."
+
+    REVISION  "201012290000Z"  --  Dec 29, 2010
+    DESCRIPTION   "Added DHCPv6 module."
+
+    ::= { ibDHCPOne 2 }
+
+ibDHCPv6SubnetTable OBJECT-TYPE
+   SYNTAX SEQUENCE OF IbDHCPv6SubnetEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "A table of DHCPv6 Subnet statistics."
+   ::= { ibDhcpv6Module 1 }
+
+ibDHCPv6SubnetEntry OBJECT-TYPE
+   SYNTAX        IbDHCPv6SubnetEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "A conceptual row of the ibDHCPv6SubnetEntry containing
+                  info about a particular network using DHCPv6."
+   INDEX         {ibDHCPv6SubnetNetworkAddress }
+   ::= { ibDHCPv6SubnetTable 1 }
+
+IbDHCPv6SubnetEntry ::=
+   SEQUENCE {
+     ibDHCPv6SubnetNetworkAddress     IbIpv6Addr,
+     ibDHCPv6SubnetNetworkMask        INTEGER
+   }
+
+ibDHCPv6SubnetNetworkAddress OBJECT-TYPE
+   SYNTAX        IbIpv6Addr
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "DHCPv6 Subnet in Ipv6Address format. A subnetwork may have many
+                  ranges for lease."
+   ::= { ibDHCPv6SubnetEntry 1 }
+
+ibDHCPv6SubnetNetworkMask OBJECT-TYPE
+   SYNTAX        INTEGER
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "DHCPv6 Subnet CIDR."
+   ::= { ibDHCPv6SubnetEntry 2 }
+
+ibDHCPv6Statistics OBJECT IDENTIFIER
+   ::= { ibDhcpv6Module 3 }
+
+ibDhcpv6TotalNoOfSolicits OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 solicit messages received"
+   ::= { ibDHCPv6Statistics 1 }
+
+ibDhcpv6TotalNoOfRequests OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 request messages received"
+   ::= { ibDHCPv6Statistics 2 }
+
+ibDhcpv6TotalNoOfReleases OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 release messages received"
+   ::= { ibDHCPv6Statistics 3 }
+
+ibDhcpv6TotalNoOfAdvertises OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 advertise messages sent"
+   ::= { ibDHCPv6Statistics 4 }
+
+ibDhcpv6TotalNoOfReplies OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 reply messages sent"
+   ::= { ibDHCPv6Statistics 5 }
+
+ibDhcpv6TotalNoOfRenews OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 renew messages sent"
+   ::= { ibDHCPv6Statistics 6 }
+
+ibDhcpv6TotalNoOfRebinds OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 rebind messages received"
+   ::= { ibDHCPv6Statistics 7 }
+
+ibDhcpv6TotalNoOfDeclines OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 decline messages received"
+   ::= { ibDHCPv6Statistics 8 }
+
+ibDhcpv6TotalNoOfInformationRequests OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 Information-Request messages received"
+   ::= { ibDHCPv6Statistics 9 }
+
+ibDhcpv6TotalNoOfOthers OBJECT-TYPE
+   SYNTAX  Counter
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "This variable indicates the number of
+		 other messages received"
+   ::= { ibDHCPv6Statistics 10 }
+
+ibDhcpv6DeferredQueueSize OBJECT-TYPE
+   SYNTAX  INTEGER
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION "The size of deferred dynamic DNS update queue for DHCPv6"
+   ::= { ibDhcpv6Module 4 }
+
+ibDHCPv6DDNSStats OBJECT IDENTIFIER
+   ::= { ibDhcpv6Module 5 }
+
+ibDHCPv6DDNSAvgLatency5 OBJECT-TYPE
+   SYNTAX        Counter64
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Average Latencies (in microseconds) for DHCPDv6
+                  dynamic DNS updates during the last 5 minutes"
+   ::= { ibDHCPv6DDNSStats 1 }
+
+ibDHCPv6DDNSAvgLatency15 OBJECT-TYPE
+   SYNTAX        Counter64
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Average Latencies (in microseconds) for DHCPDv6
+                  dynamic DNS updates during the last 15 minutes"
+   ::= { ibDHCPv6DDNSStats 2 }
+
+ibDHCPv6DDNSAvgLatency60 OBJECT-TYPE
+   SYNTAX        Counter64
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Average Latencies (in microseconds) for DHCPDv6
+                  dynamic DNS updates during the last 60 minutes"
+   ::= { ibDHCPv6DDNSStats 3 }
+
+ibDHCPv6DDNSAvgLatency1440 OBJECT-TYPE
+   SYNTAX        Counter64
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Average Latencies (in microseconds) for DHCPDv6
+                  dynamic DNS updates during the last 1 day"
+   ::= { ibDHCPv6DDNSStats 4 }
+
+ibDHCPv6DDNSTimeoutCount5 OBJECT-TYPE
+   SYNTAX        Unsigned32
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "The number of timeout DHCPDv6 dynamic DDNS
+                  updates during the last 5 minutes"
+   ::= { ibDHCPv6DDNSStats 5 }
+
+ibDHCPv6DDNSTimeoutCount15 OBJECT-TYPE
+   SYNTAX        Unsigned32
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "The number of timeout DHCPDv6 dynamic DDNS
+                  updates during the last 15 minutes"
+   ::= { ibDHCPv6DDNSStats 6 }
+
+ibDHCPv6DDNSTimeoutCount60 OBJECT-TYPE
+   SYNTAX        Unsigned32
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "The number of timeout DHCPDv6 dynamic DDNS
+                  updates during the last 60 minutes"
+   ::= { ibDHCPv6DDNSStats 7 }
+
+ibDHCPv6DDNSTimeoutCount1440 OBJECT-TYPE
+   SYNTAX        Unsigned32
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "The number of timeout DHCPDv6 dynamic DDNS
+                  updates during the last 1 day"
+   ::= { ibDHCPv6DDNSStats 8 }
+
+END

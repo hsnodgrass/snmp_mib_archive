@@ -1,0 +1,1371 @@
+-- File: xylo-protocol.mib
+--
+--	Bay Networks Annex Private Enterprise MIB
+--
+--  Copyright 1991, 1993, 1994, 1995, 1996, 1997 Bay Networks, Inc.  
+--  ALL RIGHTS RESERVED.
+--
+--  ALL RIGHTS RESERVED. Licensed Material - Property of Bay Networks, Inc.
+--  This software is made available solely pursuant to the terms of a
+--  software license agreement which governs its use.
+--  Unauthorized duplication, distribution or sale are strictly prohibited.
+--
+--  This information is subject to change without notice, and should
+--  not be construed as a commitment by Bay Networks, Inc.  Bay Networks, Inc.,
+--  assumes no responsibility for any errors that may appear in this
+--  document.
+--
+--  MIBs related to protocols should be added in this file.
+--
+
+
+  XYLO-PROTOCOL-MIB DEFINITIONS ::= BEGIN
+
+  IMPORTS
+		Counter, IpAddress
+			FROM RFC1155-SMI
+		DisplayString
+			FROM RFC1213-MIB
+		OBJECT-TYPE
+			FROM RFC-1212
+		annexlatstats, interfacerip, anxinterface, ipsec
+			FROM XYLO-MIB-SMI;
+
+
+--  xylogics	   OBJECT IDENTIFIER ::= { enterprises 15 } 
+--  annexlatstats  OBJECT IDENTIFIER ::= { annex 7 }
+--  interfacerip   OBJECT IDENTIFIER ::= { annex 8 }
+--  ipsec	   OBJECT IDENTIFIER ::= { annex 17 }
+
+-- Interface related groups
+  anxifMP			OBJECT IDENTIFIER ::= { anxinterface 1 }
+
+  anxifOspf			OBJECT IDENTIFIER ::= { anxinterface 2 }
+
+
+
+-- the Annex LAT protocol statistics group
+   
+  anxLatRecvRunMsgs     OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total received run messages."
+		::= { annexlatstats 1 }
+							 
+  anxLatXmitRunMsgs     OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+                        "Total transmitted run messages."
+		::= { annexlatstats 2 }
+		
+  anxLatRecvSlots       OBJECT-TYPE
+		SYNTAX Counter
+                ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total received slots."
+		::= { annexlatstats 3 }
+ 
+  anxLatXmitSlots       OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+                DESCRIPTION
+			"Total transmitted slots."
+		::= { annexlatstats 4 }
+							 
+  anxLatRecvBytes       OBJECT-TYPE
+                SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total recevied bytes."
+                ::= { annexlatstats 5 }
+		 
+  anxLatXmitBytes       OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+                STATUS deprecated
+		DESCRIPTION
+			"Total transmitted bytes."
+		::= { annexlatstats 6 }
+									 
+  anxLatDupMsgs OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+                STATUS deprecated
+		DESCRIPTION
+			"Total duplicate messages."
+		::= { annexlatstats 7 }
+									 
+  anxLatRexmitMsgs      OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+                        "Total retransmitted messages."
+		::= { annexlatstats 8 }
+					 
+  anxLatBadCircuitMsgs  OBJECT-TYPE
+		SYNTAX Counter
+                ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total bad circuit messages."
+		::= { annexlatstats 9 }
+ 
+  anxLatBadSlotMsgs     OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+                DESCRIPTION
+			"Total bad circuit slots."
+		::= { annexlatstats 10 }
+							 
+  anxLatAcceptHostInits OBJECT-TYPE
+                SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total accepted host-initiates."
+                ::= { annexlatstats 11 }
+		 
+  anxLatRejectHostInits OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+                STATUS deprecated
+		DESCRIPTION
+			"Total rejected host-initiates."
+		::= { annexlatstats 12 }
+									 
+  anxLatMultipleNodes   OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+		        "Total multiple nodes seen."
+		::= { annexlatstats 13 }
+
+  anxLatCreatedCircuits OBJECT-TYPE
+		SYNTAX Counter
+                ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total created circuits."
+		::= { annexlatstats 14 }
+ 
+  anxLatCreatedSessions OBJECT-TYPE
+		SYNTAX Counter
+                ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total created sessions."
+		::= { annexlatstats 15 }
+ 
+  anxLatRecvFrames      OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total received frames."
+		::= { annexlatstats 16 }
+
+  anxLatXmitFrames      OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+                        "Total transmitted frames."
+		::= { annexlatstats 17 }
+					 
+  anxLatIllegalFrames   OBJECT-TYPE
+		SYNTAX Counter
+                ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total illegal frames."
+		::= { annexlatstats 18 }
+ 
+  anxLatCircuitTimeouts OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+                DESCRIPTION
+			"Total circuit timeouts."
+		::= { annexlatstats 19 }
+							 
+  anxLatXmitSvcMsgs     OBJECT-TYPE
+                SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+                DESCRIPTION
+			"Total transmitted service messages."
+		::= { annexlatstats 20 }
+							 
+  anxLatRecvSvcMsgs     OBJECT-TYPE
+                SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+		DESCRIPTION
+			"Total received service messages."
+                ::= { annexlatstats 21 }
+		 
+  anxLatUsedSvcMsgs     OBJECT-TYPE
+		SYNTAX Counter
+		ACCESS read-only
+		STATUS deprecated
+                DESCRIPTION
+			"Total used service messages."
+		::= { annexlatstats 22 }
+							 
+
+
+-- table of interface RIP protocol parameters
+   
+  interfaceRipTable     OBJECT-TYPE
+		SYNTAX SEQUENCE OF InterfaceRipEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"Table of common RIP protocol parameters. 
+			The first two obects in this table 
+			(interfaceRipIndex and interfaceRipName) apply
+			to all interfaces including asyc, sync, and TA
+			ports. The rest of the table applies only to
+			the ethernet interface.
+
+			This table is not present in the ELS."
+		::= { interfacerip 1 }
+																      
+  interfaceRipEntry     OBJECT-TYPE
+		SYNTAX InterfaceRipEntry
+		ACCESS not-accessible
+		STATUS mandatory
+		DESCRIPTION
+			"The interface's RIP protocol configuration
+			parameters."
+		INDEX  { interfaceRipIndex }
+		::= { interfaceRipTable 1 }
+																		   
+  InterfaceRipEntry ::= SEQUENCE {
+	interfaceRipIndex       INTEGER,
+	interfaceRipName        DisplayString,
+	interfaceRipSendVersion INTEGER,
+	interfaceRipRecvVersion INTEGER,
+	interfaceRipHorizon     INTEGER,
+	interfaceRipDefRoute    INTEGER,
+	interfaceRipAdvertise   DisplayString,
+	interfaceRipSubAdvertise        INTEGER,
+	interfaceRipAccept      DisplayString,
+	interfaceRipSubAccept   INTEGER,
+	interfaceRipNextHop	INTEGER
+	}
+											   
+  interfaceRipIndex     OBJECT-TYPE
+		SYNTAX INTEGER
+		ACCESS read-only
+		STATUS mandatory
+		DESCRIPTION
+			"A unique number from 1 to n + m + 1 where:
+			
+				n = the number of asynchronous ports 
+					on the Annex
+				m = the number of synchronous ports 
+					on the Annex  
+
+			The values of this object map to 
+			interfaceRipName as shown:
+							   
+			   1 -  en0
+			   2 to (n + 1) - asy1 .. asyn
+			   (n + 2) to (n + m + 1) - syn1 .. synm
+							 
+			"
+		::= { interfaceRipEntry 1 }
+							     
+		     
+  interfaceRipName      OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..8))
+		ACCESS read-only
+		STATUS mandatory
+                DESCRIPTION
+			"The name of the interface.  This is presently the
+			same as the value returned for ifDescr (from MIB-II)
+			for this interface."
+		::= { interfaceRipEntry 2 }
+							 
+  interfaceRipSendVersion       OBJECT-TYPE
+                SYNTAX INTEGER {
+			rip-1(1),
+			rip-2(2),
+			compatibility(3)
+		}
+                ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Controls the RIP version which is sent.  rip-1
+			causes version 1 packets to be sent using version
+                        1 subsumption rules.  rip-2 causes version 2
+			packets to be sent.  compatibility causes versio
+			2 packets to be sent using version subsumption
+			rules.  This parameter takes effect only when
+			active RIP is enabled.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_send_version'."
+          	::= { interfaceRipEntry 3 }
+		 
+  interfaceRipRecvVersion       OBJECT-TYPE
+		SYNTAX INTEGER {
+			rip-1(1),
+			rip-2(2),
+                        both(3)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+                        "Controls the RIP version which the Annex accepts.
+			rip-1 causes only version 1 packets to be accepted.
+                        rip-2 causes only version 2 packets to be accepted.
+			both causes both versions to be accepted.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_recv_version'."
+		::= { interfaceRipEntry 4 }
+								 
+  interfaceRipHorizon   OBJECT-TYPE
+                SYNTAX INTEGER {
+			off(1),
+			split(2),
+			poison(3)
+		}
+                ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Controls the split horizon algorithm.  Specifying
+			off disables split horizon.  split enables split
+                        horizon without poison reverse.  poison enables
+			split horizon with poison reverse.  This parameter 
+			takes effect only when active RIP is enabled.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_horizon'."
+		::= { interfaceRipEntry 5 }
+								 
+  interfaceRipDefRoute  OBJECT-TYPE
+                SYNTAX INTEGER (0..15)
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether the Annex advertises itself as
+			a default router.  This parameter takes effect
+			only when active RIP is enabled.  The value 0 
+			prevents the Annex from advertising itself as
+			a default router.  The values of 1 to 15 define
+			the hop count that is advertised for the Annex's
+			route.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_default_route'."
+                ::= { interfaceRipEntry 6 }
+		 
+  interfaceRipAdvertise OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..138))
+		ACCESS read-write
+                STATUS mandatory
+		DESCRIPTION
+			"A list of network addresses for which the Annex
+			will advertise routes by sending RIP updates.
+			Special values include 'all' (all routes are
+			advertised), 'none' (no RIP updates are sent out),
+			or a list of one to eight IP addresses in dotted
+			decimal form preceded by 'include' or 'exclude'.
+			This parameter takes effect only when active RIP
+			is enabled.
+
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_advertise'."
+		::= { interfaceRipEntry 7 }
+									 
+  interfaceRipSubAdvertise      OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+                        disabled(2)
+		}
+		ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+                        "Controls whether subnet routes are advertised.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_sub_advertise'."
+		::= { interfaceRipEntry 8 }
+					 
+  interfaceRipAccept    OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..138))
+		ACCESS read-write
+                STATUS mandatory
+		DESCRIPTION
+			"A list of network addresses for which RIP updates 
+			will be accepted.  Special values include 'all' 
+			(RIP updates are accepted for any network), 'none' 
+			(no RIP updates are accepted), or a list of one to 
+			eight IP addresses in dotted decimal form preceded 
+			by 'include' or 'exclude'.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_accept'."
+		::= { interfaceRipEntry 9 }
+									 
+  interfaceRipSubAccept OBJECT-TYPE
+		SYNTAX INTEGER {
+			enabled(1),
+			disabled(2)
+		}
+                ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Controls whether subnet routes are accepted.
+			
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_sub_accept'."
+		::= { interfaceRipEntry 10 }
+
+  interfaceRipNextHop OBJECT-TYPE
+		SYNTAX INTEGER {
+			never(1),
+			needed(2),
+			always(3)
+		}
+                ACCESS read-write
+		STATUS mandatory
+		DESCRIPTION
+			"Control whether next hop value is included in
+			version 2 advertisements.
+
+			This MIB object corresponds to the NA/admin 
+			Annex parameter 'rip_next_hop'."
+		::= { interfaceRipEntry 11 }
+
+-- Interface related groups.
+-- Table for Multilink PPP statistics. This table is indexed by MP interface
+-- number which can be obtained from ifTable.
+
+  mpStatsTable 	OBJECT-TYPE
+		SYNTAX	SEQUENCE OF MpStatsEntry
+  		ACCESS  not-accessible
+    		STATUS  mandatory
+  		DESCRIPTION
+			"Table of MP active bundle statistics."
+		::= { anxifMP 1 }
+							    
+  mpStatsEntry 	OBJECT-TYPE
+		SYNTAX    MpStatsEntry
+		ACCESS    not-accessible
+		STATUS    mandatory
+		DESCRIPTION
+			"Mutilink PPP active bundle statistics."
+		INDEX     { mpStatsifIndex }
+		::= { mpStatsTable 1 }
+
+  MpStatsEntry	::= SEQUENCE {
+	mpStatsifIndex	INTEGER,
+	mpStatsPeakLink	INTEGER,
+	mpStatsTxPkts	INTEGER,
+	mpStatsRxPkts	INTEGER,
+	mpStatsFragPkts	INTEGER,
+	mpStatsFragLost	INTEGER,
+	mpStatsTxFrag	INTEGER,	
+	mpStatsRxFrag	INTEGER,
+	mpStatsLostPkts	INTEGER,
+	mpStatsTxUtil	INTEGER,
+	mpStatsRxUtil	INTEGER
+	}
+	
+  mpStatsifIndex	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS 	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"MP interface number. This number can be obtained
+			from the ifTable."
+		::= { mpStatsEntry 1 }
+
+  mpStatsPeakLink	 OBJECT-TYPE
+		SYNTAX INTEGER (1..255)
+		ACCESS read-only 
+		STATUS mandatory
+		DESCRIPTION
+			"This parameter returns the peak number 
+			of links used in this bundle.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, and synchronous port
+			parameter 'mp_max_links'."
+		::= { mpStatsEntry 2 }
+
+  mpStatsTxPkts	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"Number of packet transmitted to MLCP."
+		::= { mpStatsEntry 3 }
+
+  mpStatsRxPkts	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"Number of packet received from MLCP."
+		::= { mpStatsEntry 4 }
+
+  mpStatsFragPkts	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"Number of packet fragmented."
+		::= { mpStatsEntry 5 }
+
+  mpStatsFragLost	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"Number of fragments lost."
+		::= { mpStatsEntry 6 }
+
+  mpStatsTxFrag	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"Number of fragments generated for 
+			transmission."
+		::= { mpStatsEntry 7 }
+
+  mpStatsRxFrag	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"Number of fragments assembled by MLCP." 
+		::= { mpStatsEntry 8 }
+
+  mpStatsLostPkts	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"Number of packets lost."
+		::= { mpStatsEntry 9 }
+
+  mpStatsTxUtil	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"Transmit Utilization."
+		::= { mpStatsEntry 10 }
+
+  mpStatsRxUtil	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"Receive Utilization."
+		::= { mpStatsEntry 11 }
+
+-- MP parameters for Annex. These parameters are depricated by
+-- gpMpMrru, gpMpEndPointClass, gpMpEndPointValue
+
+  mpMrru    OBJECT-TYPE
+		SYNTAX INTEGER (64..1600)
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter sets the upper limit of
+			the MRRU LCP negotiation. All LCP 
+			negotiations will start with this value;
+			negotiation downward only is allowed.
+			The default value is 1500.
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, and synchronous port
+			parameter 'mp_mrru'."
+		::= { anxifMP 2 }
+
+  mpEndPointClass    OBJECT-TYPE
+		SYNTAX INTEGER {
+			nullclass(1),
+			unitipaddr(3),
+			unitmacaddr(4),
+			psnDirNbr(6)
+			}
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter sets the preference for the
+			Endpoint Discriminator. Classes Locally
+			Assigned Address (2), and PPP Magic Number
+			Block(5) are excluded; they do not guarantee
+			unique link identities and could lead to
+			illegal bundle memebership.
+			The default is unitmacaddr(4). 
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, and synchronous port
+			parameter 'mp_endpoint_option'."
+		::= { anxifMP 3 }
+
+  mpEndPointValue    OBJECT-TYPE
+		SYNTAX DisplayString (SIZE (0..15))
+		ACCESS read-write 
+		STATUS deprecated
+		DESCRIPTION
+			"This parameter sets the value of the 
+			Endpoint Discriminator for options that
+			require user-configured information.
+			This parameter is only valid when 
+			gpMPEndPointClass is set to Public Switched
+			Network Directory Number E.164 (6).
+
+			This MIB object corresponds to the NA/admin
+			asynchronous, ta, and synchronous port
+			parameter 'mp_endpoint_value'."
+		::= { anxifMP 4 }
+
+
+-- Table of PPP statistics. This table is indexed by PPP interface
+-- number which can be obtained from ifTable.
+-- For PPP links under MP this number corresponds to the physical unit(port) 
+-- number. 
+-- For the SNMP manager, 'walking' through this table will give all the 
+-- active links for a given PPPStatsIndex.
+
+-- Note: The entries in this table are transient in nature and represents the
+-- link statistics for a given instance of time.
+
+  pppStatsTable 	OBJECT-TYPE
+		SYNTAX	SEQUENCE OF PppStatsEntry
+  		ACCESS  not-accessible
+    		STATUS  mandatory
+  		DESCRIPTION
+			"Table of active PPP statistics."
+		::= { anxifMP 5 }
+							    
+  pppStatsEntry 	OBJECT-TYPE
+		SYNTAX    PppStatsEntry
+		ACCESS    not-accessible
+		STATUS    mandatory
+		DESCRIPTION
+			"Mutilink PPP active bundle statistics."
+		INDEX     { pppStatsIndex }
+		::= { pppStatsTable 1 }
+
+  PppStatsEntry	::= SEQUENCE {
+	       pppStatsIndex		
+		    INTEGER,
+	       pppStatsBundleId
+		    INTEGER,
+               pppStatsBadAddresses
+                    Counter,
+               pppStatsBadControls
+                    Counter,
+               pppStatsPacketTooLongs
+                    Counter,
+               pppStatsBadFCSs
+                    Counter,
+               pppStatsLocalMRU
+                    INTEGER,
+               pppStatsRemoteMRU
+                    INTEGER,
+               pppStatsLocalToPeerACCMap
+                    OCTET STRING,
+               pppStatsPeerToLocalACCMap
+                    OCTET STRING,
+               pppStatsLocalToRemoteProtocolCompression
+                    INTEGER,
+               pppStatsRemoteToLocalProtocolCompression
+                    INTEGER,
+               pppStatsLocalToRemoteACCompression
+                    INTEGER,
+               pppStatsRemoteToLocalACCompression
+                    INTEGER,
+               pppStatsTransmitFcsSize
+                    INTEGER,
+               pppStatsReceiveFcsSize
+                    INTEGER
+	}
+	
+  pppStatsIndex	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS 	read-only
+		STATUS	mandatory
+		DESCRIPTION
+			"PPP interface number. For PPP statistics for 
+			individual link under MP, this is MP interface 
+			number. This number can be obtained from 
+			the ifTable. "
+		::= { pppStatsEntry 1 }
+	
+  pppStatsBundleId	OBJECT-TYPE
+		SYNTAX	INTEGER
+		ACCESS 	read-only
+		STATUS	mandatory
+		DESCRIPTION
+		  "This object identifies the MP bundle with which
+		  this PPP interface is associated with. If the PPP
+		  interface is not associated with MP then this value
+		  will be zero."
+		::= { pppStatsEntry 2 }
+
+          pppStatsBadAddresses   OBJECT-TYPE
+               SYNTAX    Counter
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The number of packets received with an
+                         incorrect Address Field. This counter is a
+                         component of the ifInErrors variable that is
+                         associated with the interface that represents
+                         this PPP Link."
+               REFERENCE
+                         "Section 3.1, Address Field, of RFC1331."
+               ::= { pppStatsEntry 3 }
+
+          pppStatsBadControls   OBJECT-TYPE
+               SYNTAX    Counter
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The number of packets received on this link
+                         with an incorrect Control Field. This counter
+                         is a component of the ifInErrors variable that
+                         is associated with the interface that
+                         represents this PPP Link."
+               ::= { pppStatsEntry 4 }
+
+          pppStatsPacketTooLongs   OBJECT-TYPE
+               SYNTAX    Counter
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The number of received packets that have been
+                         discarded because their length exceeded the
+                         MRU. This counter is a component of the
+                         ifInErrors variable that is associated with the
+                         interface that represents this PPP Link. NOTE,
+                         packets which are longer than the MRU but which
+                         are successfully received and processed are NOT
+                         included in this count."
+               ::= { pppStatsEntry 5 }
+
+
+          pppStatsBadFCSs   OBJECT-TYPE
+               SYNTAX    Counter
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The number of received packets that have been
+                         discarded due to having an incorrect FCS. This
+                         counter is a component of the ifInErrors
+                         variable that is associated with the interface
+                         that represents this PPP Link."
+               ::= { pppStatsEntry 6 }
+
+
+          pppStatsLocalMRU   OBJECT-TYPE
+               SYNTAX    INTEGER(1..2147483648)
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The current value of the MRU for the local PPP
+                         Entity. This value is the MRU that the remote
+                         entity is using when sending packets to the
+                         local PPP entity. The value of this object is
+                         meaningful only when the link has reached the
+                         open state (ifOperStatus is up)."
+               ::= { pppStatsEntry 7 }
+
+
+          pppStatsRemoteMRU   OBJECT-TYPE
+               SYNTAX    INTEGER(1..2147483648)
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The current value of the MRU for the remote
+                         PPP Entity. This value is the MRU that the
+                         local entity is using when sending packets to
+                         the remote PPP entity. The value of this object
+                         is meaningful only when the link has reached
+                         the open state (ifOperStatus is up)."
+               ::= { pppStatsEntry 8 }
+
+
+          pppStatsLocalToPeerACCMap   OBJECT-TYPE
+               SYNTAX    OCTET STRING (SIZE (4))
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The current value of the ACC Map used for
+                         sending packets from the local PPP entity to
+                         the remote PPP entity. The value of this object
+                         is meaningful only when the link has reached
+                         the open state (ifOperStatus is up)."
+               ::= { pppStatsEntry 9 }
+
+
+          pppStatsPeerToLocalACCMap   OBJECT-TYPE
+               SYNTAX    OCTET STRING (SIZE (4))
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The ACC Map used by the remote PPP entity when
+                         transmitting packets to the local PPP entity.
+                         The value of this object is meaningful only
+                         when the link has reached the open state
+                         (ifOperStatus is up)."
+               ::= { pppStatsEntry 10 }
+
+
+          pppStatsLocalToRemoteProtocolCompression
+               OBJECT-TYPE
+               SYNTAX    INTEGER {
+                         enabled(1),
+                         disabled(2)
+                    }
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "Indicates whether the local PPP entity will
+                         use Protocol Compression when transmitting
+                         packets to the remote PPP entity. The value of
+                         this object is meaningful only when the link
+                         has reached the open state (ifOperStatus is
+                         up)."
+               ::= { pppStatsEntry 11 }
+
+
+          pppStatsRemoteToLocalProtocolCompression
+               OBJECT-TYPE
+               SYNTAX    INTEGER {
+                         enabled(1),
+                         disabled(2)
+                    }
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "Indicates whether the remote PPP entity will
+                         use Protocol Compression when transmitting
+                         packets to the local PPP entity. The value of
+                         this object is meaningful only when the link
+                         has reached the open state (ifOperStatus is
+                         up)."
+               ::= { pppStatsEntry 12 }
+
+
+          pppStatsLocalToRemoteACCompression   OBJECT-TYPE
+               SYNTAX    INTEGER {
+                         enabled(1),
+                         disabled(2)
+                    }
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "Indicates whether the local PPP entity will
+                         use Address and Control Compression when
+                         transmitting packets to the remote PPP entity.
+                         The value of this object is meaningful only
+                         when the link has reached the open state
+                         (ifOperStatus is up)."
+               ::= { pppStatsEntry 13 }
+
+
+          pppStatsRemoteToLocalACCompression   OBJECT-TYPE
+               SYNTAX    INTEGER {
+                         enabled(1),
+                         disabled(2)
+                    }
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "Indicates whether the remote PPP entity will
+                         use Address and Control Compression when
+                         transmitting packets to the local PPP entity.
+                         The value of this object is meaningful only
+                         when the link has reached the open state
+                         (ifOperStatus is up)."
+               ::= { pppStatsEntry 14 }
+
+
+          pppStatsTransmitFcsSize   OBJECT-TYPE
+               SYNTAX    INTEGER (0..128)
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The size of the Frame Check Sequence (FCS) in
+                         bits that the local node will generate when
+                         sending packets to the remote node. The value
+                         of this object is meaningful only when the link
+                         has reached the open state (ifOperStatus is
+                         up)."
+               ::= { pppStatsEntry 15 }
+
+
+          pppStatsReceiveFcsSize   OBJECT-TYPE
+               SYNTAX    INTEGER (0..128)
+               ACCESS    read-only
+               STATUS    mandatory
+               DESCRIPTION
+                         "The size of the Frame Check Sequence (FCS) in
+                         bits that the remote node will generate when
+                         sending packets to the local node. The value of
+                         this object is meaningful only when the link
+                         has reached the open state (ifOperStatus is
+                         up)."
+               ::= { pppStatsEntry 16 }
+
+--
+-- OSPF proprietary information per interface
+--
+
+anxOspfIfTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF AnxOspfIfTableEntry
+        ACCESS not-accessible
+        STATUS mandatory
+	DESCRIPTION
+		"Table of OSPF parameters configures or collected
+		on a per-interface basis.  This table is only vailid
+		for ethernet-like interface devices."
+        ::= { anxifOspf 1 }
+
+anxOspfIfTableEntry OBJECT-TYPE
+        SYNTAX AnxOspfIfTableEntry
+        ACCESS not-accessible
+        STATUS mandatory
+	DESCRIPTION
+		"OSPF configuration and statistical information
+		gathered on a per-interface basis."
+	INDEX { anxOspfIfIndex }
+        ::= { anxOspfIfTable 1 }
+
+AnxOspfIfTableEntry  ::= SEQUENCE {
+        anxOspfIfIndex			INTEGER,
+        anxOspfIfMd5Key1		DisplayString,
+        anxOspfIfMd5Key2		DisplayString,
+        anxOspfIfActiveMd5		INTEGER,
+	anxOspfIfState			INTEGER,
+	anxOspfIfPriority		INTEGER,
+	anxOspfIfTransDelay		INTEGER,
+	anxOspfIfRetransInterval	INTEGER,
+	anxOspfIfHelloInterval		INTEGER,
+	anxOspfIfDeadInterval		INTEGER,
+	anxOspfIfAuthKey		OCTET STRING,
+	anxOspfIfAuthType		INTEGER,
+	anxOspfIfCost			INTEGER,
+	anxOspfIfIpAddress		IpAddress,
+	anxOspfIfAreaId			IpAddress
+        }
+
+anxOspfIfIndex  OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+	DESCRIPTION
+		"OSPF interface number."
+        ::= { anxOspfIfTableEntry 1 }
+
+anxOspfIfMd5Key1  OBJECT-TYPE
+        SYNTAX  DisplayString
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The primary MD5 key.  This object corresponds to the
+		na/admin parameter ospf_md5k1."
+        ::= { anxOspfIfTableEntry 2 }
+
+anxOspfIfMd5Key2  OBJECT-TYPE
+        SYNTAX  DisplayString
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The primary MD5 key.  This object corresponds to the
+		na/admin parameter ospf_md5k2."
+        ::= { anxOspfIfTableEntry 3 }
+
+anxOspfIfActiveMd5  OBJECT-TYPE
+        SYNTAX  INTEGER {
+                primary(1),
+                secondary(2)
+        }
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"Specifies which MD5 key to use for encryption.  This
+		object corresponds to the na/admin parameter ospf_activemd5.
+		The default value is 'primary'."
+        ::= { anxOspfIfTableEntry 4 }
+
+anxOspfIfState	OBJECT-TYPE
+	SYNTAX INTEGER {
+		enabled(1),
+		disabled(2)
+	}
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The OSPF  interface's  administrative  status.
+		The  value formed on the interface, and the in-
+		terface will be advertised as an internal route
+		to  some  area.   The  value 'disabled' denotes
+		that the interface is external to OSPF.
+		This object corresponds to the na/admin parameter
+		ospf_state.  It can also be accessed through the
+		RFC1850 MIB object ospfIfAdminStat.  The default
+		value is 'enabled'."
+        ::= { anxOspfIfTableEntry 5 }
+
+anxOspfIfPriority	OBJECT-TYPE
+	SYNTAX INTEGER (0..255)
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The  priority  of  this  interface.   Used  in
+		multi-access  networks,  this  field is used in
+		the designated router election algorithm.   The
+		value 0 signifies that the router is not eligi-
+		ble to become the  designated  router  on  this
+		particular  network.   In the event of a tie in
+		this value, routers will use their Router ID as
+		a tie breaker.
+		This object corresponds to the na/admin parameter
+		ospf_priority.  It can also be accessed through the
+		RFC1850 MIB object ospfIfPriority.  The default
+		value is 0."
+        ::= { anxOspfIfTableEntry 6 }
+
+anxOspfIfTransDelay	OBJECT-TYPE
+	SYNTAX INTEGER (1..3600)
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The estimated number of seconds  it  takes  to
+		transmit  a  link state update packet over this
+		interface.
+		This object corresponds to the na/admin parameter
+		ospf_transdelay.  It can also be accessed through the
+		RFC1850 MIB object ospfIfTransitDelay.  The default
+		value is 1."
+        ::= { anxOspfIfTableEntry 7 }
+
+anxOspfIfRetransInterval	OBJECT-TYPE
+	SYNTAX INTEGER (1..3600)
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The number of seconds between  link-state  ad-
+		vertisement  retransmissions,  for  adjacencies
+		belonging to this  interface.   This  value  is
+		also used when retransmitting database descrip-
+		tion and link-state request packets.
+		This object corresponds to the na/admin parameter
+		ospf_retransinterval.  It can also be accessed through
+		the RFC1850 MIB object ospfIfRetransInterval.  The
+		default value is 5."
+        ::= { anxOspfIfTableEntry 8 }
+
+anxOspfIfHelloInterval	OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The length of time, in  seconds,  between  the
+		Hello  packets that the router sends on the in-
+		terface.  This value must be the same  for  all
+		routers attached to a common network.
+		This object corresponds to the na/admin parameter
+		ospf_hellointerval.  It can also be accessed through
+		the RFC1850 MIB object ospfIfHelloInterval.  The
+		default value is 10."
+        ::= { anxOspfIfTableEntry 9 }
+
+anxOspfIfDeadInterval	OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The number of seconds that  a  router's  Hello
+		packets  have  not been seen before it's neigh-
+		bors declare the router down.  This  should  be
+		some  multiple  of  the  Hello  interval.  This
+		value must be the same for all routers attached
+		to a common network.
+		This object corresponds to the na/admin parameter
+		ospf_deadinterval.  It can also be accessed through
+		the RFC1850 MIB object ospfIfDeadInterval.  The
+		default value is 40."
+        ::= { anxOspfIfTableEntry 10 }
+
+anxOspfIfAuthKey	OBJECT-TYPE
+	SYNTAX OCTET STRING(SIZE(0..8))
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The Authentication Key.  If the Area's Author-
+		ization  Type  is  simplePassword,  and the key
+		length is shorter than 8 octets, the agent will
+		left adjust and zero fill to 8 octets.
+		Note that unauthenticated  interfaces  need  no
+		authentication key, and simple password authen-
+		tication cannot use a key of more  than  8  oc-
+		tets.  Larger keys are useful only with authen-
+		tication mechanisms not specified in this docu-
+		ment.
+
+		Reading this parameter will return either <set>
+		if the key is defined or <unset> if the key
+		is not defined.
+
+		This object corresponds to the na/admin parameter
+		ospf_authkey.  It can also be accessed through
+		the RFC1850 MIB object ospfIfAuthKey."
+        ::= { anxOspfIfTableEntry 11 }
+
+anxOspfIfAuthType	OBJECT-TYPE
+	SYNTAX INTEGER {
+                none(1),
+                simple(2),
+		md5(3)
+        }
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The authentication type specified for  an  in-
+		terface.   Additional  authentication types may
+		be assigned locally.
+		This object corresponds to the na/admin parameter
+		ospf_authtype.  It can also be accessed through
+		the RFC1850 MIB object ospfIfAuthType.  The
+		default value is 'none'."
+        ::= { anxOspfIfTableEntry 12 }
+
+anxOspfIfCost	OBJECT-TYPE
+	SYNTAX INTEGER (1..65535)
+        ACCESS  read-write
+        STATUS  mandatory
+	DESCRIPTION
+		"The metric of using this type  of  service  on
+		this interface.
+		This object corresponds to the na/admin parameter
+		ospf_cost.  It can also be accessed through
+		the RFC1850 MIB object ospfIfMetricValue.  The
+		default value is 1."
+        ::= { anxOspfIfTableEntry 13 }
+
+anxOspfIfIpAddress	OBJECT-TYPE
+	SYNTAX  IpAddress
+        ACCESS  read-only
+        STATUS  mandatory
+	DESCRIPTION
+		"The IP address of this interface."
+        ::= { anxOspfIfTableEntry 14 }
+
+anxOspfIfAreaId	OBJECT-TYPE
+	SYNTAX  IpAddress
+        ACCESS  read-only
+        STATUS  mandatory
+	DESCRIPTION
+		"A 32-bit integer uniquely identifying the area
+		to  which  the  interface  connects.   Area  ID
+		0.0.0.0 is used for the OSPF backbone.
+		This object can also be accessed through
+		the RFC1859 MIB object ospfIfAreaId."
+        ::= { anxOspfIfTableEntry 15 }
+
+
+
+
+ipsecStatTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF IpsecStatEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		" Table of Ipsec Netstat information. This table is 
+		supported on the 5399/rac8000 platforms."
+	::= { ipsec 1 }
+
+ipsecStatEntry OBJECT-TYPE
+	SYNTAX IpsecStatEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+	        "The Ipsec Netstat information."
+	INDEX  { ipsecStatIndex }
+	::= { ipsecStatTable 1 }
+
+  IpsecStatEntry ::= SEQUENCE {
+		ipsecStatIndex          INTEGER,
+		ipsecSpiNumber		INTEGER,
+		ipsecSequenceNumber	INTEGER,
+		ipsecLifeTime		INTEGER,
+		ipsecIpAddress		IpAddress,
+		ipsecProtocol		INTEGER,
+		ipsecAntiReplayWindow   Counter,
+		ipsecProtocolMode	INTEGER,
+		ipsecAuthAlgorithm	INTEGER,
+		ipsecEncAlogorithm	INTEGER,
+		ipsecEncMode		INTEGER
+		}
+
+ipsecStatIndex OBJECT-TYPE
+	SYNTAX INTEGER 
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "The index, from 1-120,  which uniquely identifies the
+		security association entry. This index is only used by 
+		snmp."
+          ::= { ipsecStatEntry  1 }
+
+ipsecSpiNumber OBJECT-TYPE
+	SYNTAX INTEGER 
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "A 32-bit unique identifier, in addition with destination 
+		address for an IP packet (inbound traffic) and IPSEC 
+		protocol (AH/ESP) to globally identify a security 
+		association entry."
+          ::= { ipsecStatEntry  2 }
+
+
+ipsecSequenceNumber OBJECT-TYPE
+	SYNTAX INTEGER 
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "A 32-bit value used to generate the sequence number 
+		field in AH and ESP headers, only used for outbound 
+		traffic."
+          ::= { ipsecStatEntry  3 }
+		
+ipsecLifeTime OBJECT-TYPE
+	SYNTAX INTEGER 
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "· Lifetime of this security association. It can be 
+		either counted in bytes or counted in seconds since 
+		the security association is activated."
+          ::= { ipsecStatEntry  4 }
+		
+ipsecIpAddress OBJECT-TYPE
+	SYNTAX IpAddress
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "The destination address of an IP packet (inbound traffic)."
+          ::= { ipsecStatEntry  5 }
+		
+ipsecProtocol OBJECT-TYPE
+	SYNTAX INTEGER {
+		aH(1),
+		eSP(2),
+		both(3)
+	}
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "AH (Authentication Header) and/or ESP (Encapsulation 
+		Security Payload) can be applied to an IPSEC packet. AH 
+		provides authentication for the IP packet and ESP provides 
+		encryption for the IP packet."
+          ::= { ipsecStatEntry 6  }
+
+ipsecAntiReplayWindow OBJECT-TYPE
+	SYNTAX Counter
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "A 32-bit counter used to determine whether an 
+		inbound AH or ESP packet is a reply. Used only 
+		for inbound traffic. It is always set to zero for 
+		the first ANNEX release."
+          ::= { ipsecStatEntry  7 }
+		
+ipsecProtocolMode OBJECT-TYPE
+	SYNTAX INTEGER {
+		tunnel(1),
+		transport(2)
+		} 
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "Indicates which security transformation (AH or ESP) 
+		is applied to the traffic on this SA."
+          ::= { ipsecStatEntry  8 }
+
+ipsecAuthAlgorithm OBJECT-TYPE
+	SYNTAX INTEGER {
+		none(1),
+		mD5(3),
+		sHA1(2)
+		}	
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "Both SHA-1 (Secure Hash Algorithm) and MD5 are supported.
+		If the authentication service is not selected (ipsecProtocol 
+		is not set to both), this will be set to none(1)."
+          ::= { ipsecStatEntry  9 }
+
+ipsecEncAlogorithm OBJECT-TYPE
+	SYNTAX INTEGER {
+		none(1),
+		dES(2),
+		tRIPLE-DES(3)
+		}	
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "The encription algorithm. Only available when 
+		ipsecProtocol is set to ESP. Otherwise it returns none(1)."
+          ::= { ipsecStatEntry  10 }
+
+ipsecEncMode OBJECT-TYPE
+	SYNTAX INTEGER {
+		none(1),
+		cBC(2)
+		}	
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+	        "The encription mode. Only available when 
+		ipsecProtocol is set to ESP. Otherwise it returns none(1)."
+          ::= { ipsecStatEntry  11 }
+
+ipsecEnable OBJECT-TYPE
+	SYNTAX INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+	        "Setting this object enables or disables ip security (ipsec)
+		on the RAC."
+          ::= { ipsec 2 }
+		
+
+
+
+END
+
+
+

@@ -1,0 +1,781 @@
+
+RC-POS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, Counter64, IpAddress
+        FROM SNMPv2-SMI
+    MacAddress, DisplayString, TruthValue
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcPos, rcStat, EnableValue
+        FROM RAPID-CITY;
+
+
+rcPosMib MODULE-IDENTITY
+       LAST-UPDATED     "200407200000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcPos 0 }
+
+rcStatPos      OBJECT IDENTIFIER ::= { rcStat 8 }
+
+-- the Statistics Pos Control table
+
+rcStatPosControlTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF RcStatPosControlEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION ""
+        ::= { rcStatPos 1 }
+
+rcStatPosControlEntry OBJECT-TYPE
+        SYNTAX  RcStatPosControlEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION ""
+        INDEX   { rcStatPosControlPortIndex }
+        ::= { rcStatPosControlTable 1 }
+
+RcStatPosControlEntry ::=
+        SEQUENCE {
+            rcStatPosControlPortIndex          InterfaceIndex,
+            rcStatPosControlInErrors           Counter32,
+            rcStatPosControlInUnknownProtos    Counter32,
+            rcStatPosControlOutErrors          Counter32,
+            rcStatPosControlHCInOctets         Counter64,
+            rcStatPosControlHCInUcastPkts      Counter64,
+            rcStatPosControlHCInMulticastPkts  Counter64,
+            rcStatPosControlHCInBroadcastPkts  Counter64,
+            rcStatPosControlHCInDiscards       Counter64,
+            rcStatPosControlHCOutOctets        Counter64,
+            rcStatPosControlHCOutUcastPkts     Counter64,
+            rcStatPosControlHCOutMulticastPkts Counter64,
+            rcStatPosControlHCOutBroadcastPkts Counter64,
+            rcStatPosControlHCOutDiscards      Counter64
+        }
+
+rcStatPosControlPortIndex OBJECT-TYPE
+        SYNTAX  InterfaceIndex
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "A unique value for each port."
+        ::= { rcStatPosControlEntry 1 }
+
+rcStatPosControlInErrors OBJECT-TYPE
+        SYNTAX  Counter32
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The total number of error pkts received
+                on the interface."
+        ::= { rcStatPosControlEntry 2 }
+
+rcStatPosControlInUnknownProtos OBJECT-TYPE
+        SYNTAX  Counter32
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The number of packets received via the interface
+                which were discarded because of an unknown or
+                unsupported protocol."
+        ::= { rcStatPosControlEntry 3 }
+
+rcStatPosControlOutErrors OBJECT-TYPE
+        SYNTAX  Counter32
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The number of outbound packets that could not be
+                transmitted because of errors."
+        ::= { rcStatPosControlEntry 4 }
+
+rcStatPosControlHCInOctets OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The total number of octets received of the
+                interface, including framing characters."
+        ::= { rcStatPosControlEntry 5 }
+
+rcStatPosControlHCInUcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The number of subnetwork-unicast packets
+                received from a higher-layer protocol."
+        ::= { rcStatPosControlEntry 6 }
+
+rcStatPosControlHCInMulticastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The number of multicast packets
+                received from a higher-layer protocol."
+        ::= { rcStatPosControlEntry 7 }
+
+rcStatPosControlHCInBroadcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The number of broadcast packets
+                received from a higher-layer protocol."
+        ::= { rcStatPosControlEntry 8 }
+
+rcStatPosControlHCInDiscards OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The number of inbound packets which were chosen to be
+               discarded even though no errors had been detected to
+               prevent their being deliverable to a higher-layer
+               protocol."
+        ::= { rcStatPosControlEntry 9 }
+
+rcStatPosControlHCOutOctets OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The total number of octets trasmitted out of the
+                interface, including framing characters."
+        ::= { rcStatPosControlEntry 10 }
+
+rcStatPosControlHCOutUcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The total number of packets that higher-level
+                protocols requested be transmitted to a
+                subnetwork-unicast address, including those that
+                were discarded or not sent."
+        ::= { rcStatPosControlEntry 11 }
+
+rcStatPosControlHCOutMulticastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The number of multicast packets
+                delivered to a higher-layer protocol."
+        ::= { rcStatPosControlEntry 12 }
+
+rcStatPosControlHCOutBroadcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The number of broadcast packets
+                delivered to a higher-layer protocol."
+        ::= { rcStatPosControlEntry 13 }
+
+rcStatPosControlHCOutDiscards OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION "The number of outbound packets which were chosen to
+               be discarded even though no errors had been detected
+               to prevent their being transmitted."
+        ::= { rcStatPosControlEntry 14 }
+
+-- POS PPP IPX Table
+
+rcPosPppIpxTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPosPppIpxEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+	::= { rcPos 1 }
+
+rcPosPppIpxEntry OBJECT-TYPE
+	SYNTAX        RcPosPppIpxEntry
+	MAX-ACCESS 	  not-accessible
+	STATUS 	      current
+	DESCRIPTION   ""
+	INDEX         { rcPosPppIpxIfIndex }
+	::= { rcPosPppIpxTable 1 }
+
+RcPosPppIpxEntry ::=
+    	SEQUENCE {
+                rcPosPppIpxIfIndex          InterfaceIndex,
+                rcPosPppIpxIpxcpAdminStatus INTEGER,
+                rcPosPppIpxOperStatus       INTEGER,
+                rcPosPppIpxNetAddr          OCTET STRING,
+                rcPosPppIpxRoutingProtocol  INTEGER
+    	}
+
+rcPosPppIpxIfIndex OBJECT-TYPE
+   	SYNTAX        InterfaceIndex
+  	MAX-ACCESS    read-only
+  	STATUS        current
+	DESCRIPTION   "port number."
+	::= { rcPosPppIpxEntry 1 }
+
+rcPosPppIpxIpxcpAdminStatus OBJECT-TYPE  
+        SYNTAX        INTEGER {
+                         open(1),
+                         close(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        DEFVAL { close }
+        ::= { rcPosPppIpxEntry 2 }
+
+rcPosPppIpxOperStatus OBJECT-TYPE  
+        SYNTAX        INTEGER {
+                         up(1),
+                         down(2),
+                         unknown(3)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosPppIpxEntry 3 }
+
+rcPosPppIpxNetAddr OBJECT-TYPE
+        SYNTAX         OCTET STRING (SIZE(4))
+        MAX-ACCESS     read-write
+        STATUS         current
+        DESCRIPTION    "IPX Network address."
+        ::= { rcPosPppIpxEntry 4 }
+
+rcPosPppIpxRoutingProtocol OBJECT-TYPE  
+        SYNTAX        INTEGER {
+                         none(0),
+                         rip(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        DEFVAL { none }
+        ::= { rcPosPppIpxEntry 5 }
+
+-- POS SONET Table
+
+rcPosSonetTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPosSonetEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+	::= { rcPos 2 }
+
+rcPosSonetEntry OBJECT-TYPE
+	SYNTAX        RcPosSonetEntry
+	MAX-ACCESS 	  not-accessible
+	STATUS 	      current
+	DESCRIPTION   ""
+	INDEX         { rcPosSonetIndex }
+	::= { rcPosSonetTable 1 }
+
+RcPosSonetEntry ::=
+    	SEQUENCE {
+                rcPosSonetIndex                     InterfaceIndex,
+                rcPosSonetFraming                   INTEGER,
+                rcPosSonetSectionTrace              INTEGER,
+                rcPosSonetSectionGrowth             INTEGER,
+                rcPosSonetSyncronization            INTEGER,
+                rcPosSonetStsPathTrace              OCTET STRING,
+                rcPosSonetPathSignalLabel           INTEGER,
+                rcPosSonetClockSource               INTEGER,
+                rcPosSonetScramble                  EnableValue,
+                rcPosSonetOperStatusFraming         Integer32,
+                rcPosSonetOperStatusClockSource     Integer32,
+                rcPosSonetOperStatusScramble        EnableValue,
+                rcPosSonetOperStatusSectionTrace    Integer32,
+                rcPosSonetOperStatusPathSignalLabel Integer32
+
+    	}
+
+rcPosSonetIndex OBJECT-TYPE
+   	SYNTAX        InterfaceIndex
+  	MAX-ACCESS    read-only
+  	STATUS        current
+	DESCRIPTION   "pos ifIndex."
+	::= { rcPosSonetEntry 1 }
+
+rcPosSonetFraming OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         sonet(1),
+                         sdh(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosSonetEntry 2 }
+
+rcPosSonetSectionTrace OBJECT-TYPE  
+   	SYNTAX        INTEGER (1..255)
+  	MAX-ACCESS    read-write
+  	STATUS        current
+	DESCRIPTION   "config. J0 byte"
+        ::= { rcPosSonetEntry 3 }
+
+rcPosSonetSectionGrowth OBJECT-TYPE  
+   	SYNTAX        INTEGER (1..255)
+  	MAX-ACCESS    read-write
+  	STATUS        current
+	DESCRIPTION   "config. Z0 byte"
+        ::= { rcPosSonetEntry 4 }
+
+rcPosSonetSyncronization OBJECT-TYPE  
+   	SYNTAX        INTEGER (1..255)
+  	MAX-ACCESS    read-write
+  	STATUS        current
+	DESCRIPTION   "config. S1 byte"
+        ::= { rcPosSonetEntry 5 }
+
+rcPosSonetStsPathTrace OBJECT-TYPE  
+        SYNTAX         OCTET STRING (SIZE(64))
+        MAX-ACCESS     read-write
+        STATUS         current
+        DESCRIPTION    "config. 64/16 byte."
+        ::= { rcPosSonetEntry 6 }
+
+rcPosSonetPathSignalLabel OBJECT-TYPE  
+   	SYNTAX        INTEGER (1..255)
+  	MAX-ACCESS    read-write
+  	STATUS        current
+	DESCRIPTION   "config. C2 byte"
+        ::= { rcPosSonetEntry 7 }
+
+rcPosSonetClockSource OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         line(1),
+                         internal(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosSonetEntry 8 }
+
+rcPosSonetScramble OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosSonetEntry 9 }
+
+rcPosSonetOperStatusFraming OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosSonetEntry 10 }
+
+rcPosSonetOperStatusClockSource OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosSonetEntry 11 }
+
+
+rcPosSonetOperStatusScramble OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosSonetEntry 12 }
+
+rcPosSonetOperStatusSectionTrace OBJECT-TYPE
+      SYNTAX        Integer32
+   MAX-ACCESS    read-only
+   STATUS        current
+      DESCRIPTION   ""
+        ::= { rcPosSonetEntry 13 }
+
+rcPosSonetOperStatusPathSignalLabel OBJECT-TYPE
+      SYNTAX        Integer32
+   MAX-ACCESS    read-only
+   STATUS        current
+      DESCRIPTION   ""
+        ::= { rcPosSonetEntry 14 }
+
+
+
+-- Pos Line Status Table
+
+rcPosLineStatusTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPosLineStatusEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Pos Line Status Table"
+        ::= { rcPos 3 }
+
+rcPosLineStatusEntry OBJECT-TYPE
+        SYNTAX        RcPosLineStatusEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Pos Line Status."
+        INDEX         { rcPosLineStatusIndex }
+        ::= { rcPosLineStatusTable 1 }
+
+RcPosLineStatusEntry ::= SEQUENCE {
+                rcPosLineStatusIndex             InterfaceIndex,
+                rcPosLineStatusLocalMACAddress   MacAddress,
+                rcPosLineStatusRemoteMACAddress  MacAddress,
+                rcPosLineStatusLocalIpAddr       IpAddress,
+                rcPosLineStatusRemoteIpAddr      IpAddress,
+                rcPosLineStatusOutQuality        Integer32,
+                rcPosLineStatusLocalPeriod       Integer32,
+                rcPosLineStatusDeviceType        Integer32,
+                rcPosLineStatusDeviceRev         Integer32,
+                rcPosLineStatusIpxRoutingProtocol Integer32
+        }
+
+rcPosLineStatusIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "pos ifIndex, same as rcPosPppIpxIfIndex."
+        ::= { rcPosLineStatusEntry 1 }
+
+rcPosLineStatusLocalMACAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "current local MAC address"
+        ::= { rcPosLineStatusEntry 2 }
+
+rcPosLineStatusRemoteMACAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "current remote MAC address"
+        ::= { rcPosLineStatusEntry 3 }
+
+rcPosLineStatusLocalIpAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "current local ip addr"
+        ::= { rcPosLineStatusEntry 4 }
+
+rcPosLineStatusRemoteIpAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "current remote ip addr"
+        ::= { rcPosLineStatusEntry 5 }
+
+rcPosLineStatusOutQuality OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "current output quality."
+        ::= { rcPosLineStatusEntry 6 }
+
+rcPosLineStatusLocalPeriod OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosLineStatusEntry 7 }
+
+rcPosLineStatusDeviceType OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosLineStatusEntry 8 }
+
+rcPosLineStatusDeviceRev OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosLineStatusEntry 9 }
+
+rcPosLineStatusIpxRoutingProtocol OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosLineStatusEntry 10 }
+
+
+-- Pos Line Config Table
+
+rcPosLineConfigTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPosLineConfigEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Pos Line Config Table"
+        ::= { rcPos 4 }
+
+rcPosLineConfigEntry OBJECT-TYPE
+        SYNTAX        RcPosLineConfigEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Pos Line Config."
+        INDEX         { rcPosLineConfigIndex }
+        ::= { rcPosLineConfigTable 1 }
+
+RcPosLineConfigEntry ::= SEQUENCE {
+                rcPosLineConfigIndex              InterfaceIndex,
+                rcPosLineConfigLocalMACAddress    MacAddress,
+                rcPosLineConfigRemoteMACAddress   MacAddress,
+                rcPosLineConfigLocalIpAddr        IpAddress,
+                rcPosLineConfigRemoteIpAddr       IpAddress,
+                rcPosLineConfigRemoteReportPeriod INTEGER,
+                rcPosLineConfigLqrThreshold       INTEGER,
+                rcPosLineConfigOutQuality         Integer32,
+                rcPosLineConfigPppStp             EnableValue,
+                rcPosLineConfigLoopBack           TruthValue,
+                rcPosLineConfigIpxVlanMacAddress  MacAddress,
+                rcPosLineConfigIpxRemoteMacAddress MacAddress
+        }
+
+rcPosLineConfigIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "pos ifIndex, same as rcPosPppIpxIfIndex."
+        ::= { rcPosLineConfigEntry 1 }
+
+rcPosLineConfigLocalMACAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "current local MAC address"
+        ::= { rcPosLineConfigEntry 2 }
+
+rcPosLineConfigRemoteMACAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "current remote MAC address"
+        ::= { rcPosLineConfigEntry 3 }
+
+rcPosLineConfigLocalIpAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "current local ip addr"
+        ::= { rcPosLineConfigEntry 4 }
+
+rcPosLineConfigRemoteIpAddr OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "current remote ip addr"
+        ::= { rcPosLineConfigEntry 5 }
+
+rcPosLineConfigRemoteReportPeriod OBJECT-TYPE
+        SYNTAX        INTEGER (1..60)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "config. remote report period."
+        ::= { rcPosLineConfigEntry 6 }
+
+rcPosLineConfigLqrThreshold OBJECT-TYPE
+        SYNTAX        INTEGER (1..100)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "config. input quality."
+        ::= { rcPosLineConfigEntry 7 }
+
+rcPosLineConfigOutQuality OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "config. output quality."
+        ::= { rcPosLineConfigEntry 8 }
+
+rcPosLineConfigPppStp OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "STP PPP encoding enable T/F"
+        ::= { rcPosLineConfigEntry 9 }
+
+rcPosLineConfigLoopBack OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "perform loop-back."
+        ::= { rcPosLineConfigEntry 10 }
+
+rcPosLineConfigIpxVlanMacAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosLineConfigEntry 11 }
+
+rcPosLineConfigIpxRemoteMacAddress OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosLineConfigEntry 12 }
+
+
+-- POS Sonet traps --
+
+rcPosSonetTrap        OBJECT IDENTIFIER ::= { rcPos 5 }
+
+rcPosSonetTrapType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                              sectionAlarm(1),
+                              lineAlarm(2),
+                              pathAlarm(3)    
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate a particular type of Sonet 
+                      trap."
+        ::= { rcPosSonetTrap 1 }
+
+rcPosSonetTrapIndication OBJECT-TYPE
+        SYNTAX        INTEGER {
+                            noDefect(1),         
+                            sectionLossOfSignal(2),  
+                            sectionLossOfFrame(3),
+                            lineAlarmIndication(4),
+                            lineRemoteDefectIndication(5),
+                            pathLossOfPointer(6),
+                            pathAlarmIndication(7),
+                            pathRemoteDefectIndication(8),
+                            pathUnequipped(9),
+                            pathSignalLabelMismatch(10),
+                            pathTraceMismatch(11)
+                      } 
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Used to indicate an indication for a Sonet trap."
+        ::= { rcPosSonetTrap 2 }
+
+-- Pos Sio Card Config Table
+
+rcPosSioCardConfigTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPosSioCardConfigEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Pos Sio Card Config Table"
+        ::= { rcPos 6 }
+
+rcPosSioCardConfigEntry OBJECT-TYPE
+        SYNTAX        RcPosSioCardConfigEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of Pos Sio Card Config."
+        INDEX         { rcPosSioCardConfigSlotIndex }
+        ::= { rcPosSioCardConfigTable 1 }
+
+RcPosSioCardConfigEntry ::= SEQUENCE {
+                rcPosSioCardConfigSlotIndex     Integer32,
+                rcPosSioCardConfigAction        INTEGER,
+                rcPosSioCardConfigTraceMode     INTEGER,
+                rcPosSioCardConfigImageFileName DisplayString
+        }
+
+rcPosSioCardConfigSlotIndex OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "slot Index."
+        ::= { rcPosSioCardConfigEntry 1 }
+
+rcPosSioCardConfigAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          other(0),
+                          reset(1)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosSioCardConfigEntry 2 }
+
+rcPosSioCardConfigTraceMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          other(0),
+                          traceOn(1)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosSioCardConfigEntry 3 }
+
+rcPosSioCardConfigImageFileName OBJECT-TYPE
+        SYNTAX        DisplayString 
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "POS Image file name."
+        ::= { rcPosSioCardConfigEntry 4 }
+
+
+
+-- POS Operation Status Table
+
+rcPosOperStatusTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPosOperStatusEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+   ::= { rcPos 7 }
+
+rcPosOperStatusEntry OBJECT-TYPE
+   SYNTAX        RcPosOperStatusEntry
+   MAX-ACCESS     not-accessible
+   STATUS         current
+   DESCRIPTION   ""
+   INDEX         { rcPosOperStatusIndex }
+   ::= { rcPosOperStatusTable 1 }
+
+RcPosOperStatusEntry ::=
+      SEQUENCE {
+                rcPosOperStatusIndex               InterfaceIndex,
+                rcPosOperStatusLqrStatus           Integer32,
+                rcPosOperStatusLineLqrThreshold    Integer32,
+                rcPosOperStatusLinkMagicNumber     Integer32,
+                rcPosOperStatusLinePppStp          EnableValue
+      }
+
+rcPosOperStatusIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "pos ifIndex."
+        ::= { rcPosOperStatusEntry 1 }
+
+rcPosOperStatusLqrStatus   OBJECT-TYPE
+     SYNTAX      Integer32
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION
+            "Operational status of pppLqrConfigStatus."
+     ::= { rcPosOperStatusEntry 2 }
+
+rcPosOperStatusLineLqrThreshold OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "."
+        ::= { rcPosOperStatusEntry 3 }
+
+rcPosOperStatusLinkMagicNumber  OBJECT-TYPE
+     SYNTAX      Integer32
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION
+           "."
+     ::= { rcPosOperStatusEntry 4 }
+
+rcPosOperStatusLinePppStp OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcPosOperStatusEntry 5 }
+
+END

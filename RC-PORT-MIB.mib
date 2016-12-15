@@ -1,0 +1,2265 @@
+
+RC-PORT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32
+        FROM SNMPv2-SMI
+    TruthValue, DisplayString, MacAddress, RowStatus, TimeInterval
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcPort, rcChassis, rcTest, rcStat, PortSet, EnableValue
+        FROM RAPID-CITY;
+
+rcPortMib MODULE-IDENTITY
+       LAST-UPDATED     "200604190000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "Yu-Ten Lee
+                          Postal:       Nortel Networks, Inc.
+                                               4465 Great America Parkway
+                                               Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-2560
+                         Fax:          408-495-6680
+                         E-mail:     ylee@nortelnetworks.com"
+
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION         "200604190000Z" -- 19 Apr 2006
+       DESCRIPTION      "Version 36: Added rcPortSmartAutoNegotiate"
+
+       REVISION         "200602100000Z" -- 10 Feb 2006
+       DESCRIPTION      "Version 35: Added objects rcPortLacpEntry 7-10"
+
+       REVISION         "200602080000Z" -- 08 Feb 2006
+       DESCRIPTION      "Version 34: Added to rcPortType"
+
+       REVISION         "200601180000Z" -- 18 Jan 2006
+       DESCRIPTION      "Version 33: Updated rcPortPoeMainPseExtnDeviceDetectType"
+
+       REVISION         "200511150000Z" -- 15 Nov 2005
+       DESCRIPTION      "Version 32: Added 3 objects to rcPortTable."
+
+       REVISION         "200510130000Z" -- 13 Oct 2005
+       DESCRIPTION      "Version 31: Added rcPortTrustDscp.  Updated the defval on rcPortRemoteMirroringEtherType"
+
+       REVISION         "200508250000Z" -- 25 Aug 2005
+       DESCRIPTION      "Version 30: Removed duplicate leaf rcPortVLacpPortState"
+
+       REVISION         "200507200000Z" -- 20 July 2005
+       DESCRIPTION      "Version 29: Added leaf rcPortVLacpPortState"
+
+       REVISION         "200507150000Z" -- 15 July 2005
+       DESCRIPTION      "Version 28: Added rc1000BaseTXPOE to rcPortType"
+
+       REVISION         "200506220000Z" -- 22 June 2005
+       DESCRIPTION      "Version 27: Added rcPortFlushFdbTable"
+
+       REVISION         "200506100000Z" -- 10 June 2005
+       DESCRIPTION      "Version 26: chaned rcPortName length to 225"
+
+       REVISION         "200506070000Z" -- 7 June 2005
+       DESCRIPTION      "Version 25: added attribute rcPortQinqEtherType to rcPortTable"
+
+       REVISION         "200506010000Z" -- 1 June 2005
+       DESCRIPTION      "Version 24: added objects for BPDU filtering"
+
+       REVISION         "200504150000Z" -- 15 Apr 2005
+       DESCRIPTION      "Version 23: added new port types for 10 Gb (58-62) to rcPortType"
+
+       REVISION         "200502160000Z" -- 16 Feb 2005
+       DESCRIPTION      "Version 22: changed range of rcPortPcapFilterList"
+
+       REVISION         "200502040000Z" -- 04 Feb 2005
+       DESCRIPTION      "Version 21: Added rcPortMgmtLinkTable"
+
+       REVISION         "200501140000Z" -- 14 Jan 2005
+       DESCRIPTION      "Version 20: Added support for 10Gig links."
+
+       REVISION         "200412150000Z" -- 15 December 2004
+       DESCRIPTION      "Version 19: Added rcPortEgressRateLimit and 
+                               rcPortEgressRateLimitState to rcPortEntry"
+
+       REVISION         "200412090000Z" -- 09 December 2004 
+       DESCRIPTION      "Version 18: Fix typos and clean up revision history"
+
+       REVISION         "200411240000Z" -- 24 November 2004 
+       DESCRIPTION      "Version 17: Re-submitting previous request as changes are not
+                         reflected"
+
+       REVISION         "200411040000Z" -- 04 November 2004 
+       DESCRIPTION      "Version 16: Added rcPortExtCplimitConf, rcPortExtCplimitUtilRate
+                         under rcPortTable"
+
+       REVISION         "200410110000Z" -- 11 October 2004 
+       DESCRIPTION      "Version 15: rcPortType conflict: rc10GbNone is now (56).
+                         Remove rcPort8021POverrideEnable (rcPortEntry 65) as we
+                         will be using rcPortIeee8021POverrideEnable from PP8300."
+
+       REVISION         "200409300001Z" -- 30 September 2004 
+       DESCRIPTION      "Version 14: Add range for rcPortVlacpSessionIfIndex' &
+                         rcPortVlacpSessionSesNumber."
+
+       REVISION         "200409300000Z" -- 30 September 2004 
+       DESCRIPTION      "Version 13: Add rcGbicBx to rcPortType"
+
+       REVISION         "200409290000Z" -- 29 September 2004 
+       DESCRIPTION      "Version 12:  Add range for
+                         rcPortLacpFastPeriodicTime/SlowPeriodicTime,
+                         rcPortVLacpFastPeriodicTime/SlowPeriodicTime "
+
+       REVISION         "200409280000Z" -- 28 September 2004 
+       DESCRIPTION      "Version 11:  Add missing REVISION cause. "
+
+       REVISION         "200409220000Z" -- 22 September 2004 
+       DESCRIPTION      "Version 10:  Change rc100BaseTXPOL to rc100BaseTXPOE. "
+
+       REVISION         "200409210000Z" -- 21 September 2004 
+       DESCRIPTION      "Version 10:  Added rcPort8021POverrideEnable attribute 
+                         by Alka Malik. "
+
+       REVISION         "200409080000Z" -- 08 September 2004 
+       DESCRIPTION      "Version 9:  Added rcPortAutoRecoverPort 
+                         to RcPortEntry "
+
+       REVISION         "200409010000Z" -- 01 Sept 2004 
+       DESCRIPTION      "Version 8:  Added rcPortPoeMainPseExtnPwrLimit 
+                         to rcPortPoeMainPseExtnTable"
+
+       REVISION         "200408030000Z" -- 03 August 2004 
+       DESCRIPTION      "Version 7:  Added rcPortVlacpSessionTable by Amit Singh. Also, 
+                         there was a mismatch in MRT submission for rcPortPoe
+                         (rcPort 7 versus rcPort 3 (correct)."
+
+       REVISION         "200407230000Z" -- 23 July 2004 
+       DESCRIPTION      "Version 6:  Added rcPortVLacpPortState to rcPortVLacpTable,
+                         move rcPortVLacpDualHomingEnable to .10 (it was erroneously
+                         defined as .9 when it was added)."
+
+       REVISION         "200407220000Z" -- 22 July 2004 
+       DESCRIPTION      "Version 5:  Added rcPortAutoNegAd and rcPortAutoNegAdCapability
+                         to rcPortTable"
+
+       REVISION         "200407070000Z" -- 7 July 2004 
+       DESCRIPTION      "Version 4:  Added rcPortVLacpDualHomingEnable to
+                         rcPortVLacpTable" 
+			        
+       ::= { rcPort 0 }
+
+-- Port Table
+
+rcPortTable OBJECT-TYPE
+        SYNTAX	      SEQUENCE OF RcPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Port table"
+        ::= { rcPort 1 }
+
+rcPortEntry OBJECT-TYPE
+        SYNTAX        RcPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing info. for a particular port"
+        INDEX         { rcPortIndex }
+        ::= { rcPortTable 1 }
+
+RcPortEntry ::= SEQUENCE {
+    rcPortIndex                           InterfaceIndex,
+    rcPortType                            INTEGER,
+    rcPortConnectorType                   INTEGER,
+    rcPortPerformRouting                  TruthValue,
+    rcPortHighPriority                    TruthValue,
+    rcPortAction                          INTEGER,
+    rcPortResult                          INTEGER,
+    rcPortPrimaryConnector                INTEGER,
+    rcPortActiveConnector                 INTEGER,
+    rcPortBackupConnectorStatus           INTEGER,
+    rcPortAutoNegotiate                   TruthValue,
+    rcPortAdminDuplex                     INTEGER,
+    rcPortOperDuplex                      INTEGER,
+    rcPortAdminSpeed                      INTEGER,
+    rcPortOperSpeed                       Integer32,
+    rcPortMltId                           Integer32,
+    rcPortLocked                          TruthValue,
+    rcPortAutoNegotiationSupported        TruthValue,
+    rcPortSingleRoutablePort              TruthValue,
+    rcPortUnknownMacDiscard               TruthValue,
+    rcPortNumStateTransition              Counter32,
+    rcPortAllowOversizeFrame              TruthValue,
+    rcPortUserPriority                    INTEGER,
+    rcPortQosLevel                        INTEGER,
+    rcPortDiffServEnable                  TruthValue,
+    rcPortDiffServType                    INTEGER,
+    rcPortDiffServIeee8021POverrideEnable TruthValue,
+    rcPortVendorDescr                     DisplayString,
+    rcPortName                            DisplayString,
+    rcPortOctapidId                       Integer32,
+    rcPortWan                             INTEGER,
+    rcPortTransport                       INTEGER,
+    rcPortMultimediaFilterEnable          TruthValue,
+    rcPortMultimediaDevSelection          DisplayString,
+    rcPortServiceType		          INTEGER, 
+    rcPortMode			          INTEGER, 
+    rcPortAdminRouting                    EnableValue,
+    rcPortOperRouting                     EnableValue,
+    rcPortPid                             Integer32,
+    rcPortIeee8021POverrideEnable         TruthValue,
+    rcPortShaperEnable                    TruthValue,
+    rcPortShaperMaxRate                   INTEGER,
+    rcPortShaperBurstSize                 INTEGER,
+    rcPortCpLimitShutDown                 TruthValue,
+    rcPortHighSecureEnable	          TruthValue,
+    rcPortTlsPriorityOverride             EnableValue,
+    rcPortVctAbility                      INTEGER,
+    rcPortVctAdminStatus                  EnableValue,
+    rcPortMrouteStrLimit                  INTEGER,
+    rcPortMrouteStrTimerCheck             INTEGER,
+    rcPortMrouteStrLimitEnable            TruthValue,
+    rcPortUpdateDynamicMacQosLevel        EnableValue,
+    rcPortVplsDualHoming                  INTEGER,
+    rcPortVplsMgmtVlan                    TruthValue,
+    rcPortTlsManagedBySp                  TruthValue,
+    rcPortAutoNegAd                       BITS,
+    rcPortAutoNegAdCapability             BITS,
+    rcPortAutoRecoverPort                 TruthValue,
+    rcPortExtCplimitConf                  INTEGER,
+    rcPortExtCplimitUtilRate              INTEGER,
+    rcPortEgressRateLimit                 INTEGER,
+    rcPortEgressRateLimitState            EnableValue,
+    rcPortBpduFilteringTimerCount         TimeInterval,
+    rcPortBpduFilteringTimeout            TimeInterval,
+    rcPortBpduFilteringAdminEnabled       TruthValue,
+    rcPortBpduFilteringOperEnabled        TruthValue,
+    rcPortQinqEtherType                   INTEGER,
+    rcPortTrustDscp                          TruthValue,
+    rcPortCpLimitEnable                   EnableValue,
+    rcPortCpMulticastLimit                INTEGER,
+    rcPortCpBroadcastLimit                INTEGER,
+    rcPortSmartAutoNegotiate              TruthValue
+}
+
+rcPortIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "An index value that uniquely identifies a port.
+                      This value is similar to ifIndex in MIB2."
+        ::= { rcPortEntry 1 }
+
+rcPortType OBJECT-TYPE
+	SYNTAX        INTEGER {
+                         other(0),           -- no port installed
+                         rc100BaseTX(1),     -- (cat 5)
+                         rc100BaseT2(2),     -- (cat 3)
+                         rc100BaseF(3),      -- (100 mbps fiber)
+                         rc1000BaseF(4),     -- (1000 mbps fiber)
+                         rc1000BaseDualF(5), -- (fiber - dual connector)
+                         rc10BaseF(6),       -- (10 mbps fiber)
+                         rcPosMMF(7),        -- (multi mode fiber)
+                         rcPosSMF(8),        -- (single mode fiber)
+                         rcAtm(9),           -- (oc3, oc12, ds3, e3)
+                         rcGbicLx(10),       -- (gigabit long haul)
+                         rcGbicSx(11),       -- (gigabit short haul)
+                         rcGbicXd(12),       -- (gigabit extended distance)
+                         rcGbicCu(13),       -- (gigabit copper)
+                         rcGbicOther(14),    -- (gigabit other)
+                         rcOc3cSM(15),       -- (OC-3c SM)
+                         rcOc3cMM(16),       -- (OC-3c MM)
+                         rcOc3cCOPPER(17),   -- (OC-3c COPPER)
+                         rcOc12cSM(18),      -- (OC-12c SM)
+                         rcOc12cMM(19),      -- (OC-12c MM)
+                         rcDs3(20),          -- (Ds3)
+                         rcE3(21),           -- (E3)
+                         rcGbicNone(22),     -- (Gbic card feature)
+                         rc1000BaseT(23),    -- (1000 base copper)
+                         rcGbicZx(24),       -- (gigabit very extended distance)
+                         rcOc3cAtmSM(25),    -- (Atm OC-3c SM)
+                         rcOc3cAtmMM(26),    -- (Atm OC-3c MM)
+                         rcOc12cAtmSM(27),   -- (Atm OC-12c SM)
+                         rcOc12cAtmMM(28),   -- (Atm OC-12c MM)
+                         rcOc3cPosSM(29),    -- (Pos OC-3c SM)
+                         rcOc3cPosMM(30),    -- (Pos OC-3c MM)
+                         rcOc12cPosSM(31),   -- (Pos OC-12c SM)
+                         rcOc12cPosMM(32),   -- (Pos OC-12c MM)
+                         rcGbic1470(33),     -- (gigabit wavelength 1470)
+                         rcGbic1490(34),     -- (gigabit wavelength 1490)
+                         rcGbic1510(35),     -- (gigabit wavelength 1510)
+                         rcGbic1530(36),     -- (gigabit wavelength 1530)
+                         rcGbic1550(37),     -- (gigabit wavelength 1550)
+                         rcGbic1570(38),     -- (gigabit wavelength 1570)
+                         rcGbic1590(39),     -- (gigabit wavelength 1590)
+                         rcGbic1610(40),     -- (gigabit wavelength 1610)
+                         rcRmon(41),         -- (1000 base TProbe)
+                         rcGbic1470APD(42),  -- (gigabit wavelength 1470-APD)
+                         rcGbic1490APD(43),  -- (gigabit wavelength 1490-APD)
+                         rcGbic1510APD(44),  -- (gigabit wavelength 1510-APD)
+                         rcGbic1530APD(45),  -- (gigabit wavelength 1530-APD)
+                         rcGbic1550APD(46),  -- (gigabit wavelength 1550-APD)
+                         rcGbic1570APD(47),  -- (gigabit wavelength 1570-APD)
+                         rcGbic1590APD(48),  -- (gigabit wavelength 1590-APD)
+                         rcGbic1610APD(49),  -- (gigabit wavelength 1610-APD)
+	    rc10GbLW(50),       -- (10 Gig Ethernet LW)
+	    rc10GbLR(51),        -- (10 Gig Ethernet LR)
+                         rcLogicalServerPort(52), -- opm Prism used as a server for MPLS
+                         rc1000BaseTX(53),   -- (triple speed)
+                         rc100BaseTXPOE(54), -- (double speed with POE support)
+                         rcGbicBx(55),       -- (gigabit medium haul)
+                         rc10GbNone(56),     -- (10 Gig Feature)
+                         rc1000XFP(57),      -- 10Gig XFP Gbic
+                         rc10GbSR(58),       -- (10 Gig SR Ethernet)
+                         rc10GbSW(59),       -- (10 Gib SW wavelength 850nm and sonet)
+                         rc10GbER(60),       -- (10 Gig ER wavelen 1550nm)
+                         rc10GbEW(61),       -- (10 Gig EW)
+                         rc10GbOther(62),     -- (10 Gig Ethernet other)
+                         rc1000BaseTXPOE(63),  -- (triple speed with POE support)
+                         rc10GbZR(64),          -- (10G Python XFP, LAN)
+                         rc10GbZW(65)          -- (10G Python XFP, WAN)
+	              }
+	MAX-ACCESS    read-only
+	STATUS        current
+	DESCRIPTION   "Port type"
+	::= { rcPortEntry 2 }
+
+rcPortConnectorType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         nonRedundant(1), -- non-redundant connector type 
+                         redundant(2) 	  -- redundant connector type 
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Type of connector installed on this port."
+        DEFVAL        { nonRedundant }
+        ::= { rcPortEntry 3 }
+
+rcPortPerformRouting OBJECT-TYPE
+	SYNTAX 	      TruthValue
+	MAX-ACCESS 	  read-write
+        STATUS 	      deprecated
+	DESCRIPTION   "Indicate whether this port should perform
+                      routing"
+	DEFVAL	      { false }
+	::= { rcPortEntry 4 }
+
+rcPortHighPriority OBJECT-TYPE 
+        SYNTAX 	      TruthValue
+        MAX-ACCESS 	  read-write
+        STATUS 	      deprecated
+        DESCRIPTION   "Indicate whether this port should be treated with 
+                      high priority"
+	DEFVAL 	      { false }
+        ::= { rcPortEntry 5 }
+
+rcPortAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         none(1),            -- none of the following
+                         flushMacFdb(2),     -- flush MAC forwarding table
+                         flushArp(3),        -- flush ARP table
+                         flushIp(4),         -- flush IP route table
+                         flushAll(5),        -- flush all tables
+			 triggerRipUpdate(6), -- manually trigger rip update
+			 clearLoopDetectAlarm(7) -- manually enable the port on all the disabled vlans
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Port related actions."
+        DEFVAL        { none }
+        ::= { rcPortEntry 6 }
+ 
+rcPortResult OBJECT-TYPE 
+        SYNTAX        	INTEGER { 
+                       		none(1),        -- none of the following 
+                       	  	inProgress(2),  -- in progress 
+                       	  	success(3),     -- success
+                       	  	fail(4)         -- failure 
+                      	} 
+        MAX-ACCESS		read-only 
+        STATUS        	current 
+        DESCRIPTION   	"Result from the last Vlan action." 
+        DEFVAL        	{ none } 
+        ::= { rcPortEntry 7 } 
+
+rcPortPrimaryConnector OBJECT-TYPE 
+        SYNTAX 		INTEGER { 
+                		left(1),	-- left side connector
+                		right(2),	-- right side connector 
+				other(3)
+        		} 
+        MAX-ACCESS      read-write 
+        STATUS          current 
+        DESCRIPTION     "For ports configured with redundant connectors,
+                         this value is used to indicate which connector 
+                         should be used as the 'active' connector on this 
+                         port the next time the port is placed into the 
+                         ifAdminStatus=Up."
+	       DEFVAL          { left } 
+        ::= { rcPortEntry 8 }
+
+rcPortActiveConnector OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         	left(1),	-- left side connector
+                         	right(2),       -- right side connector
+				other(3)
+                      }
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "For ports configured with redundant connectors,
+		      this value is used to indicate which connector
+		      is currently the active one.  Only one connector
+		      can be active an anytime."
+        DEFVAL        { left } 
+        ::= { rcPortEntry 9 }
+
+rcPortBackupConnectorStatus OBJECT-TYPE
+        SYNTAX 		INTEGER {
+                		up(1),            -- link Up
+                		down(2),          -- link Down
+				other(3)
+        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Indicate the status of the link attached to the
+		 	 back-up (non-active) connector."
+        ::= { rcPortEntry 10 }
+
+rcPortAutoNegotiate OBJECT-TYPE
+        SYNTAX 	      TruthValue
+        MAX-ACCESS 	  read-write
+        STATUS 	      current
+        DESCRIPTION   "Indicate whether this port enabled for auto 
+                       negotiations or not."
+        DEFVAL	      { true }
+	       ::= { rcPortEntry 11 }
+
+rcPortAdminDuplex OBJECT-TYPE
+        SYNTAX 		INTEGER { 
+                      half(1),	-- half duplex
+                      full(2)		-- full duplex  
+        		      } 
+        MAX-ACCESS 		read-write
+        STATUS 		current
+        DESCRIPTION     "Indicates the port duplex type "	
+        DEFVAL		{ half }
+        ::= { rcPortEntry 12 }
+
+rcPortOperDuplex OBJECT-TYPE
+        SYNTAX     INTEGER { 
+                      half(1),	-- half duplex
+                      full(2)		-- full duplex  
+                   } 
+        MAX-ACCESS 		read-only
+        STATUS 		current
+        DESCRIPTION 	"Indicate this port's current duplex value."
+        ::= { rcPortEntry 13 }
+
+rcPortAdminSpeed OBJECT-TYPE
+        SYNTAX     INTEGER { 
+                      none(0),
+                      mbps10(1),	-- 10Mb/s
+                      mbps100(2),	-- 100Mb/s
+                      mbps1000(3),      -- 1000Mb/s
+                      mbps10000(4)      -- 10Gb/s
+                   } 
+        MAX-ACCESS 		read-write
+        STATUS 		current
+        DESCRIPTION 	"Indicate this port's speed."
+        DEFVAL		{ mbps10 }
+        ::= { rcPortEntry 14 }
+
+rcPortOperSpeed OBJECT-TYPE
+        SYNTAX       Integer32  
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  "Indicate this port's current speed value."
+	       ::= { rcPortEntry 15 }
+
+rcPortMltId OBJECT-TYPE
+        SYNTAX       Integer32  
+        MAX-ACCESS   read-only
+        STATUS       current
+        DESCRIPTION  "Indicate which multi-link trunk (MLT) this port
+                      is assigned to.  If this port is not associated
+                      with any MLT, this value will be set to zero(0)."
+        DEFVAL		{ 0 }
+        ::= { rcPortEntry 16 }
+
+rcPortLocked OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Indicate whether this port is locked." 
+        DEFVAL        	{ false }
+        ::= { rcPortEntry 17 }
+
+rcPortAutoNegotiationSupported OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Indicate whether this port can support 
+		      	auto-negotiation." 
+        DEFVAL        	{ false }
+        ::= { rcPortEntry 18 }
+
+rcPortSingleRoutablePort OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Indicate whether this port is a single routable
+		      	port.  If this value is true, the port functions
+			like a traditional router port."
+        DEFVAL        	{ false }
+        ::= { rcPortEntry 19 }
+
+rcPortUnknownMacDiscard OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "If rcUnknownMacDiscard is set to True, 
+                         then a packet with an unknown source MAC address
+                         is dropped on that port, and other ports then
+                         will discard any packets with this MAC address
+                         in the destination field.  
+                         For example, 
+                         suppose 11:22:33:44:55:66 is an unknown source MAC,
+                         packets with source MAC 11:22:33:44:55 coming from 
+                         this port is discarded, further more, packets with
+                         destination MAC 11:22:33:44:55:66 coming from
+                         other ports are also discarded, unless this address
+                         is later learned on another port or the restriction
+                         ages out."
+
+        DEFVAL          { false }
+        ::= { rcPortEntry 20 }
+
+rcPortNumStateTransition OBJECT-TYPE
+        SYNTAX        	Counter32
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"# state transitions."
+        ::= { rcPortEntry 21 }
+
+rcPortUserPriority OBJECT-TYPE
+        SYNTAX  	INTEGER {
+                            level0(0),
+                            level1(1),
+                            level2(2),
+                            level3(3),
+                            level4(4),
+                            level5(5),
+                            level6(6),
+                            level7(7)
+                        }
+      	 MAX-ACCESS 	      	read-write
+        STATUS 	      	deprecated
+	       DESCRIPTION   	"User priority level."
+        DEFVAL          { level7 }
+	::= { rcPortEntry 22 }
+
+rcPortAllowOversizeFrame OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          deprecated
+        DESCRIPTION     "Used to specify whether over-size frames should be
+			processed or dropped."
+        ::= { rcPortEntry 23 }
+
+rcPortQosLevel OBJECT-TYPE
+        SYNTAX  	INTEGER {
+                            level0(0),
+                            level1(1),
+                            level2(2),
+                            level3(3),
+                            level4(4),
+                            level5(5),
+                            level6(6),
+                            level7(7)
+                        }
+	       MAX-ACCESS 	      	read-write
+        STATUS 	      	current
+        DESCRIPTION     "Used to specify the Qos level packets, carried on this
+                        port, should be processed with."
+        DEFVAL          { level1 }
+	::= { rcPortEntry 30 }
+
+rcPortDiffServEnable OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to enable/disable the Differentiated Service
+			feature on this port."
+        DEFVAL        	{ false }
+        ::= { rcPortEntry 31 }
+
+rcPortDiffServType OBJECT-TYPE
+        SYNTAX  	INTEGER {
+                            none(0),
+                            access(1),
+                            core(2)
+                        }
+	       MAX-ACCESS 	      	read-write
+        STATUS 	      	current
+	       DESCRIPTION   	"Used to specify the Differentiated Service type
+			                   for this port."
+        DEFVAL        	{ access }
+	::= { rcPortEntry 32 }
+
+rcPortDiffServIeee8021POverrideEnable OBJECT-TYPE
+        SYNTAX        	TruthValue
+        MAX-ACCESS        	read-write
+        STATUS        	deprecated
+	DESCRIPTION	"Used to enable/disable the Differentiated Service
+			IEEE 802.1P over-ride feature."
+        DEFVAL        	{ false }
+        ::= { rcPortEntry 33 }
+
+rcPortVendorDescr OBJECT-TYPE
+        SYNTAX        	DisplayString (SIZE(16))
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to show the name of the vendor of this port's
+			connector.  Only applicable to ports on a GBIC cards."
+        ::= { rcPortEntry 34 }
+
+rcPortName OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE (0..255))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "This port's name."
+        ::= { rcPortEntry 35 }
+
+rcPortOctapidId OBJECT-TYPE
+        SYNTAX        	Integer32
+        MAX-ACCESS        	read-only
+        STATUS        	deprecated
+        DESCRIPTION   	"The octapid id of the mirrored port."
+        ::= { rcPortEntry 36 }
+
+rcPortWan OBJECT-TYPE
+        SYNTAX          INTEGER {
+		            none(0),  -- Not Applicable for non-10GE interface	
+	                    wan(1),
+			    lan(2)
+	                }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Indicatie this port's current WAN/LAN mode. Valid for 10 GE only"
+	       DEFVAL          { wan }
+        ::= { rcPortEntry 37 }
+
+rcPortTransport OBJECT-TYPE
+        SYNTAX          INTEGER {
+			    none(0),  -- N/A for non-10GE WAN interface	   	                   
+			    sonet(1),
+			    sdh(2)
+	                }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Indicatie this port's current tranport layer. Valid for 10 GE only"
+	       DEFVAL          { sonet }
+        ::= { rcPortEntry 38 }
+	
+rcPortMultimediaFilterEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+	       MAX-ACCESS      read-write
+	       STATUS          current
+	       DESCRIPTION     "Used to enable/disable the Telephony device selected on this port"
+	       DEFVAL          { false }
+	       ::= { rcPortEntry 39 }
+
+rcPortMultimediaDevSelection OBJECT-TYPE
+        SYNTAX          DisplayString 
+	       MAX-ACCESS      read-write
+	       STATUS          current
+	       DESCRIPTION     "Used to set/get the selected Multimedia & 
+                         Telephony Devices on this port. The String is 
+                         the name of the device in the 
+                         rcIpFilterMediaDevTable"
+	       ::= { rcPortEntry 40 }
+
+rcPortServiceType OBJECT-TYPE
+        SYNTAX          INTEGER {
+                            none  (0),
+                            l2uni (1),
+                            vpls   (2),
+                            ip    (3),
+                            serverl2uni (4)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Indicates the port functionality. 12uni is used to
+                         configure the port to be part of Martini service,
+                         tls is used to configure the port to be part of
+                         Any2Any VPN service and ip is used to perform the IP
+                         routing and mpls if enabled."
+        ::= { rcPortEntry 41 }
+
+rcPortMode OBJECT-TYPE
+        SYNTAX          INTEGER {
+                            none (0),
+                            transparent (1),
+                            switched (2)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The port mode for l2uni service type.If the port is
+                         configured for l2uni service type, then the mode can
+                         be transparent or switched."
+        DEFVAL         { none }
+        ::= { rcPortEntry 42 }
+
+rcPortAdminRouting OBJECT-TYPE
+        SYNTAX          EnableValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Indicate whether the port is routable."
+        DEFVAL          { enable }
+   ::= { rcPortEntry 43 }
+
+rcPortOperRouting OBJECT-TYPE
+        SYNTAX          EnableValue
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The status of the port whether is routable."
+   ::= { rcPortEntry 44 }
+
+rcPortPid OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The pid of the mirrored port."
+        ::= { rcPortEntry 45 }
+
+rcPortIeee8021POverrideEnable OBJECT-TYPE
+      SYNTAX          TruthValue
+      MAX-ACCESS      read-write
+      STATUS          current
+      DESCRIPTION     "Used to enable/disable IEEE 802.1P override.
+                     If it is enabled, 802.1p vlaue from a tagged
+                       frame may not honor."
+      DEFVAL          { false }
+      ::= { rcPortEntry 46 }
+
+rcPortShaperEnable OBJECT-TYPE
+      SYNTAX         TruthValue
+      MAX-ACCESS     read-write
+      STATUS         current
+      DESCRIPTION   "Used to enable/disable shaper on the port."
+      DEFVAL         { false }
+      ::= { rcPortEntry 47 }
+
+rcPortShaperMaxRate OBJECT-TYPE
+      SYNTAX         INTEGER (1..10000)
+      MAX-ACCESS     read-write
+      STATUS         current
+      DESCRIPTION   "Shaping rate in mega bits per second. Note that
+                     actual shaping rate might be different from the
+                     configured rate due to the rate granularity
+                     of the shaper."
+      DEFVAL         { 10 }
+      ::= { rcPortEntry 48 }
+
+rcPortShaperBurstSize OBJECT-TYPE
+      SYNTAX        INTEGER(4..16000)
+      MAX-ACCESS    read-write
+      STATUS        current
+      DESCRIPTION   "Burst size in kilo bytes per second.  Note
+                     that actual burst size might be different
+                     from the configured size due to the granularity
+                     of the shaper."
+      DEFVAL          { 4 }
+      ::= { rcPortEntry 49 }
+
+rcPortCpLimitShutDown OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "A TRUE value indicates if CP Limit shut down 
+                         the interface."
+        ::= { rcPortEntry 50 }
+
+rcPortHighSecureEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Enable/Disable high secure." 
+        ::= { rcPortEntry 51 }
+
+rcPortTlsPriorityOverride OBJECT-TYPE
+        SYNTAX          EnableValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Enable/Disable tls port priority override feature."
+        DEFVAL          { disable }
+        ::= { rcPortEntry 52 }
+
+rcPortVctAbility OBJECT-TYPE
+      SYNTAX        INTEGER {
+                       vctNotCapable(1),
+                       vctCapable(2)
+                    }
+      MAX-ACCESS    read-only
+      STATUS        current
+      DESCRIPTION   "If this object is TRUE, then the specified port is
+                     hardware-capable of doing the VCT test, if the
+                     rcPortAdminStatus is also true. If this object is
+                     FALSE, then the hardware cannot do the VCT test
+                     regardless of the setting of the rcPortAdminStatus."
+        ::= { rcPortEntry 53 }
+
+rcPortVctAdminStatus OBJECT-TYPE
+      SYNTAX        EnableValue
+      MAX-ACCESS    read-write
+      STATUS        current
+      DESCRIPTION   "Admin status for port VCT test. If this object is
+                     set to TRUE, then the VCT test can be performed. If
+                     it is set to FALSE, then the test cannot be performed,
+                     even if the port hardware is capable of doing it. If
+                     this variable si read, then the value returned is
+                     what was previously written."
+        ::= { rcPortEntry 54 }
+
+rcPortMrouteStrLimit OBJECT-TYPE
+        SYNTAX          INTEGER (1..32768)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "maximum number of multicast streams that are
+                         allowed to ingress to CPU through this port."
+        DEFVAL          { 1984 }
+        ::= { rcPortEntry 55 }
+
+rcPortMrouteStrTimerCheck OBJECT-TYPE
+        SYNTAX          INTEGER (1..3600)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "sampling period to check number of multicast
+                         streams that has ingressed CPU through this port."
+        DEFVAL          { 10 }
+        ::= { rcPortEntry 56 }
+
+rcPortMrouteStrLimitEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "enable or disable mroute stream limit on port."
+        DEFVAL          { false }
+        ::= { rcPortEntry 57 }
+
+rcPortUpdateDynamicMacQosLevel OBJECT-TYPE
+      SYNTAX        EnableValue
+      MAX-ACCESS    read-write
+      STATUS        current
+      DESCRIPTION   "It is used to indicate whether to update qos
+                     level for dynamic learned mac add resses
+                     associated with a port-based vlan when port qos
+                     level changes.  If it is set to TRUE, qos level
+                     for all dynamic learned mac addresses will be
+                     changed upon changing port qos level.  If it
+                     is set to DISABLE, once a mac address is learned,
+                     qos level will not updated when port qos level
+                     changes."
+      DEFVAL         { disable }
+      ::= { rcPortEntry 58 }
+
+rcPortVplsDualHoming    OBJECT-TYPE
+        SYNTAX          INTEGER {
+                            disable (0),
+                            firstNNI (1),
+                            secondNNI (2)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The VPLS dual homing is for VPLS service type only.
+                         It can be disable, firstNNI or secondNNI."
+        DEFVAL         { disable }
+        ::= { rcPortEntry 59 }
+
+rcPortVplsMgmtVlan      OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Management Vlan is configured on this port"
+        DEFVAL          { false }
+        ::= { rcPortEntry 60 }
+
+rcPortTlsManagedBySp  OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "True/False tls devices on port Managed By Service Provider."
+	DEFVAL          { false }
+        ::= { rcPortEntry 61 }
+
+rcPortAutoNegAd OBJECT-TYPE
+        SYNTAX          BITS {
+                            advertise10Half(0),
+                            advertise10Full(1),
+                            advertise100Half(2),
+                            advertise100Full(3),
+                            advertise1000Half(4),
+                            advertise1000Full(5),
+                            advertiseMacPause(6),
+                            advertiseAsymPause(7)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "This object is used to specify the port speed
+                         and duplex abilities to be advertised during
+                         link negotiation.
+
+                         bit 0 - 10 half duplex advertised
+                         bit 1 - 10 full duplex advertised
+                         bit 2 - 100 half duplex advertised
+                         bit 3 - 100 full duplex advertised
+                         bit 4 - 1000 half duplex advertised
+                         bit 5 - 1000 full duplex advertised
+                         bit 6 - Mac PAUSE frame support advertised
+                         bit 7 - Asymmetric PAUSE frame support advertised
+
+                         The abilities specified in this object are only used
+                         when auto-negotiation is enabled on the port.  If all
+                         bits in this object are disabled, and auto-negotiation
+                         is enabled on the port, then the physical link process
+                         on the port will be disabled (if hardware supports 
+                         this ability).
+
+                         Any change in the value of this bit map will force the
+                         PHY to restart the auto-negotiation process.  This will
+                         have the same effect as physically unplugging and
+                         reattaching the cable plant attached to this port.
+
+                         Only capabilities present in the hardware as indicated
+                         by rcPortAutoNegAdCapability can be advertised.
+
+                         The default value for this object will be the value
+                         of the associated instance of rcPortAutoNegAdCapability."
+        ::= { rcPortEntry 62 }
+
+rcPortAutoNegAdCapability OBJECT-TYPE
+        SYNTAX          BITS {
+                            advertise10Half(0),
+                            advertise10Full(1),
+                            advertise100Half(2),
+                            advertise100Full(3),
+                            advertise1000Half(4),
+                            advertise1000Full(5),
+                            advertiseMacPause(6),
+                            advertiseAsymPause(7)
+                        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "This object indicates the port speed and duplex
+                         capabilities that hardware can actually support on a
+                         port, and which may be advertised by the port
+                         using auto-negotiation. Bit 7 tells if a port supports
+                         pause frame capabilities (for full-duplex links) as a
+                         part of the advertisement.
+
+                         bit 0 - 10 half duplex advertisements
+                         bit 1 - 10 full duplex advertisements
+                         bit 2 - 100 half duplex advertisements
+                         bit 3 - 100 full duplex advertisements
+                         bit 4 - 1000 half duplex advertisements
+                         bit 5 - 1000 full duplex advertisements
+                         bit 6 - Mac PAUSE frame support advertisements
+                         bit 7 - Asymmetric PAUSE frame support advertisements
+
+                         If auto negotiation is not supported by the port
+                         hardware, then all bits will reflect a value of zero."
+        ::= { rcPortEntry 63 }
+
+rcPortAutoRecoverPort OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "enable or disable auto recovery of port from action
+                         taken by cp-limit, link flap or loop detect features"
+        DEFVAL          { false }
+        ::= { rcPortEntry 64 }
+
+rcPortExtCplimitConf OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         none(1),
+                         softDown(2),
+                         hardDown(3)
+                      }        
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Indicates the port configuration for extended CP-LIMIT"
+        DEFVAL        { none}
+        ::= { rcPortEntry 65 }
+
+rcPortExtCplimitUtilRate OBJECT-TYPE
+        SYNTAX        INTEGER (1..100)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Threshold for Ingress traffic utilization rate of the port
+                      for extended CP-LIMIT"
+        DEFVAL        { 50 }
+        ::= { rcPortEntry 66 }
+
+rcPortEgressRateLimit OBJECT-TYPE
+        SYNTAX          INTEGER(1000..10000000)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Egress Rate Limit."
+        ::= { rcPortEntry 67 }
+
+rcPortEgressRateLimitState OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to enable/disable shape/egress-rate-limit 
+		       functionality."
+        DEFVAL          { disable }
+        ::= { rcPortEntry 68 }
+
+rcPortBpduFilteringTimerCount OBJECT-TYPE
+        SYNTAX        TimeInterval (0..6553500)
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The remaining time the port will be disabled due
+                       to a BPDU received when BPDU filtering is enabled."
+        ::= { rcPortEntry 69 }
+
+rcPortBpduFilteringTimeout OBJECT-TYPE
+        SYNTAX        TimeInterval (0..6553500)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The time the port will be disabled when a BPDU is
+                       received when BPDU filtering is enabled."
+        ::= { rcPortEntry 70 }
+
+rcPortBpduFilteringAdminEnabled OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Used to enable/disable BPDU filtering."
+        DEFVAL          { false }
+        ::= { rcPortEntry 71 }
+
+rcPortBpduFilteringOperEnabled OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Indicates whether BPDU filtering is actually
+                       enabled or disabled."
+        ::= { rcPortEntry 72 }
+
+rcPortQinqEtherType   OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h) 
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The qinq ether type value. It is hex value. 
+                       It should be displayed and input as Hex value. It is 
+		       only be used when port is associated with QnQ service 
+		       UNI. Otherwise, it would be ignored"
+        DEFVAL        { '8020'h }
+        ::= { rcPortEntry 73 }
+
+rcPortTrustDscp OBJECT-TYPE
+      SYNTAX        TruthValue
+      MAX-ACCESS    read-write
+      STATUS        current
+      DESCRIPTION   "Used to enable/disable the trusted DSCP feature.
+                     If enabled, the internal qos-level and 802.1p value are derived
+                     from the received packet's DSCP value.  This MIB object is
+                     applicable to ports in 8348GTX so that higher priority IP traffic
+                     can bypass the oversubscribed cascading link."
+      DEFVAL        {false}
+      ::= {rcPortEntry 74}
+
+rcPortCpLimitEnable OBJECT-TYPE
+        SYNTAX      EnableValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Used to enable/disable the control packet rate limit.
+                     Specifies whether or not rate limiting is currently in
+                     operation for multicast and broadcast packets for the
+                     specified port. "
+        DEFVAL      { enable }
+        ::= {rcPortEntry 75 }
+
+rcPortCpMulticastLimit OBJECT-TYPE
+        SYNTAX      INTEGER(1000..100000)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Used to limit Multicast traffic on the specified port. Sets
+                    the limit in packets per second."
+        DEFVAL      { 10000 }
+        ::= { rcPortEntry 76 }
+
+rcPortCpBroadcastLimit OBJECT-TYPE
+        SYNTAX      INTEGER(1000..100000)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Used to limit Broadcast traffic on the specified port. Sets
+                     the limit in packets per second. "
+        DEFVAL      { 10000 }
+        ::= { rcPortEntry 77 }
+
+rcPortSmartAutoNegotiate OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "This object indicates whether 'smart' autonegotiation is
+                     enabled on a port (smart autonegotiation indicates that the
+                     port can sense whether its partner has autonegotiation
+                     enabled).  This object, when supported, works in conjunction
+                     with rcPortAutoNegotiate.  It is an inconsistentValue error
+                     to set rcPortAutoNegotiate to false(2) and this object to
+                     true(1) in the same Set request.  Setting the object to
+                     true(1) will automatically change rcPortAutoNegotiate to
+                     true(1).  Similarly, setting rcPortAutoNegotiate to false(2)
+                     will automatically change this object to false(2)."
+        DEFVAL      { false }
+        ::= { rcPortEntry 78 }
+
+
+-- Port Pcap Table
+
+rcPortPcapTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPortPcapEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Port pcap Table"
+        ::= { rcPort 2 }
+
+rcPortPcapEntry OBJECT-TYPE
+        SYNTAX        RcPortPcapEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing pcap info. for a particular port"
+        INDEX         { rcPortPcapIndex }
+        ::= { rcPortPcapTable 1 }
+
+RcPortPcapEntry ::= SEQUENCE {
+        rcPortPcapIndex            InterfaceIndex,
+        rcPortPcapEnable           TruthValue,
+        rcPortPcapMode             INTEGER,
+        rcPortPcapFilterListSize   INTEGER,
+        rcPortPcapFilterList       OCTET STRING
+        }
+
+
+rcPortPcapIndex OBJECT-TYPE
+        SYNTAX          InterfaceIndex
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "An index value that uniquely identifies a port.
+                         This value is similar to ifIndex in MIB2."
+        ::= { rcPortPcapEntry 1 }
+
+rcPortPcapEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "To enable pcap for the port"
+        DEFVAL          { false }
+        ::= { rcPortPcapEntry 2 }
+
+rcPortPcapMode OBJECT-TYPE
+        SYNTAX          INTEGER {
+                                tx(1),
+                                rx(2),
+                                both(3),
+                                rxFilter(4)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Mode in which pcap is enabled"
+        DEFVAL          { rx }
+        ::= { rcPortPcapEntry 3 }
+
+rcPortPcapFilterListSize OBJECT-TYPE
+        SYNTAX          INTEGER (0..128)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Used to indicate the number of filter list(s)
+                         that are assigned to this port."
+        ::= { rcPortPcapEntry 4 }
+
+
+rcPortPcapFilterList OBJECT-TYPE
+        SYNTAX          OCTET STRING (SIZE(0..256))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to indicate zero or more filter lists that
+                         are associated with this port for pcap.  Each
+                         filter list identifier is stored as two bytes
+                         in this array starting from offset zero.  Any
+                         unused bytes should be set to zero."
+        ::= { rcPortPcapEntry 5 }
+
+-- rcPortPoe IfIndex to Pse Index Table
+
+rcPortPoe OBJECT IDENTIFIER ::= { rcPort 3 }
+
+rcPortPoePseIndexTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPortPoePseIndexEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Port table"
+        ::= { rcPortPoe 1 }
+
+rcPortPoePseIndexEntry OBJECT-TYPE
+        SYNTAX        RcPortPoePseIndexEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing info. for a particular port"
+        INDEX         { rcPortPoePseIndexIfIndex }
+        ::= { rcPortPoePseIndexTable 1 }
+
+RcPortPoePseIndexEntry ::= SEQUENCE {
+      rcPortPoePseIndexIfIndex                 InterfaceIndex,
+      rcPortPoePseIndexGroupIndex              INTEGER,
+      rcPortPoePseIndexPortIndex               INTEGER
+
+}
+
+rcPortPoePseIndexIfIndex OBJECT-TYPE
+     SYNTAX      InterfaceIndex
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies an interface
+                  to a PSE port device.  The interface identified by a
+                  particular value of this index is the same interface
+                  as identified by the same value of ifIndex."
+     ::= { rcPortPoePseIndexEntry 1 }
+
+rcPortPoePseIndexGroupIndex OBJECT-TYPE
+     SYNTAX      INTEGER (0..65535)
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies the group
+                  containing the port to which a power Etherenet PSE
+                  is connected. Group means box in the stack, module
+                  in a rack and the value 1 MUST be used for
+                  non-modular devices."
+     ::= { rcPortPoePseIndexEntry 2 }
+
+rcPortPoePseIndexPortIndex OBJECT-TYPE
+     SYNTAX      INTEGER (0..65535)
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION "This variable uniquely identifies the power Ethernet
+                  PSE port within group rcPoePseGroupIndex to which the
+                  power Ethernet PSE entry is connected."
+     ::= { rcPortPoePseIndexEntry 3 }
+
+
+-- POE main Pse extn table
+
+rcPortPoeMainPseExtnTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPortPoeMainPseExtnEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Port table"
+        ::= { rcPortPoe 2 }
+
+rcPortPoeMainPseExtnEntry OBJECT-TYPE
+        SYNTAX        RcPortPoeMainPseExtnEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing info. for a particular port"
+        INDEX         { rcPortPoeMainPseExtnGroupIndex }
+        ::= { rcPortPoeMainPseExtnTable 1 }
+
+RcPortPoeMainPseExtnEntry ::= SEQUENCE {
+      rcPortPoeMainPseExtnGroupIndex              INTEGER,
+      rcPortPoeMainPseExtnPwrAdmin                EnableValue,
+      rcPortPoeMainPseExtnPwrPriority             INTEGER,
+      rcPortPoeMainPseExtnDeviceDetectType        INTEGER,
+      rcPortPoeMainPseExtnPwrLimit                INTEGER
+}
+
+rcPortPoeMainPseExtnGroupIndex OBJECT-TYPE
+     SYNTAX      INTEGER (0..65535)
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies an interface
+                  to a PSE port device.  The interface identified by a
+                  particular value of this index is the same interface
+                  as identified by the same value of ifIndex."
+     ::= { rcPortPoeMainPseExtnEntry 1 }
+
+rcPortPoeMainPseExtnPwrAdmin OBJECT-TYPE
+     SYNTAX      EnableValue
+     MAX-ACCESS  read-write
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies the group
+                  containing the port to which a power Etherenet PSE
+                  is connected. Group means box in the stack, module
+                  in a rack and the value 1 MUST be used for
+                  as identified by the same value of ifIndex."
+     DEFVAL      { disable }
+     ::= { rcPortPoeMainPseExtnEntry 2 }
+
+rcPortPoeMainPseExtnPwrPriority OBJECT-TYPE
+     SYNTAX      INTEGER {
+                    critical(1),
+                    high(2),
+                    low(3)
+                 }
+     MAX-ACCESS  read-write
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies the group
+                  containing the port to which a power Etherenet PSE
+                  is connected. Group means box in the stack, module
+                  in a rack and the value 1 MUST be used for
+                  as identified by the same value of ifIndex."
+     DEFVAL      { low }
+     ::= { rcPortPoeMainPseExtnEntry 3 }
+
+rcPortPoeMainPseExtnDeviceDetectType OBJECT-TYPE
+     SYNTAX      INTEGER {
+                    p802dot3af(1),
+                    p802dot3afAndLegacy(2)
+                 }
+     MAX-ACCESS  read-write
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies the group
+                  containing the port to which a power Etherenet PSE
+                  is connected. Group means box in the stack, module
+                  in a rack and the value 1 MUST be used for
+                  as identified by the same value of ifIndex."
+     DEFVAL      { p802dot3afAndLegacy }
+     ::= { rcPortPoeMainPseExtnEntry 4 }
+
+rcPortPoeMainPseExtnPwrLimit OBJECT-TYPE
+     SYNTAX      INTEGER (37..800)
+     MAX-ACCESS  read-write
+     STATUS      current
+     DESCRIPTION "The maximum available PoE power of the main PSE 
+                  expressed in Watts."
+     DEFVAL      { 200 }
+     ::= { rcPortPoeMainPseExtnEntry 5 }
+
+-- POE Pse Port extn table
+
+rcPortPoePsePortExtnTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPortPoePsePortExtnEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Port table"
+        ::= { rcPortPoe 3 }
+
+rcPortPoePsePortExtnEntry OBJECT-TYPE
+        SYNTAX        RcPortPoePsePortExtnEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing info. for a particular port"
+        INDEX         { rcPortPoePsePortExtnGroupIndex,
+                        rcPortPoePsePortExtnPortIndex }
+        ::= { rcPortPoePsePortExtnTable 1 }
+
+RcPortPoePsePortExtnEntry ::= SEQUENCE {
+      rcPortPoePsePortExtnGroupIndex              INTEGER,
+      rcPortPoePsePortExtnPortIndex               INTEGER,
+      rcPortPoePsePortExtnPwrLimit                INTEGER,
+      rcPortPoePsePortExtnMeasuredVolt            Integer32,
+      rcPortPoePsePortExtnMeasuredCurrent         Integer32,
+      rcPortPoePsePortExtnPwrConsumpt             Integer32
+
+}
+
+rcPortPoePsePortExtnGroupIndex OBJECT-TYPE
+     SYNTAX      INTEGER (1..2147483647)
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies an interface
+                  to a PSE port device.  The interface identified by a
+                  particular value of this index is the same interface
+                  as identified by the same value of ifIndex."
+     ::= { rcPortPoePsePortExtnEntry 1 }
+
+rcPortPoePsePortExtnPortIndex OBJECT-TYPE
+     SYNTAX      INTEGER (1..2147483647)
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies an interface
+                  to a PSE port device.  The interface identified by a
+                  particular value of this index is the same interface
+                  as identified by the same value of ifIndex."
+     ::= { rcPortPoePsePortExtnEntry 2 }
+
+rcPortPoePsePortExtnPwrLimit OBJECT-TYPE
+     SYNTAX      INTEGER (3..16)
+     MAX-ACCESS  read-write
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies the group
+                  containing the port to which a power Etherenet PSE
+                  is connected. Group means box in the stack, module
+                  in a rack and the value 1 MUST be used for
+                  as identified by the same value of ifIndex."
+     DEFVAL      { 16 }
+     ::= { rcPortPoePsePortExtnEntry 3 }
+
+rcPortPoePsePortExtnMeasuredVolt OBJECT-TYPE
+     SYNTAX      Integer32
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies the group
+                  containing the port to which a power Etherenet PSE
+                  is connected. Group means box in the stack, module
+                  in a rack and the value 1 MUST be used for
+                  as identified by the same value of ifIndex."
+     ::= { rcPortPoePsePortExtnEntry 4 }
+
+rcPortPoePsePortExtnMeasuredCurrent OBJECT-TYPE
+     SYNTAX      Integer32
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies the group
+                  containing the port to which a power Etherenet PSE
+                  is connected. Group means box in the stack, module
+                  in a rack and the value 1 MUST be used for
+                  as identified by the same value of ifIndex."
+     ::= { rcPortPoePsePortExtnEntry 5 }
+
+rcPortPoePsePortExtnPwrConsumpt OBJECT-TYPE
+     SYNTAX      Integer32
+     MAX-ACCESS  read-only
+     STATUS      current
+     DESCRIPTION "An index value that uniquely identifies the group
+                  containing the port to which a power Etherenet PSE
+                  is connected. Group means box in the stack, module
+                  in a rack and the value 1 MUST be used for
+                  as identified by the same value of ifIndex."
+     ::= { rcPortPoePsePortExtnEntry 6 }
+
+
+
+-- PORT LACP 
+
+rcPortLacpTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPortLacpEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Port LACP table"
+        ::= { rcPort 4 }
+
+rcPortLacpEntry OBJECT-TYPE
+        SYNTAX        RcPortLacpEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing info. for a particular port"
+        INDEX         { rcPortIndex }
+        ::= { rcPortLacpTable 1 }
+
+RcPortLacpEntry ::= SEQUENCE {
+    rcPortLacpAdminEnable                 TruthValue,
+    rcPortLacpOperEnable                  TruthValue,
+    rcPortLacpFastPeriodicTime            INTEGER,
+    rcPortLacpSlowPeriodicTime            INTEGER,
+    rcPortLacpTimeoutScale                INTEGER,
+    rcPortLacpAggrWaitTime                INTEGER,
+    rcPortLacpFastPeriodicTimeOper   INTEGER,
+    rcPortLacpSlowPeriodicTimeOper   INTEGER,
+    rcPortLacpTimeoutScaleOper   INTEGER,
+    rcPortLacpAggrWaitTimeOper   INTEGER
+    }
+
+rcPortLacpAdminEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Administratively enable/disable LACP on a port"
+        DEFVAL        { false }
+        ::= { rcPortLacpEntry 1 }
+
+rcPortLacpOperEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Indicates if LACP is operationally enabled or disabled 
+                       on a port"
+        ::= { rcPortLacpEntry 2 }
+
+rcPortLacpFastPeriodicTime OBJECT-TYPE
+        SYNTAX        INTEGER (200..20000)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The number of miliseconds between periodic transmissions
+                       using Short Timeouts."
+        DEFVAL        { 1000 }
+        ::= { rcPortLacpEntry 3 }
+
+rcPortLacpSlowPeriodicTime OBJECT-TYPE
+        SYNTAX        INTEGER (10000..30000)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The number of miliseconds between periodic transmissions
+                       using LONG Timeouts."
+        DEFVAL        { 30000 }
+        ::= { rcPortLacpEntry 4 }
+
+rcPortLacpTimeoutScale OBJECT-TYPE
+        SYNTAX         INTEGER (1..10)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Scalar value used to calculate timeout time from
+                       periodic time. Timeout = PeriodicTime * TimeoutScale"
+        DEFVAL        { 3 }
+        ::= { rcPortLacpEntry 5 }
+
+rcPortLacpAggrWaitTime OBJECT-TYPE
+        SYNTAX        INTEGER (200..2000)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The number of mili seconds to delay aggregation to
+                       allow multiple links to aggregate simultaneously."
+        DEFVAL        { 2000 }
+        ::= { rcPortLacpEntry 6 }
+
+rcPortLacpFastPeriodicTimeOper OBJECT-TYPE
+        SYNTAX        INTEGER (10..20000) 
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The operating value of fast periodic timer on the port."
+        ::= { rcPortLacpEntry 7 }
+
+rcPortLacpSlowPeriodicTimeOper OBJECT-TYPE
+        SYNTAX        INTEGER (10..30000) 
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The operating value of slow periodic timer on the port."
+        ::= { rcPortLacpEntry 8 }
+
+rcPortLacpTimeoutScaleOper OBJECT-TYPE
+        SYNTAX        INTEGER (1..10) 
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The operating value of timeout scale on the port."
+        ::= { rcPortLacpEntry 9 }
+
+rcPortLacpAggrWaitTimeOper OBJECT-TYPE
+        SYNTAX        INTEGER (10..2000) 
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The operating value of aggreagate wait time on port."
+        ::= { rcPortLacpEntry 10 }
+
+rcPortVLacpTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPortVLacpEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Port Virtual LACP table"
+        ::= { rcPort 5 }
+
+rcPortVLacpEntry OBJECT-TYPE
+        SYNTAX        RcPortVLacpEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing info. for a particular port"
+        INDEX         { rcPortIndex }
+        ::= { rcPortVLacpTable 1 }
+
+RcPortVLacpEntry ::= SEQUENCE {
+    rcPortVLacpAdminEnable                 TruthValue,
+    rcPortVLacpOperEnable                  TruthValue,
+    rcPortVLacpFastPeriodicTimer           INTEGER,
+    rcPortVLacpSlowPeriodicTimer           INTEGER,
+    rcPortVLacpTimeout                     INTEGER,
+    rcPortVLacpTimeoutScale                INTEGER,
+    rcPortVLacpEtherType                   Integer32,
+    rcPortVLacpEtherMacAddress             MacAddress,
+    rcPortVLacpPortState                   INTEGER,
+    rcPortVLacpDualHomingEnable            TruthValue
+    }
+
+rcPortVLacpAdminEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Administratively enable/disable Virtual LACP on a port"
+        DEFVAL        { false }
+        ::= { rcPortVLacpEntry 1 }
+
+rcPortVLacpOperEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Indicates if Virtual LACP is operationally enabled or
+                       disabled on a port"
+        ::= { rcPortVLacpEntry 2 }
+
+rcPortVLacpFastPeriodicTimer OBJECT-TYPE
+        SYNTAX        INTEGER (200..20000)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "The number of miliseconds between periodic transmissions
+                       using Short Timeouts"
+        DEFVAL        { 250 }
+        ::= { rcPortVLacpEntry 3 }
+
+rcPortVLacpSlowPeriodicTimer OBJECT-TYPE
+        SYNTAX        INTEGER (10000..30000)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "The number of miliseconds between periodic transmissions
+                       using LONG Timeouts."
+        DEFVAL        { 30000 }
+        ::= { rcPortVLacpEntry 4 }
+
+rcPortVLacpTimeout     OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         short(1),
+                         long(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Timeout control value. Long or Short Timeout"
+        ::= { rcPortVLacpEntry 5 }
+
+rcPortVLacpTimeoutScale OBJECT-TYPE
+        SYNTAX        INTEGER (1..10)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Scalar value used to calculate timeout time from
+                       periodic time. Timeout = PeriodicTime * TimeoutScale"
+        DEFVAL        { 3 }
+        ::= { rcPortVLacpEntry 6 }
+
+rcPortVLacpEtherType  OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "VLACP Protocol Identification. The id value is
+                       in Hex"
+        DEFVAL        { 8103 }
+        ::= { rcPortVLacpEntry 7 }
+
+rcPortVLacpEtherMacAddress OBJECT-TYPE
+        SYNTAX         MacAddress
+        MAX-ACCESS     read-write
+        STATUS         current
+        DESCRIPTION    "Multicast Mac Address exclusively used for VLACPDU's"
+        ::= { rcPortVLacpEntry 8 }
+
+rcPortVLacpPortState OBJECT-TYPE
+        SYNTAX         INTEGER {
+                          up(1),
+                          down(2)
+                       }
+        MAX-ACCESS     read-only
+        STATUS         current
+        DESCRIPTION    "Display the Vlacp Port State."
+        ::= { rcPortVLacpEntry 9 }
+
+rcPortVLacpDualHomingEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Enable/Disable Dual homing on Virtual LACP on a port"
+        DEFVAL        { false }
+        ::= { rcPortVLacpEntry 10 }
+
+
+-- Port Remote Mirroring Table
+
+rcPortRemoteMirroringTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPortRemoteMirroringEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Port Remote Mirroring Table"
+        ::= { rcPort 6 }
+
+rcPortRemoteMirroringEntry OBJECT-TYPE
+        SYNTAX        RcPortRemoteMirroringEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing remote mirroring info. for a
+                       particular port"
+        INDEX         { rcPortRemoteMirroringIndex }
+        ::= { rcPortRemoteMirroringTable 1 }
+
+RcPortRemoteMirroringEntry ::= SEQUENCE {
+        rcPortRemoteMirroringIndex            InterfaceIndex,
+        rcPortRemoteMirroringEnable           TruthValue,
+        rcPortRemoteMirroringMode             INTEGER,
+        rcPortRemoteMirroringSrcMac           MacAddress,
+        rcPortRemoteMirroringDstMac           MacAddress,
+        rcPortRemoteMirroringEtherType        INTEGER,
+        rcPortRemoteMirroringVlanIdListSize   INTEGER,
+        rcPortRemoteMirroringVlanIdList       OCTET STRING,
+        rcPortRemoteMirroringRowStatus        RowStatus
+        }
+
+
+rcPortRemoteMirroringIndex OBJECT-TYPE
+        SYNTAX          InterfaceIndex
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "An index value that uniquely identifies a port.
+                         This value is similar to ifIndex in MIB2."
+        ::= { rcPortRemoteMirroringEntry 1 }
+
+rcPortRemoteMirroringEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "To enable remote Mirroring for the port"
+        DEFVAL          { false }
+        ::= { rcPortRemoteMirroringEntry 2 }
+
+rcPortRemoteMirroringMode OBJECT-TYPE
+        SYNTAX          INTEGER {
+                                source(1),
+                                termination(2)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Mode in which remote mirroring is enabled"
+        DEFVAL          { source }
+        ::= { rcPortRemoteMirroringEntry 3 }
+
+rcPortRemoteMirroringSrcMac OBJECT-TYPE
+        SYNTAX          MacAddress
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Source Mac of the remote mirrored packet.
+                         Remote mirroring packet will be send with
+                         this source mac address"
+        ::= { rcPortRemoteMirroringEntry 4 }
+
+
+rcPortRemoteMirroringDstMac OBJECT-TYPE
+        SYNTAX          MacAddress
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Destination Mac of the remote mirrored packet.
+                         Packets will be bridged to this mac address.
+                         Remote mirroring packet will be send to this
+                         mac address"
+        ::= { rcPortRemoteMirroringEntry 5 }
+
+rcPortRemoteMirroringEtherType OBJECT-TYPE
+        SYNTAX          INTEGER (0..65535)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Ethertype of the remote mirrored packet. Packets
+                         will be send with this ethertype"
+        DEFVAL          { '8103'h }
+        ::= { rcPortRemoteMirroringEntry 6 }
+
+rcPortRemoteMirroringVlanIdListSize OBJECT-TYPE
+        SYNTAX          INTEGER (0..2000)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Used to indicate the number of VLAN IDs
+                         that are assigned to this port."
+        ::= { rcPortRemoteMirroringEntry 7 }
+
+rcPortRemoteMirroringVlanIdList OBJECT-TYPE
+        SYNTAX          OCTET STRING (SIZE(4096))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "This field is used only if the port is assigned as
+                         remote mirroring termination port. Represents zero
+                         or more filter lists vlan in which the Destination
+                         Mac address resides.  Each VLAN ID is stored as
+                         two bytes in this array starting from offset zero.
+                         Any unused bytes should be set to zero."
+        ::= { rcPortRemoteMirroringEntry 8 }
+
+rcPortRemoteMirroringRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "RowStatus"
+        ::= { rcPortRemoteMirroringEntry 9 }
+
+
+-- Start of Vlacp session
+rcPortVlacpSessionTable OBJECT-TYPE
+          SYNTAX        SEQUENCE OF RcPortVlacpSessionEntry
+          MAX-ACCESS    not-accessible
+          STATUS        current
+          DESCRIPTION   "A table used to maintain Vlacp session values."
+         ::= { rcPort 7 }
+
+rcPortVlacpSessionEntry OBJECT-TYPE
+          SYNTAX        RcPortVlacpSessionEntry
+          MAX-ACCESS    not-accessible
+          STATUS        current
+          DESCRIPTION   "Entry containing Vlacp Session information
+                        regarding a particular port or mlt."
+          INDEX         { rcPortVlacpSessionIfIndex,
+                          rcPortVlacpSessionSesNumber }
+          ::= { rcPortVlacpSessionTable 1 }
+
+RcPortVlacpSessionEntry ::= SEQUENCE {
+        rcPortVlacpSessionIfIndex              Integer32,
+        rcPortVlacpSessionSesNumber            Integer32,
+        rcPortVlacpSessionSrcMacAddress        MacAddress,
+        rcPortVlacpSessionRxTimer              Integer32,
+        rcPortVlacpSessionValidbit             INTEGER,
+        rcPortVlacpSessionInPktCount           Integer32
+        }
+
+rcPortVlacpSessionIfIndex OBJECT-TYPE
+          SYNTAX          Integer32 (0..2147483647)
+          MAX-ACCESS      not-accessible
+          STATUS          current
+          DESCRIPTION     "IfIndex of the port or Mlt"
+          ::= { rcPortVlacpSessionEntry 1 }
+
+rcPortVlacpSessionSesNumber OBJECT-TYPE
+          SYNTAX           Integer32 (0..2147483647)
+          MAX-ACCESS       not-accessible
+          STATUS           current
+          DESCRIPTION      "Session number of an IfIndex"
+          ::= { rcPortVlacpSessionEntry 2 }
+
+rcPortVlacpSessionSrcMacAddress OBJECT-TYPE
+          SYNTAX           MacAddress
+          MAX-ACCESS       read-only
+          STATUS           current
+          DESCRIPTION      "Mac Address for the session"
+          ::= { rcPortVlacpSessionEntry 3 }
+
+rcPortVlacpSessionRxTimer OBJECT-TYPE
+            SYNTAX          Integer32
+            MAX-ACCESS      read-only
+            STATUS          current
+            DESCRIPTION     "The Rx timer for the session"
+            ::= { rcPortVlacpSessionEntry 4 }
+
+rcPortVlacpSessionValidbit OBJECT-TYPE
+            SYNTAX          INTEGER
+                            {
+                               inValidSession(0),
+                               validSession(1)
+                            }
+            MAX-ACCESS      read-only
+            STATUS          current
+            DESCRIPTION     "The valid bit for the session"
+            ::= { rcPortVlacpSessionEntry 5 }
+
+rcPortVlacpSessionInPktCount OBJECT-TYPE
+            SYNTAX          Integer32
+            MAX-ACCESS      read-only
+            STATUS          current
+            DESCRIPTION     "The In packet count for the session"
+            ::= { rcPortVlacpSessionEntry 6 }
+
+-- End of Vlacp session
+
+-- Management port details
+
+rcPortMgmtLinkTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcPortMgmtLinkEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Port card mgmt port link table"
+        ::= { rcPort 8 }
+
+rcPortMgmtLinkEntry OBJECT-TYPE
+        SYNTAX        RcPortMgmtLinkEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing info. for a particular mgmt port in I/O
+                      card"
+        INDEX         { rcPortMgmtLinkIndex }
+        ::= { rcPortMgmtLinkTable 1 }
+
+RcPortMgmtLinkEntry ::= SEQUENCE {
+        rcPortMgmtLinkIndex                   InterfaceIndex,
+        rcPortMgmtLinkDescr                   DisplayString,
+        rcPortMgmtLinkOperStatus              INTEGER,
+        rcPortMgmtLinkAutoNegotiate           TruthValue,
+        rcPortMgmtLinkDuplex                  INTEGER,
+        rcPortMgmtLinkSpeed                   INTEGER
+        }
+
+rcPortMgmtLinkIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "IfIndex of the port."
+        ::= { rcPortMgmtLinkEntry 1 }
+
+rcPortMgmtLinkDescr OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..128))
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Port description"
+        ::= { rcPortMgmtLinkEntry 2 }
+
+rcPortMgmtLinkOperStatus OBJECT-TYPE
+        SYNTAX          INTEGER
+                        {
+                            up(1),
+                            down(2),
+                            unknown(3)
+                        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "admin status of the mgmt port"
+        ::= { rcPortMgmtLinkEntry 3 }
+
+rcPortMgmtLinkAutoNegotiate OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Auto-negotiation status of the port"
+        ::= { rcPortMgmtLinkEntry 4 }
+
+rcPortMgmtLinkDuplex OBJECT-TYPE
+        SYNTAX          INTEGER
+                        {
+                            half(1),
+                            full(2)
+                        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "duplex setting for the port"
+        ::= { rcPortMgmtLinkEntry 5 }
+
+rcPortMgmtLinkSpeed OBJECT-TYPE
+        SYNTAX          INTEGER
+                        {
+                            none(0),
+                            mbps10(1),      -- 10Mb/s
+                            mbps100(2),      -- 100Mb/s
+                            mbps1000(3)     -- 1000Mb/s
+                        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "speed setting for this port."
+        ::= { rcPortMgmtLinkEntry 6 }
+
+-- PORT FlushFdbTable
+
+rcPortFlushFdbTable OBJECT-TYPE
+       SYNTAX        SEQUENCE OF RcPortFlushFdbEntry
+       MAX-ACCESS    not-accessible
+       STATUS        current
+       DESCRIPTION   "Port Flush Fdbtable"
+        ::= { rcPort 9 }
+
+rcPortFlushFdbEntry OBJECT-TYPE
+        SYNTAX        RcPortFlushFdbEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "port based deletion of mac addresses
+                       learned or discarded on that port"
+        INDEX         { rcPortIndex }
+        ::= { rcPortFlushFdbTable 1 }
+
+RcPortFlushFdbEntry ::= SEQUENCE {
+        rcPortFlushFdbAddress                DisplayString,
+        rcPortFlushFdbVlanId                 Integer32
+        }
+
+rcPortFlushFdbAddress OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE (17))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Mac Address to be deleted."
+        ::= { rcPortFlushFdbEntry 1 }
+
+rcPortFlushFdbVlanId OBJECT-TYPE
+        SYNTAX      Integer32(1..4094)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION  "vlan Id associated with the Mac Address"
+        ::= { rcPortFlushFdbEntry 2 }
+
+
+-- Port Lock Group
+
+rcPortLock OBJECT IDENTIFIER ::= { rcChassis 11 }
+
+rcPortLockEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "Indicate whether the port lock feature is enabled."
+        DEFVAL          { false }
+        ::= { rcPortLock 1 }
+
+rcPortLockLockedPorts OBJECT-TYPE
+        SYNTAX          PortSet
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "The set of ports that are administratively locked.
+                        Locked ports cannot be modified in anyway until the
+                        port is unlocked first."
+        ::= { rcPortLock 2 }
+
+
+-- Test Group
+
+rcTestExtTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcTestEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Test extension table.  This table augments the
+                      standard ifTestTable table in RFC1573."
+        ::= { rcTest 1 }
+ 
+rcTestEntry OBJECT-TYPE
+        SYNTAX        RcTestEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current    
+        DESCRIPTION   "Proprietary test variables."
+        INDEX         { rcTestExtIfIndex }
+        ::= { rcTestExtTable 1 }
+ 
+RcTestEntry ::=
+        SEQUENCE {
+                rcTestExtIfIndex InterfaceIndex,
+                rcTestExtPassCount Integer32,  
+                rcTestExtFailCount Integer32
+        }
+ 
+rcTestExtIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The index value which uniquely identifies the
+                      interface to which this entry is applicable.
+                      The interface identified by a particular value
+                      of this index is the same interface as
+                      identified by the same value of ifIndex."
+        ::= { rcTestEntry 1 }
+
+rcTestExtPassCount OBJECT-TYPE
+	SYNTAX	      Integer32
+	MAX-ACCESS	  read-only
+	STATUS	      current
+	DESCRIPTION   "The number of iterations of the test case that
+		      completed successfully."
+	::= { rcTestEntry 2}
+
+rcTestExtFailCount OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The number of iterations of the test case that
+                      failed."
+        ::= { rcTestEntry 3}
+
+
+rcTestTypes		OBJECT IDENTIFIER	::= { rcTest 2}
+rcTestTypesFabric	OBJECT IDENTIFIER	::= { rcTestTypes 1 }
+rcTestTypesArTable	OBJECT IDENTIFIER	::= { rcTestTypes 2 }
+rcTestTypesExtLoopBack	OBJECT IDENTIFIER	::= { rcTestTypes 3 }
+
+
+rcTestCodes		OBJECT IDENTIFIER	::= { rcTest 3 }
+rcTestCodesNoReceive	OBJECT IDENTIFIER	::= { rcTestCodes 1 }
+rcTestCodesBadSeq	OBJECT IDENTIFIER	::= { rcTestCodes 2 }
+rcTestCodesBadLen	OBJECT IDENTIFIER	::= { rcTestCodes 3 }
+rcTestCodesBadData	OBJECT IDENTIFIER	::= { rcTestCodes 4 }
+
+
+-- Statistics
+
+rcStatTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcStatEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A table used to store port statistics."
+        ::= { rcStat 1 }
+ 
+rcStatEntry OBJECT-TYPE
+        SYNTAX        RcStatEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "interface counters"
+        INDEX         { rcStatPortIndex }
+        ::= { rcStatTable 1 }
+ 
+RcStatEntry ::= SEQUENCE {
+                rcStatPortIndex            	InterfaceIndex,
+                rcStatFrameTooShorts       	Counter32,
+ 		rcStatBridgeInUnicastFrames	Counter32,
+ 		rcStatBridgeInMulticastFrames	Counter32,
+ 		rcStatBridgeInBroadcastFrames	Counter32,
+ 		rcStatBridgeInDiscards		Counter32,
+ 		rcStatBridgeOutUnicastFrames	Counter32,
+ 		rcStatBridgeOutMulticastFrames	Counter32,
+ 		rcStatBridgeOutBroadcastFrames	Counter32,
+ 		rcStatRouteInUnicastFrames	Counter32,
+ 		rcStatRouteInMulticastFrames	Counter32,
+ 		rcStatRouteInDiscards		Counter32,
+ 		rcStatRouteOutUnicastFrames	Counter32,
+ 		rcStatRouteOutMulticastFrames 	Counter32,
+		rcStatStgForwardTransitions     Counter32,
+		rcStatStgInConfigBpdus          Counter32,
+		rcStatStgInTcnBpdus             Counter32,
+		rcStatStgInBadBpdus             Counter32,
+		rcStatStgOutConfigBpdus         Counter32,
+		rcStatStgOutTcnBpdus            Counter32,
+		rcStatBridgeOutFrames           Counter32
+        }
+ 
+rcStatPortIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "An index value that uniquely identifies a port.
+                      This value is similar to ifIndex in MIB2."
+        ::= { rcStatEntry 1 }
+ 
+rcStatFrameTooShorts OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The total number of frames that are too short 
+                      that were encountered on this interface."
+        ::= { rcStatEntry 2 }
+
+rcStatBridgeInUnicastFrames OBJECT-TYPE
+        SYNTAX        Counter32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "The total number of incoming unicast frames that 
+		      were bridged."
+        ::= { rcStatEntry 3 }
+
+rcStatBridgeInMulticastFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of incoming multicast frames that 
+                      were bridged."
+        ::= { rcStatEntry 4 }
+
+rcStatBridgeInBroadcastFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of incoming broadcast frames that 
+                      were bridged."
+        ::= { rcStatEntry 5 }
+
+rcStatBridgeInDiscards OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of frames that were discarded by
+		      the bridging entity."
+        ::= { rcStatEntry 6 }
+
+rcStatBridgeOutUnicastFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of outgoing unicast frames that 
+                      were bridged."
+        ::= { rcStatEntry 7 }
+
+rcStatBridgeOutMulticastFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of outgoing multicast frames that 
+                      were bridged."
+        ::= { rcStatEntry 8 }
+
+rcStatBridgeOutBroadcastFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of outgoing broadcast frames that 
+                      were bridged."
+        ::= { rcStatEntry 9 }
+
+rcStatRouteInUnicastFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of incoming unicast frames that
+                      were routed."
+        ::= { rcStatEntry 10 }
+
+rcStatRouteInMulticastFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of incoming multicast frames that
+                      were routed."
+        ::= { rcStatEntry 11 }
+
+rcStatRouteInDiscards OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of frames that were discarded by
+		      the routing entity."
+        ::= { rcStatEntry 12 }
+
+rcStatRouteOutUnicastFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of outgoing unicast frames that
+                      were routed."
+        ::= { rcStatEntry 13 }
+
+rcStatRouteOutMulticastFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The total number of outgoing multicast frames that
+                      were routed."
+        ::= { rcStatEntry 14 }
+
+rcStatStgForwardTransitions OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   "The number of times this port has transitioned
+                      from the Learning state to the Forwarding state."
+        ::= { rcStatEntry 15 }
+
+rcStatStgInConfigBpdus OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   ""
+        ::= { rcStatEntry 16 }
+
+rcStatStgInTcnBpdus OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   ""
+        ::= { rcStatEntry 17 }
+
+rcStatStgInBadBpdus OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   ""
+        ::= { rcStatEntry 18 }
+
+rcStatStgOutConfigBpdus OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   ""
+        ::= { rcStatEntry 19 }
+
+rcStatStgOutTcnBpdus OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION   ""
+        ::= { rcStatEntry 20 }
+
+rcStatBridgeOutFrames OBJECT-TYPE 
+        SYNTAX        Counter32 
+        MAX-ACCESS    read-only
+        STATUS        current 
+        DESCRIPTION     "Used by the Accelar 8000 product family to account
+                        for all transmitted bridge unicast, broadcast, and
+                        multicast packets.  The individual counters are not
+                        supported."
+
+        ::= { rcStatEntry 21 }
+
+
+END

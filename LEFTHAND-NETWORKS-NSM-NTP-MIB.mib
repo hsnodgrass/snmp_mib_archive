@@ -1,0 +1,196 @@
+-- ****************************************************************************
+-- LEFTHAND-NETWORKS-NSM-NTP-MIB
+-- Management Information Base for SNMP Network Management
+--
+-- This MIB provides NTP information for a storage node.
+
+-- This MIB must be loaded after:
+--                                LEFTHAND-NETWORKS-GLOBAL-REG-MIB.mib
+--                                LEFTHAND-NETWORKS-NSM-MIB.mib
+--
+-- The LeftHand Networks Enterprise number is 9804.
+-- The ASN.1 prefix to, and including the LeftHand Networks Enterprise is:
+--     1.3.6.1.4.1.9804
+-- ****************************************************************************
+-- Copyright 2009,2010 Hewlett-Packard Development Company, L.P.
+-- Copyright 2008,2009 LeftHand Networks, Inc.
+-- All Rights Reserved.
+--
+-- Hewlett-Packard Company shall not be liable for technical or
+-- editorial errors or omissions contained herein. The information in
+-- this document is provided "as is" without warranty of any kind and
+-- is subject to change without notice. The warranties for HP products
+-- are set forth in the express limited warranty statements
+-- accompanying such products. Nothing herein should be construed as
+-- constituting an additional warranty.
+--
+-- Confidential computer software. Valid license from HP required for
+-- possession, use or copying. Consistent with FAR 12.211 and 12.212,
+-- Commercial Computer Software, Computer Software Documentation, and
+-- Technical Data for Commercial Items are licensed to the U.S.
+-- Government under vendor's standard commercial license.
+-- ****************************************************************************
+
+LEFTHAND-NETWORKS-NSM-NTP-MIB DEFINITIONS ::= BEGIN
+
+	IMPORTS
+		MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32
+			FROM SNMPv2-SMI
+		OBJECT-GROUP, MODULE-COMPLIANCE
+			FROM SNMPv2-CONF
+		TEXTUAL-CONVENTION, DisplayString, RowStatus, TruthValue
+			FROM SNMPv2-TC
+		lhnModules, lhnNsm
+			FROM LEFTHAND-NETWORKS-GLOBAL-REG-MIB
+		lhnNsmNTP
+			FROM LEFTHAND-NETWORKS-NSM-MIB;
+
+-- lhnNsm is imported but never used, this will create a smilint warning
+-- however, it's necessary for some MIB compilers
+
+--
+-- Module definition and a brief description of this mib.
+--
+lhnNsmNTPModule MODULE-IDENTITY
+    LAST-UPDATED        "201006230000Z"
+    ORGANIZATION        "Hewlett Packard Company, StorageWorks Division"
+    CONTACT-INFO        "Product Support
+                         Product URL: www.hp.com/go/p4000
+                         Support URL: www.itrc.hp.com
+                         Product Phone: www.hp.com/go/contact
+                                        1-800-786-7967 (US only)
+                         Support Phone: www.hp.com/go/contact
+                                        1-800-334-5144 (US only)"
+    DESCRIPTION         "HP StorageWorks P4000 NTP Information"
+    REVISION            "201006230000Z"
+    DESCRIPTION         "SAN/iQ 7.0, SAN/iQ 8.0, SAN/iQ 8.1, SAN/iQ 8.5"
+
+	::= { lhnModules 6 }
+
+--******************************************************************************
+--
+-- Conformance
+--
+--******************************************************************************
+
+lhnNsmNTPModuleConformance OBJECT IDENTIFIER
+	::= { lhnNsmNTPModule 1 }
+
+lhnNsmNTPModuleCompliances OBJECT IDENTIFIER
+	::= { lhnNsmNTPModuleConformance 1 }
+
+lhnNsmNTPModuleGroups OBJECT IDENTIFIER
+	::= { lhnNsmNTPModuleConformance 2 }
+
+lefthandNetworksNsmNTPMibCompliance MODULE-COMPLIANCE
+	STATUS current
+	DESCRIPTION "The compliance statement."
+	MODULE
+	MANDATORY-GROUPS {
+			lefthandNetworksNsmNtpGroup
+		}
+	::= { lhnNsmNTPModuleCompliances 1 }
+
+lefthandNetworksNsmNtpGroup OBJECT-GROUP
+	OBJECTS {           
+					ntpCount,
+					timeGMTTime,
+					timeTimeZone,
+					ntpPreferred,
+					ntpServer
+			}
+	STATUS              current
+	DESCRIPTION         "The default group for all NSM NTP objects."
+	::= { lhnNsmNTPModuleGroups 1 }
+
+lefthandNetworksNsmNtpGroupObsolete OBJECT-GROUP
+	OBJECTS {           
+					ntpRowStatus
+			}
+	STATUS              obsolete
+	DESCRIPTION         "The group for all obsolete NSM NTP objects."
+	::= { lhnNsmNTPModuleGroups 2 }
+
+--******************************************************************************
+--
+-- NTP Module Objects
+--
+--******************************************************************************
+
+ntpCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of NTP servers."
+	::= { lhnNsmNTP 1 }
+
+ntpTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF NtpEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of NTP information for the NSM. The
+						number of servers is given by ntpCount."
+	::= { lhnNsmNTP 2 }
+
+	ntpEntry OBJECT-TYPE
+		SYNTAX              NtpEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of NTP information."
+		INDEX               {
+								ntpIndex
+							}
+		::= { ntpTable 1 }
+
+	NtpEntry ::= SEQUENCE {
+		ntpIndex		Unsigned32,
+		ntpPreferred	TruthValue,
+		ntpServer		DisplayString,
+		ntpRowStatus	RowStatus
+	}
+
+	ntpIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the ntpTable table."
+		::= { ntpEntry 1 }
+
+	ntpPreferred OBJECT-TYPE
+		SYNTAX              TruthValue
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "true if NTP server is preferred, false otherwise"
+		::= { ntpEntry 2 }
+
+	ntpServer OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The name or IP address of the NTP server."
+		::= { ntpEntry 3 }
+
+	ntpRowStatus OBJECT-TYPE
+		SYNTAX              RowStatus
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { ntpEntry 4 }
+
+timeGMTTime OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The current time in the GMT time zone."
+	::= { lhnNsmNTP 7 }
+
+timeTimeZone OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The current time in the local time zone."
+	::= { lhnNsmNTP 8 }
+
+END
+
+-- END: some MIB compilers require a CR/LF after the END statement --

@@ -1,0 +1,1551 @@
+
+RC-OPM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter64, IpAddress,
+    NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, RowStatus, MacAddress
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcOpm, rcVpn, rcOeAdm, rcTlsVpn, rcOm8k, EnableValue
+        FROM RAPID-CITY;
+
+
+rcOpmMib MODULE-IDENTITY
+       LAST-UPDATED     "200409300000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+ 
+      REVISION "200509300000Z" -- 30 September 2005
+       DESCRIPTION "Version 8: Added rcOpmPortTable"  
+
+       REVISION "200410110000Z" -- 11 October 2004
+       DESCRIPTION "Version 7: Added rcTlsVpnAccessStatisticsClear, rcTlsVpnTrunkStatisticsClear and {rcTlsVpn 6} table."  
+       REVISION "200410110000Z" -- 11 October 2004
+       DESCRIPTION "Version 6: Import InterfaceIndex type"  
+       REVISION "200409080000Z" -- 08 Sept. 2004
+       DESCRIPTION "Version 5: Correct the DEFVAL rcOeAdmPEEdgeOutgoingInterface and 
+				rcOeAdmPEEdgeSecOutgoingInterface "  
+       REVISION "200408310000Z" -- 31 August 2004
+       DESCRIPTION "Version 4: Added rcOeAdmPEEdgeObjects"  
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcOpm 0 }
+
+-- OPM Card Config Table
+
+rcOpmCardConfigTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcOpmCardConfigEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "Opm Card Config Table"
+        ::= { rcOpm 1 }
+
+rcOpmCardConfigEntry OBJECT-TYPE
+        SYNTAX        RcOpmCardConfigEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing infomation of OPM Card Config."
+        INDEX         { rcOpmCardConfigSlotIndex }
+        ::= { rcOpmCardConfigTable 1 }
+
+RcOpmCardConfigEntry ::= SEQUENCE {
+                rcOpmCardConfigSlotIndex     Integer32,
+                rcOpmCardConfigAction        INTEGER,
+                rcOpmCardConfigTraceMode     INTEGER,
+                rcOpmCardConfigImageFileName DisplayString
+        }
+
+rcOpmCardConfigSlotIndex OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "slot Index."
+        ::= { rcOpmCardConfigEntry 1 }
+
+rcOpmCardConfigAction OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          other(0),
+                          reset(1)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcOpmCardConfigEntry 2 }
+
+rcOpmCardConfigTraceMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+                          other(0),
+                          traceOn(1)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcOpmCardConfigEntry 3 }
+
+rcOpmCardConfigImageFileName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "OPM Image file name."
+        ::= { rcOpmCardConfigEntry 4 }
+
+
+rcOpmPortTable OBJECT-TYPE
+        SYNTAX	      SEQUENCE OF RcOpmPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Opm Port table"
+        ::= { rcOpm 2 }
+
+rcOpmPortEntry OBJECT-TYPE
+        SYNTAX        RcOpmPortEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing info. for a particular opm port"
+        INDEX         { rcOpmPortIndex }
+        ::= { rcOpmPortTable 1 }
+
+RcOpmPortEntry ::= SEQUENCE {
+        rcOpmPortIndex                           InterfaceIndex,
+        rcOpmPortServiceType                INTEGER,
+        rcOpmPortUniNum                          Integer32,
+        rcOpmPortServerEnable	      TruthValue,
+        rcOpmPortEgressCosProfileName	 DisplayString,
+        rcOpmPortEgressPolicerAdminState	 EnableValue
+        }
+	
+rcOpmPortIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "An index value that uniquely identifies a opm port.
+                      This value is similar to ifIndex in MIB2."
+        ::= { rcOpmPortEntry 1 }
+
+rcOpmPortServiceType OBJECT-TYPE
+	SYNTAX        INTEGER {
+		rbsRingPrimary(1),
+		rbsRingSecondary(2),
+		standaloneRbs(3),
+		localTlsTransparent(4),
+		localTlsSwitched(5),
+		localIpmcUni(6),
+		localIpmcBi(7),
+		localQnq1(8),
+		localQnq2(9),
+		server(10), 
+		unknown(11),
+		multiService(12)  
+	              }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Opm Port service type"
+        ::= { rcOpmPortEntry 2 }
+
+rcOpmPortUniNum OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of UNI this port belongs to"
+        ::= { rcOpmPortEntry 3 }
+
+rcOpmPortServerEnable  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Value indicating whether the OPM port set as a server port"
+        DEFVAL        { false }
+        ::= { rcOpmPortEntry 4 }
+
+rcOpmPortEgressCosProfileName	OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE (0..20))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Egress COS Profile Table Name"
+        DEFVAL          { "DEFAULT_MGT_PROFILE"  }
+	::= { rcOpmPortEntry 5 }
+
+rcOpmPortEgressPolicerAdminState	OBJECT-TYPE
+        SYNTAX          EnableValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Enable/disable to use Egress Cos Profile table"
+        DEFVAL          { disable }
+	::= { rcOpmPortEntry 6 }
+
+--  VPN table
+
+rcVpnTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcVpnEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcVpn 1 }
+
+rcVpnEntry OBJECT-TYPE
+        SYNTAX        RcVpnEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "A Vpn table entry."
+        INDEX         { rcVpnVpnId, rcVpnMemberId }
+        ::= { rcVpnTable 1 }
+
+RcVpnEntry ::=
+        SEQUENCE {
+                rcVpnVpnId                  INTEGER,
+                rcVpnMemberId               Integer32,
+                rcVpnName                   OCTET STRING,
+                rcVpnPort                   INTEGER,
+                rcVpnQtagNumOrRange         DisplayString,
+                rcVpnLocalSwitch            TruthValue,
+                rcVpnRemotePeerId           IpAddress,
+                rcVpnTunnelGrpId            Integer32,
+                rcVpnOutBoundLowerBwReq     INTEGER,
+                rcVpnOutBoundUpperBwReq     INTEGER,
+                rcVpnServiceType            INTEGER,
+                rcVpnServiceDegrationFactor INTEGER,
+                rcVpnTunnelExpPolicyType    INTEGER,
+                rcVpnTunnelExpPolicy        Integer32,
+                rcVpnVcGrpId                INTEGER,
+                rcVpnVcLabel                Integer32,
+                rcVpnTunnelLspId            Integer32,
+                rcVpnAdminState             EnableValue,
+                rcVpnOperState              INTEGER,
+                rcVpnRowStatus              RowStatus,
+                rcVpnMemAction              INTEGER,
+                rcVpnQtagNumListSize        Integer32,
+		rcVpnClassInteropMode	    INTEGER,
+		rcVpnAssociatedPortIfndx    INTEGER
+
+        }
+
+rcVpnVpnId OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Vpn identifier. For the Martini L2s this is the VCId.
+                       Distributed in the VFEC to the remote peer (other end 
+                       point of ). "
+        ::= { rcVpnEntry 1 }
+ 
+rcVpnMemberId OBJECT-TYPE
+        SYNTAX        Integer32  (0..2147483647)
+        MAX-ACCESS        read-only
+        STATUS	      current
+        DESCRIPTION   "This field along with the Id identifies an end point 
+                       of a Virtural circuit. In the martini point-to-point 
+                       this is PortID, where as in any2any  this is 
+                       UNI ID. "
+	    ::= { rcVpnEntry 2 }
+
+rcVpnName OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE (1..256)) 
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "For ease of configuration. Can provide either during
+                       the configuration or modification of this field is 
+                       allowed on when the  admin state is disabled. Not 
+                       supoorted in this release."
+        ::= { rcVpnEntry 3 }
+
+rcVpnPort OBJECT-TYPE 
+        SYNTAX        INTEGER (0..65535) 
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Providing  member."
+        ::= { rcVpnEntry 4 } 
+
+
+rcVpnQtagNumOrRange OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "List of qtags or range of qtags for this port.
+                       ( member)"
+        ::= { rcVpnEntry 5 }
+
+rcVpnLocalSwitch OBJECT-TYPE
+        SYNTAX        TruthValue 
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "indicate the local switch."
+        DEFVAL     { false }
+        ::= { rcVpnEntry 6 }
+ 
+rcVpnRemotePeerId OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Remote LER IP address."
+        ::= { rcVpnEntry 7 }
+
+rcVpnTunnelGrpId OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Tunnel group for this  to reach remote LER."
+        ::= { rcVpnEntry 8 }
+
+rcVpnOutBoundLowerBwReq OBJECT-TYPE
+        SYNTAX        INTEGER (1..1000)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "This is part of required parameter to enable the 
+                        admin status. Specifies the lower guaranteed 
+                       bandwidth in Mbps."
+        DEFVAL  { 1 }
+        ::= { rcVpnEntry 9 }
+
+
+rcVpnOutBoundUpperBwReq OBJECT-TYPE
+        SYNTAX        INTEGER (1..1000)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "This is part of required parameter to enable the 
+                        admin status. Specifies the upper bandwidth in Mbps.
+                       Interpretation of this is based on the ServicType."
+        DEFVAL   { 1 }
+        ::= { rcVpnEntry 10 }
+
+rcVpnServiceType OBJECT-TYPE
+        SYNTAX        INTEGER{
+                           serviceA (1),
+                           serviceB (2),
+                           serviceC (3)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Type of service offered for the ."
+        ::= { rcVpnEntry 11 }
+
+rcVpnServiceDegrationFactor OBJECT-TYPE
+        SYNTAX        INTEGER (1..100)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "This value indicates the service degradation factor 
+                       (percent) either in the case of LSP failure or when
+                       bandwidth requirement changes."
+        DEFVAL {100}
+        ::= { rcVpnEntry 12 }
+
+
+rcVpnTunnelExpPolicyType OBJECT-TYPE
+        SYNTAX        INTEGER {
+                        explicit(1),
+                        implicit(2)
+                      }
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "This indicates how the Tunnel EXP bits will be defined.
+                       Value of this field specify the interpretation of 
+                       TunnelExpPolicy value."
+        DEFVAL { explicit }
+        ::= { rcVpnEntry 13 }
+
+rcVpnTunnelExpPolicy OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "The usage of this field is signaled by 
+                       TunnelExpPolicyType. If the type is set to Explicit 
+                       then the value specified is the EXP bit value. Otherwise
+                       the index for the mapping policy entry in the 
+                       TunnelExpPolicyTable. "
+        ::= { rcVpnEntry 14 }
+
+rcVpnVcGrpId OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Configuration of VcGroupId has local Significance. 
+                       it is sent in the VFEC. Used for sending the wildcard
+                       withdraw message to all the LDP neighbors. One 
+                       application is sending the withdraw message in the
+                       event of the interface is going down." 
+        ::= { rcVpnEntry 15 }
+
+rcVpnVcLabel  OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "This will be updated upon receiving the VFEC from the 
+                       remote peer. It is 20 bits long"
+        ::= { rcVpnEntry 16 }
+
+rcVpnTunnelLspId OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Will be updated when Vpn Controller determines which Lsp
+                       it is using for the Vpn (based on the bw requirements).
+                       This will be updated upon detecting the existence of 
+                       tunnel to the remote peer. This occurs while sending 
+                       the VFEC. Receving the VFEC does not guarantee the 
+                       existence of tunnel going from this switch to the other
+                       end."  
+        ::= { rcVpnEntry 17 }
+
+rcVpnAdminState  OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Use for configuration. Enable operation is allowed
+                       only if the configuration of this  entry contains
+                       tunnel-group association, memeber information and SLA 
+                       attributes. Disable value indicates that the 
+                       configuration exists but  is not yet enabled."
+        ::= { rcVpnEntry 18 }
+
+rcVpnOperState  OBJECT-TYPE
+        SYNTAX         INTEGER {
+                            inactive (1),
+                            waitLdpSess (2),
+                            waitLsp (3),
+                            waitPeerLbl (4),
+                            operational (5)
+                       }
+        MAX-ACCESS         read-only
+        STATUS         current
+        DESCRIPTION    "Change of state occurs upon establishing the label
+                        mapping i.e., sending the VFEC and receiving the VFEC
+                        or changes in Tunnel existence or LDP session."
+        ::= { rcVpnEntry 19}
+
+rcVpnRowStatus  OBJECT-TYPE
+        SYNTAX           RowStatus 
+        MAX-ACCESS           read-write
+        STATUS           current
+        DESCRIPTION      "uses for controlling the creation and deletion of
+                          this row"
+        ::= { rcVpnEntry 20 }
+    
+
+ rcVpnMemAction  OBJECT-TYPE
+        SYNTAX           INTEGER {
+                           none   (0),
+                           add    (1),
+                           remove (2)
+                         }
+        MAX-ACCESS           read-write
+        STATUS           current
+        DESCRIPTION      "Add/Remove member from VPN."
+        ::= { rcVpnEntry 21 }
+  
+ rcVpnQtagNumListSize  OBJECT-TYPE
+        SYNTAX           Integer32 
+        MAX-ACCESS           read-only
+        STATUS           current
+        DESCRIPTION      "The Size of qtags or range of qtags for this port. "
+        ::= { rcVpnEntry 22 }
+
+ rcVpnClassInteropMode  OBJECT-TYPE
+        SYNTAX           INTEGER {
+                           standard (1),
+                           juniper (2)
+                         }
+        MAX-ACCESS           read-write
+        STATUS           current
+        DESCRIPTION      "Interoperability mode for a service class attached to
+			  an L2-VPN."
+	DEFVAL           { standard }
+        ::= { rcVpnEntry 23 }
+
+rcVpnAssociatedPortIfndx OBJECT-TYPE 
+        SYNTAX        INTEGER (0..65535) 
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Extended Legacy port or MLTport   member."
+        ::= { rcVpnEntry 24 } 
+
+
+-- Vpn VcGrpId table
+
+rcVpnVcGrpIdTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcVpnVcGrpIdEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcVpn 2 }
+
+rcVpnVcGrpIdEntry OBJECT-TYPE
+        SYNTAX        RcVpnVcGrpIdEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "A VcGrpId table entry."
+        INDEX         { rcVpnVcGrpIdIndex }
+        ::= { rcVpnVcGrpIdTable 1 }
+ 
+RcVpnVcGrpIdEntry ::=
+        SEQUENCE {
+                rcVpnVcGrpIdIndex          INTEGER,
+                rcVpnVcGrpIdAdminStatus    EnableValue,
+                rcVpnVcGrpIdListSize       Integer32,
+                rcVpnVcGrpIdList           OCTET STRING                   
+        }
+
+rcVpnVcGrpIdIndex   OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "VC Grp Identifier. In the VPN configuration this value
+                       is used to tie the VPN to the VcGrp."
+        ::= { rcVpnVcGrpIdEntry 1 }
+ 
+rcVpnVcGrpIdAdminStatus OBJECT-TYPE
+        SYNTAX        EnableValue 
+        MAX-ACCESS        read-write
+        STATUS	      current
+        DESCRIPTION   "use for configuration." 
+	    ::= { rcVpnVcGrpIdEntry 2 }
+
+rcVpnVcGrpIdListSize OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS        read-only
+        STATUS	      current
+        DESCRIPTION   "Used to indicate the number of VPNs that are associated 
+                       with this VcGrpId." 
+	    ::= { rcVpnVcGrpIdEntry 3 }
+
+rcVpnVcGrpIdList OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE (256)) 
+        MAX-ACCESS        read-only
+        STATUS	      current
+        DESCRIPTION   "Used to indicate the list of VPNs that are assiciated
+                       with this VcGrpId." 
+	    ::= { rcVpnVcGrpIdEntry 4 }
+
+
+--  Vpn Statistics table
+
+rcVpnStatisticsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcVpnStatisticsEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcVpn 3 }
+
+rcVpnStatisticsEntry OBJECT-TYPE
+        SYNTAX        RcVpnStatisticsEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "A Statistics table entry."
+        INDEX         { rcVpnStatisticsVpnId }
+        ::= { rcVpnStatisticsTable 1 }
+ 
+RcVpnStatisticsEntry ::=
+        SEQUENCE {
+                rcVpnStatisticsVpnId               Integer32,
+		rcVpnStatisticsAccessPacketCount   Counter64,
+		rcVpnStatisticsAccessOctetCount	   Counter64,
+		rcVpnStatisticsAccessDroppedBIR    Counter64,
+		rcVpnStatisticsAccessDroppedCIR    Counter64,
+		rcVpnStatisticsTrunkPacketCount	   Counter64,
+		rcVpnStatisticsTrunkOctetCount	   Counter64,
+		rcVpnStatisticsTrunkErrorTTL	   Counter64,
+		rcVpnStatisticsTrunkErrorMTU	   Counter64,
+		rcVpnStatisticsAccessDroppedPIR    Counter64
+        }
+
+rcVpnStatisticsVpnId  OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Vpn identifier. For the Martini L2VPNs this is the VCId."
+        ::= { rcVpnStatisticsEntry 1 } 
+
+rcVpnStatisticsAccessPacketCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of packets received at the access port
+                      for this VPN."
+        ::= { rcVpnStatisticsEntry 2 }
+
+rcVpnStatisticsAccessOctetCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of octets received at the access port
+                      for this VPN."
+        ::= { rcVpnStatisticsEntry 3 }
+
+rcVpnStatisticsAccessDroppedBIR OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        obsolete
+        DESCRIPTION  "Used to indicate the number of packets dropped due to BIR"
+        ::= { rcVpnStatisticsEntry 4 }
+
+rcVpnStatisticsAccessDroppedCIR OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of packets dropped due to CIR"
+        ::= { rcVpnStatisticsEntry 5 }
+
+rcVpnStatisticsTrunkPacketCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of packets received at the trunk port
+                      for this VPN label."
+        ::= { rcVpnStatisticsEntry 6 }
+
+rcVpnStatisticsTrunkOctetCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of octets received at the trunk port
+                      for this VPN label."
+        ::= { rcVpnStatisticsEntry 7 }
+
+rcVpnStatisticsTrunkErrorTTL OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the TTL error count for this VPN label."
+        ::= { rcVpnStatisticsEntry 8 }
+
+rcVpnStatisticsTrunkErrorMTU OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the MTU error count for this VPN label."
+        ::= { rcVpnStatisticsEntry 9 }
+
+rcVpnStatisticsAccessDroppedPIR OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of packets dropped due to PIR"
+        ::= { rcVpnStatisticsEntry 10 }
+
+-- Vpn Port Table
+
+rcVpnPortTable OBJECT-TYPE
+        SYNTAX	      SEQUENCE OF RcVpnPortEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "vpn port table"
+        ::= { rcVpn 4 }
+
+rcVpnPortEntry OBJECT-TYPE
+        SYNTAX        RcVpnPortEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry containing info. for a particular port"
+        INDEX         { rcVpnPortIndex }
+        ::= { rcVpnPortTable 1 }
+
+
+RcVpnPortEntry ::= SEQUENCE {
+                      rcVpnPortIndex        Integer32,
+                      rcVpnPortServiceType  INTEGER,
+                      rcVpnPortMode         INTEGER
+                   }
+
+
+rcVpnPortIndex OBJECT-TYPE
+        SYNTAX        	Integer32 (0..2147483647)
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"An unique index used to identify a particular port
+                         in the system. this index is equal to the ifIndex of
+                         the port."
+        ::= { rcVpnPortEntry 1 }
+
+rcVpnPortServiceType OBJECT-TYPE
+        SYNTAX        	INTEGER {
+			    none (0),
+                            l2uni (1),
+                            vpls   (2),
+                            ip    (3),
+			    serverl2uni (4)
+                        } 
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Indicates the port functionality. 12uni is used to 
+                         configure the port to be part of Martini service, 
+                         tls is used to configure the port to be part of 
+                         Any2Any VPN service and ip is used to perform the IP 
+                         routing and mpls if enabled."
+        ::= { rcVpnPortEntry 2 }
+
+rcVpnPortMode OBJECT-TYPE
+        SYNTAX        	INTEGER {
+		 	    none (0),
+                            transparent (1),
+                            switched (2)
+                        }
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"The octapid id of the mirrored port."
+        DEFVAL         { none }
+        
+        ::= { rcVpnPortEntry 3 }
+
+-- OE-ADM Group
+
+rcOeAdmPECoreObjects	OBJECT IDENTIFIER  ::=  { rcOeAdm 1 }
+
+rcOeAdmPECoreKeepAliveInterval	OBJECT-TYPE
+        SYNTAX          INTEGER (3..10000)
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "The time interval in minutes after which, if no Hello messages
+			 have been received for a UNI, the VPN membership
+			 for the UNI will be cleared."
+        DEFVAL          { 30 }
+        ::= { rcOeAdmPECoreObjects 1 }
+
+rcOeAdmPECoreTLSEnabled	   OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "Boolean value indicating whether the TLS service
+			 is enabled on a PE-Core device."
+        DEFVAL          { false }
+        ::= { rcOeAdmPECoreObjects 2 }
+
+rcOeAdmPECoreUDPPort	OBJECT-TYPE
+        SYNTAX          INTEGER (1..65535)
+        MAX-ACCESS          read-write
+        STATUS          current
+        DESCRIPTION     "The UDP port to which ADM Hello messages will
+			 be sent."
+        DEFVAL          { 9999 }
+        ::= { rcOeAdmPECoreObjects 3 }
+
+
+rcOeAdmStatisticsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcOeAdmStatisticsEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcOeAdm 2 }
+ 
+rcOeAdmStatisticsEntry OBJECT-TYPE
+        SYNTAX       RcOeAdmStatisticsEntry 
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "A Statistics table entry."
+        INDEX         { rcOeAdmStatsPortIndex }
+        ::= { rcOeAdmStatisticsTable 1}
+ 
+RcOeAdmStatisticsEntry ::=
+        SEQUENCE {
+                rcOeAdmStatsPortIndex           Integer32,
+                rcOeAdmStatsUnSupportedVersion  Counter64,
+                rcOeAdmStatsUnSupportedTlvType  Counter64,
+                rcOeAdmStatsBadMsgLength        Counter64,
+                rcOeAdmStatsBadTlvLength        Counter64,
+                rcOeAdmStatsBadMsgType          Counter64
+        }
+
+rcOeAdmStatsPortIndex OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Port interface Index ."
+        ::= { rcOeAdmStatisticsEntry 1 }
+
+rcOeAdmStatsUnSupportedVersion  OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of Hellos received with
+Bad OE-ADM protocol version number ."
+        ::= { rcOeAdmStatisticsEntry 2 }
+
+rcOeAdmStatsUnSupportedTlvType  OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of Hellos received with
+		      bad TLV types."
+        ::= { rcOeAdmStatisticsEntry  3 }
+
+rcOeAdmStatsBadMsgLength OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of Hellos received with
+		      bad Hello message length ."
+        ::= { rcOeAdmStatisticsEntry  4 }
+
+rcOeAdmStatsBadTlvLength OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of Hellos received with 
+		      Bad TLV Length."
+        ::= { rcOeAdmStatisticsEntry   5 }
+
+rcOeAdmStatsBadMsgType OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to indicate the number of Hellos received
+		      with Bad Hello message Length."
+        ::= { rcOeAdmStatisticsEntry   6 }
+
+--
+--   ADM Connection Table 
+--
+
+rcOeAdmConnStatisticsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcOeAdmConnStatisticsEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcOeAdm 3 }
+
+rcOeAdmConnStatisticsEntry OBJECT-TYPE
+        SYNTAX       RcOeAdmConnStatisticsEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "A Statistics table entry."
+        INDEX         { rcOeAdmConnStatsUniId }
+        ::= { rcOeAdmConnStatisticsTable 1}
+ 
+
+RcOeAdmConnStatisticsEntry ::=
+        SEQUENCE {
+                rcOeAdmConnStatsUniId               IpAddress, 
+                rcOeAdmConnStatsTimerZTimeout       Counter64,
+                rcOeAdmConnStatsHellos              Counter64
+        }
+
+rcOeAdmConnStatsUniId OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   " This field identifies the UNI-ID for the PE-Edge
+			device.It represents the customer site ID."
+            ::= { rcOeAdmConnStatisticsEntry 1 }
+
+rcOeAdmConnStatsTimerZTimeout OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  " This counter indicates total number of 'Z' Timer
+		       timetouts.This is an indication of the possible physical link 
+		       disconnect between PE-Edge device and a PE-Core device."
+        ::= { rcOeAdmConnStatisticsEntry 2 }
+
+rcOeAdmConnStatsHellos OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  " This counter indicates total number of Hello PDUs
+			received." 
+        ::= { rcOeAdmConnStatisticsEntry 3 }
+
+--
+-- Objects to be implemented on PE-Edge devices
+--
+
+rcOeAdmPEEdgeObjects  OBJECT IDENTIFIER ::= { rcOeAdm 4 } 
+
+rcOeAdmPEEdgeUDPPort OBJECT-TYPE
+        SYNTAX          INTEGER (0..65535)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The UDP port to which ADM Hello messages will
+                         be sent."
+        DEFVAL          { 9999 }
+        ::= { rcOeAdmPEEdgeObjects 1 }
+
+rcOeAdmPEEdgeNumHelloMessages OBJECT-TYPE
+        SYNTAX          INTEGER (0..100)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The number of Hello messages that will be
+                         generated when a UNI/TDI association is changed."
+        DEFVAL          { 2 }
+        ::= { rcOeAdmPEEdgeObjects 2 }
+
+rcOeAdmPEEdgeHelloMessageInterval OBJECT-TYPE
+        SYNTAX          INTEGER (1..1000)
+        UNITS           "seconds"
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The time interval between Hello messages that are
+                         generated when a UNI/TDI association is changed."
+        DEFVAL          { 10 }
+        ::= { rcOeAdmPEEdgeObjects 3 }
+
+rcOeAdmPEEdgeKeepAliveInterval OBJECT-TYPE
+        SYNTAX          INTEGER (1..1000)
+        UNITS           "minutes"
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The time interval between generation of
+                         keep-alive Hello messages."
+        DEFVAL          { 10 }
+        ::= { rcOeAdmPEEdgeObjects 4 }
+
+rcOeAdmPEEdgeProtocolEnabled OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Boolean value indicating whether the ADM
+                         protocol is enabled on a PE-Edge device."
+        DEFVAL          { false }
+        ::= { rcOeAdmPEEdgeObjects 5 }
+
+rcOeAdmPEEdgeHeartbeatInterval OBJECT-TYPE
+        SYNTAX          INTEGER (0..65535)
+        UNITS           "deci-seconds"
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The interval with which Heartbeat messages are
+                         generated, measured in 10ths of seconds."
+        DEFVAL          { 300 }
+        ::= { rcOeAdmPEEdgeObjects 6 }
+
+rcOeAdmPEEdgeOutgoingInterface OBJECT-TYPE
+        SYNTAX          OCTET STRING (SIZE(16))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The outgoing interfaces from which the ADM
+                         messages are sent out. The format of the string
+                         contains one or more interfaces, each 
+                         interface is represented in
+                         the octet string as 4 octets, each four octets
+                         is the IpAddress of the interface configured on
+                         the box. Now the maximum interfaces can be
+                         configured is four "
+        DEFVAL          { '00000000000000000000000000000000'H }
+        ::= { rcOeAdmPEEdgeObjects 7 }
+
+rcOeAdmPEEdgeSecOutgoingInterface OBJECT-TYPE
+        SYNTAX          OCTET STRING (SIZE(16))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The secondary outgoing interfaces from which the ADM
+                         messages are sent out. Only used if ADM is in dual-homed mode"
+        DEFVAL          { '00000000000000000000000000000000'H }
+        ::= { rcOeAdmPEEdgeObjects 8 }
+
+rcOeAdmPEEdgeDhPrimaryPort OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "BAN dual-homed primaray port number. Only used if ADM is in dual-homed mode"
+        ::= { rcOeAdmPEEdgeObjects 9 }
+ 
+rcOeAdmPEEdgeDhSecondaryPort OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "BAN dual-homed secondary port number. Only used if ADM is in dual-homed mode"
+        ::= { rcOeAdmPEEdgeObjects 10 }
+
+rcOeAdmPEEdgeMode OBJECT-TYPE
+        SYNTAX          INTEGER {
+                           normal(1),
+                           dual-homed(2)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Mode: 1 is normal mode, 2 is dual-homed mode"
+        DEFVAL          { normal }
+        ::= { rcOeAdmPEEdgeObjects 11 }
+
+
+--  TLSVPN Config table
+
+rcTlsVpnConfigTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcTlsVpnConfigEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcTlsVpn 1 }
+
+rcTlsVpnConfigEntry OBJECT-TYPE
+        SYNTAX        RcTlsVpnConfigEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "A TlsVpn config table entry. This table is used for configuring
+                       TLS VPN."
+        INDEX         { rcTlsVpnConfigVpnId, rcTlsVpnConfigTdi }
+        ::= { rcTlsVpnConfigTable 1 }
+ 
+RcTlsVpnConfigEntry ::=
+        SEQUENCE {
+                rcTlsVpnConfigVpnId                  INTEGER,
+                rcTlsVpnConfigTdi                    INTEGER,
+                rcTlsVpnConfigName                   OCTET STRING,
+                rcTlsVpnConfigMode                   INTEGER,
+                rcTlsVpnConfigRowStatus              RowStatus
+        }
+
+rcTlsVpnConfigVpnId OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Vpn identifier. For the TLS VPN this is the VCId.
+                       Distributed in the TFEC to the remote peer (other end 
+                       point of ). "
+        ::= { rcTlsVpnConfigEntry 1 }
+ 
+rcTlsVpnConfigTdi  OBJECT-TYPE
+        SYNTAX           INTEGER (100..65535)
+        MAX-ACCESS           read-only
+        STATUS           current
+        DESCRIPTION      "Transparent domain identifier for TLS."
+        ::= { rcTlsVpnConfigEntry 2 }
+
+rcTlsVpnConfigName OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE (0..256)) 
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "For ease of configuration. Can provide either during
+                       the configuration or modification of this field is 
+                       allowed on when the  admin state is disabled. Not 
+                       supoorted in this release."
+        ::= { rcTlsVpnConfigEntry 3 }
+
+rcTlsVpnConfigMode  OBJECT-TYPE
+        SYNTAX           INTEGER {
+                            transparent (1),
+                            mapped (2)
+                         } 
+        MAX-ACCESS           read-only
+        STATUS           current
+        DESCRIPTION      "The transmission mode for interworking with Hornet."
+        DEFVAL         { transparent }
+        ::= { rcTlsVpnConfigEntry 4 }
+
+rcTlsVpnConfigRowStatus  OBJECT-TYPE
+        SYNTAX           RowStatus 
+        MAX-ACCESS           read-write
+        STATUS           current
+        DESCRIPTION      "Used for controlling the creation and deletion of
+                          this row"
+        ::= { rcTlsVpnConfigEntry 5 }
+    
+
+--  TLSVPN Remote Peer Config table
+
+rcTlsVpnRemotePeerTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcTlsVpnRemotePeerEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcTlsVpn 2 }
+
+rcTlsVpnRemotePeerEntry OBJECT-TYPE
+        SYNTAX        RcTlsVpnRemotePeerEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "A TlsVpn remote peer table entry. 
+             	       This table is used for configuring
+                       TLS VPN remote peers."
+        INDEX         { rcTlsVpnRemotePeerVpnId, rcTlsVpnRemotePeerRemotePeerId }
+        ::= { rcTlsVpnRemotePeerTable 1 }
+ 
+RcTlsVpnRemotePeerEntry ::=
+        SEQUENCE {
+                rcTlsVpnRemotePeerVpnId                  INTEGER,
+                rcTlsVpnRemotePeerRemotePeerId         	 IpAddress,
+                rcTlsVpnRemotePeerTunnelGrpId            INTEGER,
+                rcTlsVpnRemotePeerRowStatus              RowStatus,
+		rcTlsVpnRemotePeerTunnelId               INTEGER,
+	        rcTlsVpnRemotePeerTunnelType             DisplayString,
+		rcTlsVpnRemotePeerLdpFec		 IpAddress
+        }
+
+rcTlsVpnRemotePeerVpnId OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Vpn identifier. For the TLS VPN this is the VCId.
+                       Distributed in the TFEC to the remote peer (other end 
+                       point of ). "
+        ::= { rcTlsVpnRemotePeerEntry 1 }
+ 
+rcTlsVpnRemotePeerRemotePeerId OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Remote LER IP address." 
+        ::= { rcTlsVpnRemotePeerEntry 2 }
+
+rcTlsVpnRemotePeerTunnelGrpId OBJECT-TYPE
+        SYNTAX        INTEGER (0..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Tunnel group to reach remote LER."
+        ::= { rcTlsVpnRemotePeerEntry 3 }
+
+rcTlsVpnRemotePeerRowStatus  OBJECT-TYPE
+        SYNTAX           RowStatus 
+        MAX-ACCESS           read-write
+        STATUS           current
+        DESCRIPTION      "Used for controlling the creation and deletion of
+                          this row"
+        ::= { rcTlsVpnRemotePeerEntry 4 }
+
+rcTlsVpnRemotePeerTunnelId OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "Tunnel in the Tunnel group to be used to reach remote LER."
+        ::= { rcTlsVpnRemotePeerEntry 5 }
+
+rcTlsVpnRemotePeerTunnelType OBJECT-TYPE
+        SYNTAX        DisplayString (SIZE (0..20))
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Type of the Tunnel in the Tunnel group to be used to reach 
+			remote LER. Includes primary and backup tunnel"
+        ::= { rcTlsVpnRemotePeerEntry 6 }
+
+rcTlsVpnRemotePeerLdpFec OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-write
+        STATUS        current
+        DESCRIPTION   "LDP FEC to be used to reach remote LER."
+        ::= { rcTlsVpnRemotePeerEntry 7 }
+
+--  TLSVPN table
+
+rcTlsVpnTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcTlsVpnEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcTlsVpn 3 }
+
+rcTlsVpnEntry OBJECT-TYPE
+        SYNTAX        RcTlsVpnEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "A TlsVpn table entry. This table is used for 
+                       displaying all the TLS VPN
+                       members. When displaying, the number of table entries
+                       could be more than configured entry number due to
+                         dynamically added TLS VPN members."
+        INDEX         { rcTlsVpnVpnId, rcTlsVpnMemberId, rcTlsVpnRemotePeerId }
+        ::= { rcTlsVpnTable 1 }
+ 
+RcTlsVpnEntry ::=
+        SEQUENCE {
+                rcTlsVpnVpnId                  Integer32,
+                rcTlsVpnMemberId               IpAddress,
+                rcTlsVpnRemotePeerId           IpAddress,
+                rcTlsVpnName                   OCTET STRING,
+                rcTlsVpnTdi                    Integer32,
+                rcTlsVpnMode                   INTEGER,
+                rcTlsVpnMemberType             INTEGER,
+                rcTlsVpnUniPortListSize        Integer32,
+                rcTlsVpnUniPortList            OCTET STRING,
+                rcTlsVpnUniMac                 MacAddress,
+                rcTlsVpnTunnelGrpId            Integer32,
+                rcTlsVpnVcGrpId                INTEGER,
+                rcTlsVpnVcLabel                Integer32,
+                rcTlsVpnTunnelLspId            Integer32,
+                rcTlsVpnAdminState             EnableValue,
+                rcTlsVpnOperState              INTEGER,
+                rcTlsVpnTlsFlags               Integer32,
+		rcTlsVpnRowStatus	       RowStatus
+        }
+
+rcTlsVpnVpnId OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Vpn identifier. For the TLS VPN this is the VCId.
+                       Distributed in the TFEC to the remote peer (other end 
+                       point of ). "
+        ::= { rcTlsVpnEntry 1 }
+ 
+rcTlsVpnMemberId OBJECT-TYPE
+        SYNTAX        IpAddress 
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "This field along with the Id identifies an end point 
+                       of a Virtural circuit. In TLS VPN, this is
+                       UNI ID. For creating the TLS VPN, Tdi must be configured
+                       and this memberId value is (0xea000000|Tdi)."
+            ::= { rcTlsVpnEntry 2 }
+
+rcTlsVpnRemotePeerId OBJECT-TYPE
+        SYNTAX        IpAddress
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Remote LER IP address. 0.0.0.1 representing 
+                       the local peer."
+        ::= { rcTlsVpnEntry 3 }
+
+rcTlsVpnName OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE (0..256)) 
+        MAX-ACCESS        read-only 
+        STATUS        current
+        DESCRIPTION   "For ease of configuration. Can provide either during
+                       the configuration or modification of this field is 
+                       allowed on when the  admin state is disabled. Not 
+                       supoorted in this release."
+        ::= { rcTlsVpnEntry 4 }
+
+rcTlsVpnTdi  OBJECT-TYPE
+        SYNTAX           Integer32 
+        MAX-ACCESS           read-only 
+        STATUS           current
+        DESCRIPTION      "Transparent domain identifier for TLS."
+        ::= { rcTlsVpnEntry 5 }
+
+rcTlsVpnMode  OBJECT-TYPE
+        SYNTAX           INTEGER {
+                            transparent (1),
+                            mapped (2)
+                         } 
+        MAX-ACCESS           read-only 
+        STATUS           current
+        DESCRIPTION      "The transmission mode for interworking with Hornet."
+        DEFVAL         { transparent }
+        ::= { rcTlsVpnEntry 6 }
+
+rcTlsVpnMemberType  OBJECT-TYPE
+        SYNTAX           INTEGER {
+                           multicast      (0),
+                           localUnicast   (1),
+                           remoteUnicast  (2)
+                         }
+        MAX-ACCESS           read-only
+        STATUS           current
+        DESCRIPTION      "UNI type of the TLS VPN entry."
+        ::= { rcTlsVpnEntry 7 }
+
+rcTlsVpnUniPortListSize OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Size of the incoming (or member) Port list.
+                       Valid only for multicast member type."
+        ::= { rcTlsVpnEntry 8 }
+
+rcTlsVpnUniPortList OBJECT-TYPE
+        SYNTAX        OCTET STRING (SIZE (256)) 
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "The list of incoming (or member) ports.
+                       Valid only for multicast member type." 
+        ::= { rcTlsVpnEntry 9 }
+
+rcTlsVpnUniMac  OBJECT-TYPE
+        SYNTAX        MacAddress
+        MAX-ACCESS        read-only 
+        STATUS        current
+        DESCRIPTION   "UNI MAC address."
+        ::= { rcTlsVpnEntry 10 }
+
+rcTlsVpnTunnelGrpId OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS        read-only 
+        STATUS        current
+        DESCRIPTION   "Tunnel group to reach remote LER."
+        ::= { rcTlsVpnEntry 11 }
+
+rcTlsVpnVcGrpId OBJECT-TYPE
+        SYNTAX        INTEGER (1..65535)
+        MAX-ACCESS        read-only 
+        STATUS        current
+        DESCRIPTION   "Is generated per UNI. Used for sending the wildcard
+                       withdraw message to all the LDP neighbors. One 
+                       application is sending the withdraw message in the
+                       event of the UNI interface is going down." 
+        ::= { rcTlsVpnEntry 12 }
+
+rcTlsVpnVcLabel  OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "This is the vc label either allocated locally in the
+                                           case of local peer, or received from the remote 
+peer.
+                       It is 20 bits long"
+        ::= { rcTlsVpnEntry 13 }
+
+rcTlsVpnTunnelLspId OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Will be updated when Vpn Controller determines which Lsp
+                       it is using for the Vpn (based on the bw requirements).
+                       This will be updated upon detecting the existence of 
+                       tunnel to the remote peer. This occurs while sending 
+                       the TFEC. Receving the TFEC does not guarantee the 
+                       existence of tunnel going from this switch to the other
+                       end."  
+        ::= { rcTlsVpnEntry 14 }
+
+rcTlsVpnAdminState  OBJECT-TYPE
+        SYNTAX        EnableValue
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "Not used by TLS yet."
+        ::= { rcTlsVpnEntry 15 }
+
+rcTlsVpnOperState  OBJECT-TYPE
+        SYNTAX         INTEGER {
+                            inactive (1),
+                            waitLdpSess (2),
+                            waitLsp (3),
+                            waitPeerLbl (4),
+                            operational (5)
+                       }
+        MAX-ACCESS         read-only
+        STATUS         current
+        DESCRIPTION    "Change of state occurs upon establishing the label
+                        mapping i.e., sending the TFEC and receiving the TFEC
+                        or changes in Tunnel existence or LDP session.
+                        For local peer, i.e., remotePeerId = 0.0.0.1, only
+                        inactive and operational states are valid."
+        ::= { rcTlsVpnEntry 16}
+
+rcTlsVpnTlsFlags OBJECT-TYPE
+        SYNTAX        Integer32 
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION   "TLS UNI flags."
+        ::= { rcTlsVpnEntry 17 }
+
+rcTlsVpnRowStatus  OBJECT-TYPE
+        SYNTAX           RowStatus
+        MAX-ACCESS           read-write
+        STATUS           current
+        DESCRIPTION      "Used for controlling the creation and deletion of
+                          this row"
+        ::= { rcTlsVpnEntry 18 }
+
+--  TLS Statistics table
+
+-- TLS Access Port Statistics
+
+rcTlsVpnAccessStatisticsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcTlsVpnAccessStatisticsEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcTlsVpn 4 }
+
+rcTlsVpnAccessStatisticsEntry OBJECT-TYPE
+        SYNTAX        RcTlsVpnAccessStatisticsEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "TLS VPN Access Statistics table entry."
+        INDEX         { rcTlsVpnAccessStatisticsTdi,
+                        rcTlsVpnAccessStatisticsPort }
+        ::= { rcTlsVpnAccessStatisticsTable 1 }
+ 
+RcTlsVpnAccessStatisticsEntry ::=
+        SEQUENCE {
+                rcTlsVpnAccessStatisticsTdi                Integer32,
+                rcTlsVpnAccessStatisticsPort               Integer32,
+		rcTlsVpnAccessStatisticsUcastPacketCount   Counter64,
+		rcTlsVpnAccessStatisticsUcastOctetCount    Counter64,
+		rcTlsVpnAccessStatisticsMcastPacketCount   Counter64,
+		rcTlsVpnAccessStatisticsMcastOctetCount    Counter64,
+                rcTlsVpnAccessStatisticsClear              TruthValue
+        }
+
+rcTlsVpnAccessStatisticsTdi  OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "TDI identifier. This uniquely identifies the VPN-ID.
+                      i.e. VPN-ID and TDI have a one-to-one association."
+        ::= { rcTlsVpnAccessStatisticsEntry 1 } 
+
+rcTlsVpnAccessStatisticsPort  OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Access Port identifier."
+        ::= { rcTlsVpnAccessStatisticsEntry 2 } 
+
+rcTlsVpnAccessStatisticsUcastPacketCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to collect the number of Unicast packets received
+                      on this access port for this TDI."
+        ::= { rcTlsVpnAccessStatisticsEntry 3 }
+
+rcTlsVpnAccessStatisticsUcastOctetCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to collect the number of Unicast octets received
+                      on this access port for this TDI."
+        ::= { rcTlsVpnAccessStatisticsEntry 4 }
+
+rcTlsVpnAccessStatisticsMcastPacketCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to collect the number of Multicast packets received
+                      on this access port for this TDI."
+        ::= { rcTlsVpnAccessStatisticsEntry 5 }
+
+rcTlsVpnAccessStatisticsMcastOctetCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to collect the number of Multicast octets received
+                      on this access port for this TDI."
+        ::= { rcTlsVpnAccessStatisticsEntry 6 }
+
+rcTlsVpnAccessStatisticsClear OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION  "Used to clear statistics for TDI and Port"
+        ::= { rcTlsVpnAccessStatisticsEntry 7 }
+
+-- TLS Trunk Port Statistics
+
+rcTlsVpnTrunkStatisticsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF RcTlsVpnTrunkStatisticsEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   ""
+        ::= { rcTlsVpn 5 }
+
+rcTlsVpnTrunkStatisticsEntry OBJECT-TYPE
+        SYNTAX        RcTlsVpnTrunkStatisticsEntry
+        MAX-ACCESS        not-accessible
+        STATUS        current
+        DESCRIPTION   "TLS VPN Trunk Statistics table entry."
+        INDEX         { rcTlsVpnTrunkStatisticsTdi,
+                        rcTlsVpnTrunkStatisticsPort }
+        ::= { rcTlsVpnTrunkStatisticsTable 1 }
+ 
+RcTlsVpnTrunkStatisticsEntry ::=
+        SEQUENCE {
+                rcTlsVpnTrunkStatisticsTdi                Integer32,
+                rcTlsVpnTrunkStatisticsPort               Integer32,
+		rcTlsVpnTrunkStatisticsUcastPacketCount   Counter64,
+		rcTlsVpnTrunkStatisticsUcastOctetCount    Counter64,
+		rcTlsVpnTrunkStatisticsMcastPacketCount   Counter64,
+		rcTlsVpnTrunkStatisticsMcastOctetCount    Counter64,
+                rcTlsVpnTrunkStatisticsClear              TruthValue
+        }
+
+rcTlsVpnTrunkStatisticsTdi  OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "TDI identifier. This uniquely identifies the VPN-ID.
+                      i.e. VPN-ID and TDI have a one-to-one association."
+        ::= { rcTlsVpnTrunkStatisticsEntry 1 } 
+
+rcTlsVpnTrunkStatisticsPort  OBJECT-TYPE
+        SYNTAX        Integer32 (0..2147483647)
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Trunk Port identifier."
+        ::= { rcTlsVpnTrunkStatisticsEntry 2 } 
+
+rcTlsVpnTrunkStatisticsUcastPacketCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to collect the number of Unicast packets received
+                      on this trunk port for this TDI."
+        ::= { rcTlsVpnTrunkStatisticsEntry 3 }
+
+rcTlsVpnTrunkStatisticsUcastOctetCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to collect the number of Unicast octets received
+                      on this trunk port for this TDI."
+        ::= { rcTlsVpnTrunkStatisticsEntry 4 }
+
+rcTlsVpnTrunkStatisticsMcastPacketCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to collect the number of Multicast packets received
+                      on this trunk port for this TDI."
+        ::= { rcTlsVpnTrunkStatisticsEntry 5 }
+
+rcTlsVpnTrunkStatisticsMcastOctetCount OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS        read-only
+        STATUS        current
+        DESCRIPTION  "Used to collect the number of Multicast octets received
+                      on this trunk port for this TDI."
+        ::= { rcTlsVpnTrunkStatisticsEntry 6 }
+
+rcTlsVpnTrunkStatisticsClear OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION  "Used to clear statistics for TDI and Port"
+        ::= { rcTlsVpnTrunkStatisticsEntry 7 }
+
+-- TLS Clear Statistics
+
+rcTlsVpnGlobal OBJECT IDENTIFIER ::= { rcTlsVpn 6 }
+
+rcTlsVpnGlobalClearAllAccessStats OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Clear All TLS VPN Access Statistics."
+        ::= { rcTlsVpnGlobal 1 }
+
+rcTlsVpnGlobalClearAllTrunkStats OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Clear All TLS VPN Trunk Statistics."
+        ::= { rcTlsVpnGlobal 2 }
+
+-- rcOm8kTraps -- 
+
+rcOm8kTraps   OBJECT IDENTIFIER ::= { rcOm8k 1 }
+
+rcTlsTunnelChangeTrap NOTIFICATION-TYPE
+        OBJECTS       { rcTlsVpnRemotePeerVpnId, 
+			rcTlsVpnRemotePeerRemotePeerId, 
+			rcTlsVpnRemotePeerTunnelId, 
+		        rcTlsVpnRemotePeerTunnelType}    
+        STATUS        current
+        DESCRIPTION   "Whenevev there is any change in the tunnel selected 
+		       by the TLS VPN, a trap will be sent. The trap will 
+		       indicate the vpnId, remotePeerId, oldTunnelId, 
+		       newTunnelId, oldTunnelType and newTunnelType."
+        ::= { rcOm8kTraps 1 }
+
+rcTlsBackupTunnelSelectedTrap NOTIFICATION-TYPE
+        OBJECTS       { rcTlsVpnRemotePeerVpnId, 
+			rcTlsVpnRemotePeerRemotePeerId, 
+			rcTlsVpnRemotePeerTunnelId}    
+        STATUS        current
+        DESCRIPTION   "When a backup tunnel is selected, a trap will be sent.
+		       The trap will indicate the vpnId, remotePeerId, and the
+	 	       TunnelId of the backup tunnel"
+        ::= { rcOm8kTraps 2 }
+
+
+END

@@ -1,0 +1,656 @@
+-- =====================================================================
+-- == OG-CM-STATUS-MIB :                                        ==
+-- == Opengear port signal notification Management Information Base   ==
+-- ==                                                                 ==
+-- == (c) Copyright 2010 Opengear Inc.                                ==
+-- =====================================================================
+
+OG-CM-STATUS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS 
+	opengear FROM OPENGEAR-SMI
+	MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+	Integer32 FROM SNMPv2-SMI
+        Counter64 FROM SNMPv2-SMI
+	MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+	DisplayString FROM SNMPv2-TC;
+
+ogStatus MODULE-IDENTITY
+       LAST-UPDATED "201001110000Z"
+       ORGANIZATION "Opengear Inc."
+       CONTACT-INFO
+               "Opengear Inc.
+                630 West 9560 South, Suite A,
+                Sandy, UT 84070
+                support@opengear.com"
+       DESCRIPTION
+               "Opengear console connection MIB"
+       REVISION "201001110000Z"
+       DESCRIPTION
+		"Initial revision"
+       ::= { opengear 16 }
+
+
+-- === + Textual Conventions + ===========================================
+
+-- DisplayString ::= OCTET STRING
+
+-- =======================================================================
+
+
+ogSerialPortStatusTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF SerialPortStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's serial port statistics table."
+	::= { ogStatus 1 }
+
+ogSerialPortStatusEntry OBJECT-TYPE
+	SYNTAX SerialPortStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"A console serial port entry"
+	INDEX { ogSerialPortStatusIndex }
+	::= { ogSerialPortStatusTable 1 }
+
+
+SerialPortStatusEntry ::= SEQUENCE {
+        ogSerialPortStatusIndex         Integer32,
+        ogSerialPortStatusPort          Integer32,
+ 	ogSerialPortStatusRxBytes	Counter64,
+ 	ogSerialPortStatusTxBytes	Counter64,
+        ogSerialPortStatusSpeed         Integer32,
+        ogSerialPortStatusDCD           Integer32,
+        ogSerialPortStatusDTR           Integer32,
+        ogSerialPortStatusDSR           Integer32,
+        ogSerialPortStatusCTS           Integer32,
+        ogSerialPortStatusRTS           Integer32
+}
+
+ogSerialPortStatusIndex OBJECT-TYPE
+	SYNTAX Integer32(0..63)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index within the serial port table of this status"
+	::= { ogSerialPortStatusEntry 1 }
+
+ogSerialPortStatusPort OBJECT-TYPE
+	SYNTAX Integer32(1..64)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Serial port number"
+	::= { ogSerialPortStatusEntry 2 }
+
+ogSerialPortStatusRxBytes OBJECT-TYPE
+	SYNTAX Counter64
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Serial port bytes received"
+	::= { ogSerialPortStatusEntry 3 }
+
+ogSerialPortStatusTxBytes OBJECT-TYPE
+	SYNTAX Counter64
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Serial port bytes transmitted"
+	::= { ogSerialPortStatusEntry 4 }
+
+ogSerialPortStatusSpeed OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Serial port speed in bits per second"
+	::= { ogSerialPortStatusEntry 5 }
+
+ogSerialPortStatusDCD OBJECT-TYPE
+        SYNTAX INTEGER {
+            off(0),
+            on(1)
+        }
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The status of the DCD signal."
+        
+
+	::= { ogSerialPortStatusEntry 6 }
+
+ogSerialPortStatusDTR OBJECT-TYPE
+        SYNTAX INTEGER {
+            off(0),
+            on(1)
+        }
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The status of the DTR signal."
+
+
+	::= { ogSerialPortStatusEntry 7 }
+
+ogSerialPortStatusDSR OBJECT-TYPE
+        SYNTAX INTEGER {
+            off(0),
+            on(1)
+        }
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The status of the DSR signal."
+
+
+	::= { ogSerialPortStatusEntry 8 }
+
+ogSerialPortStatusCTS OBJECT-TYPE
+        SYNTAX INTEGER {
+            off(0),
+            on(1)
+        }
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The status of the CTS signal."
+
+
+	::= { ogSerialPortStatusEntry 9 }
+
+ogSerialPortStatusRTS OBJECT-TYPE
+        SYNTAX INTEGER {
+            off(0),
+            on(1)
+        }
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The status of the RTS signal."
+
+
+	::= { ogSerialPortStatusEntry 10 }
+
+
+
+ogSerialPortActiveUsersTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF SerialPortActiveUsersEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's serial port users table."
+	::= { ogStatus 2 }
+
+ogSerialPortActiveUsersEntry OBJECT-TYPE
+	SYNTAX SerialPortActiveUsersEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"A user logged in on the serial port"
+	INDEX { ogSerialPortActiveUsersIndex }
+	::= { ogSerialPortActiveUsersTable 1 }
+
+
+SerialPortActiveUsersEntry ::= SEQUENCE {
+        ogSerialPortActiveUsersIndex        Integer32,
+        ogSerialPortActiveUsersPort         Integer32,
+        ogSerialPortActiveUsersName         DisplayString
+}
+
+
+ogSerialPortActiveUsersIndex OBJECT-TYPE
+	SYNTAX Integer32(0..63)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index within the serial port table of this status"
+	::= { ogSerialPortActiveUsersEntry 1 }
+
+
+ogSerialPortActiveUsersPort OBJECT-TYPE
+	SYNTAX Integer32(1..64)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Serial port number"
+	::= { ogSerialPortActiveUsersEntry 2 }
+
+
+ogSerialPortActiveUsersName OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (0..64))
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The name of the user logged in on the port."
+	::= { ogSerialPortActiveUsersEntry 3 }
+
+
+
+
+ogRpcStatusTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF RpcStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's rpc table."
+	::= { ogStatus 3 }
+
+ogRpcStatusEntry OBJECT-TYPE
+	SYNTAX RpcStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"RPC status entry"
+	INDEX { ogRpcStatusIndex }
+	::= { ogRpcStatusTable 1 }
+
+
+RpcStatusEntry ::= SEQUENCE {
+        ogRpcStatusIndex        Integer32,
+        ogRpcStatusName         DisplayString,
+        ogRpcStatusMaxTemp      Integer32,
+        ogRpcStatusAlertCount   Integer32
+}
+
+
+ogRpcStatusIndex OBJECT-TYPE
+	SYNTAX Integer32 (0..65535)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index within the RPC status table"
+	::= { ogRpcStatusEntry 1 }
+
+
+ogRpcStatusName OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (0..255))
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The name of the RPC device."
+	::= { ogRpcStatusEntry 2 }
+
+ogRpcStatusMaxTemp OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Maximum temperature on the RPC"
+	::= { ogRpcStatusEntry 3 }
+
+ogRpcStatusAlertCount OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of alerts triggered on the RPC"
+	::= { ogRpcStatusEntry 4 }
+
+
+
+ogEmdStatusTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF EmdStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's rpc table."
+	::= { ogStatus 4 }
+
+ogEmdStatusEntry OBJECT-TYPE
+	SYNTAX EmdStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"RPC status entry"
+	INDEX { ogEmdStatusIndex }
+	::= { ogEmdStatusTable 1 }
+
+
+EmdStatusEntry ::= SEQUENCE {
+        ogEmdStatusIndex        Integer32,
+        ogEmdStatusName         DisplayString,
+        ogEmdStatusTemp      Integer32,
+        ogEmdStatusHumidity     Integer32,
+        ogEmdStatusAlertCount   Integer32
+}
+
+
+ogEmdStatusIndex OBJECT-TYPE
+	SYNTAX Integer32 (0..65535)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index within the EMD status table"
+	::= { ogEmdStatusEntry 1 }
+
+
+ogEmdStatusName OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (0..255))
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The name of the EMD device."
+	::= { ogEmdStatusEntry 2 }
+
+ogEmdStatusTemp OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Maximum temperature on the EMD"
+	::= { ogEmdStatusEntry 3 }
+
+ogEmdStatusHumidity OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Humidity sensor on the EMD"
+	::= { ogEmdStatusEntry 4 }
+
+
+ogEmdStatusAlertCount OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Number of alerts triggered on the EMD"
+	::= { ogEmdStatusEntry 5 }
+
+-- alert status
+ogSignalAlertStatusTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF SignalAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's serial port signal table."
+	::= { ogStatus 5 }
+
+ogSignalAlertStatusEntry OBJECT-TYPE
+	SYNTAX SignalAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"A console signal entry"
+	INDEX { ogSignalAlertStatusIndex }
+	::= { ogSignalAlertStatusTable 1 }
+
+
+SignalAlertStatusEntry ::= SEQUENCE {
+ 	ogSignalAlertStatusIndex	Integer32,
+ 	ogSignalAlertStatusPort		Integer32,
+ 	ogSignalAlertStatusLabel	DisplayString,
+ 	ogSignalAlertStatusSignalName	DisplayString,
+ 	ogSignalAlertStatusState	Integer32
+
+}
+
+ogSignalAlertStatusIndex OBJECT-TYPE
+	SYNTAX Integer32(0..65535)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index within the table of this alert"
+	::= { ogSignalAlertStatusEntry 1 }
+
+ogSignalAlertStatusPort OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Serial port number on which the signal change occurred"
+	::= { ogSignalAlertStatusEntry 2 }
+
+ogSignalAlertStatusLabel OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The label for the serial port where the signal applies."
+	::= { ogSignalAlertStatusEntry 3 }
+
+ogSignalAlertStatusSignalName OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+	        "The particular signal which changed"
+	::= { ogSignalAlertStatusEntry 4 }
+
+ogSignalAlertStatusState OBJECT-TYPE
+	SYNTAX	INTEGER {
+			off(0),
+			on(1)
+		}
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+	        "The current signal state"
+	::= { ogSignalAlertStatusEntry 5 }
+
+
+ogEnvAlertStatusTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF EnvAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's serial port signal table."
+	::= { ogStatus 6 }
+
+ogEnvAlertStatusEntry OBJECT-TYPE
+	SYNTAX EnvAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"A console environment entry"
+	INDEX { ogEnvAlertStatusIndex }
+	::= { ogEnvAlertStatusTable 1 }
+
+
+EnvAlertStatusEntry ::= SEQUENCE {
+        ogEnvAlertStatusIndex	Integer32,
+ 	ogEnvAlertStatusDevice	DisplayString,
+ 	ogEnvAlertStatusSensor	DisplayString,
+ 	ogEnvAlertStatusOutlet	Integer32,
+ 	ogEnvAlertStatusValue	Integer32,
+ 	ogEnvAlertStatusOldValue	Integer32,
+ 	ogEnvAlertStatusStatus	Integer32
+}
+
+ogEnvAlertStatusIndex OBJECT-TYPE
+	SYNTAX Integer32(0..65535)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index of the environment alert status"
+	::= { ogEnvAlertStatusEntry 1 }
+
+
+ogEnvAlertStatusDevice OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The device the environment alert occurred on."
+	::= { ogEnvAlertStatusEntry 2 }
+
+ogEnvAlertStatusSensor OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The sensor the environment alert occurred on."
+	::= { ogEnvAlertStatusEntry 3 }
+
+ogEnvAlertStatusOutlet OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Outlet of the environment status"
+	::= { ogEnvAlertStatusEntry 4 }
+
+ogEnvAlertStatusValue OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Value of the environment status"
+	::= { ogEnvAlertStatusEntry 5 }
+
+ogEnvAlertStatusOldValue OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Previous value of the environment status"
+	::= { ogEnvAlertStatusEntry 6 }
+
+ogEnvAlertStatusStatus OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"status value of the environment status"
+	::= { ogEnvAlertStatusEntry 7 }
+
+ogNutAlertStatusTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF NutAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS     current
+	DESCRIPTION
+           "This entity's nut (ups) alert table."
+	::= { ogStatus 7 }
+
+ogNutAlertStatusEntry OBJECT-TYPE
+	SYNTAX NutAlertStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"A NUT (ups) entry"
+	INDEX { ogNutAlertStatusIndex }
+	::= { ogNutAlertStatusTable 1 }
+
+NutAlertStatusEntry ::= SEQUENCE {
+        ogNutAlertStatusIndex	Integer32,
+        ogNutAlertStatusPort	Integer32,
+ 	ogNutAlertStatusName	DisplayString,
+ 	ogNutAlertStatusHost	DisplayString,
+ 	ogNutAlertStatusStatus	DisplayString
+}
+
+ogNutAlertStatusIndex OBJECT-TYPE
+	SYNTAX Integer32(0..65535)
+	MAX-ACCESS not-accessible
+	STATUS current
+	DESCRIPTION
+		"Index of the nut alert status"
+	::= { ogNutAlertStatusEntry 1 }
+
+ogNutAlertStatusPort OBJECT-TYPE
+	SYNTAX Integer32
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Serial port of the nut alert"
+	::= { ogNutAlertStatusEntry 2 }
+
+ogNutAlertStatusName OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The UPS name of the nut alert."
+	::= { ogNutAlertStatusEntry 3 }
+
+ogNutAlertStatusHost OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The host of the nut alert."
+	::= { ogNutAlertStatusEntry 4 }
+
+ogNutAlertStatusStatus OBJECT-TYPE
+	SYNTAX DisplayString
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The status of the nut alert."
+	::= { ogNutAlertStatusEntry 5 }
+
+-- end alert status
+
+-- conformance information
+
+ogStatusConformance OBJECT IDENTIFIER ::= { ogStatus 65535 }
+ogStatusCompliances OBJECT IDENTIFIER ::= { ogStatusConformance 1 }
+ogStatusGroups OBJECT IDENTIFIER ::= { ogStatusConformance 2 }
+
+-- compliance statements
+
+ogStatusCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for the Opengear status MIB."
+    MODULE  -- this module
+    MANDATORY-GROUPS { ogBasicStatusGroup, ogBasicAlertStatusGroup  }
+
+   ::= { ogStatusCompliances 1 }
+
+-- units of conformance
+
+ogBasicStatusGroup OBJECT-GROUP
+    OBJECTS { 
+    	    ogSerialPortStatusPort, 
+    	    ogSerialPortStatusRxBytes,
+    	    ogSerialPortStatusTxBytes, 
+	    ogSerialPortStatusSpeed, 
+	    ogSerialPortStatusDCD,
+	    ogSerialPortStatusDTR,
+	    ogSerialPortStatusDSR,
+	    ogSerialPortStatusCTS,
+	    ogSerialPortStatusRTS,
+	    ogSerialPortActiveUsersPort,
+	    ogSerialPortActiveUsersName,
+	    ogRpcStatusName,
+	    ogRpcStatusMaxTemp,
+	    ogRpcStatusAlertCount,
+	    ogEmdStatusName,
+	    ogEmdStatusTemp,
+	    ogEmdStatusHumidity,
+	    ogEmdStatusAlertCount 
+    }
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects to retrieve Opengear statistics."
+    ::= { ogStatusGroups 1 }
+
+ogBasicAlertStatusGroup OBJECT-GROUP
+    OBJECTS { 
+    	ogSignalAlertStatusPort,
+	ogSignalAlertStatusLabel,
+	ogSignalAlertStatusSignalName,
+	ogSignalAlertStatusState,
+	ogEnvAlertStatusDevice,
+	ogEnvAlertStatusSensor,
+	ogEnvAlertStatusOutlet,
+	ogEnvAlertStatusValue,
+	ogEnvAlertStatusOldValue,
+	ogEnvAlertStatusStatus,
+	ogNutAlertStatusPort,
+	ogNutAlertStatusName,
+	ogNutAlertStatusHost,
+	ogNutAlertStatusStatus
+    }
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects to retrieve Opengear alert status."
+    ::= { ogStatusGroups 2 }
+
+
+END
+

@@ -1,0 +1,288 @@
+NOKIA-NTP-MIB DEFINITIONS ::= BEGIN
+        
+IMPORTS 
+    ntcNtpMibs, ntcNtpReqs, ntcCommonModules 
+        FROM NOKIA-COMMON-MIB-OID-REGISTRATION-MIB
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32 --, Unsigned32
+        FROM SNMPv2-SMI
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    TEXTUAL-CONVENTION, DisplayString, TruthValue, RowStatus, DateAndTime
+        FROM SNMPv2-TC;
+
+nokiaNtpMIB MODULE-IDENTITY
+    LAST-UPDATED "9908050000Z"
+    ORGANIZATION "Nokia"
+    CONTACT-INFO
+        "Anna-Kaisa Lindfors
+         Nokia Telecommunications Oy
+         P.O.Box 315, FIN-00045 NOKIA GROUP, Finland
+         +358-1-511 21
+         anna-kaisa.lindfors@ntc.nokia.com"
+    DESCRIPTION
+        "This MIB module defines management objects that model
+         the management aspects of real time clocks, including
+         NTP client.  This includes status and configuration
+         information.
+         This work is partially derived from the
+         'Management of the Network Time Protocol (NTP) with SNMP'
+         MIB by Adarshpal S. Sethi, Hongxiang Gao, and David Mills."
+    REVISION        "9810070000Z"
+    DESCRIPTION
+        "Rev 0.09    September 29, 1998 Initial version by K. Miettinen.
+         Rev 0.10    September 30, 1998 MKi - ready for review.
+         Rev 0.11    October   01, 1998 MKi - Editorial corrections.
+         Rev 0.12    October   02, 1998 MKi - Harm. body comments included.
+         Rev 0.13    October   07, 1998 MKi - Rest of the comments included.
+         Rev 0.14    October   07, 1998 MKi - KMi's 'Final' comments included.
+         Rev 0.15    August    05, 1999 AKL - Reference to ntcNtpModule changed
+                                              reference to ntcCommonModules 2.
+                                              Some IMPORTS not used removed
+                                              and ntcCommonMOdules imported" 
+    ::= { ntcCommonModules 2 }
+
+nokiaNtpObjs        OBJECT IDENTIFIER ::= { ntcNtpMibs 1 }
+--nokiaNtpEvents      OBJECT IDENTIFIER ::= { ntcNtpMibs 2 }
+--nokiaNtpConformance OBJECT IDENTIFIER ::= { ntcNtpMibs 3 }
+
+ntcNtpConf          OBJECT IDENTIFIER ::= { nokiaNtpObjs 1 }
+ntcNtpRtcConf       OBJECT IDENTIFIER ::= { nokiaNtpObjs 2 }
+
+ntcNtpGroups        OBJECT IDENTIFIER ::= { ntcNtpReqs 1 }
+ntcNtpCompliances   OBJECT IDENTIFIER ::= { ntcNtpReqs 2 }
+
+--
+-- Textual conventions
+--
+
+EnabledDisabled ::= TEXTUAL-CONVENTION
+    STATUS  current
+    DESCRIPTION
+        ""
+
+    SYNTAX  INTEGER { 
+                    enabled(1), 
+                    disabled(2) 
+                    }
+
+TimeServerStatus ::= TEXTUAL-CONVENTION
+    STATUS  current
+    DESCRIPTION
+        "Current status of the corresponding NTP server or NE's capability to
+         communicate with the NTP server. Value ok(1) means that NE is able to
+         communicate with this NTP server, value notReachable(2) means that 
+         this NTP server is not reachable, value clockNotInSynch(3) means that
+         this NTP server is currently unsynchronized (has just come up, has 
+         been too long without external time source or its clock has been 
+         reset), value diffTooBig(4)means that the NE cannot synchronize with 
+         this NTP server because the difference between NTP server and NE's RTC
+         is too big (> 1000 seconds), and value otherError(5) is reserved for 
+         any other errors."
+    SYNTAX  INTEGER {
+                    ok(1), 
+                    notReachable(2), 
+                    clockNotInSynch(3), 
+                    diffTooBig(4), 
+                    otherError(5)
+                    }
+
+--
+-- Nokia NTP group
+--
+
+ntcNtpEnabled  OBJECT-TYPE
+    SYNTAX      EnabledDisabled
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Used to determine if the NE is using NTP (Network Time Protocol)
+         to update it's internal RTC. Possible values are 'enabled' (1) 
+         and 'disabled' (2), and the NTP is turned on or off  
+         according to this setting. If the variable is set to 'enabled' (1)
+         while it is already 'enabled' (1), then program implementing
+         NTP (e.g. xntpd) is restarted."
+    ::= {ntcNtpConf 1}
+
+ntcNtpServerTableNextIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..'7fffffff'h)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Reading this variable returns an available index for row creation in
+         ntcNtpServerTable. Subsequent reads should not return same values to
+         avoid conflicts in multiple manager cases. The value zero indicates
+         that no unassigned entries are available."
+    ::= {ntcNtpConf 2}
+
+ntcNtpServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF NtcNtpServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The list of NTP servers available for this network element."
+    ::= {ntcNtpConf 3}
+
+ntcNtpServerEntry OBJECT-TYPE
+    SYNTAX      NtcNtpServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The data for one NTP server."
+    INDEX { ntcNtpServerIndex }
+    ::= {ntcNtpServerTable 1}
+
+NtcNtpServerEntry ::= SEQUENCE {
+        ntcNtpServerIndex Integer32,
+        ntcNtpServerAddress DisplayString,
+        ntcNtpServerPort Integer32,
+        ntcNtpServerStatus TimeServerStatus,
+        ntcNtpServerPreferred TruthValue,
+        ntcNtpServerRowStatus RowStatus
+        }
+
+ntcNtpServerIndex OBJECT-TYPE
+    SYNTAX      Integer32 (1..'7fffffff'h)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A unique value, greater than zero, for each NTP server.
+         It is recommended that values are assigned continuously starting
+         from 1."
+    ::= {ntcNtpServerEntry 1}
+
+ntcNtpServerAddress OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Address from which NTP based time is requested. This can be
+         either absolute IP address eg. 131.228.32.41, or host name
+         eg. ntpserver1.ntc.nokia.com."
+    ::= {ntcNtpServerEntry 2}
+
+ntcNtpServerPort OBJECT-TYPE
+    SYNTAX      Integer32 (1..'ffff'h)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Port number used in NTP communication with NTP server.
+         The default value of this variable shall be 123."
+    ::= {ntcNtpServerEntry 3}
+
+ntcNtpServerStatus OBJECT-TYPE
+    SYNTAX      TimeServerStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current status of the corresponding NTP server or NE's capability to
+         communicate with the NTP server. "
+    ::= {ntcNtpServerEntry 4}
+
+ntcNtpServerPreferred OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This boolean variable marks the server as preferred ('true' (1)) or 
+         non-preferred ('false' (2))."
+    ::= {ntcNtpServerEntry 5}
+
+ntcNtpServerRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is used to create new rows in this table,
+         modify existing rows, and to delete existing rows.
+         For further details see RowStatus defined in RFC1903"
+    ::= {ntcNtpServerEntry 6}
+
+ntcNtpRtcCurrentTime OBJECT-TYPE
+--    SYNTAX      OCTET STRING (SIZE (8..11))
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Reading this variable gives the current local time of NEs RTC 
+         including the time zone information. NEs local time can be set by 
+         updating this variable. The time is always returned and must be 
+         always set in a format
+         of full 11 octects as DateAndTime in RFC 1514, as follows:
+         octets  contents              range
+           1-2     year                0..65536  (in network byte order)
+           3       month               1..12
+           4       day                 1..31
+           5       hour                0..23
+           6       minutes             0..59
+           7       seconds             0..60     (use 60 for leap-second)
+           8       deci-seconds        0..9
+           9       direction from UTC  + or -    (in ascii notation)
+           10      hours from UTC      0..13
+           11      minutes from UTC    0..59"
+    ::= {ntcNtpRtcConf 1}
+
+ntcNtpRtcTimeZone OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Reading this variable gives the time zone where the NE is located. NEs
+         time zone can be set by updating this variable. If the first character
+         is + or - then the variable is interpreted as the direction from UTC
+         (+ means east from UTC and - means west from UTC), and the next 4
+         characters are the hours and minutes values of the timezone 
+         (eg. +0300).
+         Otherwise the string is an implementation specific name of the 
+         timezone (eg. EET, Europe/Helsinki or GMT+3)."
+    ::= {ntcNtpRtcConf 2}
+
+--
+-- conformance information
+--
+
+--
+-- compliance statements
+--
+
+nokiaNtpCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+        "Describes the requirements for conformance to the Nokia NTP MIB"
+    MODULE  -- this module
+    MANDATORY-GROUPS { ntcNtpMinimumRTCGroup }
+    GROUP       ntcNtpMandatoryNTPGroup
+    DESCRIPTION
+        "Implementation of ntcOptionalGroup is mandatory if the NE supports 
+          NTP."
+    ::= { ntcNtpCompliances 1 }
+
+--
+-- units of conformance
+--
+
+ntcNtpMinimumRTCGroup   OBJECT-GROUP
+    OBJECTS { 
+        ntcNtpRtcCurrentTime,
+        ntcNtpRtcTimeZone }
+    STATUS  current
+    DESCRIPTION
+        "All of these objects are required to be implemented if Real Time Clock
+         is implemented."
+    ::= { ntcNtpGroups 1 }
+
+ntcNtpMandatoryNTPGroup   OBJECT-GROUP
+    OBJECTS { 
+        ntcNtpEnabled,
+        ntcNtpServerTableNextIndex,
+        ntcNtpServerAddress,
+        ntcNtpServerPort,
+        ntcNtpServerStatus,
+        ntcNtpServerPreferred,
+        ntcNtpServerRowStatus }
+    STATUS  current
+    DESCRIPTION
+        "All of these objects are required to be implemented if NTP is 
+         supported."
+    ::= { ntcNtpGroups 2 }
+
+END

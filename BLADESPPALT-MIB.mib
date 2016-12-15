@@ -1,0 +1,861 @@
+-- **************************************************************************
+-- **************************************************************************
+--
+-- File         : mmalert.mib
+-- Description  : IBM Management Module traps
+--                 MIB for traps(Alerts)
+-- By           : Joe Bolan, IBM
+-- Version      : 1.2
+-- Date         : December 20, 2002
+--
+--
+-- Copyright (c) 2002/2003 IBM  All Rights Reserved.
+--
+--
+-- Contains trap descriptions for:
+--  (1) Bladecenter Management Module
+--
+--
+-- Changes History
+--
+-- Date       Reason
+-- ****       ******
+-- 4/08/02    Lorrie - Created
+-- 12/20/02   jeb - Fix priority to include recovery, move SFF to critical, text on KVM/CD
+-- 05/17/04   BN  - Add two new alerts (blade throttle and power management)
+-- 05/19/05   KS  - Moved blade throttle and power management to system level alerts.
+--
+--  
+-- This MIB is used by the Management Module to describe
+-- traps for alert conditions detected by the MM/Blades on Bladecenter hardware.
+-- **************************************************************************
+-- **************************************************************************
+
+        BLADESPPALT-MIB DEFINITIONS ::= BEGIN
+
+
+        IMPORTS
+            OBJECT-TYPE                          FROM RFC-1212
+            enterprises                          FROM RFC1155-SMI
+            DisplayString                        FROM RFC1213-MIB
+            TRAP-TYPE                            FROM RFC-1215;
+
+
+        ibm            OBJECT IDENTIFIER ::=   { enterprises 2 }
+
+        -- IBM products group
+
+        ibmProd        OBJECT IDENTIFIER ::=   { ibm 6 }
+
+        -- IBM Netfinity SP
+
+        supportProcessor OBJECT IDENTIFIER ::= { ibmProd 158 }
+
+        -- IBM Netfinity SP Alert
+
+        mmRemoteSupTrapMIB     OBJECT IDENTIFIER ::= { supportProcessor 3 }
+
+-- **************************************************************************
+-- Start: Management Module Adapter SP Alerts
+-- **************************************************************************
+
+        -- the rsspalt generic trap generator group
+
+        remoteSupTrapMibObjects OBJECT IDENTIFIER ::= { mmRemoteSupTrapMIB 1 }
+
+
+        spTrapInfo OBJECT IDENTIFIER ::= { remoteSupTrapMibObjects 1 }
+
+        spTrapDateTime  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Timestamp of Local Date and Time when alert was generated"
+                       ::= { spTrapInfo 1 }
+
+        spTrapAppId    OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Application ID, always 'BladeCenter Management Module'"
+                       ::= { spTrapInfo 2 }
+
+        spTrapSpTxtId  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "SP System Identification - Text Identification"
+                       ::= { spTrapInfo 3 }
+
+        spTrapSysUuid  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Host System UUID(Universal Unique ID)"
+                       ::= { spTrapInfo 4 }
+
+        spTrapSysSern  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Host System Serial Number"
+                       ::= { spTrapInfo 5 }
+
+        spTrapAppType  OBJECT-TYPE
+                       SYNTAX  INTEGER (1..65535)
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Application Alert Type - Event Number ID"
+                       ::= { spTrapInfo 6 }
+
+        spTrapPriority  OBJECT-TYPE
+                       SYNTAX  INTEGER (1..65535)
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Alert Severity Value
+                          - Critical Alert(0)
+                          - Non-Critical Alert(2)
+                          - System Alert(4)
+                          - Recovery Alert(8)
+                          - Informational Only Alert(255)"
+                       ::= { spTrapInfo 7 }
+
+        spTrapMsgText  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Alert Message Text"
+                       ::= { spTrapInfo 8 }
+
+        spTrapHostContact  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Host Contact"
+                       ::= { spTrapInfo 9 }
+
+        spTrapHostLocation  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Host Location"
+                       ::= { spTrapInfo 10 }
+
+        spTrapBladeName  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Blade Name"
+                       ::= { spTrapInfo 11 }
+
+        spTrapBladeSern  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Blade Serial Number"
+                       ::= { spTrapInfo 12 }
+
+        spTrapBladeUuid  OBJECT-TYPE
+                       SYNTAX  DisplayString
+                       ACCESS  read-only
+                       STATUS  mandatory
+                       DESCRIPTION
+                       "Blade UUID(Universal Unique ID)"
+                       ::= { spTrapInfo 13 }
+
+-- **************************************************************************
+-- Critical Traps
+-- **************************************************************************
+        -- 4.2.1.1
+        mmTrapTempC          TRAP-TYPE
+                                ENTERPRISE  mmRemoteSupTrapMIB
+                                VARIABLES
+                                  {
+                                  spTrapDateTime,
+                                  spTrapAppId,
+                                  spTrapSpTxtId,
+                                  spTrapSysUuid,
+                                  spTrapSysSern,
+                                  spTrapAppType,
+                                  spTrapPriority,
+                                  spTrapMsgText,
+                                  spTrapHostContact,
+                                  spTrapHostLocation,
+                                  spTrapBladeName,
+                                  spTrapBladeSern,
+                                  spTrapBladeUuid
+                                  }
+                                  DESCRIPTION
+                                    "Critical Alert: Temperature threshold exceeded."
+                                  ::= 0
+
+        -- 4.2.1.2
+        mmTrapVoltC        TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Critical Alert: Voltage threshold exceeded."
+                                ::= 1
+
+        -- 4.2.1.3 
+        -- is this not supported on blades?
+        mmTrapTampC        TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Critical Alert: Physical intrusion of system has occurred."
+                                ::= 2
+
+        -- 4.2.1.4
+        mmTrapMffC         TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Critical Alert: Multiple fan failure."
+                                ::= 3
+
+        -- 4.2.1.5
+        mmTrapPsC          TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Critical Alert: Power supply failure."
+                                ::= 4
+
+        -- 4.2.1.6
+        mTrapHdC          TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Critical Alert: Hard disk drive failure."
+                                ::= 5
+
+        -- 4.2.1.7
+        mmTrapVrmC         TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Critical Alert: Voltage Regulator Module(VRM) failure."
+                                ::= 6
+
+        -- 4.2.2.2
+        mmTrapSffC         TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Critical Alert: Single Fan failure."
+                                ::= 11
+
+
+        -- 4.2.1.8
+        mmTrapMsC          TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Critical Alert: Multiple switch module failure."
+                                ::= 31
+
+        -- 4.2.1.9
+        mmTrapIhcC         TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Critical Alert: Incompatible hardware configuration."
+                                ::= 36
+
+-- **************************************************************************
+-- Non-Critical Traps
+-- **************************************************************************
+
+        -- 4.2.2.1
+        mmTrapRdpsN          TRAP-TYPE
+                                ENTERPRISE  mmRemoteSupTrapMIB
+                                VARIABLES
+                                  {
+                                  spTrapDateTime,
+                                  spTrapAppId,
+                                  spTrapSpTxtId,
+                                  spTrapSysUuid,
+                                  spTrapSysSern,
+                                  spTrapAppType,
+                                  spTrapPriority,
+                                  spTrapMsgText,
+                                  spTrapHostContact,
+                                  spTrapHostLocation,
+                                  spTrapBladeName,
+                                  spTrapBladeSern,
+                                  spTrapBladeUuid
+                                  }
+                                  DESCRIPTION
+                                    "Non-Critical Alert: Redundant Power Supply failure."
+                                  ::= 10
+
+        -- 4.2.2.3
+        mmTrapTempN        TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Non-Critical Alert: Temperature threshold exceeded."
+                                ::= 12
+
+        -- 4.2.2.4
+        mmTrapVoltN        TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Non-Critical Alert: Voltage threshold exceeded."
+                                ::= 13
+
+        -- 4.2.2.6
+        mmTrapRmN          TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "Non-Critical Alert: Redundant module."
+                                ::= 32
+                                
+
+-- **************************************************************************
+-- System Traps
+-- **************************************************************************
+
+        -- 5.2.14
+        mmTrapSecDvS       TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Secondary Device warning."
+                                ::= 15
+
+        -- 4.2.3.1
+        mmTrapPostToS      TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Post Timeout value exceeded."
+                                ::= 20
+
+        -- 4.2.3.2
+        mmTrapOsToS        TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: OS Timeout value exceeded."
+                                ::= 21
+
+        -- 4.2.3.3
+        mmTrapAppS         TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Application Alert."
+                                ::= 22
+                                
+        -- 4.2.3.4
+        mmTrapPoffS        TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Power Off."
+                                ::= 23
+
+        -- 4.2.3.5
+        mmTrapPonS         TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Power On."
+                                ::= 24
+
+        -- 4.2.3.6
+        mmTrapBootS        TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: System Boot Failure."
+                                ::= 25
+
+        -- 4.2.3.7
+        mmTrapLdrToS       TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: OS Loader Timeout."
+                                ::= 26
+
+        -- 4.2.3.8
+        mmTrapPFAS         TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Predictive Failure Analysis(PFA) information."
+                                ::= 27
+
+        -- 4.2.3.9
+        mmTrapKVMSwitchS   TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Keyboard/Video/Mouse(KVM) or Medial Tray(MT) switching failure."
+                                ::= 33
+
+        -- 4.2.3.10
+        mmTrapSysInvS      TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Inventory."
+                                ::= 34
+
+        -- 4.2.3.11
+        mmTrapSysLogS      TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: System Log 75% full."
+                                ::= 35
+
+        -- 4.2.3.12
+        mmTrapNwChangeS    TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Network change notification."
+                                ::= 37
+        -- 4.2.3.13
+        mmTrapBlThrS          TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Blade Throttle"
+                                ::= 39
+
+        -- 4.2.3.14
+        mmTrapPwrMgntS          TRAP-TYPE
+                              ENTERPRISE  mmRemoteSupTrapMIB
+                              VARIABLES
+                                {
+                                spTrapDateTime,
+                                spTrapAppId,
+                                spTrapSpTxtId,
+                                spTrapSysUuid,
+                                spTrapSysSern,
+                                spTrapAppType,
+                                spTrapPriority,
+                                spTrapMsgText,
+                                spTrapHostContact,
+                                spTrapHostLocation,
+                                spTrapBladeName,
+                                spTrapBladeSern,
+                                spTrapBladeUuid
+                                }
+                                DESCRIPTION
+                                  "System Alert: Power Management"
+                                ::= 40
+
+
+
+END
+

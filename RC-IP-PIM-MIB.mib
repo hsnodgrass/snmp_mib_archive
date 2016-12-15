@@ -1,0 +1,512 @@
+
+RC-IP-PIM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, IpAddress
+        FROM SNMPv2-SMI
+    TruthValue, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcIpPim
+        FROM RC-IP-MIB
+    EnableValue
+        FROM RAPID-CITY;
+
+
+rcIpPimMib MODULE-IDENTITY
+       LAST-UPDATED     "200904090000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+
+       REVISION "200904090000Z" -- 16 Mar 2009
+       DESCRIPTION "Version 11: Added rcIpPimGlobalOperEnable."
+
+       REVISION "200903160000Z" -- 16 Mar 2009
+       DESCRIPTION "Version 10: Added rcIpPimGlobalStaticRPSpecificRt."
+
+       REVISION "200902250000Z" -- 25 Feb 2009
+       DESCRIPTION "Version 9: Added rcIpPimVirtualNbrTable."
+
+       REVISION "200805090000Z" -- 09 May 2008
+       DESCRIPTION "Version 8: Fixed smilint errors."
+
+       REVISION "200803250000Z" -- 25 Mar 2008
+       DESCRIPTION "Version 7: Added rcIpPimInterfaceCBSREnable under rcIpPimInterfaceEntry to Enable/disable Candidate BSR 
+                               on pim local interface"
+
+       REVISION "200607060000Z" -- 06 Jul 2006
+       DESCRIPTION "Version 6: Added rcIpPimGlobalFastJoinPrune"
+
+       REVISION "200503080000Z" -- 08 Mar 2005
+       DESCRIPTION "Version 5: Added rcIpPimGlobalFwdCacheTimeOut"
+
+       REVISION "200409220000Z" -- 22 Sept 2004
+       DESCRIPTION "Version 4: Increase the range for rcIpPimJoinPruneInterval"
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcIpPim 0 }
+
+--IP PIM
+
+rcIpPimGlobal OBJECT IDENTIFIER ::= { rcIpPim 1}
+
+rcIpPimGlobalEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "enable feature"
+        ::= { rcIpPimGlobal 1 }
+
+rcIpPimGlobalMode OBJECT-TYPE
+        SYNTAX          INTEGER {
+                                dm(1),
+                                sm(2),
+                                smdm(3),
+                                ssm(4)
+                        }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "PIM global mode"
+        ::= { rcIpPimGlobal 2 }
+
+rcIpPimGlobalMbr OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "enable/disable pim multicast border router feature"
+        ::= { rcIpPimGlobal 3 }
+
+rcIpPimGlobalRegisterSuppTimer OBJECT-TYPE
+        SYNTAX          Integer32 (5..65535)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Each source's DR maintains, per (S,G), a Register-                                 Suppression-timer in seconds. The Register-
+                         Suppression-timer is started by the Register-Stop                                  message; upon expiration, the source's DR resumes                                  sending data packets to the RP, encapsulated in 
+                         the Register message."
+        DEFVAL  { 60 }
+        ::= { rcIpPimGlobal 4 }
+
+rcIpPimGlobalInterfaceTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "table size"
+        ::= { rcIpPimGlobal 5 }
+
+rcIpPimGlobalUniRouteChgTimeOut OBJECT-TYPE
+        SYNTAX          Integer32 (2..65535)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "This timer allows a better tuning on how fast the
+                         routing information is going to get updated from
+                         RTM (the frequency at which the RTM is polled for
+                         routing information updates)."
+        DEFVAL        { 5 }
+        ::= { rcIpPimGlobal 6 }
+
+rcIpPimGlobalDiscardDataTimeOut OBJECT-TYPE
+        SYNTAX          Integer32 (5..65535)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "This timer is used to discard data until the Join
+                         is received from the RP. A ipmc discard record is
+                         created and deleted once the timer expires and/or
+                         when a Join is received."
+        DEFVAL        { 60 }
+        ::= { rcIpPimGlobal 7 }
+
+rcIpPimGlobalCRPADVTimeOut OBJECT-TYPE
+        SYNTAX          Integer32 (5..26214)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Routers configured as candidate RPs use this timer
+                         to periodically send C-RP-Adv messages. Upon expiry,
+                         a C-RP-Adv message is sent to the elected BSR."
+        DEFVAL        { 60 }
+        ::= { rcIpPimGlobal 8 }
+
+rcIpPimGlobalBootStrapPeriod OBJECT-TYPE
+        SYNTAX          Integer32 (5..32757)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "At the elected BSR, this is the interval between
+                         originating Bootstrap messages."
+        DEFVAL        { 60 }
+        ::= { rcIpPimGlobal 9 }
+
+rcIpPimGlobalStaticRP   OBJECT-TYPE
+        SYNTAX    TruthValue
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION     "Enable/Disable Static RP feature."
+        DEFVAL       { false }
+        ::= { rcIpPimGlobal 10 }
+
+rcIpPimGlobalActivityChkInterval   OBJECT-TYPE
+        SYNTAX    INTEGER {
+                           intv15(15),
+                           intv30(30),
+                           intv42(42),
+                           intv70(70),
+                           intv105(105),
+                           intv210(210)
+                        }
+        MAX-ACCESS   read-write
+        STATUS       current
+        DESCRIPTION     "Activity check interval for polling PIM SG traffic 
+                         activity information."
+        DEFVAL       { intv210 }
+        ::= { rcIpPimGlobal 11 }
+
+rcIpPimGlobalFwdCacheTimeOut OBJECT-TYPE
+        SYNTAX          Integer32 (10..86400)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     " PIM forward cache expiry value in seconds. 
+                         This value is going to be used in aging PIM mroutes 
+                         in seconds"
+        DEFVAL  { 210 }
+        ::= { rcIpPimGlobal 12 }
+
+rcIpPimGlobalFastJoinPrune OBJECT-TYPE
+        SYNTAX          EnableValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Pim Fast Join Prune."   
+        DEFVAL          { disable }
+        ::= { rcIpPimGlobal  13 }
+
+rcIpPimGlobalStaticRPSpecificRt   OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Enable/Disable Static RP specific route feature."
+        DEFVAL          { false }
+        ::= { rcIpPimGlobal  14 }
+
+rcIpPimGlobalOperEnable OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Indicates whether PIM is operationally enabled."
+        ::= { rcIpPimGlobal 15 }
+
+rcIpPimTable OBJECT-TYPE 
+        SYNTAX          SEQUENCE OF RcIpPimEntry
+        MAX-ACCESS      not-accessible 
+        STATUS          current 
+        DESCRIPTION     "IP Pim table"
+    ::= { rcIpPim 2 }
+
+rcIpPimEntry OBJECT-TYPE
+        SYNTAX        	RcIpPimEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"An entry of Ip Pim Table."
+        INDEX         	{ rcIpPimIfIndex }
+        ::= { rcIpPimTable 1 }
+ 
+RcIpPimEntry ::=
+        SEQUENCE {
+                rcIpPimIfIndex           InterfaceIndex,
+                rcIpPimEnable            TruthValue,
+                rcIpPimMode              INTEGER,
+                rcIpPimHelloInterval     Integer32,
+                rcIpPimJoinPruneInterval Integer32,
+                rcIpPimCBSRPreference    Integer32,
+                rcIpPimIntfType          INTEGER
+        }
+ 
+rcIpPimIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "port"
+        ::= { rcIpPimEntry 1 }
+
+rcIpPimEnable OBJECT-TYPE
+        SYNTAX         TruthValue
+        MAX-ACCESS     read-write
+        STATUS         current
+        DESCRIPTION    "enable interface"
+        ::= { rcIpPimEntry 2 }
+
+rcIpPimMode OBJECT-TYPE
+        SYNTAX        INTEGER {
+		         dense(1),
+			 sparse(2),
+			 sparseDense(3),
+			 ssm(4)
+		      }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Interface PIM mode"
+        ::= { rcIpPimEntry 3 }
+
+rcIpPimHelloInterval OBJECT-TYPE
+        SYNTAX        Integer32(0..18724)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "frq. at which hello sent."
+	DEFVAL     { 30 }
+        ::= { rcIpPimEntry 4 }
+
+rcIpPimJoinPruneInterval OBJECT-TYPE
+        SYNTAX        Integer32(0..18724)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Interface PIM prune interval"
+        ::= { rcIpPimEntry 5 }
+
+rcIpPimCBSRPreference OBJECT-TYPE
+        SYNTAX        Integer32 (-1..255)
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Interface PIM CBSR preference"
+	DEFVAL     { -1 }
+        ::= { rcIpPimEntry 6 }
+
+rcIpPimIntfType OBJECT-TYPE
+        SYNTAX        INTEGER {
+               active(1),
+               passive(2)
+            }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Pim interface type."
+          DEFVAL     { active }
+        ::= { rcIpPimEntry 7 }
+
+-- Pim Interface Table Extension
+
+rcIpPimInterfaceTable OBJECT-TYPE 
+        SYNTAX          SEQUENCE OF RcIpPimInterfaceEntry
+        MAX-ACCESS      not-accessible 
+        STATUS          current 
+        DESCRIPTION     "IP Pim table"
+    ::= { rcIpPim 3 }
+
+rcIpPimInterfaceEntry OBJECT-TYPE
+        SYNTAX        	RcIpPimInterfaceEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"An entry of Ip Pim Interface Table."
+        INDEX         	{ rcIpPimInterfaceIfIndex }
+        ::= { rcIpPimInterfaceTable 1 }
+ 
+RcIpPimInterfaceEntry ::=
+        SEQUENCE {
+                rcIpPimInterfaceIfIndex    InterfaceIndex,
+                rcIpPimInterfaceOperState  INTEGER,
+                rcIpPimInterfaceType       INTEGER,
+                rcIpPimInterfaceCBSREnable TruthValue
+        }
+ 
+rcIpPimInterfaceIfIndex OBJECT-TYPE
+        SYNTAX        InterfaceIndex
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "port"
+        ::= { rcIpPimInterfaceEntry 1 }
+
+rcIpPimInterfaceOperState OBJECT-TYPE
+        SYNTAX         INTEGER { 
+                          up(1), 
+                          down(2) 
+                       }
+        MAX-ACCESS     read-only
+        STATUS         current
+        DESCRIPTION    "The current operational state of this PIM interface. 
+                        This object is deprecated in favor of ifOperStatus."
+        ::= { rcIpPimInterfaceEntry 2 }
+
+rcIpPimInterfaceType OBJECT-TYPE
+        SYNTAX        INTEGER {
+               active(1),
+               passive(2)
+            }
+        MAX-ACCESS    read-write
+        STATUS        current
+        DESCRIPTION   "Pim interface type."
+          DEFVAL     { active }
+        ::= { rcIpPimInterfaceEntry 3 }
+
+rcIpPimInterfaceCBSREnable OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION "Enable/disable Candidate BSR on pim local interface."
+        DEFVAL      { false }
+        ::= { rcIpPimInterfaceEntry 4 }
+
+
+rcIpPimStaticRPTable OBJECT-TYPE
+    SYNTAX        SEQUENCE OF RcIpPimStaticRPEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION   "The table lists all the RPs configured statically for
+                   various IP multicast groups."
+    ::= { rcIpPim 4 }
+
+rcIpPimStaticRPEntry OBJECT-TYPE
+    SYNTAX        RcIpPimStaticRPEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION   "An entry (conceptual row) in the rcIpPimStaticRPTable."
+    INDEX      { rcIpPimStaticRPGroupAddress,
+                 rcIpPimStaticRPGroupMask,
+                 rcIpPimStaticRPAddress }
+    ::= { rcIpPimStaticRPTable 1 }
+
+RcIpPimStaticRPEntry ::= SEQUENCE {
+    rcIpPimStaticRPGroupAddress  IpAddress,
+    rcIpPimStaticRPGroupMask     IpAddress,
+    rcIpPimStaticRPAddress       IpAddress,
+    rcIpPimStaticRPRowStatus     RowStatus,
+    rcIpPimStaticRPStatus        INTEGER
+}
+
+rcIpPimStaticRPGroupAddress   OBJECT-TYPE
+    SYNTAX        IpAddress
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "The IP multicast group address which, when combined with
+                   rcIpPimStaticRPGroupMask, identifies a group prefix for
+                   which rcIpPimStaticRPAddress is a static-RP."
+    ::= { rcIpPimStaticRPEntry 1 }
+
+rcIpPimStaticRPGroupMask   OBJECT-TYPE
+    SYNTAX        IpAddress
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "The multicast group address mask which, when combined
+                  with rcIpPimStaticRPGroupAddress, identifies a group
+                    prefix for which rcIpPimStaticRPAddress is a static-RP."
+    ::= { rcIpPimStaticRPEntry 2 }
+
+rcIpPimStaticRPAddress  OBJECT-TYPE
+    SYNTAX        IpAddress
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "The (unicast) address of the static-RP."
+    ::= { rcIpPimStaticRPEntry 3 }
+
+rcIpPimStaticRPRowStatus   OBJECT-TYPE
+    SYNTAX        RowStatus
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION   "The status of this row, by which new entries may be
+                   created, or old entries deleted from this table."
+    ::= { rcIpPimStaticRPEntry 4 }
+
+rcIpPimStaticRPStatus   OBJECT-TYPE
+    SYNTAX        INTEGER {
+	             valid(1),
+		     invalid(2)
+                  }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "The status of StaticRP."
+    ::= { rcIpPimStaticRPEntry 5 }
+
+rcIpPimCurrBsr OBJECT IDENTIFIER ::= { rcIpPim 5 }
+
+rcIpPimCurrBsrAddress OBJECT-TYPE
+    SYNTAX        IpAddress
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "Current BSR address"
+    ::= { rcIpPimCurrBsr 1 }
+
+rcIpPimCurrBsrFragmentTag OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "Current BSR Fragment Tag"
+    DEFVAL        { -1 }
+    ::= { rcIpPimCurrBsr 2 }
+
+rcIpPimCurrBsrHashMask OBJECT-TYPE
+    SYNTAX        IpAddress 
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "Current BSR Hash Mask value"
+    ::= { rcIpPimCurrBsr 3 }
+
+rcIpPimCurrBsrPriority OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "Current BSR Priority"
+    DEFVAL        { 0 }
+    ::= { rcIpPimCurrBsr 4 }
+
+rcIpPimCurrBsrBootStrapTimer OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION   "Current BSR Boot Strap Timer"
+    ::= { rcIpPimCurrBsr 5 }
+
+rcIpPimVirtualNbrTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpPimVirtualNbrEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Table listing the router's virtual PIM neighbors"
+    ::= { rcIpPim 6 }
+
+rcIpPimVirtualNbrEntry OBJECT-TYPE
+        SYNTAX          RcIpPimVirtualNbrEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "An entry in the virtual PIM neighbors' table."
+        INDEX           { rcIpPimVirtualNbrAddress }
+        ::= { rcIpPimVirtualNbrTable 1 }
+
+RcIpPimVirtualNbrEntry ::= SEQUENCE {
+        rcIpPimVirtualNbrAddress   IpAddress,
+        rcIpPimVirtualNbrIfIndex   InterfaceIndex,
+        rcIpPimVirtualNbrRowStatus RowStatus
+}
+
+rcIpPimVirtualNbrAddress OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+            "The IP address of the virtual PIM neighbor for which this entry
+             contains information."
+    ::= { rcIpPimVirtualNbrEntry 1 }
+
+rcIpPimVirtualNbrIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "The value of ifIndex for the PIM interface in which this virtual
+             neighbor is created. This value is mandatory while trying to create
+             a virtual PIM neighbor."
+    ::= { rcIpPimVirtualNbrEntry 2 }
+
+rcIpPimVirtualNbrRowStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+            "To create/delete an entry in the virtual PIM neighbors'
+             table."
+    ::= { rcIpPimVirtualNbrEntry 3 }
+
+END

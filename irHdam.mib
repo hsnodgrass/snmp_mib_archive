@@ -1,0 +1,804 @@
+MRV-IR-HDAM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    OBJECT-TYPE, MODULE-IDENTITY, enterprises, Counter32
+            FROM SNMPv2-SMI
+    TrapSeverity
+            FROM MRV-IR-SYSTEM-MIB
+    DisplayString 
+            FROM SNMPv2-TC;
+
+mrvBpd          OBJECT IDENTIFIER ::= { enterprises 33 }
+mrvLx           OBJECT IDENTIFIER ::= { mrvBpd 100 }
+
+irHdamMib MODULE-IDENTITY
+    LAST-UPDATED "200703220000Z"        -- 22 Mar 2007 (LX v5.1.0)
+    ORGANIZATION "MRV Communications - BPD Division"
+    CONTACT-INFO 
+            "Postal: MRV Communications, Inc.
+                     295 Foster Street
+                     Littleton, MA 01460
+
+             E-mail: support@mrv.com"
+    DESCRIPTION
+        "This is the MRV LX HDAM Alarm MIB module."
+    ::= { mrvLx 4 }
+
+-- HDAM Groups.
+
+irHdam         OBJECT IDENTIFIER ::= { irHdamMib 1 }
+irHdamAlarm    OBJECT IDENTIFIER ::= { irHdamMib 2 }
+irHdamControl  OBJECT IDENTIFIER ::= { irHdamMib 3 }
+irHdamAnalog   OBJECT IDENTIFIER ::= { irHdamMib 4 }
+
+--
+-- Textual Conventions
+--
+
+--
+-- HDAM Module type values.
+--
+IrHdamModuleType ::= INTEGER {
+        empty(1),
+        alarmModule(2),
+        controlModule(3),
+        analoglModule(4)
+        }
+
+IrContactState ::= INTEGER {
+        open(1),
+        closed(2)
+        }
+
+IrAnalogStatus ::= INTEGER {
+        disabled(1),
+        enabled(2)
+        }
+
+
+--
+-- HDAM Unit Table.
+--
+
+irHdamUnitTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrHdamUnitEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of hdam unit entries."
+    ::= { irHdam 1 }
+
+irHdamUnitEntry OBJECT-TYPE
+    SYNTAX       IrHdamUnitEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "An hdam unit entry."
+    INDEX { irHdamUnitPortIndex }
+    ::= { irHdamUnitTable 1 }
+
+IrHdamUnitEntry ::= SEQUENCE {
+    irHdamUnitPortIndex 
+        INTEGER,
+    irHdamFwVersion 
+        DisplayString,
+    irHdamConnectStatus 
+        INTEGER,
+    irHdamPowerType 
+        INTEGER,
+    irHdamAction 
+        INTEGER
+    }
+
+irHdamUnitPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port index to which this hdam unit is connected."
+    ::= { irHdamUnitEntry 1 }
+
+irHdamFwVersion OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The HDAM unit firmware version string."
+    ::= { irHdamUnitEntry 2 }
+
+irHdamConnectStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               connected(1),
+               disconnected(2)
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The HDAM unit connection status."
+    ::= { irHdamUnitEntry 3 }
+
+irHdamPowerType OBJECT-TYPE
+    SYNTAX INTEGER {
+               powerAC(1),
+               powerDC(2)
+            }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The type of power used by the hdam device."
+    ::= { irHdamUnitEntry 4 }
+
+irHdamAction OBJECT-TYPE
+    SYNTAX INTEGER {
+               other(1),
+               reset(2)
+            }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object is used to perform an action on the HDAM unit.
+         A read of this object always returns the value other(1).
+         Setting this object to reset(2) causes the unit to be reset."
+    ::= { irHdamUnitEntry 5 }
+
+--
+-- HDAM Module Table.
+--
+
+irHdamModuleTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrHdamModuleEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of hdam module entries."
+    ::= { irHdam 2 }
+
+irHdamModuleEntry OBJECT-TYPE
+    SYNTAX       IrHdamModuleEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "An hdam module entry."
+    INDEX { irHdamPortIndex, irHdamSlotIndex }
+    ::= { irHdamModuleTable 1 }
+
+IrHdamModuleEntry ::= SEQUENCE {
+    irHdamPortIndex 
+        INTEGER,
+    irHdamSlotIndex 
+        INTEGER,
+    irHdamModuleType 
+        IrHdamModuleType
+    }
+
+irHdamPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port index to which this hdam unit is connected."
+    ::= { irHdamModuleEntry 1 }
+
+irHdamSlotIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..4)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The slot index for this module entry."
+    ::= { irHdamModuleEntry 2 }
+
+irHdamModuleType OBJECT-TYPE
+    SYNTAX      IrHdamModuleType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The type of module in the slot."
+    ::= { irHdamModuleEntry 3 }
+
+--
+--
+-- HDAM Power Supply Table.
+--
+
+irHdamPowerSupplyTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrHdamPowerSupplyEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of hdam power supply entries."
+    ::= { irHdam 3 }
+
+irHdamPowerSupplyEntry OBJECT-TYPE
+    SYNTAX       IrHdamPowerSupplyEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "An hdam power supply entry."
+    INDEX { irHdamPortIndex, irHdamPowerIndex }
+    ::= { irHdamPowerSupplyTable 1 }
+
+IrHdamPowerSupplyEntry ::= SEQUENCE {
+    irHdamPowerPortIndex 
+        INTEGER,
+    irHdamPowerIndex 
+        INTEGER,
+    irHdamPowerUnitPresent 
+        INTEGER,
+    irHdamPowerInputStatus 
+        INTEGER,
+    irHdamPowerOutputStatus 
+        INTEGER,
+    irHdamPowerStatus 
+        INTEGER
+    }
+
+irHdamPowerPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the port to which the hdam unit is attached."
+    ::= { irHdamPowerSupplyEntry 1 }
+
+irHdamPowerIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..2)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the hdam power unit."
+    ::= { irHdamPowerSupplyEntry 2 }
+
+irHdamPowerUnitPresent OBJECT-TYPE
+    SYNTAX INTEGER {
+               yes(1),
+               no(2)
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This indicates if the power unit is present or not."
+    ::= { irHdamPowerSupplyEntry 3 }
+
+irHdamPowerInputStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               on(1),
+               off(2)
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This indicates if the power unit is plugged into a power source."
+    ::= { irHdamPowerSupplyEntry 4 }
+
+irHdamPowerOutputStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               on(1),
+               off(2)
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This indicates the status of the internal power feed to the device
+         components."
+    ::= { irHdamPowerSupplyEntry 5 }
+
+irHdamPowerStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               on(1),
+               off(2),
+               failed(3)
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The overall status of the power unit."
+    ::= { irHdamPowerSupplyEntry 6 }
+
+--
+-- Alarm Module Config Table.
+--
+
+irAlarmConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrAlarmConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of alarm config entries."
+    ::= { irHdamAlarm 1 }
+
+irAlarmConfigEntry OBJECT-TYPE
+    SYNTAX IrAlarmConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "An hdam alarm config entry."
+    INDEX { irAlarmPortIndex, 
+            irAlarmSlotIndex, 
+            irAlarmPointIndex }
+    ::= { irAlarmConfigTable 1 }
+
+IrAlarmConfigEntry ::= SEQUENCE {
+    irAlarmPortIndex 
+        INTEGER,
+    irAlarmSlotIndex 
+        INTEGER,
+    irAlarmPointIndex 
+        INTEGER,
+    irAlarmName
+        DisplayString,
+    irAlarmContactState 
+        IrContactState,
+    irAlarmContactFaultState 
+        IrContactState,
+    irAlarmDebounceInterval 
+        INTEGER,
+    irAlarmAudibleStatus 
+        INTEGER,
+    irAlarmTrapStatus 
+        INTEGER,
+    irAlarmTrapSeverity 
+        TrapSeverity,
+    irAlarmCount
+        Counter32,
+    irAlarmTimestamp 
+        DisplayString,
+    irAlarmDescription 
+        DisplayString
+    }
+
+irAlarmPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..48)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port index on which the alarm unit is attached."
+    ::= { irAlarmConfigEntry 1 }
+
+irAlarmSlotIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..4)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The slot in the alarm unit which identifies this module."
+    ::= { irAlarmConfigEntry 2 }
+
+irAlarmPointIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..32)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An integer which uniquely identifies an alarm on this module."
+    ::= { irAlarmConfigEntry 3 }
+
+irAlarmName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name assigned to the alarm."
+    ::= { irAlarmConfigEntry 4 }
+
+irAlarmContactState OBJECT-TYPE
+    SYNTAX      IrContactState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current state of the alarm contacts."
+    ::= { irAlarmConfigEntry 5 }
+
+irAlarmContactFaultState OBJECT-TYPE
+    SYNTAX      IrContactState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The contact state (open or closed) which indicates the fault
+         condition. If the value of this object and irAlarmContactState
+         is the same, then the alarm has been triggered."
+    ::= { irAlarmConfigEntry 6 }
+
+irAlarmDebounceInterval OBJECT-TYPE
+    SYNTAX      INTEGER (0..1800)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The number of seconds the alarm must be in the fault state
+         before it is considered valid."
+    ::= { irAlarmConfigEntry 7 }
+
+irAlarmAudibleStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               disabled(1),
+               enabled(2)
+            }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This indicates whether the audible alarm on the unit will sound
+         when this alarm is generated."
+    ::= { irAlarmConfigEntry 8 }
+
+irAlarmTrapStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+               disabled(1),
+               enabled(2)
+            }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This indicates whether an snmp trap will be generated when this 
+         alarm is generated."
+    ::= { irAlarmConfigEntry 9 }
+
+irAlarmTrapSeverity OBJECT-TYPE
+    SYNTAX      TrapSeverity 
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The trap severity assigned to this alarm. This value will be sent 
+         when an alarm fires and an snmp trap is generated."
+    ::= { irAlarmConfigEntry 10 }
+
+irAlarmCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times the alarm has been generated since the unit
+         was started."
+    ::= { irAlarmConfigEntry 11 }
+
+irAlarmTimestamp OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A timestamp string indicating the time the last alarm was generated.
+         A null string indicates that the alarm has not been generated."
+    ::= { irAlarmConfigEntry 12 }
+
+irAlarmDescription OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A user configurable alarm description string."
+    ::= { irAlarmConfigEntry 13 }
+
+--
+-- Control Module Config Table.
+--
+
+irControlConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrControlConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of control config entries."
+    ::= { irHdamControl 1 }
+
+irControlConfigEntry OBJECT-TYPE
+    SYNTAX       IrControlConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A control config entry."
+    INDEX { irControlPortIndex, 
+            irControlSlotIndex, 
+            irControlPointIndex }
+    ::= { irControlConfigTable 1 }
+
+IrControlConfigEntry ::= SEQUENCE {
+    irControlPortIndex 
+        INTEGER,
+    irControlSlotIndex 
+        INTEGER,
+    irControlPointIndex 
+        INTEGER,
+    irControlName
+        DisplayString,
+    irControlState 
+        IrContactState,
+    irControlActiveState 
+        IrContactState,
+    irControlDescription 
+        DisplayString
+    }
+
+irControlPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..48)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port index on which the control unit is attached."
+    ::= { irControlConfigEntry 1 }
+
+irControlSlotIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..4)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The slot in the control unit which identifies this module."
+    ::= { irControlConfigEntry 2 }
+
+irControlPointIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..8)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An integer which uniquely identifies a control on this module."
+    ::= { irControlConfigEntry 3 }
+
+irControlName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name assigned to the control."
+    ::= { irControlConfigEntry 4 }
+
+irControlState OBJECT-TYPE
+    SYNTAX      IrContactState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The current value of the control state."
+    ::= { irControlConfigEntry 5 }
+
+irControlActiveState OBJECT-TYPE
+    SYNTAX      IrContactState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value of the control state that activates the attached 
+         device."
+    ::= { irControlConfigEntry 6 }
+
+irControlDescription OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A user configurable control description string."
+    ::= { irControlConfigEntry 7 }
+
+--
+-- Analog (Sensor) Module Config Table.
+--
+
+irAnalogConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IrAnalogConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "A list of analog loop config entries."
+    ::= { irHdamAnalog 1 }
+
+irAnalogConfigEntry OBJECT-TYPE
+    SYNTAX       IrAnalogConfigEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "An analog loop config entry."
+    INDEX { irAnalogPortIndex, 
+            irAnalogSlotIndex, 
+            irAnalogPointIndex }
+    ::= { irAnalogConfigTable 1 }
+
+IrAnalogConfigEntry ::= SEQUENCE {
+    irAnalogPortIndex 
+        INTEGER,
+    irAnalogSlotIndex 
+        INTEGER,
+    irAnalogPointIndex 
+        INTEGER,
+    irAnalogName
+        DisplayString,
+    irAnalogDescription 
+        DisplayString,
+    irAnalogStatus 
+        IrAnalogStatus,
+    irAnalogValue 
+        DisplayString,
+    irAnalogCalValue 
+        DisplayString,
+    irAnalogCalMinValue 
+        DisplayString,
+    irAnalogCalMaxValue 
+        DisplayString,
+    irAnalogCalMargin 
+        DisplayString,
+    irAnalogCalUnits 
+        DisplayString,
+    irAnalogThresholdHigh
+        DisplayString,
+    irAnalogThresholdLow
+        DisplayString,
+    irAnalogThresholdSeverity
+        TrapSeverity,
+    irAnalogThresholdHysteresis
+        DisplayString,
+    irAnalogThresholdHighAlarmCount 
+        Counter32,
+    irAnalogThresholdLowAlarmCount 
+        Counter32,
+    irAnalogThresholdHighTimestamp 
+        DisplayString,
+    irAnalogThresholdLowTimestamp 
+        DisplayString
+    }
+
+irAnalogPortIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..48)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port index on which the analog unit is attached."
+    ::= { irAnalogConfigEntry 1 }
+
+irAnalogSlotIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..4)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The slot in the analog unit which identifies this module."
+    ::= { irAnalogConfigEntry 2 }
+
+irAnalogPointIndex OBJECT-TYPE
+    SYNTAX      INTEGER (1..8)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An integer which uniquely identifies an analog point on this module."
+    ::= { irAnalogConfigEntry 3 }
+
+irAnalogName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name assigned to the analog."
+    ::= { irAnalogConfigEntry 4 }
+
+irAnalogDescription OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A user configurable analog description string."
+    ::= { irAnalogConfigEntry 5 }
+
+irAnalogStatus OBJECT-TYPE
+    SYNTAX      IrAnalogStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The status of the analog point."
+    ::= { irAnalogConfigEntry 6 }
+
+irAnalogValue OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..24))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current analog sensor reading in milliAmps."
+    ::= { irAnalogConfigEntry 7 }
+
+irAnalogCalValue OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current analog sensor calibrated value."
+    ::= { irAnalogConfigEntry 8 }
+
+irAnalogCalMinValue OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..10))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The calibration value assigned to the minimum sensor reading."
+    ::= { irAnalogConfigEntry 9 }
+
+irAnalogCalMaxValue OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..10))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The calibration value assigned to the maximum analog sensor reading."
+    ::= { irAnalogConfigEntry 10 }
+
+irAnalogCalMargin OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..10))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The calibration margin value. This will be added to the 
+         calibrated analog sensor value."
+    ::= { irAnalogConfigEntry 11 }
+
+irAnalogCalUnits OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..8))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A user defined string describing the calibrated units for the 
+         analog sensor."
+    ::= { irAnalogConfigEntry 12 }
+
+irAnalogThresholdHigh OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..10))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The analog sensor high threshold value. A value of -0 indicates 
+         threshold is not configured."
+    ::= { irAnalogConfigEntry 13 }
+
+irAnalogThresholdLow OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..10))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The analog sensor low threshold value. A value of -0 indicates 
+         threshold is not configured."
+    ::= { irAnalogConfigEntry 14 }
+
+irAnalogThresholdSeverity OBJECT-TYPE
+    SYNTAX      TrapSeverity
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The severity value of the analog sensor assigned to the low threshold. 
+         This value will be sent in the threshold trap."
+    ::= { irAnalogConfigEntry 15 }
+
+irAnalogThresholdHysteresis OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..10))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "After crossing a threshold, the delta by which the caliberated 
+         value must drop within the normal range before the alarm
+         condition is cleared (i.e. a cleared alarm is generated)."
+    ::= { irAnalogConfigEntry 16 }
+
+irAnalogThresholdHighAlarmCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times the analog sensor high threshold has been 
+         crossed since the unit was started."
+    ::= { irAnalogConfigEntry 17 }
+
+irAnalogThresholdLowAlarmCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times the analog sensor low threshold has been 
+         crossed since the unit was started."
+    ::= { irAnalogConfigEntry 18 }
+
+irAnalogThresholdHighTimestamp OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A timestamp string indicating the time the analog sensor last 
+         crossed the high threshold. A null string indicates that the 
+         alarm has not been crossed."
+    ::= { irAnalogConfigEntry 19 }
+
+irAnalogThresholdLowTimestamp OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A timestamp string indicating the time the analog sensor last 
+         crossed the low threshold. A null string indicates that the 
+         alarm has not been crossed."
+    ::= { irAnalogConfigEntry 20 }
+
+END
+

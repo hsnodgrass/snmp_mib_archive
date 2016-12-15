@@ -1,0 +1,4249 @@
+-- File: callmgmt.mib
+--	Bay Networks Remote Annex Private Enterprise MIB
+--
+--  Copyright 1997 Bay Networks, Inc.  ALL RIGHTS RESERVED.
+--
+--  ALL RIGHTS RESERVED. Licensed Material - Property of Bay Networks, Inc.
+--  This software is made available solely pursuant to the terms of a
+--  software license agreement which governs its use.
+--  Unauthorized duplication, distribution or sale are strictly prohibited.
+--
+--  This information is subject to change without notice, and should
+--  not be construed as a commitment by Bay Networks, Inc.  Bay Networks, Inc.,
+--  assumes no responsibility for any errors that may appear in this
+--  document.
+--
+--  $Id: 
+--
+-- overview
+
+  XYLO-CALLMGMT-MIB DEFINITIONS ::= BEGIN
+
+  IMPORTS
+		Counter
+			FROM RFC1155-SMI
+		DisplayString
+			FROM RFC1213-MIB
+		OBJECT-TYPE
+			FROM RFC-1212
+		anxt1ChanIndex, anxt1ChanNumber
+			FROM XYLO-WAN-MIB
+		mdmNumber
+			FROM XYLO-MODEM-MIB
+		callmgmt
+			FROM XYLO-MIB-SMI;
+
+
+--  xylogics		OBJECT IDENTIFIER ::= { enterprises 15 } 
+--  callmgmt		OBJECT IDENTIFIER ::= { annex 16 }
+
+	activecall	OBJECT IDENTIFIER ::= { callmgmt 1 }
+	callHist	OBJECT IDENTIFIER ::= { callmgmt 2 }
+
+-- modem call statistics MIB objects.
+	mdmCallStatsObjects	OBJECT IDENTIFIER ::= { callmgmt 3 }
+	
+-- Port action objects
+	portaction	OBJECT IDENTIFIER ::= { callmgmt 4 }
+
+
+-- This table is no longer supported. Please design/change your
+-- applications to use the new actCallTable below (under activecall 2).
+
+	activecallTable	OBJECT-TYPE
+			SYNTAX	SEQUENCE OF ActivecallEntry
+			ACCESS	not-accessible
+			STATUS  deprecated
+			DESCRIPTION
+			"A table of active call information."
+			::= { activecall 1 }
+
+	activecallEntry	OBJECT-TYPE
+			SYNTAX	ActivecallEntry
+			ACCESS	not-accessible
+			STATUS	deprecated
+			DESCRIPTION
+				"A row in the active call table."
+			INDEX	{ anxt1ChanIndex, 
+				  anxt1ChanNumber }
+			::= { activecallTable 1 }
+	
+	ActivecallEntry	::= SEQUENCE {
+			actcallUsername		DisplayString,
+			actcallCallingNumber	DisplayString,
+			actcallCalledNumber	DisplayString,
+			actcallSPBName		DisplayString,
+			actcallDeviceType	INTEGER,
+			actcallDeviceNumber	INTEGER,
+			actcallSubAddress	DisplayString,
+			actcallBearer		INTEGER,
+			actcallSetupTime	INTEGER,
+			actcallDuration		INTEGER,
+			actcalllocalin          DisplayString,
+			actcallremotein         DisplayString,
+			actcalllocalat          DisplayString,
+			actcallremoteat         DisplayString,
+			actcalllocalipx         DisplayString,
+			actcallremoteipx        DisplayString,
+			actcallConnectionType	INTEGER,
+			actcallOctetsRx		Counter,
+			actcallOctetsTx		Counter,
+			actcallOrigin		INTEGER,
+			actcallCallState	INTEGER,
+			actcallConfiguredType	INTEGER,
+			actcallOwningBundle     INTEGER
+			}
+
+	actcallUsername	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..128))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Name of the user associated with this call. A
+			null string is returned if the call is active 
+			but the current user name cannot be determined at
+			the time of the call."
+		::= { activecallEntry 1 }
+
+	actcallCallingNumber	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..29))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number from which this call was made.
+			Can be a null string.
+
+			This object obsoletes the callSetupCallingNbr object."
+		::= { activecallEntry 2 }
+
+	actcallCalledNumber	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..29))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number to which this call was made. 
+			Can be a null string.
+
+			This object obsoletes the callSetupCalledNbr object."
+		::= { activecallEntry 3 }
+
+	actcallSPBName	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..29))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Session Parameter Block name. The RAC determines how
+			to handle a call through the SPB. The SPB is defined in
+			the configuration file. When a call comes in, the RAC
+			tries to match the received setup information elements
+			that accompanied the call with the values in the
+			setup criteria section of the defined SPBs. The
+			first SPB that matches the call's setup criteria 
+			is used."
+		::= { activecallEntry 4 }
+
+	actcallDeviceType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				asy(1),
+				syn(9),
+				ta(10),
+				mp(12)
+--				nocall('7fffffff'h)
+				}
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"An enumerated integer indicating the port type. 
+			asy(1) - the call is assigned internally to an
+				asynchronous device (async port).
+			syn(9) - the call is handled internally by a
+				synchronous device (sync port).
+			ta(10) - the call is handled internally by a
+				ta device (ta port).
+			mp(12) - pseudo-session, Multi-link PPP bundle head.
+
+			This object obsoletes the callSetupPortType object."
+			::= { activecallEntry 5 }
+
+	actcallDeviceNumber	OBJECT-TYPE
+			SYNTAX	INTEGER 
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The one-based device (port) number the call
+			is assigned to. This object in conjunction with the 
+			object, actcallDeviceType, should be used to 
+			cross-reference the information displayed by the 
+			CLI command 'who'.
+
+			This object obsoletes the callSetupPortNumber object."
+			::= { activecallEntry 6 }
+
+	actcallSubAddress	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..29))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The subaddress this call is connected to.
+			Can be a null string.
+
+			This object obsoletes the callSetupCalledSubAddr 
+			object."
+			::= { activecallEntry 7 }
+
+	actcallBearer	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				missing(1),
+				voice(2),
+				data(3)
+--				nocall('7fffffff'h)
+				}
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"This object defines the bearer capability of the 
+			incoming call. 
+
+			This object obsoletes the callSetupBearer object."
+			::= { activecallEntry 8 }
+
+	actcallSetupTime	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The time that the call started.  This is RAC
+			system time, which is the same as Unix system
+			time: seconds since 0:00 January 1, 1970 UTC
+			(GMT).
+
+			This object obsoletes callSetupCallingTime."
+			::= { activecallEntry 9 }
+
+	actcallDuration	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Duration of the phone call, in seconds."
+			::= { activecallEntry 10 }
+
+	actcalllocalin	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..15))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The Internet (IP) address assigned to the RAC end
+			of a point-to-point link established during this call,
+			in dotted-decimal notation."
+			::= { activecallEntry 11 }
+	actcallremotein	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..15))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The Internet (IP) address assigned to the far end
+			of a point-to-point link established during this call,
+			in dotted-decimal notation."
+			::= { activecallEntry 12 }
+	actcalllocalat	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..13))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The local AppleTalk address assigned to this call."
+			::= { activecallEntry 13 }
+	actcallremoteat	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..13))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The remote AppleTalk address assigned to this call."
+			::= { activecallEntry 14 }
+	actcalllocalipx	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (21))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The local IPX address assigned to this call."
+			::= { activecallEntry 15 }
+	actcallremoteipx	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (21))
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The remote IPX address assigned to this call."
+			::= { activecallEntry 16 }
+
+	actcallConnectionType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+                                        none(1),
+                                        cli(2),
+                                        server(3),
+                                        rdp(4),
+                                        slip(5),
+                                        dedicated(6),
+                                        ldp(7),
+                                        ppp(8),
+                                        mp(9),
+                                        arap(10),
+                                        ftp(11),
+                                        ndp(12),
+                                        ipx(13),
+                                        dynamic-dial(14),
+                                        vpn(15),
+                                        ppp-sublet-from-cli(16)
+                        }
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The name of the client routine running on the
+			port at the time of this call."
+			::= { activecallEntry 17 }
+
+	actcallOctetsRx	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number of octets received during this call."
+			::= { activecallEntry 18 }
+
+	actcallOctetsTx	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number of octets transmitted during this call."
+			::= { activecallEntry 19 }
+
+	actcallOrigin	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				incoming(1),
+				outgoing(2)
+--				nocall('7fffffff'h)
+				}
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The call origin.
+			incoming(1) - the RAC answered an incoming call.
+			outgoing(2) - the RAC made the call.
+
+			This object obsoletes the callSetupCallType object."
+			::= { activecallEntry 20 }
+
+	actcallCallState	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				invalid(1),
+				valid(2)
+				}
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The current state of this call.
+			invalid(1)-call is inactive and the contents of this
+				table row are not valid.
+			valid(2)- call is active and contents of this table
+				row are valid."
+			::= { activecallEntry 21 }
+
+	actcallConfiguredType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+			cli(1),
+			slave(2),
+			adaptive(3),
+			unused(4),
+			slip(5),
+			dedicated(6),
+			ppp(7),
+			arap(8),
+			printer(9),
+			auto-detect(10),
+			auto-adapt(11),
+			ndp(12),
+			ipx(13),
+			call(14),
+			connect(15),
+			rlogin(16),
+			telnet(17),
+			tn3270(18),
+			any(19)
+--			nocall('7fffffff'h)
+			}
+			ACCESS  read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The type (mode) of the port at the time of the
+                        connection.
+
+			cli   - allows an incoming session access to the CLI.
+				The CLI provides access to the network and 
+				connections to other hosts via the telnet,
+				connect, rlogin and tn3270 commands.
+			slip  - allows a port to perform as a network
+				interface using SLIP. IP packets are
+				encapsulated by SLIP.
+			ppp   - allows a port to perform as a network
+				interface using PPP. Packets of several
+				protocols are encapsulated by PPP.
+			arap  - allows a port to perform as a network
+				interface using ARAP.
+			slave - allows a port to accept TCP connections
+				over the network.
+			connect - allows a port to communicate with a LAT
+				host via the connect command. 
+			rlogin - allows a port to communicate via the rlogin
+				command. 
+			telnet - allows a port to communicate via the
+				telnet command.
+			tn3270 - allows a port to communicate via the
+				tn3270 command."
+			::= { activecallEntry 22 }
+
+        actcallOwningBundle    	OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  deprecated
+                        DESCRIPTION
+                        "The identifier of the MP bundle that owns this
+                        PPP link."
+                        ::= { activecallEntry 23 }
+
+
+
+
+
+
+
+
+
+-- actCallTable has replaced activecallTable. The 
+-- new table is be indexed by the deviceType and the deviceNumber rather
+-- than wan and channel. This will make it possible to get information
+-- for virtual devices such as MP, VPN etc... 
+-- Another major difference is that it is now a sparse table. 
+
+	actCallTable	OBJECT-TYPE
+			SYNTAX	SEQUENCE OF ActCallEntry
+			ACCESS	not-accessible
+			STATUS  mandatory
+			DESCRIPTION
+			"A table of active call information."
+			::= { activecall 2 }
+
+	actCallEntry	OBJECT-TYPE
+			SYNTAX	ActCallEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+				"A row in the active call table."
+			INDEX	{ activeCallDeviceType, activeCallDeviceNumber }
+			::= { actCallTable 1 } 
+	
+	ActCallEntry	::= SEQUENCE {
+			activeCallDeviceType	   INTEGER,
+			activeCallDeviceNumber	   INTEGER,
+			activeCallUsername	   DisplayString,
+			activeCallCallingNumber	   DisplayString,
+			activeCallCalledNumber	   DisplayString,
+			activeCallSPBName	   DisplayString,
+			activeCallSubAddress	   DisplayString,
+			activeCallBearer	   INTEGER,
+			activeCallSetupTime	   INTEGER,
+			activeCallDuration	   INTEGER,
+			activeCalllocalin          DisplayString,
+			activeCallremotein         DisplayString,
+			activeCalllocalipx         DisplayString,
+			activeCallremoteipx        DisplayString,
+			activeCallConnectionType   INTEGER,
+			activeCallOctetsRx	   Counter,
+			activeCallOctetsTx	   Counter,
+			activeCallOrigin	   INTEGER,
+			activeCallCallState	   INTEGER,
+			activeCallConfiguredType   INTEGER,
+			activeCallOwningBundle     INTEGER,
+			activeCallWanIndex 	   INTEGER,
+			activeCallChanIndex	   INTEGER,
+			activeCallLocalAt	   DisplayString,
+			activeCallRemoteAt	   DisplayString
+			}
+
+	activeCallDeviceType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				asy(1),
+				syn(9),
+				ta(10),
+				mp(12),
+				vpn(13),
+				gen-sync-port(14)
+				}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"An enumerated integer indicating the port type. 
+			asy(1) - the call is assigned internally to an
+				asynchronous device (async port).
+			syn(9) - the call is handled internally by a
+				synchronous device (sync port).
+			ta(10) - the call is handled internally by a
+				ta device (ta port).
+			mp(12) - pseudo-session, Multi-link PPP bundle head.
+			vpn(13) - Virtual Private Network.
+			gen-sync(14) - General Sync port.
+
+			This object obsoletes the callSetupPortType object."
+			::= { actCallEntry 1 }
+
+	activeCallDeviceNumber	OBJECT-TYPE
+			SYNTAX	INTEGER 
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The one-based device (port) number the call
+			is assigned to. This object in conjunction with the 
+			object, actcallDeviceType, should be used to 
+			cross-reference the information displayed by the 
+			CLI command 'who'.
+
+			This object obsoletes the callSetupPortNumber object."
+			::= { actCallEntry 2 }
+
+	activeCallUsername	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..128))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Name of the user associated with this call. A
+			null string is returned if the call is active 
+			but the current user name cannot be determined at
+			the time of the call."
+		::= { actCallEntry 3 }
+
+	activeCallCallingNumber	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..29))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number from which this call was made.
+			Can be a null string.
+
+			This object obsoletes the callSetupCallingNbr object."
+		::= { actCallEntry 4 }
+
+	activeCallCalledNumber	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..29))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number to which this call was made. 
+			Can be a null string.
+
+			This object obsoletes the callSetupCalledNbr object."
+		::= { actCallEntry 5 }
+
+	activeCallSPBName	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..29))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Session Parameter Block name. The RAC determines how
+			to handle a call through the SPB. The SPB is defined in
+			the configuration file. When a call comes in, the RAC
+			tries to match the received setup information elements
+			that accompanied the call with the values in the
+			setup criteria section of the defined SPBs. The
+			first SPB that matches the call's setup criteria 
+			is used."
+		::= { actCallEntry 6 }
+
+
+	activeCallSubAddress	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..29))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The subaddress this call is connected to.
+			Can be a null string.
+
+			This object obsoletes the callSetupCalledSubAddr 
+			object."
+			::= { actCallEntry 7 }
+
+	activeCallBearer	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				missing(1),
+				voice(2),
+				data(3)
+				}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"This object defines the bearer capability of the 
+			incoming call. 
+
+			This object obsoletes the callSetupBearer object."
+			::= { actCallEntry 8 }
+
+	activeCallSetupTime	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The time that the call started.  This is RAC
+			system time, which is the same as Unix system
+			time: seconds since 0:00 January 1, 1970 UTC
+			(GMT).
+
+			This object obsoletes callSetupCallingTime."
+			::= { actCallEntry 9 }
+
+	activeCallDuration	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Duration of the phone call, in seconds."
+			::= { actCallEntry 10 }
+
+	activeCalllocalin	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..15))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The Internet (IP) address assigned to the RAC end
+			of a point-to-point link established during this call,
+			in dotted-decimal notation."
+			::= { actCallEntry 11 }
+	activeCallremotein	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..15))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The Internet (IP) address assigned to the far end
+			of a point-to-point link established during this call,
+			in dotted-decimal notation."
+			::= { actCallEntry 12 }
+	activeCalllocalipx	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (21))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The local IPX address assigned to this call."
+			::= { actCallEntry 13 }
+	activeCallremoteipx	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (21))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The remote IPX address assigned to this call."
+			::= { actCallEntry 14 }
+
+	activeCallConnectionType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+                                        none(1),
+                                        cli(2),
+                                        server(3),
+                                        rdp(4),
+                                        slip(5),
+                                        dedicated(6),
+                                        ldp(7),
+                                        ppp(8),
+                                        mp(9),
+                                        arap(10),
+                                        ftp(11),
+                                        ndp(12),
+                                        ipx(13),
+                                        dynamic-dial(14),
+                                        vpn(15),
+                                        ppp-sublet-from-cli(16)
+                        }
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The name of the client routine running on the
+			port at the time of this call."
+			::= { actCallEntry 15 }
+
+	activeCallOctetsRx	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of octets received during this call."
+			::= { actCallEntry 16 }
+
+	activeCallOctetsTx	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of octets transmitted during this call."
+			::= { actCallEntry 17 }
+
+	activeCallOrigin	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				incoming(1),
+				outgoing(2)
+				}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The call origin.
+			incoming(1) - the RAC answered an incoming call.
+			outgoing(2) - the RAC made the call.
+
+			This object obsoletes the callSetupCallType object."
+			::= { actCallEntry 18 }
+
+	activeCallCallState	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				invalid(1),
+				valid(2)
+				}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The current state of this call.
+			invalid(1)-call is inactive and the contents of this
+				table row are not valid.
+			valid(2)- call is active and contents of this table
+				row are valid."
+			::= { actCallEntry 19 }
+
+	activeCallConfiguredType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+			cli(1),
+			slave(2),
+			adaptive(3),
+			unused(4),
+			slip(5),
+			dedicated(6),
+			ppp(7),
+			arap(8),
+			printer(9),
+			auto-detect(10),
+			auto-adapt(11),
+			ndp(12),
+			ipx(13),
+			call(14),
+			connect(15),
+			rlogin(16),
+			telnet(17),
+			tn3270(18),
+			any(19)
+			}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The type (mode) of the port at the time of the
+                        connection.
+
+			cli   - allows an incoming session access to the CLI.
+				The CLI provides access to the network and 
+				connections to other hosts via the telnet,
+				connect, rlogin and tn3270 commands.
+			slip  - allows a port to perform as a network
+				interface using SLIP. IP packets are
+				encapsulated by SLIP.
+			ppp   - allows a port to perform as a network
+				interface using PPP. Packets of several
+				protocols are encapsulated by PPP.
+			arap  - allows a port to perform as a network
+				interface using ARAP.
+			slave - allows a port to accept TCP connections
+				over the network.
+			connect - allows a port to communicate with a LAT
+				host via the connect command. 
+			rlogin - allows a port to communicate via the rlogin
+				command. 
+			telnet - allows a port to communicate via the
+				telnet command.
+			tn3270 - allows a port to communicate via the
+				tn3270 command."
+			::= { actCallEntry 20 }
+
+        activeCallOwningBundle    	OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "The identifier of the MP bundle that owns this
+                        PPP link. This number will always be the same as
+			the mp device number. For example, mp17 devtype 
+			will have a owningBundle number of 17"
+                        ::= { actCallEntry 21 }
+
+        activeCallWanIndex	OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+			"The wan interface number"
+                        ::= { actCallEntry 22 }
+
+        activeCallChanIndex	OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+			"The channel number"
+                        ::= { actCallEntry 23 }
+
+	activeCallLocalAt	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..13))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The local AppleTalk address assigned to this call."
+			::= { actCallEntry 24 }
+
+	activeCallRemoteAt	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..13))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The remote AppleTalk address assigned to this call."
+			::= { actCallEntry 25 }
+
+-- Returns active modem call statistics
+
+	actCallAsyTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF ActCallAsyEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A table of modem call statistics indexed 
+			by the async device number (which is identical to
+			the modem number)"
+			::= { activecall 3 }
+
+	actCallAsyEntry OBJECT-TYPE
+			SYNTAX	ActCallAsyEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A row in the modem call statistics table."
+			INDEX	{ activeCallDeviceNumber }
+			::= { actCallAsyTable 1 }
+	
+	ActCallAsyEntry ::= SEQUENCE {
+			activeCallAsyBeginRxSpeed	INTEGER,
+			activeCallAsyCurrRxSpeed	INTEGER,
+			activeCallAsyBeginTxSpeed	INTEGER,
+			activeCallAsyCurrTxSpeed	INTEGER,
+			activeCallAsyTxBaudRate		INTEGER,
+			activeCallAsyRxBaudRate		INTEGER,
+			activeCallAsyCurrSignalQ	INTEGER,
+			activeCallAsyBeginRxLineLevel	INTEGER,
+			activeCallAsyCurrRxLineLevel	INTEGER,
+			activeCallAsyErrorProtocol	INTEGER,
+			activeCallAsyCompressionProtocol  INTEGER,
+			activeCallAsyTxPackets		Counter,
+			activeCallAsyTxPacketError	Counter,
+			activeCallAsyRxPackets		Counter,
+			activeCallAsyRxPacketError	Counter,
+			activeCallAsyRetrainReqSent	Counter,
+			activeCallAsyRetrainReqReceived	Counter,
+			activeCallAsyRRNReqReceived	Counter,
+			activeCallAsyRRNReqSent		Counter,
+			activeCallAsyRoundTripDelay	INTEGER,
+			activeCallAsyFarEndEchoFreq	INTEGER,
+			activeCallAsyFarEndEchoLevel	INTEGER,
+			activeCallAsyChanFreqOffset	INTEGER,
+			activeCallAsyOscFreqOffset	INTEGER,
+			activeCallAsySNR		INTEGER,
+			activeCallAsyx2Status		INTEGER,
+			activeCallAsyx2RbsStatus	INTEGER,
+			activeCallAsyx2DigitalPadStatus	INTEGER,
+			activeCallAsyk56Status		INTEGER,
+			activeCallAsyk56RbsStatus	INTEGER,
+			activeCallAsyk56DigitalPadStatus	INTEGER,
+			activeCallAsyk56Version		INTEGER,
+ 			activeCallAsyWANUnitNumber      INTEGER,
+			activeCallAsyChannel      	INTEGER,
+  	 		activeCallAsyCurrModulation	INTEGER,
+  	 		activeCallAsyCurrPumpState	INTEGER,
+  	 		activeCallAsyx2SpeedReduction	INTEGER,
+  	 		activeCallAsyk56SpeedReduction	INTEGER,
+                        activeCallAsyV90Status          INTEGER,
+                        activeCallAsyV90ConstellationIndex0     INTEGER,
+                        activeCallAsyV90ConstellationIndex1     INTEGER,
+                        activeCallAsyV90ConstellationIndex2     INTEGER,
+                        activeCallAsyV90ConstellationIndex3     INTEGER,
+                        activeCallAsyV90ConstellationIndex4     INTEGER,
+                        activeCallAsyV90ConstellationIndex5     INTEGER,
+                        activeCallAsyV90PADStatus       INTEGER,
+                        activeCallAsyV90ShapingBits     INTEGER,
+                        activeCallAsyV90LookAhead       INTEGER,
+                        activeCallAsyV90ConstellationPower      INTEGER,
+                        activeCallAsyV90HalfDuplexRRNRx         INTEGER
+			}
+	
+			-- reserved { activeCallAsyEntry 1 }
+
+			-- reserved { activeCallAsyEntry 2 }
+
+	activeCallAsyBeginRxSpeed	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The receive connect speed at the time the call was
+			established. 
+			Note: The agent will return zero if the modem is 
+			     not in a busy state."
+			::= { actCallAsyEntry 3 }
+
+	activeCallAsyCurrRxSpeed OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The current receive connect speed of the call."
+			::= { actCallAsyEntry 4 }
+
+	activeCallAsyBeginTxSpeed OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The transmit connect speed at the time the call was
+			established. 
+			Note: The agent will return zero if the modem is 
+			     not in a busy state."
+		::= { actCallAsyEntry 5 }
+
+	activeCallAsyCurrTxSpeed OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The current transmit connect speed of the call."
+			::= { actCallAsyEntry 6 }
+
+	activeCallAsyTxBaudRate OBJECT-TYPE
+			SYNTAX	INTEGER {
+				r2400(1),
+				r2743(2),
+				r2800(3),
+				r3000(4),
+				r3200(5),
+				r3429(6),
+				r8000(7)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The rate at which symbols that carry 
+			data are generated. Symbol rate limits and options 
+			apply to the modem v.34. Default is r2400(1)."
+			::= { actCallAsyEntry 7 }
+
+	activeCallAsyRxBaudRate OBJECT-TYPE
+			SYNTAX	INTEGER {
+				r2400(1),
+				r2743(2),
+				r2800(3),
+				r3000(4),
+				r3200(5),
+				r3429(6),
+				r8000(7)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The rate at which symbols that carry 
+			data are received. Symbol rate limits and options 
+			apply to the modem v.34. Default is r2400(1)."
+			::= { actCallAsyEntry 8 }
+
+--      activeCallAsyBeginSignalQ { actCallAsyEntry 9 } removed
+
+	activeCallAsyCurrSignalQ OBJECT-TYPE
+			SYNTAX	INTEGER (0..255)
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Current line signal quality.  This is a
+			unitless number derived from several line
+			characteristics.  Range is 0-255; 0 is good.
+			30 or less is reasonable."
+			::= { actCallAsyEntry 10 }
+
+	activeCallAsyBeginRxLineLevel OBJECT-TYPE
+			SYNTAX	INTEGER  (0..45)
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The receive signal level at the beginning of the call,
+			in dBm (ratio of receive level to a reference value).
+			The number returned by this MIB object is positive,
+			but it represents a negative number (ie, this object
+			returns the negative of the actual dBm).
+
+			Expected values are roughly -12 to -30.  Less than
+			-11 is bad; that signal is too strong, and causes
+			problems for the modem."
+			::= { actCallAsyEntry 11 }
+
+	activeCallAsyCurrRxLineLevel OBJECT-TYPE
+			SYNTAX	INTEGER (0..45)
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The current receive signal level of the call,
+			in dBm (ratio of receive level to a reference value).
+			The number returned by this MIB object is positive,
+			but it represents a negative number (ie, this object
+			returns the negative of the actual dBm).
+
+			Expected values are roughly -12 to -30.  Less than
+			-11 is bad; that signal is too strong, and causes
+			problems for the modem."
+			::= { actCallAsyEntry 12 }
+
+--      activeCallAsyBeginSignalQ { actCallAsyEntry 13 } removed
+
+	activeCallAsyErrorProtocol OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				buffer(2),
+				mnpclass2(3),
+				mnpclass3(4),
+				mnpclass4(5),
+				v42(6),
+				v42selrej(7)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Error correction protocol used by the modem."
+			::= { actCallAsyEntry 14 }
+
+	activeCallAsyCompressionProtocol OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				v42bis-decode(2),
+				v42bis-encode(3),
+				v42bis-encode-decode(4),
+				mnpclass5(5)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Data compression protocol used by the modem. The
+			compression protocol used by the modem is dependent 
+			on the error correction protocol used at the lower
+			layer."
+			::= { actCallAsyEntry 15 }
+
+	activeCallAsyTxPackets OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of LAPM packets sent by the modem.
+			This does not include retransmitted packets."
+			::= { actCallAsyEntry 16 }
+
+	activeCallAsyTxPacketError OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of LAPM packets retransmitted by 
+			the modem."
+			::= { actCallAsyEntry 17 }
+
+	activeCallAsyRxPackets OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of good LAPM packets
+			received by the modem."
+			::= { actCallAsyEntry 19 }
+
+	activeCallAsyRxPacketError OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of bad LAPM packets (with CRC errors)
+			received by the modem."
+			::= { actCallAsyEntry 20 }
+
+-- actCallAsyEntry 22 deleted
+
+	activeCallAsyRetrainReqSent OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of retrains requested by the modem for
+			this call."
+			::= { actCallAsyEntry 22 }
+
+	activeCallAsyRetrainReqReceived OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of retrain requests received by the modem 
+			from the remote modem for this call."
+			::= { actCallAsyEntry 23 }
+
+	activeCallAsyRRNReqReceived OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Number of rate renegotiation request (RRN) initiated
+			by the remote modem." 
+			::= { actCallAsyEntry 24 }
+
+	activeCallAsyRRNReqSent OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Number of rate renegotiation request (RRN) initiated
+			by this modem."
+			::= { actCallAsyEntry 25 }
+
+	activeCallAsyRoundTripDelay OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The round trip delay, in milliseconds, for this call.
+			This object alongwith the object, activeCallAsyFarEndEchoFreq,
+			gives the echo characteristics of the call."
+			::= { actCallAsyEntry 26 }
+
+	activeCallAsyFarEndEchoFreq OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Far end echo frequency offset, in Hertz. This object 
+			alongwith the object, activeCallAsyRoundTripDelay, 
+			gives the echo characteristics of the call."
+			::= { actCallAsyEntry 27 }
+
+	activeCallAsyFarEndEchoLevel OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Far end echo level, in decibels. The number 
+			represents the negative decibels."
+			::= { actCallAsyEntry 28 }
+
+	activeCallAsyChanFreqOffset OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Channel frequency offset, in Hertz."
+			::= { actCallAsyEntry 29 }
+
+	activeCallAsyOscFreqOffset OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Oscillator frequency offset, in PPM.
+			Not always valid."
+			::= { actCallAsyEntry 30 }
+
+	activeCallAsySNR OBJECT-TYPE
+			SYNTAX	INTEGER (0..80)
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Signal to noise ratio in decibels. Low is bad,
+			high is good. Zero means not valid: no current
+			connection, or connection is not V.34 (other
+			protocols don't calculate this)."
+			::= { actCallAsyEntry 31 }
+
+	 activeCallAsyx2Status OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"x2 phase bit map
+			---------------------
+		      	| 4 | 3 | 2 | 1 | 0 | bits
+			---------------------
+			|DM |P4 |P3 |P2 |P1 |
+			---------------------
+			
+			P1 = 1	Detected In Phase 1
+			P2 = 1  Detected In Phase 2
+			P3 = 1  X2 In Phase 3
+			P4 = 1  X2 In Phase 4
+			DM = 1  X2 In Data Mode"
+			::= { actCallAsyEntry 32 }
+
+
+	 activeCallAsyx2RbsStatus OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"x2 raw bit signalling, bit map
+			-------------------------
+		      	| 5 | 4 | 3 | 2 | 1 | 0 | bits
+			-------------------------
+			|S5 |S4 |S3 |S2 |S1 |S0 |
+			-------------------------
+
+			S0 = 1	RBS in symbol 0
+			S1 = 1	RBS in symbol 1
+			S2 = 1	RBS in symbol 2
+			S3 = 1	RBS in symbol 3
+			S4 = 1	RBS in symbol 4
+			S5 = 1	RBS in symbol 5
+			"
+			::= { actCallAsyEntry 33 }
+
+	 activeCallAsyx2DigitalPadStatus OBJECT-TYPE
+			SYNTAX	INTEGER {
+			none(1),
+			a3db(2),
+			a6db(3)
+			}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"x2 attenuation"
+			::= { actCallAsyEntry 34 }
+
+-- activeCallAsyx2Shaping { actCallAsyEntry 35 } deleted
+
+	 activeCallAsyk56Status OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"k56 phase bit map
+			---------------------
+		      	| 4 | 3 | 2 | 1 | 0 | bits
+			---------------------
+			|DM |P4 |P3 |P2 |P1 |
+			---------------------
+			
+			P1 = 1	Detected In Phase 1
+			P2 = 1  Detected In Phase 2
+			P3 = 1  K56 In Phase 3
+			P4 = 1  K56 In Phase 4
+			DM = 1  K56 In Data Mode"
+			::= { actCallAsyEntry 36 }
+
+
+	 activeCallAsyk56RbsStatus OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"k56 raw bit signalling, bit map
+			-------------------------
+		      	| 5 | 4 | 3 | 2 | 1 | 0 | bits
+			-------------------------
+			|S5 |S4 |S3 |S2 |S1 |S0 |
+			-------------------------
+
+			S0 = 1	RBS in symbol 0
+			S1 = 1	RBS in symbol 1
+			S2 = 1	RBS in symbol 2
+			S3 = 1	RBS in symbol 3
+			S4 = 1	RBS in symbol 4
+			S5 = 1	RBS in symbol 5
+			"
+			::= { actCallAsyEntry 37 }
+
+	 activeCallAsyk56DigitalPadStatus OBJECT-TYPE
+			SYNTAX	INTEGER {
+			none(1),
+			a3db(2),
+			a6db(3)
+			}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"k56 attenuation"
+			::= { actCallAsyEntry 38 }
+
+-- activeCallAsyk56Shaping { actCallAsyEntry 39 } deleted
+
+	 activeCallAsyk56Version OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			" k56 version number"
+			::= { actCallAsyEntry 40 }
+
+	 activeCallAsyWANUnitNumber OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The physical WAN module unit number in the RAC 
+			that uses WAN modules. The range is 1 to anxt1Total.
+			Use anxt1WanModuleTable to retrieve the unit's
+			ifIndex number.(For R14.1 and later releases, 
+			WAN1=1001 and WAN2 = 1002 always" 
+			::= { actCallAsyEntry 41 }
+
+	 activeCallAsyChannel OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"A number from 1 to anxt1TotChan that identifies 
+			which DS0 channel handled the call."
+			::= { actCallAsyEntry 42 }
+
+  	 activeCallAsyCurrModulation OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				v34(2),
+				v32-v32bis(3),
+				v22bis(4),
+				x2(5),
+				k56(6),
+				itu-tPCM(7)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Beginning negotiated modulation mode." 
+                        ::= { actCallAsyEntry 43 }
+
+  	 activeCallAsyCurrPumpState OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"End pump status."
+                        ::= { actCallAsyEntry 44 }
+
+  	 activeCallAsyx2SpeedReduction OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Speed reduction due to spectral shaping:
+			0 no speed reduction
+			1 speed reduction of 1.333 kBps
+			2 speed reduction of 2.666 kBps
+			3 speed reduction of 4.0 kBps
+			4 speed reduction of 5.333 kBps
+			5 speed reduction of 6.666 kBps
+			6 speed reduction of 8.0 kBps"
+                        ::= { actCallAsyEntry 45 }
+
+  	 activeCallAsyk56SpeedReduction OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Speed reduction due to robbed bits:
+			0 no speed reduction
+			1 speed reduction of 2.0 kBps
+			2 speed reduction of 4.0 kBps
+			3 speed reduction of 6.0 kBps
+			4 speed reduction of 8.0 kBps"
+                        ::= { actCallAsyEntry 46 }
+
+         activeCallAsyV90Status OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "V90 status (this is a bitmap):
+                        1  = currently in V90 mode
+                        2  = V90 detected in phase 1
+                        4  = V90 detected in phase 2
+                        8  = V90 through phase 3
+                        16 = V90 through phase 4
+                        32 = V90 in data mode
+                        64 = V90 data mode at least once "
+                        ::= { actCallAsyEntry 47 }
+ 
+         activeCallAsyV90ConstellationIndex0 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 0."
+                        ::= { actCallAsyEntry 48 }
+ 
+         activeCallAsyV90ConstellationIndex1 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 1"
+                        ::= { actCallAsyEntry 49 }
+ 
+         activeCallAsyV90ConstellationIndex2 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 2"
+                        ::= { actCallAsyEntry 50 }
+ 
+         activeCallAsyV90ConstellationIndex3 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 3"
+                        ::= { actCallAsyEntry 51 }
+ 
+         activeCallAsyV90ConstellationIndex4 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 4"
+                        ::= { actCallAsyEntry 52 }
+ 
+         activeCallAsyV90ConstellationIndex5 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 5"
+                        ::= { actCallAsyEntry 53 }
+ 
+         activeCallAsyV90PADStatus OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Digital attenuation in dB."
+                        ::= { actCallAsyEntry 54 }
+ 
+         activeCallAsyV90ShapingBits OBJECT-TYPE
+                        SYNTAX  INTEGER (0..3)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Number of CSS redundancy bits."
+                        ::= { actCallAsyEntry 55 }
+ 
+         activeCallAsyV90LookAhead OBJECT-TYPE
+                        SYNTAX  INTEGER (0..3)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Number of look ahead CSS frames."
+                        ::= { actCallAsyEntry 56 }
+ 
+         activeCallAsyV90ConstellationPower OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "V90 constellation power in -dBm."
+                        ::= { actCallAsyEntry 57 }
+ 
+         activeCallAsyV90HalfDuplexRRNRx OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Number of received half-duplex RRNs."
+                        ::= { actCallAsyEntry 58 }
+ 
+
+-- Returns active TA call statistics
+
+	actCallTaTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF ActCallTaEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A table of TA call statistics indexed 
+			by the TA device number."
+			::= { activecall 4 }
+
+	actCallTaEntry OBJECT-TYPE
+			SYNTAX	ActCallTaEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A row in the TA call statistics table."
+			INDEX	{ activeCallDeviceNumber }
+			::= { actCallTaTable 1 }
+	
+	ActCallTaEntry ::= SEQUENCE {
+			activeCallTaSpeed	INTEGER
+			}
+	activeCallTaSpeed	OBJECT-TYPE
+			SYNTAX	INTEGER 
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The receive connect speed at the time the call was
+			established."
+			::= { actCallTaEntry 1 }
+
+
+-- Returns active Sync call statistics
+
+	actCallSyncTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF ActCallSyncEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A table of Sync call statistics indexed 
+			by the Sync device number."
+			::= { activecall 5 }
+
+	actCallSyncEntry OBJECT-TYPE
+			SYNTAX	ActCallSyncEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A row in the Sync call statistics table."
+			INDEX	{ activeCallDeviceNumber }
+			::= { actCallSyncTable 1 }
+	
+	ActCallSyncEntry ::= SEQUENCE {
+			activeCallSyncSpeed	INTEGER
+			}
+	activeCallSyncSpeed	OBJECT-TYPE
+			SYNTAX	INTEGER 
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The receive connect speed at the time the call was
+			established."
+			::= { actCallSyncEntry 1 }
+
+-- This table is will contain data for the active devices'
+-- specific MP sessions.
+ 
+        actCallMpTable OBJECT-TYPE
+                        SYNTAX  SEQUENCE OF ActCallMpEntry
+                        ACCESS not-accessible
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "A table of call history MP information/statistics."
+                        ::= { activecall 6 }
+ 
+        actCallMpEntry OBJECT-TYPE
+                        SYNTAX  ActCallMpEntry
+                        ACCESS  not-accessible
+                        STATUS  mandatory
+                        DESCRIPTION
+                                "A row in the call history MP table."
+			INDEX	{ activeCallDeviceNumber }
+                        ::= { actCallMpTable 1 }
+ 
+        ActCallMpEntry ::= SEQUENCE {
+                        activeCallMpBundleIdx     INTEGER
+                        }
+        activeCallMpBundleIdx     OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "The identifier of this MP bundle."
+                        ::= { actCallMpEntry 1 }
+				
+-- The call history table. The objects in callHistTable are kept for
+-- all types of calls (modem, ta, sync) on the WAN interface.  Depending 
+-- on the device type the call was assigned to, the device specific 
+-- statistics can be retrieved from the appropriate MIB table. For example,
+-- if the call was assigned to a modem (a async. type of device), then 
+-- callHistAsyTable MIB table will give the call's modem specific statistics.  
+-- MIB objects for ta and sync calls are not yet defined.  The maximum
+-- size of the table is defined by the value of callHistMaxCalls.
+
+
+	callHistMaxCalls OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-write
+			STATUS	mandatory
+			DESCRIPTION
+			"The maximum number of calls for which history is kept
+			by the RAC. Default is 0. 
+			Note: Assigning an arbitrarily large value to this
+			object could affect the performance of the box due
+			to memory being used to maintain this table.
+			Each call record uses about 500 bytes of RAC memory."
+			::= { callHist 1 }
+
+	callHistStartIdx OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The beginning (lowest) value of callHistIndex
+			currently in the call history table.  This is the
+			oldest call currently in the table.  Note this value 
+			could change at any time since the table could have 
+			new calls added to it and old calls dropping off the 
+			table."
+			::= { callHist 2 }
+
+	callHistEndIdx OBJECT-TYPE
+			SYNTAX INTEGER
+			ACCESS read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The end (highest) value of callHistIndex
+			in the call history table. Note this value could
+			change at any time since the table will have new 
+			calls added whenever a call terminates."
+			::= { callHist 3 }
+
+	callHistTable	OBJECT-TYPE
+			SYNTAX SEQUENCE OF CallHistEntry
+		        ACCESS not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A table of call history information.
+			
+			You should view this table as either a circular
+			buffer or a sliding window whose size is specified
+			by callHistMaxCalls.  When the table is full and
+			a call terminates, the information for the oldest 
+			call in the table is discarded and the new call
+			information is added.  The callHistStartIdx value
+			is changed whenever a call's information is discarded.
+			The callHistEndIdx value is changed whenever a
+			call's information is added to the table."
+			::= { callHist 4 }
+
+	callHistEntry	OBJECT-TYPE
+			SYNTAX	CallHistEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A row in the call history table."
+			INDEX	{ callHistIndex } 
+			::= { callHistTable 1 }
+
+	CallHistEntry	::= SEQUENCE {
+			callHistIndex		INTEGER,
+			callHistUsername	DisplayString,
+			callHistCallingNumber	DisplayString,
+			callHistCalledNumber	DisplayString,
+			callHistSPBName		DisplayString,
+			callHistWANUnitNumber	INTEGER,
+			callHistChannel		INTEGER,
+			callHistDeviceType	INTEGER,
+			callHistDeviceNumber	INTEGER,
+			callHistSubAddress	DisplayString,
+			callHistBearer		INTEGER,
+			callHistSetupTime	INTEGER,
+			callHistDuration	INTEGER,
+			callHistlocalin         DisplayString,
+			callHistremotein        DisplayString,
+			callHistlocalat         DisplayString,
+			callHistremoteat        DisplayString,
+			callHistlocalipx        DisplayString,
+			callHistremoteipx       DisplayString,
+			callHistConnectionType	INTEGER,
+			callHistOctetsRx	Counter,
+			callHistOctetsTx	Counter,
+			callHistOrigin		INTEGER,
+			callHistDisconnectReason	INTEGER,
+			callHistConfiguredType	INTEGER,
+			callHistCompositeDisconnect	INTEGER,
+			callHistOwningBundle	INTEGER
+			}
+
+	callHistIndex	OBJECT-TYPE
+			SYNTAX	INTEGER (1..'7fffffff'h) -- 2147483647 
+			ACCESS  read-only
+			STATUS mandatory
+			DESCRIPTION
+			"A unique identifier assigned to a call in the
+			call history table. When a call terminates,
+			its call record is moved from the active call
+			table to the call history table, and the next
+			higher history index number is assigned to it."
+			::= { callHistEntry 1 }
+
+	callHistUsername	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..128))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Name of the user associated with this call.
+			Can be a null string.
+			
+			This object obsoletes anxmStatsUsername."
+			::= { callHistEntry 2 }
+
+	callHistCallingNumber	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..29))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number from which this call was made.
+			Can be a null string."
+			::= { callHistEntry 3 }
+
+	callHistCalledNumber	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..29))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number to which this call was made.
+			Can be a null string.
+			
+			This object obsoletes anxmStatsNumber."
+			::= { callHistEntry 4 }
+
+	callHistSPBName	OBJECT-TYPE
+			SYNTAX	DisplayString	(SIZE (0..29))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Session Parameter Block name used when answering
+			the call.  Can be a null string."
+			::= { callHistEntry 5 }
+
+	callHistWANUnitNumber	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The physical WAN module unit number in the RAC 
+			that uses WAN modules. The range is 1 to anxt1Total.
+			Use anxt1WanModuleTable to retrieve the unit's
+			ifIndex number." 
+			::= { callHistEntry 6 }
+
+	callHistChannel	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"A number from 1 to anxt1TotChan that identifies 
+			which DS0 channel handled the call."
+			::= { callHistEntry 7 }
+
+	callHistDeviceType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				asy(1),
+				syn(9),
+				ta(10),
+				mp(12)
+				}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"An enumerated integer indicating the port 
+			type. 
+			asy(1) - the call was assigned internally to an
+				asynchronous device (async port).
+			syn(9) - the call was handled internally by a
+				synchronous device (sync port).
+			ta(10) - the call was handled internally by a
+				ta device (ta port).
+			mp(12) - pseudo-session, Multi-link PPP bundle head."
+			::= { callHistEntry 8 }
+
+	callHistDeviceNumber	OBJECT-TYPE
+			SYNTAX	INTEGER 
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The 1-based device (port) number the call
+			was assigned to. This object in conjunction with the 
+			object, callHistDeviceType, should be used to 
+			cross-reference the information displayed by the 
+			CLI command 'who'.
+			
+			This object obsoletes anxmStatsPort."
+			::= { callHistEntry 9 }
+
+	callHistSubAddress	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..29))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The subaddress this call was connected to.
+			Can be a null string."
+			::= { callHistEntry 10 }
+
+	callHistBearer	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				missing(1),
+				voice(2),
+				data(3)
+				}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"This object defines the bearer capability of the 
+			incoming call. "
+			::= { callHistEntry 11 }
+
+	callHistSetupTime	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The time that the call started.  This is RAC
+			system time, which is the same as Unix system
+			time: seconds since 0:00 January 1, 1970 UTC
+			(GMT).
+			
+			This object obsoletes anxmStatsTime."
+			::= { callHistEntry 12 }
+
+	callHistDuration	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Duration of the call, in seconds.
+			
+			This object obsoletes anxmStatsDuration."
+			::= { callHistEntry 13 }
+
+	 callHistlocalin	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE(0..15))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The Internet (IP) address assigned to the RAC end
+			of a point-to-point link established during this call,
+			in dotted-decimal notation."
+			::= { callHistEntry 14 }
+	callHistremotein	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE(0..15))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The Internet (IP) address assigned to the far end
+			of a point-to-point link established during this call,
+			in dotted-decimal notation."
+			::= { callHistEntry 15 }
+	callHistlocalat	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..13))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The local AppleTalk address assigned to this call."
+			::= { callHistEntry 16 }
+	callHistremoteat	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (0..13))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The remote AppleTalk address assigned to this call."
+			::= { callHistEntry 17 }
+	callHistlocalipx	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (21))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The local IPX address assigned to this call."
+			::= { callHistEntry 18 }
+	callHistremoteipx	OBJECT-TYPE
+			SYNTAX	DisplayString (SIZE (21))
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The remote IPX address assigned to this call."
+			::= { callHistEntry 19 }
+
+	callHistConnectionType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				cli(2),
+				server(3),
+				rdp(4),
+				slip(5),
+				dedicated(6),
+				ldp(7),
+				ppp(8),
+				mp(9),
+				arap(10),
+				ftp(11),
+				ndp(12),
+				ipx(13),
+				dynamic-dial(14),
+				vpn(15),
+				ppp-sublet-from-cli(16)
+                        }
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The name of the client routine running on the
+			port at the time of this call."
+			::= { callHistEntry 20 }
+
+	callHistOctetsRx	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of octets received during this call."
+			::= { callHistEntry 21 }
+
+	callHistOctetsTx	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of octets transmitted during this call."
+			::= { callHistEntry 22 }
+
+
+	callHistOrigin	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				incoming(1),
+				outgoing(2)
+				}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The call origin.
+			incoming(1) - the RAC answered an incoming call.
+			outgoing(2) - the call was made by the RAC.
+
+			This object deprecates callSetupCallType object."
+			::= { callHistEntry 23 }
+
+	callHistDisconnectReason	OBJECT-TYPE
+			SYNTAX	INTEGER	{
+				unknown(1),
+				telDisc(2),
+				dialFailed(3),
+				wanmgrErr(4),
+				reset(5),
+				admErrornext(6),
+				admModDown(7),
+				pppTerm(8),
+				inactivity(9),
+				hangupCmd(10),
+				lastJob(11),
+				maxLogon(12),
+				slaveNormal(13),
+				slaveError(14),
+				noCarrier(15),
+				cliInactivity(16),
+				portReset(17),
+				cliAuthFail(18),
+				slaveAuthFail(19),
+				pppPapFail(20),
+				pppChapFail(21),
+				modemReset(22),
+				deadModemReset(23),
+                                pppLcpFail(24),
+                                pppLastNcpFailIpcp(25),
+                                pppLastNcpFailIpxcp(26),
+                                pppLastNcpFailAtcp(27),
+                                pppLastNcpFailCcp(28),
+                                pppLastNcpFailMp(29),
+                                pppLastNcpToIpcp(30),
+                                pppLastNcpToIpxcp(31),
+                                pppLastNcpToAtcp(32),
+                                pppLastNcpToCcp(33),
+                                pppLastNcpToMp(34),
+                                pppInitFailed(35),
+                                pppUnknownCode(36),
+                                pppDialback(37),   
+                                pppAddrInuse(38),
+                                pppNoDevice(39),
+                                pppModSigHangup(40),
+                                pppSigHangup(41),
+                                pppSigTerm(42),
+                                pppSigKill(43), 
+                                pppSigTime(44),
+                                pppNoMem(45),
+                                pppConnAbort(46),
+                                pppVpnLcpFail(47),
+                                pppVpnAuthFail(48),
+                                pppMpBadPortCfg(49),
+                                pppInvOpDevType(50),
+                                mmpBunDiscFail(51),
+                                dvsRegFail(52),
+                                dvsHaDereg(53),
+                                dvsTnlNoRenew(54),
+                                dvsTnlExpire(55),
+                                l2tpCallFail(56),
+                                l2tpCallDiscNotify(57),
+                                dialTimedout(58),
+                                camponError(59),
+                                preempted(60),
+                                pppBunLinkErr(61),
+				clidialbackrequest(62)
+			}		
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Call disconnect reasons:
+			unknown
+			telDisc		got telephone disconnect (hangup)
+			dialFailed
+			wanmgrErr	internal error, shouldn't happen
+			reset		WAN/channel reset
+			admErrornext	general internal mechanism to end call
+			admModDown	DSR or DCD went down
+			pppTerm		PPP protocol disconnect
+			inactivity	inactivity timer ran out
+			hangupCmd	CLI command 'hangup'
+			lastJob		CLI last-job
+			maxLogon	max logon timer ran out
+			slaveNormal	normal slave termination
+			slaveError	abnormal slave termination
+			noCarrier	modem failed to establish a connection
+			cliInactivity	cli_inactivity timer ran out
+			portReset	port was reset
+			cliAuthFail	CLI authorization failed
+			slaveAuthFail	slave port authorization failed
+			pppPapFail	PPP PAP failed
+			pppChapFail	PPP CHAP failed
+			modemReset	internal modem was reset
+			deadModemReset	internal modem was reset because it was
+					not responding"
+			::= { callHistEntry 24 }
+
+	callHistConfiguredType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+			cli(1),
+			slave(2),
+			adaptive(3),
+			unused(4),
+			slip(5),
+			dedicated(6),
+			ppp(7),
+			arap(8),
+			printer(9),
+			auto-detect(10),
+			auto-adapt(11),
+			ndp(12),
+			ipx(13),
+			call(14),
+			connect(15),
+			rlogin(16),
+			telnet(17),
+			tn3270(18),
+			any(19)
+			}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The type (mode) of the port at the time of the
+                        connection.
+
+			cli   - allows an incoming session access to the CLI.
+				The CLI provides access to the network and 
+				connections to other hosts via the telnet,
+				connect, rlogin and tn3270 commands.
+			slip  - allows a port to perform as a network
+				interface using SLIP. IP packets are
+				encapsulated by SLIP.
+			ppp   - allows a port to perform as a network
+				interface using PPP. Packets of several
+				protocols are encapsulated by PPP.
+			arap  - allows a port to perform as a network
+				interface using ARAP.
+			slave - allows a port to accept TCP connections
+				over the network.
+			connect - allows a port to communicate with a LAT
+				host via the connect command. 
+			rlogin - allows a port to communicate via the rlogin
+				command. 
+			telnet - allows a port to communicate via the
+				telnet command.
+			tn3270 - allows a port to communicate via the
+				tn3270 command."
+			::= { callHistEntry 25 }
+
+	callHistCompositeDisconnect	OBJECT-TYPE
+			SYNTAX	INTEGER	{
+--			Following values from callHistDisconnectReason.
+				unknown(1),
+				telDisc(2),
+				dialFailed(3),
+				wanmgrErr(4),
+				reset(5),
+				admErrornext(6),
+				admModDown(7),
+				pppTerm(8),
+				inactivity(9),
+				hangupCmd(10),
+				lastJob(11),
+				maxLogon(12),
+				slaveNormal(13),
+				slaveError(14),
+				noCarrier(15),
+				cliInactivity(16),
+				portReset(17),
+				cliAuthFail(18),
+				slaveAuthFail(19),
+				pppPapFail(20),
+				pppChapFail(21),
+				modemReset(22),
+				deadModemReset(23),
+                                pppLcpFail(24),
+                                pppLastNcpFailIpcp(25),
+                                pppLastNcpFailIpxcp(26),
+                                pppLastNcpFailAtcp(27),
+                                pppLastNcpFailCcp(28),
+                                pppLastNcpFailMp(29),
+                                pppLastNcpToIpcp(30),
+                                pppLastNcpToIpxcp(31),
+                                pppLastNcpToAtcp(32),
+                                pppLastNcpToCcp(33),
+                                pppLastNcpToMp(34),
+                                pppInitFailed(35),
+                                pppUnknownCode(36),
+                                pppDialback(37),   
+                                pppAddrInuse(38),
+                                pppNoDevice(39),
+                                pppModSigHangup(40),
+                                pppSigHangup(41),
+                                pppSigTerm(42),
+                                pppSigKill(43), 
+                                pppSigTime(44),
+                                pppNoMem(45),
+                                pppConnAbort(46),
+                                pppVpnLcpFail(47),
+                                pppVpnAuthFail(48),
+                                pppMpBadPortCfg(49),
+                                pppInvOpDevType(50),
+                                mmpBunDiscFail(51),
+                                dvsRegFail(52),
+                                dvsHaDereg(53),
+                                dvsTnlNoRenew(54),
+                                dvsTnlExpire(55),
+                                l2tpCallFail(56),
+                                l2tpCallDiscNotify(57),
+				clidialbackrequest(58),
+--			Following from callHistAsyMdmDisconnectReason,
+--			+ 100,000 to avoid collisions.
+--			Modem unknown reason does not occur here.
+				mdm-local-host-disconnect(100002),
+				mdm-cd-timer-expired(100003),
+				mdm-protocol-disconnect(100004),
+				mdm-proto-discon-remote-mdm(100005),
+				mdm-cleardown(100006),
+				mdm-long-space-disconnect(100007),
+				mdm-carrier-lost(100008),
+				mdm-retrain-timeout(100009)
+			}		
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Composite call disconnect reason.  Either system or
+			modem disconnect reason (callHistDisconnectReason or
+			callHistAsyMdmDisconnectReason).  Modem reasons have
+			100,000 added to avoid collisions (since SNMP does
+			not allow enum values to be negative).  The modem
+			version of 'unknown' does not occur here."
+			::= { callHistEntry 26 }
+
+        callHistOwningBundle    OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "The identifier of the MP bundle that owns this
+                        PPP link."
+                        ::= { callHistEntry 27 }
+
+
+-- This table is valid only for calls on digital modems. Thus
+-- if the callHistDeviceType is asy(1) then this table will have
+-- a corresponding entry for the call history statistics/information.
+
+	callHistAsyTable	OBJECT-TYPE
+			SYNTAX	SEQUENCE OF CallHistAsyEntry
+		        ACCESS not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+			"A table of call history asynchronous 
+			information/statistics."
+			::= { callHist 5 }
+
+	callHistAsyEntry	OBJECT-TYPE
+			SYNTAX	CallHistAsyEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+				"A row in the call history async. table."
+			INDEX	{ callHistIndex }
+			::= { callHistAsyTable 1 }
+	
+	CallHistAsyEntry	::= SEQUENCE {
+			callHistAsyBeginRxSpeed		INTEGER,
+			callHistAsyEndRxSpeed		INTEGER,
+			callHistAsyBeginTxSpeed		INTEGER,
+			callHistAsyEndTxSpeed		INTEGER,
+			callHistAsyTxBaudRate		INTEGER,
+			callHistAsyRxBaudRate		INTEGER,
+			callHistAsyBeginSignalQ		INTEGER,
+			callHistAsyEndSignalQ		INTEGER,
+			callHistAsyBeginRxLineLevel	INTEGER,
+			callHistAsyEndRxLineLevel	INTEGER,
+			callHistAsyModulationMode	INTEGER,
+			callHistAsyErrorProtocol	INTEGER,
+			callHistAsyCompressionProtocol  INTEGER,
+			callHistAsyTxPackets		Counter,
+			callHistAsyTxPacketError	Counter,
+			callHistAsyRxPackets		Counter,
+			callHistAsyRxPacketError	Counter,
+			callHistAsyRetrainReqSent	Counter,
+			callHistAsyRetrainReqReceived	Counter,
+			callHistAsyRRNReqReceived	Counter,
+			callHistAsyRRNReqSent		Counter,
+			callHistAsyRoundTripDelay	INTEGER,
+			callHistAsyFarEndEchoFreq	INTEGER,
+			callHistAsyFarEndEchoLevel	INTEGER,
+			callHistAsyChanFreqOffset	INTEGER,
+			callHistAsyOscFreqOffset	INTEGER,
+			callHistAsySNR			INTEGER,
+			callHistAsyMdmDisconnectReason	INTEGER,
+			callHistAsyx2Status             INTEGER,
+			callHistAsyx2RbsStatus		INTEGER,
+			callHistAsyx2DigitalPadStatus   INTEGER,
+			callHistAsyx2Shaping		INTEGER,
+			callHistAsyk56Status            INTEGER,
+			callHistAsyk56RbsStatus		INTEGER,
+			callHistAsyk56DigitalPadStatus  INTEGER,
+			callHistAsyk56Shaping		INTEGER,
+			callHistAsyk56Version		INTEGER,
+			callHistAsySignalQ		INTEGER,
+			callHistAsyBeginModulation    	INTEGER,
+			callHistAsyEndModulation    	INTEGER,
+			callHistAsyEndPumpState		INTEGER,
+			callHistAsyx2SpeedReduction	INTEGER,
+			callHistAsyk56SpeedReduction	INTEGER,
+                        callHistAsyV90Status            INTEGER,
+                        callHistAsyV90ConstellationIndex0       INTEGER,
+                        callHistAsyV90ConstellationIndex1       INTEGER,
+                        callHistAsyV90ConstellationIndex2       INTEGER,
+                        callHistAsyV90ConstellationIndex3       INTEGER,
+                        callHistAsyV90ConstellationIndex4       INTEGER,
+                        callHistAsyV90ConstellationIndex5       INTEGER,
+                        callHistAsyV90PADStatus         INTEGER,
+                        callHistAsyV90ShapingBits       INTEGER,
+                        callHistAsyV90LookAhead         INTEGER,
+                        callHistAsyV90ConstellationPower        INTEGER,
+                        callHistAsyV90HalfDuplexRRNRx   INTEGER
+			}
+	callHistAsyBeginRxSpeed	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The receive connect speed when the modem connection
+			was established."
+			::= { callHistAsyEntry 1 }
+
+	callHistAsyEndRxSpeed	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The ending receive connect speed of the call."
+			::= { callHistAsyEntry 2 }
+
+	callHistAsyBeginTxSpeed	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The transmit connect speed when the modem connection
+			was established."
+			::= { callHistAsyEntry 3 }
+
+	callHistAsyEndTxSpeed	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+				}
+		ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The ending transmit connect speed of the call."
+			::= { callHistAsyEntry 4 }
+
+	callHistAsyTxBaudRate	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				r2400(1),
+				r2743(2),
+				r2800(3),
+				r3000(4),
+				r3200(5),
+				r3429(6),
+				r8000(7)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The transmit rate at which symbols that carry 
+			data are generated. Symbol rate limits and options 
+			apply to V.34. Default is r2400(1)."
+			::= { callHistAsyEntry 5 }
+
+	callHistAsyRxBaudRate	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				r2400(1),
+				r2743(2),
+				r2800(3),
+				r3000(4),
+				r3200(5),
+				r3429(6),
+				r8000(7)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The received rate at which symbols that carry 
+			data are received. Symbol rate limits and options 
+			apply to V.34. Default is r2400(1)."
+			::= { callHistAsyEntry 6 }
+	
+
+	callHistAsyBeginSignalQ	OBJECT-TYPE
+			SYNTAX	INTEGER (0..255)
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Line signal quality at the beginning of the
+			call. This is a unitless number derived from
+			several line characteristics.  Range is 0-255;
+			0 is good.  30 or less is reasonable."
+			::= { callHistAsyEntry 7 }
+
+	callHistAsyEndSignalQ	OBJECT-TYPE
+			SYNTAX	INTEGER (0..255)
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Line signal quality at the end of the
+			call. This is a unitless number derived from
+			several line characteristics.  Range is 0-255;
+			0 is good.  30 or less is reasonable."
+			::= { callHistAsyEntry 8 }
+
+	callHistAsyBeginRxLineLevel	OBJECT-TYPE
+			SYNTAX	INTEGER (0..45)
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The receive signal level at the beginning of the call,
+			in dBm (ratio of receive level to a reference value).
+			The number returned by this MIB object is positive,
+			but it represents a negative number (ie, this object
+			returns the negative of the actual dBm).
+
+			Expected values are roughly -12 to -30.  Less than
+			-11 is bad; that signal is too strong, and causes
+			problems for the modem."
+			::= { callHistAsyEntry 9 }
+
+	callHistAsyEndRxLineLevel	OBJECT-TYPE
+			SYNTAX	INTEGER (0..45)
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The receive signal level at the end of the call,
+			in dBm (ratio of receive level to a reference value).
+			The number returned by this MIB object is positive,
+			but it represents a negative number (ie, this object
+			returns the negative of the actual dBm).
+
+			Expected values are roughly -12 to -30.  Less than
+			-11 is bad; that signal is too strong, and causes
+			problems for the modem."
+			::= { callHistAsyEntry 10 }
+
+	callHistAsyModulationMode	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				v34(2),
+				v32-v32bis(3),
+				v22bis(4),
+				x2(5),
+				k56(6),
+				itu-tPCM(7)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Negotiated modulation mode." 
+			::= { callHistAsyEntry 11 }
+
+	callHistAsyErrorProtocol	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				buffer(2),
+				mnpclass2(3),
+				mnpclass3(4),
+				mnpclass4(5),
+				v42(6),
+				v42selrej(7)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Error correction protocol used by the modem."
+			::= { callHistAsyEntry 12 }
+
+
+	callHistAsyCompressionProtocol	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				v42bis-decode(2),
+				v42bis-encode(3),
+				v42bis-encode-decode(4),
+				mnpclass5(5)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Data compression protocol used by the modem. The
+			compression protocol used by the modem is dependent 
+			on the error correction protocol used at the lower
+			layer." 
+			::= { callHistAsyEntry 13 }
+
+	callHistAsyTxPackets	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of LAPM packets sent by the modem.
+			This does not include retransmitted packets."
+			::= { callHistAsyEntry 14 }
+
+	callHistAsyTxPacketError	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of LAPM packets retransmitted by 
+			the modem."
+			::= { callHistAsyEntry 15 }
+
+ --	{ callHistAsyEntry 16 } is reserved
+
+	callHistAsyRxPackets	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of good LAPM packets
+			received by the modem."
+			::= { callHistAsyEntry 17 }
+
+	callHistAsyRxPacketError	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of bad LAPM packets (with CRC errors)
+			received by the modem."
+			::= { callHistAsyEntry 18 }
+
+ --	{ callHistAsyEntry 19 } is reserved
+
+	callHistAsyRetrainReqSent	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of retrains requested by the modem for
+			this call." 
+			::= { callHistAsyEntry 20 }
+
+	callHistAsyRetrainReqReceived	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The number of retrain requests received by the modem 
+			from the remote modem for this call." 
+			::= { callHistAsyEntry 21 }
+
+	callHistAsyRRNReqReceived	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Number of rate renegotiation request (RRN) initiated
+			by the remote modem." 
+			::= { callHistAsyEntry 22 }
+
+	callHistAsyRRNReqSent	OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Number of rate renegotiation request (RRN) initiated
+			by this modem." 
+			::= { callHistAsyEntry 23 }
+
+	callHistAsyRoundTripDelay	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The round trip delay, in milliseconds, for this call.
+			This object, along with the object
+			callHistAsyFarEndEchoFreq,
+			gives the echo characteristics of the call."
+			::= { callHistAsyEntry 24 }
+
+	callHistAsyFarEndEchoFreq	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Far end echo frequency offset, in Hertz. This object, 
+			along with the object callHistAsyRoundTripDelay, 
+			gives the echo characteristics of the call."
+			::= { callHistAsyEntry 25 }
+
+	callHistAsyFarEndEchoLevel	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Far end echo level, in decibels. The number 
+			represents the negative decibels."
+			::= { callHistAsyEntry 26 }
+
+	callHistAsyChanFreqOffset	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Channel frequency offset, in Hertz."
+			::= { callHistAsyEntry 27 }
+
+	callHistAsyOscFreqOffset	OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Oscillator frequency offset, in PPM.
+			Not always valid."
+			::= { callHistAsyEntry 28 }
+
+	callHistAsySNR	OBJECT-TYPE
+			SYNTAX	INTEGER (0..80)
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Signal to noise ratio in decibels. Low is bad,
+			high is good. Zero means not valid: no current
+			connection, or connection is not V.34 (other
+			protocols don't calculate this)."
+			::= { callHistAsyEntry 29 }
+
+	callHistAsyMdmDisconnectReason	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				unknown(1),
+				local-host-disconnect(2),
+				cd-timer-expired(3),
+				protocol-disconnect(4),
+				proto-discon-remote-mdm(5),
+				cleardown(6),
+				long-space-disconnect(7),
+				carrier-lost(8),
+				retrain-timeout(9)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Modem's reason for disconnecting the call. Modem's
+			disconnect reason could be different from the system's
+			reason for disconnecting the call. 
+
+			carrier-lost(8) - modem detected the loss of carrier.
+				The time (delay) from loss of carrier until
+				the modem disconnects is determined by
+				MIB object mdmCfgLineCarrierDisconnect.
+
+			retrain-timeout(9) - modem failed to retrain."
+
+			::= { callHistAsyEntry 30 }
+
+	 callHistAsyx2Status OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"x2 phase bit map
+			---------------------
+		      	| 4 | 3 | 2 | 1 | 0 | bits
+			---------------------
+			|DM |P4 |P3 |P2 |P1 |
+			---------------------
+			
+			P1 = 1	Detected In Phase 1
+			P2 = 1  Detected In Phase 2
+			P3 = 1  X2 In Phase 3
+			P4 = 1  X2 In Phase 4
+			DM = 1  X2 In Data Mode"
+			::= { callHistAsyEntry 31 }
+
+	 callHistAsyx2RbsStatus OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"x2 raw bit signalling, bit map
+			-------------------------
+		      	| 5 | 4 | 3 | 2 | 1 | 0 | bits
+			-------------------------
+			|S5 |S4 |S3 |S2 |S1 |S0 |
+			-------------------------
+
+			S0 = 1	RBS in symbol 0
+			S1 = 1	RBS in symbol 1
+			S2 = 1	RBS in symbol 2
+			S3 = 1	RBS in symbol 3
+			S4 = 1	RBS in symbol 4
+			S5 = 1	RBS in symbol 5"
+			::= { callHistAsyEntry 32 }
+
+	 callHistAsyx2DigitalPadStatus OBJECT-TYPE
+			SYNTAX	INTEGER {
+			none(1),
+			a3db(2),
+			a6db(3)
+			}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+                        "x2 attenuation"
+                        ::= { callHistAsyEntry 33 }
+
+	 callHistAsyx2Shaping OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Number of bits used for spectral shaping 
+                         in one data frame (frame 0 - 6)"
+                        ::= { callHistAsyEntry 34 }
+
+	 callHistAsyk56Status OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"k56 phase bit map
+			---------------------
+		      	| 4 | 3 | 2 | 1 | 0 | bits
+			---------------------
+			|DM |P4 |P3 |P2 |P1 |
+			---------------------
+			
+			P1 = 1	Detected In Phase 1
+			P2 = 1  Detected In Phase 2
+			P3 = 1  K56 In Phase 3
+			P4 = 1  K56 In Phase 4
+			DM = 1  K56 In Data Mode"
+			::= { callHistAsyEntry 35 }
+
+	 callHistAsyk56RbsStatus OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"k56 raw bit signalling, bit map
+			-------------------------
+		      	| 5 | 4 | 3 | 2 | 1 | 0 | bits
+			-------------------------
+			|S5 |S4 |S3 |S2 |S1 |S0 |
+			-------------------------
+
+			S0 = 1	RBS in symbol 0
+			S1 = 1	RBS in symbol 1
+			S2 = 1	RBS in symbol 2
+			S3 = 1	RBS in symbol 3
+			S4 = 1	RBS in symbol 4
+			S5 = 1	RBS in symbol 5"
+			::= { callHistAsyEntry 36 }
+
+	 callHistAsyk56DigitalPadStatus OBJECT-TYPE
+			SYNTAX	INTEGER {
+			none(1),
+			a3db(2),
+			a6db(3)
+			}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+                        "k56 attenuation"
+                        ::= { callHistAsyEntry 37 }
+
+	 callHistAsyk56Shaping OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Number of bits used for spectral shaping 
+                         in one data frame (frame 0 - 6)"
+                        ::= { callHistAsyEntry 38 }
+
+	 callHistAsyk56Version OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"k56 version number"
+                        ::= { callHistAsyEntry 39 }
+
+  	 callHistAsySignalQ OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Line signal quality at the end of the
+			call. This is a unitless number derived from
+			several line characteristics.  Range is 0-255;
+			0 is good.  30 or less is reasonable."
+                        ::= { callHistAsyEntry 40 }
+
+  	 callHistAsyBeginModulation OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				v34(2),
+				v32-v32bis(3),
+				v22bis(4),
+				x2(5),
+				k56(6),
+				itu-tPCM(7)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Beginning negotiated modulation mode." 
+                        ::= { callHistAsyEntry 41 }
+
+  	 callHistAsyEndModulation OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				v34(2),
+				v32-v32bis(3),
+				v22bis(4),
+				x2(5),
+				k56(6),
+				itu-tPCM(7)
+				}
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Ending negotiated modulation mode." 
+                        ::= { callHistAsyEntry 42 }
+
+  	 callHistAsyEndPumpState OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"End pump status."
+                        ::= { callHistAsyEntry 43 }
+
+  	 callHistAsyx2SpeedReduction OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Speed reduction due to spectral shaping:
+			0 no speed reduction
+			1 speed reduction of 1.333 kBps
+			2 speed reduction of 2.666 kBps
+			3 speed reduction of 4.0 kBps
+			4 speed reduction of 5.333 kBps
+			5 speed reduction of 6.666 kBps
+			6 speed reduction of 8.0 kBps"
+                        ::= { callHistAsyEntry 44 }
+
+  	 callHistAsyk56SpeedReduction OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"Speed reduction due to robbed bits:
+			0 no speed reduction
+			1 speed reduction of 2.0 kBps
+			2 speed reduction of 4.0 kBps
+			3 speed reduction of 6.0 kBps
+			4 speed reduction of 8.0 kBps"
+                        ::= { callHistAsyEntry 45 }
+ 
+         callHistAsyV90Status OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "V90 status (this is a bitmap):
+                        1  = currently in V90 mode
+                        2  = V90 detected in phase 1
+                        4  = V90 detected in phase 2
+                        8  = V90 through phase 3
+                        16 = V90 through phase 4
+                        32 = V90 in data mode
+                        64 = V90 data mode at least once "
+                        ::= { callHistAsyEntry 46 }
+ 
+         callHistAsyV90ConstellationIndex0 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 0."
+                        ::= { callHistAsyEntry 47 }
+ 
+         callHistAsyV90ConstellationIndex1 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 1"
+                        ::= { callHistAsyEntry 48 }
+ 
+         callHistAsyV90ConstellationIndex2 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 2"
+                        ::= { callHistAsyEntry 49 }
+ 
+         callHistAsyV90ConstellationIndex3 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 3"
+                        ::= { callHistAsyEntry 50 }
+ 
+         callHistAsyV90ConstellationIndex4 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 4"
+                        ::= { callHistAsyEntry 51 }
+ 
+         callHistAsyV90ConstellationIndex5 OBJECT-TYPE
+                        SYNTAX  INTEGER (0..15)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Constellation index for symbol 5"
+                        ::= { callHistAsyEntry 52 }
+ 
+         callHistAsyV90PADStatus OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Digital attenuation in dB."
+                        ::= { callHistAsyEntry 53 }
+ 
+         callHistAsyV90ShapingBits OBJECT-TYPE
+                        SYNTAX  INTEGER (0..3)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Number of CSS redundancy bits."
+                        ::= { callHistAsyEntry 54 }
+ 
+         callHistAsyV90LookAhead OBJECT-TYPE
+                        SYNTAX  INTEGER (0..3)
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Number of look ahead CSS frames."
+                        ::= { callHistAsyEntry 55 }
+ 
+         callHistAsyV90ConstellationPower OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "V90 constellation power in -dBm."
+                        ::= { callHistAsyEntry 56 }
+ 
+         callHistAsyV90HalfDuplexRRNRx OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "Number of received half-duplex RRNs."
+                        ::= { callHistAsyEntry 57 }
+
+
+-- This table is will contain data for the historical device
+-- specific TA sessions.
+ 
+        callHistTaTable OBJECT-TYPE
+                        SYNTAX  SEQUENCE OF CallHistTaEntry
+                        ACCESS not-accessible
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "A table of call history TA information/statistics."
+                        ::= { callHist 6 }
+ 
+        callHistTaEntry OBJECT-TYPE
+                        SYNTAX  CallHistTaEntry
+                        ACCESS  not-accessible
+                        STATUS  mandatory
+                        DESCRIPTION
+                                "A row in the call history TA table."
+                        INDEX   { callHistIndex }
+                        ::= { callHistTaTable 1 }
+ 
+        CallHistTaEntry ::= SEQUENCE {
+                        callHistTaSpeed     INTEGER
+                        }
+        callHistTaSpeed     OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "The identifier of this TA bundle."
+                        ::= { callHistTaEntry 1 }
+-- This table is will contain data for the historical device
+-- specific Sync sessions.
+ 
+        callHistSyncTable OBJECT-TYPE
+                        SYNTAX  SEQUENCE OF CallHistSyncEntry
+                        ACCESS not-accessible
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "A table of call history Sync information/statistics."
+                        ::= { callHist 7 }
+ 
+        callHistSyncEntry OBJECT-TYPE
+                        SYNTAX  CallHistSyncEntry
+                        ACCESS  not-accessible
+                        STATUS  mandatory
+                        DESCRIPTION
+                                "A row in the call history Sync table."
+                        INDEX   { callHistIndex }
+                        ::= { callHistSyncTable 1 }
+ 
+        CallHistSyncEntry ::= SEQUENCE {
+                        callHistSyncSpeed     INTEGER
+                        }
+        callHistSyncSpeed     OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "The identifier of this Sync bundle."
+                        ::= { callHistSyncEntry 1 }
+
+
+-- This table is will contain data for the historical device
+-- specific MP sessions.
+ 
+        callHistMpTable OBJECT-TYPE
+                        SYNTAX  SEQUENCE OF CallHistMpEntry
+                        ACCESS not-accessible
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "A table of call history MP information/statistics."
+                        ::= { callHist 8 }
+ 
+        callHistMpEntry OBJECT-TYPE
+                        SYNTAX  CallHistMpEntry
+                        ACCESS  not-accessible
+                        STATUS  mandatory
+                        DESCRIPTION
+                                "A row in the call history MP table."
+                        INDEX   { callHistIndex }
+                        ::= { callHistMpTable 1 }
+ 
+        CallHistMpEntry ::= SEQUENCE {
+                        callHistMpBundleIdx     INTEGER
+                        }
+        callHistMpBundleIdx     OBJECT-TYPE
+                        SYNTAX  INTEGER
+                        ACCESS  read-only
+                        STATUS  mandatory
+                        DESCRIPTION
+                        "The identifier of this MP bundle."
+                        ::= { callHistMpEntry 1 }
+ 
+-- modem call statistics MIB objects. The modem statistics MIB table represents
+-- modem statistics for an active call. If the modem state is not busy,
+-- then statistics are unreliable and user should not use them except
+-- for the object, mdmStatTotalCalls. For the call history statistics, 
+-- you should consult call history MIB table.
+-- Note: these are read only objects.
+
+-- Objects mdmCallStat* (all but state and total calls) come from the
+-- active call record for that modem.  If the modem state is not busy
+-- that is, if there is no call in progress on that modem, and
+-- therefore no active call record; these objects return special
+-- values: zero for integer types, the largest positive integer
+-- ('7fffffff'h) for enumerated types.  Note that zero is ambiguous
+-- for some objects.
+ 
+	mdmCallStatTable OBJECT-TYPE
+			SYNTAX SEQUENCE OF MdmCallStatEntry
+			ACCESS	not-accessible
+			STATUS	deprecated
+			DESCRIPTION
+			"A table of modem call statistics."
+			::= { mdmCallStatsObjects 1 }
+
+	mdmCallStatEntry OBJECT-TYPE
+			SYNTAX	MdmCallStatEntry
+			ACCESS	not-accessible
+			STATUS	deprecated
+			DESCRIPTION
+			"A row in the modem call statistics table."
+			INDEX	{ mdmNumber }
+			::= { mdmCallStatTable 1 }
+	
+	MdmCallStatEntry ::= SEQUENCE {
+			mdmCallStatBeginRxSpeed		INTEGER,
+			mdmCallStatCurrRxSpeed		INTEGER,
+			mdmCallStatBeginTxSpeed		INTEGER,
+			mdmCallStatCurrTxSpeed		INTEGER,
+			mdmCallStatTxBaudRate		INTEGER,
+			mdmCallStatRxBaudRate		INTEGER,
+			mdmCallStatBeginSignalQ		INTEGER,
+			mdmCallStatCurrSignalQ		INTEGER,
+			mdmCallStatBeginRxLineLevel	INTEGER,
+			mdmCallStatCurrRxLineLevel	INTEGER,
+			mdmCallStatModulationMode	INTEGER,
+			mdmCallStatErrorProtocol	INTEGER,
+			mdmCallStatCompressionProtocol  INTEGER,
+			mdmCallStatTxPackets		Counter,
+			mdmCallStatTxPacketError	Counter,
+			mdmCallStatRxPackets		Counter,
+			mdmCallStatRxPacketError	Counter,
+			mdmCallStatRetrainReqSent	Counter,
+			mdmCallStatRetrainReqReceived	Counter,
+			mdmCallStatRRNReqReceived	Counter,
+			mdmCallStatRRNReqSent		Counter,
+			mdmCallStatRoundTripDelay	INTEGER,
+			mdmCallStatFarEndEchoFreq	INTEGER,
+			mdmCallStatFarEndEchoLevel	INTEGER,
+			mdmCallStatChanFreqOffset	INTEGER,
+			mdmCallStatOscFreqOffset	INTEGER,
+			mdmCallStatSNR			INTEGER,
+			mdmCallStatx2Status		INTEGER,
+			mdmCallStatx2RbsStatus		INTEGER,
+			mdmCallStatx2DigitalPadStatus	INTEGER,
+			mdmCallStatx2Shaping		INTEGER,
+			mdmCallStatk56Status		INTEGER,
+			mdmCallStatk56RbsStatus		INTEGER,
+			mdmCallStatk56DigitalPadStatus	INTEGER,
+			mdmCallStatk56Shaping		INTEGER,
+			mdmCallStatk56Version		INTEGER,
+ 			mdmCallStatWANUnitNumber        INTEGER,
+			mdmCallStatChannel      	INTEGER
+			}
+	
+			-- reserved { mdmCallStatEntry 1 }
+
+			-- reserved { mdmCallStatEntry 2 }
+
+	mdmCallStatBeginRxSpeed	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+--				nocall('7fffffff'h)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The receive connect speed at the time the call was
+			established. 
+			Note: The agent will return zero if the modem is 
+			     not in a busy state."
+			::= { mdmCallStatEntry 3 }
+
+	mdmCallStatCurrRxSpeed OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+--				nocall('7fffffff'h)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The current receive connect speed of the call."
+			::= { mdmCallStatEntry 4 }
+
+	mdmCallStatBeginTxSpeed OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+--				nocall('7fffffff'h)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The transmit connect speed at the time the call was
+			established. 
+			Note: The agent will return zero if the modem is 
+			     not in a busy state."
+		::= { mdmCallStatEntry 5 }
+
+	mdmCallStatCurrTxSpeed OBJECT-TYPE
+			SYNTAX	INTEGER {
+				bps300(1),
+				bps600(2),
+				bps1200(3),
+				bps2400(4),
+				bps4800(5),
+				bps7200(6),
+				bps9600(7),
+				bps12000(8),
+				bps14400(9),
+				bps16800(10),
+				bps19200(11),
+				bps21600(12),
+				bps24000(13),
+				bps26400(14),
+				bps28800(15),
+				bps31200(16),
+				bps33600(17),
+				idle(20),
+				handshaking(21),
+				bps25333(22),
+				bps26666(23),
+				bps28000(24),
+				bps29333(25),
+				bps30666(26),
+				bps32000(27),
+				bps33333(28),
+				bps34000(29),
+				bps34666(30),
+				bps36000(31),
+				bps37333(32),
+				bps38000(33),
+				bps38666(34),
+				bps40000(35),
+				bps41333(36),
+				bps42000(37),
+				bps42666(38),
+				bps44000(39),
+				bps45333(40),
+				bps46000(41),
+				bps46666(42),
+				bps48000(43),
+				bps49333(44),
+				bps50000(45),
+				bps50666(46),
+				bps52000(47),
+				bps53333(48),
+				bps54000(49),
+				bps54666(50),
+				bps56000(51),
+				bps57333(52),
+				bps58000(53),
+				bps60000(54)
+--				nocall('7fffffff'h)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The current transmit connect speed of the call."
+			::= { mdmCallStatEntry 6 }
+
+	mdmCallStatTxBaudRate OBJECT-TYPE
+			SYNTAX	INTEGER {
+				r2400(1),
+				r2743(2),
+				r2800(3),
+				r3000(4),
+				r3200(5),
+				r3429(6),
+				r8000(7)
+--				nocall('7fffffff'h)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The rate at which symbols that carry 
+			data are generated. Symbol rate limits and options 
+			apply to the modem v.34. Default is r2400(1)."
+			::= { mdmCallStatEntry 7 }
+
+	mdmCallStatRxBaudRate OBJECT-TYPE
+			SYNTAX	INTEGER {
+				r2400(1),
+				r2743(2),
+				r2800(3),
+				r3000(4),
+				r3200(5),
+				r3429(6),
+				r8000(7)
+--				nocall('7fffffff'h)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The rate at which symbols that carry 
+			data are received. Symbol rate limits and options 
+			apply to the modem v.34. Default is r2400(1)."
+			::= { mdmCallStatEntry 8 }
+
+
+	mdmCallStatBeginSignalQ OBJECT-TYPE
+			SYNTAX	INTEGER (0..255)
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Line signal quality at the beginning of the
+			call. This is a unitless number derived from
+			several line characteristics.  Range is 0-255;
+			0 is good.  30 or less is reasonable."
+			::= { mdmCallStatEntry 9 }
+
+	mdmCallStatCurrSignalQ OBJECT-TYPE
+			SYNTAX	INTEGER (0..255)
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Current line signal quality.  This is a
+			unitless number derived from several line
+			characteristics.  Range is 0-255; 0 is good.
+			30 or less is reasonable."
+			::= { mdmCallStatEntry 10 }
+
+	mdmCallStatBeginRxLineLevel OBJECT-TYPE
+			SYNTAX	INTEGER  (0..45)
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The receive signal level at the beginning of the call,
+			in dBm (ratio of receive level to a reference value).
+			The number returned by this MIB object is positive,
+			but it represents a negative number (ie, this object
+			returns the negative of the actual dBm).
+
+			Expected values are roughly -12 to -30.  Less than
+			-11 is bad; that signal is too strong, and causes
+			problems for the modem."
+			::= { mdmCallStatEntry 11 }
+
+	mdmCallStatCurrRxLineLevel OBJECT-TYPE
+			SYNTAX	INTEGER (0..45)
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The current receive signal level of the call,
+			in dBm (ratio of receive level to a reference value).
+			The number returned by this MIB object is positive,
+			but it represents a negative number (ie, this object
+			returns the negative of the actual dBm).
+
+			Expected values are roughly -12 to -30.  Less than
+			-11 is bad; that signal is too strong, and causes
+			problems for the modem."
+			::= { mdmCallStatEntry 12 }
+
+	mdmCallStatModulationMode OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				v34(2),
+				v32-v32bis(3),
+				v22bis(4),
+				x2(5),
+				k56(6),
+				itu-tPCM(7)
+--				nocall('7fffffff'h)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Negotiated modulation mode." 
+			::= { mdmCallStatEntry 13 }
+
+	mdmCallStatErrorProtocol OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				buffer(2),
+				mnpclass2(3),
+				mnpclass3(4),
+				mnpclass4(5),
+				v42(6),
+				v42selrej(7)
+--				nocall('7fffffff'h)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Error correction protocol used by the modem."
+			::= { mdmCallStatEntry 14 }
+
+	mdmCallStatCompressionProtocol OBJECT-TYPE
+			SYNTAX	INTEGER {
+				none(1),
+				v42bis-decode(2),
+				v42bis-encode(3),
+				v42bis-encode-decode(4),
+				mnpclass5(5)
+--				nocall('7fffffff'h)
+				}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Data compression protocol used by the modem. The
+			compression protocol used by the modem is dependent 
+			on the error correction protocol used at the lower
+			layer."
+			::= { mdmCallStatEntry 15 }
+
+	mdmCallStatTxPackets OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number of LAPM packets sent by the modem.
+			This does not include retransmitted packets."
+			::= { mdmCallStatEntry 16 }
+
+	mdmCallStatTxPacketError OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number of LAPM packets retransmitted by 
+			the modem."
+			::= { mdmCallStatEntry 17 }
+
+--			::= { mdmCallStatEntry 18 } is reserved
+
+	mdmCallStatRxPackets OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number of good LAPM packets
+			received by the modem."
+			::= { mdmCallStatEntry 19 }
+
+	mdmCallStatRxPacketError OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number of bad LAPM packets (with CRC errors)
+			received by the modem."
+			::= { mdmCallStatEntry 20 }
+
+--			::= { mdmCallStatEntry 21 } is reserved
+
+	mdmCallStatRetrainReqSent OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number of retrains requested by the modem for
+			this call."
+			::= { mdmCallStatEntry 22 }
+
+	mdmCallStatRetrainReqReceived OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The number of retrain requests received by the modem 
+			from the remote modem for this call."
+			::= { mdmCallStatEntry 23 }
+
+	mdmCallStatRRNReqReceived OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Number of rate renegotiation request (RRN) initiated
+			by the remote modem." 
+			::= { mdmCallStatEntry 24 }
+
+	mdmCallStatRRNReqSent OBJECT-TYPE
+			SYNTAX	Counter
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Number of rate renegotiation request (RRN) initiated
+			by this modem."
+			::= { mdmCallStatEntry 25 }
+
+	mdmCallStatRoundTripDelay OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The round trip delay, in milliseconds, for this call.
+			This object alongwith the object, mdmCallStatFarEndEchoFreq,
+			gives the echo characteristics of the call."
+			::= { mdmCallStatEntry 26 }
+
+	mdmCallStatFarEndEchoFreq OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Far end echo frequency offset, in Hertz. This object 
+			alongwith the object, mdmCallStatRoundTripDelay, 
+			gives the echo characteristics of the call."
+			::= { mdmCallStatEntry 27 }
+
+	mdmCallStatFarEndEchoLevel OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Far end echo level, in decibels. The number 
+			represents the negative decibels."
+			::= { mdmCallStatEntry 28 }
+
+	mdmCallStatChanFreqOffset OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Channel frequency offset, in Hertz."
+			::= { mdmCallStatEntry 29 }
+
+	mdmCallStatOscFreqOffset OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Oscillator frequency offset, in PPM.
+			Not always valid."
+			::= { mdmCallStatEntry 30 }
+
+	mdmCallStatSNR OBJECT-TYPE
+			SYNTAX	INTEGER (0..80)
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"Signal to noise ratio in decibels. Low is bad,
+			high is good. Zero means not valid: no current
+			connection, or connection is not V.34 (other
+			protocols don't calculate this)."
+			::= { mdmCallStatEntry 31 }
+
+	 mdmCallStatx2Status OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"x2 phase bit map
+			---------------------
+		      	| 4 | 3 | 2 | 1 | 0 | bits
+			---------------------
+			|DM |P4 |P3 |P2 |P1 |
+			---------------------
+			
+			P1 = 1	Detected In Phase 1
+			P2 = 1  Detected In Phase 2
+			P3 = 1  X2 In Phase 3
+			P4 = 1  X2 In Phase 4
+			DM = 1  X2 In Data Mode"
+			::= { mdmCallStatEntry 32 }
+
+
+	 mdmCallStatx2RbsStatus OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"x2 raw bit signalling, bit map
+			-------------------------
+		      	| 5 | 4 | 3 | 2 | 1 | 0 | bits
+			-------------------------
+			|S5 |S4 |S3 |S2 |S1 |S0 |
+			-------------------------
+
+			S0 = 1	RBS in symbol 0
+			S1 = 1	RBS in symbol 1
+			S2 = 1	RBS in symbol 2
+			S3 = 1	RBS in symbol 3
+			S4 = 1	RBS in symbol 4
+			S5 = 1	RBS in symbol 5
+			"
+			::= { mdmCallStatEntry 33 }
+
+	 mdmCallStatx2DigitalPadStatus OBJECT-TYPE
+			SYNTAX	INTEGER {
+			none(1),
+			a3db(2),
+			a6db(3)
+			}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"x2 attenuation"
+			::= { mdmCallStatEntry 34 }
+
+	 mdmCallStatx2Shaping OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"x2 - Number of bits used for spectral shaping
+			in one data frame (frame 0 - 6)"
+			::= { mdmCallStatEntry 35 }
+
+	 mdmCallStatk56Status OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"k56 phase bit map
+			---------------------
+		      	| 4 | 3 | 2 | 1 | 0 | bits
+			---------------------
+			|DM |P4 |P3 |P2 |P1 |
+			---------------------
+			
+			P1 = 1	Detected In Phase 1
+			P2 = 1  Detected In Phase 2
+			P3 = 1  K56 In Phase 3
+			P4 = 1  K56 In Phase 4
+			DM = 1  K56 In Data Mode"
+			::= { mdmCallStatEntry 36 }
+
+
+	 mdmCallStatk56RbsStatus OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"k56 raw bit signalling, bit map
+			-------------------------
+		      	| 5 | 4 | 3 | 2 | 1 | 0 | bits
+			-------------------------
+			|S5 |S4 |S3 |S2 |S1 |S0 |
+			-------------------------
+
+			S0 = 1	RBS in symbol 0
+			S1 = 1	RBS in symbol 1
+			S2 = 1	RBS in symbol 2
+			S3 = 1	RBS in symbol 3
+			S4 = 1	RBS in symbol 4
+			S5 = 1	RBS in symbol 5
+			"
+			::= { mdmCallStatEntry 37 }
+
+	 mdmCallStatk56DigitalPadStatus OBJECT-TYPE
+			SYNTAX	INTEGER {
+			none(1),
+			a3db(2),
+			a6db(3)
+			}
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"k56 attenuation"
+			::= { mdmCallStatEntry 38 }
+
+	 mdmCallStatk56Shaping OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"k56 - Number of bits used for spectral shaping
+			in one data frame (frame 0 - 6)"
+			::= { mdmCallStatEntry 39 }
+					
+	 mdmCallStatk56Version OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			" k56 version number"
+			::= { mdmCallStatEntry 40 }
+
+	 mdmCallStatWANUnitNumber OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"The physical WAN module unit number in the RAC 
+			that uses WAN modules. The range is 1 to anxt1Total.
+			Use anxt1WanModuleTable to retrieve the unit's
+			ifIndex number.(For R14.1 and later releases, 
+			WAN1=1001 and WAN2 = 1002 always" 
+			::= { mdmCallStatEntry 41 }
+
+	 mdmCallStatChannel OBJECT-TYPE
+			SYNTAX	INTEGER
+			ACCESS	read-only
+			STATUS	deprecated
+			DESCRIPTION
+			"A number from 1 to anxt1TotChan that identifies 
+			which DS0 channel handled the call."
+			::= { mdmCallStatEntry 42 }
+
+
+	portActionTable	OBJECT-TYPE
+			SYNTAX	SEQUENCE OF PortActionEntry
+			ACCESS	not-accessible
+			STATUS  mandatory
+			DESCRIPTION
+			"A table of port actions"
+			::= { portaction 1 }
+
+	portActionEntry	OBJECT-TYPE
+			SYNTAX	PortActionEntry
+			ACCESS	not-accessible
+			STATUS	mandatory
+			DESCRIPTION
+				"A row in the portActionTable."
+			INDEX	{ portActionDeviceType, portActionDeviceNumber }
+			::= { portActionTable 1 } 
+	
+	PortActionEntry	::= SEQUENCE {
+			portActionDeviceType	   INTEGER,
+			portActionDeviceNumber	   INTEGER,
+			portActionResetPort	   INTEGER
+			}
+
+	portActionDeviceType	OBJECT-TYPE
+			SYNTAX	INTEGER {
+				asy(1),
+				syn(9),
+				ta(10),
+				mp(12),
+				vpn(13),
+				gen-sync-port(14)
+				}
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"An enumerated integer indicating the device type. 
+			asy(1) - the call is assigned internally to an
+				asynchronous device (async port).
+			syn(9) - the call is handled internally by a
+				synchronous device (sync port).
+			ta(10) - the call is handled internally by a
+				ta device (ta port).
+			mp(12) - pseudo-session, Multi-link PPP bundle head.
+			vpn(13) - Virtual Private Network.
+			gen-sync(14) - General Sync port."
+
+			::= { portActionEntry 1 }
+
+	portActionDeviceNumber	OBJECT-TYPE
+			SYNTAX	INTEGER 
+			ACCESS  read-only
+			STATUS	mandatory
+			DESCRIPTION
+			"The one-based device (port) number the call
+			is assigned to."
+			::= { portActionEntry 2 }
+
+	portActionResetPort	OBJECT-TYPE
+			SYNTAX	INTEGER {
+			ready(1),
+			execute(2)
+			}
+			ACCESS  read-write
+			STATUS	mandatory
+			DESCRIPTION
+			"Setting this object to execute will reset the
+			specified port terminating all sessions on the 
+			port. Reading this object will allways return
+			ready(1).
+
+			Setting this object is equivalent to the 
+			reset port command in cli/admin."
+		::= { portActionEntry 3 }
+
+END
+
+
+

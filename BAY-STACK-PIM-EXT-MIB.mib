@@ -1,0 +1,208 @@
+
+BAY-STACK-PIM-EXT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Integer32, IpAddress
+        FROM SNMPv2-SMI
+    RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcPimNeighborIfIndex
+        FROM RC-PIM-MIB
+    bayStackMibs
+        FROM SYNOPTICS-ROOT-MIB;
+
+bayStackPimExtMib MODULE-IDENTITY
+    LAST-UPDATED    "200902270000Z"
+    ORGANIZATION    "Nortel Networks"
+    CONTACT-INFO    "Nortel Networks"
+    DESCRIPTION
+        "Nortel Networks PIM Extension MIB
+
+         Copyright 2007 Nortel Networks, Inc.
+         All rights reserved.
+         This Nortel Networks SNMP Management Information Base
+         Specification embodies Nortel Networks' confidential and
+         proprietary intellectual property. Nortel Networks retains
+         all title and ownership in the Specification, including any
+         revisions.
+
+         This Specification is supplied 'AS IS,' and Nortel Networks
+         makes no warranty, either express or implied, as to the use,
+         operation, condition, or performance of the Specification."
+
+    REVISION "200902270000Z" -- 27 February 2009
+    DESCRIPTION "v3:  Changed bspimNeighborLoss to bspimeNeighborStateChanged."
+
+    REVISION "200902100000Z" -- 10 February 2009
+    DESCRIPTION "v2:  Added bspimNeighborLoss."
+
+    REVISION "200711280000Z" -- 28 November 2007
+    DESCRIPTION "v1:  Initial version."
+
+    ::= { bayStackMibs 27 }
+
+bspimeNotifications       OBJECT IDENTIFIER ::= { bayStackPimExtMib 0 }
+bspimeObjects             OBJECT IDENTIFIER ::= { bayStackPimExtMib 1 }
+bspimeNotificationObjects OBJECT IDENTIFIER ::= { bayStackPimExtMib 2 }
+
+-- -------------------------------------------------------------
+-- Textual Conventions
+-- -------------------------------------------------------------
+
+-- -------------------------------------------------------------
+-- Scalar Objects
+-- -------------------------------------------------------------
+
+bspimeScalars OBJECT IDENTIFIER ::= { bspimeObjects 1 }
+
+-- -------------------------------------------------------------
+-- PIM Virtual Neighbor Table
+-- -------------------------------------------------------------
+
+bspimePimVirtualNeighborTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BsvePimVirtualNeighborEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "PIM Virtual Neighbor table."
+    ::= { bspimeObjects 2 }
+
+bspimePimVirtualNeighborEntry OBJECT-TYPE
+    SYNTAX BsvePimVirtualNeighborEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A PIM virtual neighbor."
+    INDEX { bspimePimVirtualNeighborIfIndex, bspimePimVirtualNeighborAddress }
+    ::= { bspimePimVirtualNeighborTable 1 }
+
+BsvePimVirtualNeighborEntry ::=
+    SEQUENCE {
+        bspimePimVirtualNeighborIfIndex    InterfaceIndex,
+        bspimePimVirtualNeighborAddress    IpAddress,
+        bspimePimVirtualNeighborRowStatus  RowStatus
+    }
+
+bspimePimVirtualNeighborIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "IP address of the interface of the virtual neighbor."
+    ::= { bspimePimVirtualNeighborEntry 1 }
+ 
+bspimePimVirtualNeighborAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "IP address of the virtual neighbor."
+    ::= { bspimePimVirtualNeighborEntry 2 }
+
+bspimePimVirtualNeighborRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Used to create/delete virtual neighbors."
+    ::= { bspimePimVirtualNeighborEntry 3 }
+
+-- -------------------------------------------------------------
+-- PIM Group -> Active RP Mapping Table
+-- -------------------------------------------------------------
+
+bspimePimGroupActiveRPMappingTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BsvePimGroupActiveRPMappingEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "PIM Group -> Active RP Mapping table."
+    ::= { bspimeObjects 3 }
+
+bspimePimGroupActiveRPMappingEntry OBJECT-TYPE
+    SYNTAX BsvePimGroupActiveRPMappingEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A mapping of a group to its active RP."
+    INDEX { bspimePimGroupActiveRPMappingGroupAddress,
+            bspimePimGroupActiveRPMappingGroupMask,
+            bspimePimGroupActiveRPMappingActiveRP }
+    ::= { bspimePimGroupActiveRPMappingTable 1 }
+
+BsvePimGroupActiveRPMappingEntry ::=
+    SEQUENCE {
+        bspimePimGroupActiveRPMappingGroupAddress  IpAddress,
+        bspimePimGroupActiveRPMappingGroupMask     IpAddress,
+        bspimePimGroupActiveRPMappingActiveRP      IpAddress,
+        bspimePimGroupActiveRPMappingPriority      Integer32
+    }
+
+bspimePimGroupActiveRPMappingGroupAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Group address."
+    ::= { bspimePimGroupActiveRPMappingEntry 1 }
+
+bspimePimGroupActiveRPMappingGroupMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Group mask."
+    ::= { bspimePimGroupActiveRPMappingEntry 2 }
+
+bspimePimGroupActiveRPMappingActiveRP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "IP address of the active RP."
+    ::= { bspimePimGroupActiveRPMappingEntry 3 }
+
+bspimePimGroupActiveRPMappingPriority OBJECT-TYPE
+    SYNTAX      Integer32(0..2147483647)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Priority of the active RP."
+    ::= { bspimePimGroupActiveRPMappingEntry 4 }
+
+-- -------------------------------------------------------------
+-- Notification Objects
+-- -------------------------------------------------------------
+
+bspimeNotifNeighborStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    up(1),
+                    down(2)
+                }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "When a neighbor PIM interface changes state, this indicates whether
+         the new state is up or down."
+    ::= { bspimeNotificationObjects 1 }
+
+-- -------------------------------------------------------------
+-- Notifications
+-- -------------------------------------------------------------
+
+bspimeNeighborStateChanged NOTIFICATION-TYPE
+    OBJECTS {
+                rcPimNeighborIfIndex,
+                bspimeNotifNeighborStatus
+            }
+    STATUS             current
+    DESCRIPTION
+        "A bspimeNeighborChange notification signifies a change of state of
+         an adjacency with a neighbor.  This notification should be generated
+         when the router's PIM interface is disabled or enabled, or when a 
+         router's PIM neighbor adjacency expires or is established."
+    ::= { bspimeNotifications 1 }
+
+END
+

@@ -1,0 +1,4252 @@
+-- MIB created 3/21/96 14:37:01, by
+--   SMIC (the next generation) version 1.6.31, December 11, 1994.
+
+LAN-EMULATION-ELAN-MIB DEFINITIONS ::= BEGIN
+
+-- From file: "atm1129r5.mi2"
+
+IMPORTS
+    Counter32, Integer32
+            FROM SNMPv2-SMI-v1
+    OBJECT-TYPE
+            FROM RFC-1212
+    DisplayString, RowStatus, MacAddress, AutonomousType, TimeStamp
+            FROM SNMPv2-TC-v1
+    LecDataFrameSize, LecDataFrameFormat, AtmLaneAddress, 
+    atmfLanEmulation, VpiInteger, VciInteger
+            FROM LAN-EMULATION-CLIENT-MIB;
+
+elanMIB OBJECT IDENTIFIER ::= { atmfLanEmulation 2 }
+-- MODULE-IDENTITY
+--  LastUpdated
+--    9602121200Z
+--  OrgName
+--    ATM Forum LAN Emulation Sub-Working Group
+--  ContactInfo
+--    
+--      The ATM Forum
+--    
+--      2570 West El Camino Real,
+--      Ste 304,
+--      Mountain View, CA 94040-1313
+--      Tel: 415-949-6711
+--      E-mail: info@atmforum.com
+--  Descr
+--    This is the MIB module for managing ATM
+--     Emulated LANs as well as LAN Emulation
+--     Configuration Server (LECS).  It provides 
+--     mechanism for constructing and destroying 
+--     ELANs, for distributing members of an 
+--     ELAN and for figuring out the topology 
+--     of an ELAN.  It also provides management
+--     information for LECS.
+
+elanAdminGroup  OBJECT IDENTIFIER ::= { elanMIB 1 }
+elanConfGroup   OBJECT IDENTIFIER ::= { elanMIB 2 }
+elanLecsGroup   OBJECT IDENTIFIER ::= { elanMIB 3 }
+elanLecsConfGroup OBJECT IDENTIFIER ::= { elanLecsGroup 1 }
+elanLecsFaultGroup OBJECT IDENTIFIER ::= { elanLecsGroup 2 }
+elanLecsStatGroup OBJECT IDENTIFIER ::= { elanLecsGroup 3 }
+elanAdminPolicyVal OBJECT IDENTIFIER ::= { elanAdminGroup 1 }
+byAtmAddr       OBJECT IDENTIFIER ::= { elanAdminPolicyVal 1 }
+byMacAddr       OBJECT IDENTIFIER ::= { elanAdminPolicyVal 2 }
+byRouteDescriptor OBJECT IDENTIFIER ::= { elanAdminPolicyVal 3 }
+byLanType       OBJECT IDENTIFIER ::= { elanAdminPolicyVal 4 }
+byPktSize       OBJECT IDENTIFIER ::= { elanAdminPolicyVal 5 }
+byElanName      OBJECT IDENTIFIER ::= { elanAdminPolicyVal 6 }
+elanMIBConformance OBJECT IDENTIFIER ::= { elanMIB 4 }
+elanMIBGroups   OBJECT IDENTIFIER ::= { elanMIBConformance 1 }
+elanMIBCompliances OBJECT IDENTIFIER ::= { elanMIBConformance 2 }
+
+IfIndexOrZero ::= INTEGER(0..65535)
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An integer defined as to equivalent
+--     to ifIndex in the ifTable defined
+--     in RFC 1213 and the value zero.
+
+ElanLocalIndex ::= Integer32
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A value which uniquely identifies a
+--     conceptual row in the elanConfTable.
+--     This number is only used locally by the agent to
+--     distinguish between ELANs.
+
+AtmLaneMask ::= OCTET STRING(SIZE(20))
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A twenty-octet binary string, containing a standard
+--     ATM Forum address mask.
+
+TlvSelectorIndexType ::= Integer32
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An arbitrary integer used in identifying
+--     a set of TLV encoding.  This number
+--     is locally managed by the agent.
+
+PolicySelectorIndexType ::= Integer32
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An arbitrary integer used in identifying
+--     a set of LEC assignment policies.  
+--     This number is locally managed by the
+--     agent.
+
+LecsErrLogIndexType ::= Integer32(1..2147483647)
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An arbitrary integer used in identifying
+--     an error log associated with a LECS.
+
+elanConfNextId OBJECT-TYPE
+    SYNTAX ElanLocalIndex
+--    Rsyntax Integer32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The next available ELAN index provided
+         by the agent.  The value of this object 
+         can be used as the index to the 
+         elanConfTable during creation."
+    ::= { elanConfGroup 1 }
+
+elanConfTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF ElanConfEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all Emulated LANs
+        (ELANs) this agent manages.  An ELAN
+        is defined by the ELAN name, a set of
+        TLVs, and other parameters.  After an
+        ELAN is created, members of the ELAN
+        such as the LAN Emulation Server (LES)
+        or Client (LEC) can be added to this
+        ELAN entry in their repective tables.
+        There are four memebers to an ELAN and
+        they are LECS, LES, BUS (Broadcast and
+        Unknown Server ) and LEC.  The support
+        of LECS is optional.  The addition and
+        deletion of LECS is done in the 
+        elanLecsConfGroup defined in this MIB.
+        The addition and deletion of the LEC
+        are done in the LEC Assignment tables
+        defined in this ELAN Configuration group.
+        The addition and deletion of the LES
+        are also defined in this group.  The
+        addition and deletion of the BUS are
+        done in the LES MIB due to the fact that
+        LEC learns the BUS address only from
+        the LES it corresponds to."
+    ::= { elanConfGroup 2 }
+
+elanConfEntry OBJECT-TYPE
+    SYNTAX ElanConfEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents an
+        Emulated LAN.  Objects elanConfIndex
+        and elanConfRowStatus are required
+        during row creation and deletion. "
+    INDEX { elanConfIndex }
+    ::= { elanConfTable 1 }
+
+ElanConfEntry ::= SEQUENCE {
+    elanConfIndex ElanLocalIndex,
+    elanConfName DisplayString,
+    elanConfTlvIndex TlvSelectorIndexType,
+    elanConfLanType LecDataFrameFormat,
+    elanConfMaxFrameSize LecDataFrameSize,
+    elanConfRowStatus RowStatus
+    }
+
+elanConfIndex OBJECT-TYPE
+    SYNTAX ElanLocalIndex
+--    Rsyntax Integer32
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A value which uniquely identifies a
+         conceptual row in the elanConfTable.
+           
+         If the conceptual row identified by this value
+         of elanConfIndex is recreated following an agent
+         restart, the same value of elanConfIndex must be
+         used to identify the recreated row."
+    ::= { elanConfEntry 1 }
+
+elanConfName OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..32))
+--    Rsyntax OCTET STRING(SIZE(0..32))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The name of this Emulated LAN entry.
+        When this object length is zero then the 
+        ELAN name is not specified.  The clients
+        assigned to this ELAN will also have
+        a zero length string as the ELAN name.
+        
+        The value of this object is used in the
+        LE CONFIGURE response by the LECS if supported.
+        
+        Note that ELAN name may be used as cross
+        reference to the LES MIB and BUS MIB 
+        though not required.  Multiple ELANs 
+        with no ELAN name specified will cause 
+        conflicts in reference to LES and BUS MIBs."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. C5."
+    DEFVAL { "" }
+    ::= { elanConfEntry 2 }
+
+elanConfTlvIndex OBJECT-TYPE
+    SYNTAX TlvSelectorIndexType
+--    Rsyntax Integer32
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The value of this object identifies
+        one or more rows in the lecsTlvTable which
+        applies to this ELAN.  This object is 
+        set to zero if 1) LECS is not supported.
+        or 2) there is no TLV associated with 
+        this entry."
+    ::= { elanConfEntry 3 }
+
+elanConfLanType OBJECT-TYPE
+    SYNTAX LecDataFrameFormat
+--    Rsyntax INTEGER {
+--        unspecified(1),
+--        aflane8023(2),
+--        aflane8025(3)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The LAN type of this ELAN entry."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+         version 1.0. S2."
+    DEFVAL { unspecified }
+    ::= { elanConfEntry 4 }
+
+elanConfMaxFrameSize OBJECT-TYPE
+    SYNTAX LecDataFrameSize
+--    Rsyntax INTEGER {
+--        unspecified(1),
+--        max1516(2),
+--        max4544(3),
+--        max9234(4),
+--        max18190(5)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The maximum data frame size of this
+        ELAN entry.  The maximum AAL-5 SDU size
+        of a data frame that this ELAN can support.
+        The value of this object is returned to the
+        LEC in the LE CONFIGURE response."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. S3."
+    DEFVAL { unspecified }
+    ::= { elanConfEntry 5 }
+
+elanConfRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+         delete entries in the elanConfTable."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { elanConfEntry 6 }
+
+elanLesTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF ElanLesEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all LESs for each 
+        ELAN specified in the elanConfTable.
+         Each ELAN can have more than
+         one LES providing LAN Emulation 
+         services.  Each LES can service only
+        one ELAN.  The table is indexed by the
+        elanConfIndex which points to the ELAN
+        this LES is providing service to, and
+        elanLesIndex which unquely identifies
+        a LES.  This table is used for configuration
+        of an ELAN only, that is, creating a
+        LES in this table does not instantiate
+        a LES in the network.  It is done in
+        the LES MIB."
+    ::= { elanConfGroup 3 }
+
+elanLesEntry OBJECT-TYPE
+    SYNTAX ElanLesEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents 
+         a LES/Emulated LAN pair.  Object
+         elanLesAtmAddress besides elanLesRowStatus
+         is also required during row creation."
+    INDEX { elanConfIndex, elanLesIndex }
+    ::= { elanLesTable 1 }
+
+ElanLesEntry ::= SEQUENCE {
+    elanLesIndex Integer32,
+    elanLesAtmAddress AtmLaneAddress,
+    elanLesRowStatus RowStatus
+    }
+
+elanLesIndex OBJECT-TYPE
+    SYNTAX Integer32
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An arbitrary number which uniquely
+        identifies the LES this entry pertains
+        to."
+    ::= { elanLesEntry 1 }
+
+elanLesAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address of the LES entry.
+        If LECS is supported, the value of
+        this object is the LES ATM address 
+        LECS returns to the LEC in the
+        CONFIGURE response.  If LECS
+        is not supported, the value of this
+        object pertains to the LES ATM address
+        network manager provides to the
+        LEC."
+    DEFVAL { "" }
+    ::= { elanLesEntry 2 }
+
+elanLesRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+         delete entries in the elanLesfTable."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { elanLesEntry 3 }
+
+elanPolicyTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF ElanPolicyEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all policies this
+        agent supports for assigning a LEC to
+        an ELAN. 
+        A set of policies with the same or
+        different priorities can be selected
+        by the entity which provides ELAN
+        configuration service such
+        as the LECS.  The policy with the
+        highest priority or with the smallest
+        elanPolicyPriority , is evaluated
+        first.  The policies with the same
+        elanPolicyPriority are evaluated
+        at the same time with the AND operation.
+        When LECS receives a configure
+        request, it checks it's policies selected
+        from this table to determine which 
+        ELAN and LES the LEC will join.
+        This table is indexed by a selector
+        index and a policy index.  The policy
+        index unquely identifies a policy and
+        the selector index allows multiple
+        policies be selected by one LECS or
+        an entity that is providing ELAN
+        configuration service."
+    ::= { elanConfGroup 4 }
+
+elanPolicyEntry OBJECT-TYPE
+    SYNTAX ElanPolicyEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents a
+         policy supported by the entity which 
+         provides ELAN configuration 
+         services.  Each policy can be used to
+         evaluate the CONFIGURE request from
+         the LEC in determining which ELAN it
+         belongs to. "
+    INDEX { elanPolicySelectorIndex, elanPolicyIndex }
+    ::= { elanPolicyTable 1 }
+
+ElanPolicyEntry ::= SEQUENCE {
+    elanPolicySelectorIndex PolicySelectorIndexType,
+    elanPolicyIndex Integer32,
+    elanPolicyPriority Integer32,
+    elanPolicyType AutonomousType,
+    elanPolicyRowStatus RowStatus
+    }
+
+elanPolicySelectorIndex OBJECT-TYPE
+    SYNTAX PolicySelectorIndexType
+--    Rsyntax Integer32
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The value of this object indicates
+        a group of policies that can be selected
+        by the ELAN configuration service
+            provider such as the LECS."
+    ::= { elanPolicyEntry 1 }
+
+elanPolicyIndex OBJECT-TYPE
+    SYNTAX Integer32(1..65000)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The value of this object uniquely
+         identifies a single policy entry in
+         this table. "
+    ::= { elanPolicyEntry 2 }
+
+elanPolicyPriority OBJECT-TYPE
+    SYNTAX Integer32(1..65000)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The priority of this policy entry. 
+         Policies are evaluated by the 
+         entity which provides ELAN configuration
+         service (LECS) by their
+         priorities.  Policies with the
+         same priority values should be
+         evludated at the same time with
+         an AND operation.  That is, if
+         one of the policy with the same
+         priority is not met,
+         the evluation should fail.
+         The value 1 has the highest priority. "
+    ::= { elanPolicyEntry 3 }
+
+elanPolicyType OBJECT-TYPE
+    SYNTAX AutonomousType
+--    Rsyntax OBJECT IDENTIFIER
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "
+         The value of this object must
+         reference a definition of a type
+         of policy.  Some of such definition
+         exist within the elanAdminPolicyVal
+         subtree.  Others may be defined 
+         within enterprise specific subtrees.
+         The agent is not required to 
+         support every types defined
+         within the elanAdminPolicyVal subtree."
+    ::= { elanPolicyEntry 4 }
+
+elanPolicyRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+         delete entries in the elanPolicyTable."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { elanPolicyEntry 5 }
+
+elanLecAtmAddrTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF ElanLecAtmAddrEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table is used to assign a LEC
+         to an ELAN by ATM address.
+         When the by ATM address policy is 
+         used, this table is used to specify
+         the LEC's ATM address or portion of an ATM
+         address.  The ATM address is used by
+         the LECS or other entity which serves
+         the LANE configuration function to
+         determine the ELAN membership.
+        
+         This table is indexed
+         by the elanConfIndex which points
+         to the ELAN this LEC belongs, the
+         elanLesIndex which points to the
+         LES this LEC should join, the
+         LEC's ATM address and an ATM address
+         mask.  Portions of ATM address
+         can be used in dertermining ELAN
+         membership by using both the ATM
+         address and the mask."
+    ::= { elanConfGroup 5 }
+
+elanLecAtmAddrEntry OBJECT-TYPE
+    SYNTAX ElanLecAtmAddrEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LEC to ELAN
+        binding."
+    INDEX { elanConfIndex, elanLesIndex, elanLecAtmAddress, elanLecAtmMask }
+    ::= { elanLecAtmAddrTable 1 }
+
+ElanLecAtmAddrEntry ::= SEQUENCE {
+    elanLecAtmAddress AtmLaneAddress,
+    elanLecAtmMask AtmLaneAddress,
+    elanLecAtmRowStatus RowStatus
+    }
+
+elanLecAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The value of this object is the
+        ATM address of a LAN Emulation
+        client.  This object and the
+        object elanLecAtmMask are used
+        to form an ATM address or portion
+        of an ATM address to be used
+        by the LECS in determining the
+        ELAN membership when the policy
+        of this LECS is by ATM address."
+    ::= { elanLecAtmAddrEntry 1 }
+
+elanLecAtmMask OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address mask associated with
+        the object elanLecAtmAddress.  The value
+        of the mask is an ATM address with
+        the don't care portion set to zero
+        and the valid ATM address portion set to one."
+    ::= { elanLecAtmAddrEntry 2 }
+
+elanLecAtmRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        destroy entries in this table."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { elanLecAtmAddrEntry 4 }
+
+elanLecMacAddrTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF ElanLecMacAddrEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table is used to assign a LEC
+         to an ELAN by MAC address.
+         When the byMacAddress policy is 
+         used, this table is used to specify
+         the LEC's ELAN membership by ATM
+         address.  This table is indexed
+         by the elanConfIndex which points
+         to the ELAN this LEC belongs, the
+         elanLesIndex which points to the
+         LES this LEC should join, and the
+         LEC's MAC address."
+    ::= { elanConfGroup 6 }
+
+elanLecMacAddrEntry OBJECT-TYPE
+    SYNTAX ElanLecMacAddrEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LEC to ELAN
+        binding."
+    INDEX { elanConfIndex, elanLesIndex, elanLecMacAddress }
+    ::= { elanLecMacAddrTable 1 }
+
+ElanLecMacAddrEntry ::= SEQUENCE {
+    elanLecMacAddress MacAddress,
+    elanLecMacRowStatus RowStatus
+    }
+
+elanLecMacAddress OBJECT-TYPE
+    SYNTAX MacAddress
+--    Rsyntax OCTET STRING(SIZE(6))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The value of this object is the
+        MAC address of a LAN Emulation
+        client.  When a CONFIGURE request
+        is received with this MAC address,
+        it will be assigned to the ELAN
+        which elanConfIndex is pointing
+        to."
+    ::= { elanLecMacAddrEntry 1 }
+
+elanLecMacRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        destroy entries in this table."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { elanLecMacAddrEntry 2 }
+
+elanLecRdTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF ElanLecRdEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table is used to assign a LEC
+        to an ELAN by Route Descriptor.
+         When the by Route Descriptor policy is 
+        used, this table is used to specify
+        the LEC's ELAN membership by Route
+        Descriptor.  This table is indexed
+        by the elanConfIndex which points
+        to the ELAN this LEC belongs, the
+        elanLesIndex which points to the
+        LES this LEC should join, and the
+        LEC's Route Descriptors."
+    ::= { elanConfGroup 7 }
+
+elanLecRdEntry OBJECT-TYPE
+    SYNTAX ElanLecRdEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LEC to ELAN
+        binding. "
+    INDEX { elanConfIndex, elanLesIndex, elanLecRdSegId, elanLecRdBridgeNum }
+    ::= { elanLecRdTable 1 }
+
+ElanLecRdEntry ::= SEQUENCE {
+    elanLecRdSegId Integer32,
+    elanLecRdBridgeNum Integer32,
+    elanLecRdRowStatus RowStatus
+    }
+
+elanLecRdSegId OBJECT-TYPE
+    SYNTAX Integer32(0..4095)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The LAN ID portion of the IEEE 802.5
+        route descriptor associated with this
+        conceptual row."
+    ::= { elanLecRdEntry 1 }
+
+elanLecRdBridgeNum OBJECT-TYPE
+    SYNTAX Integer32(0..15)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The Bridge Number portion of the
+         IEEE 802.5 route descriptor associated
+         with this conceptual row."
+    ::= { elanLecRdEntry 2 }
+
+elanLecRdRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        destroy entries in this table."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { elanLecRdEntry 4 }
+
+elanLecPktSizeTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF ElanLecPktSizeEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table is used to assign a LEC
+        to an ELAN by Packet Size. When the by 
+        Packet Size policy is used, this table is 
+        used to specifythe LEC's ELAN membership 
+        by Packet Size.  This table is indexed by 
+        the elanConfIndex which points to the 
+        ELAN this LEC belongs, the elanLesIndex 
+        which points to the
+        LES this LEC should join, and the
+        LEC's Packet Size."
+    ::= { elanConfGroup 8 }
+
+elanLecPktSizeEntry OBJECT-TYPE
+    SYNTAX ElanLecPktSizeEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LEC to ELAN
+        binding. "
+    INDEX { elanConfIndex, elanLesIndex, elanLecFrameSize }
+    ::= { elanLecPktSizeTable 1 }
+
+ElanLecPktSizeEntry ::= SEQUENCE {
+    elanLecFrameSize LecDataFrameSize,
+    elanLecPktSizeRowStatus RowStatus
+    }
+
+elanLecFrameSize OBJECT-TYPE
+    SYNTAX LecDataFrameSize
+--    Rsyntax INTEGER {
+--        unspecified(1),
+--        max1516(2),
+--        max4544(3),
+--        max9234(4),
+--        max18190(5)
+--        }
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The maximum AAL-5 SDU size this LEC can 
+        support. "
+    ::= { elanLecPktSizeEntry 1 }
+
+elanLecPktSizeRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        destroy entries in this table."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { elanLecPktSizeEntry 2 }
+
+elanLecNameTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF ElanLecNameEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table is used to assign a LEC
+        to an ELAN by ELAN name. When the by ELAN 
+        name policy is used, this table is used 
+        to specifythe LEC's ELAN membership by 
+        ELAN name.  This table is indexed by the 
+        elanConfIndex which points to the ELAN 
+        this LEC belongs, the elanLesIndex which 
+        points to the
+        LES this LEC should join, and the
+        LEC's ELAN name."
+    ::= { elanConfGroup 9 }
+
+elanLecNameEntry OBJECT-TYPE
+    SYNTAX ElanLecNameEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LEC to ELAN
+        binding. "
+    INDEX { elanConfIndex, elanLesIndex, elanLecElanName }
+    ::= { elanLecNameTable 1 }
+
+ElanLecNameEntry ::= SEQUENCE {
+    elanLecElanName DisplayString,
+    elanLecNameRowStatus RowStatus
+    }
+
+elanLecElanName OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..32))
+--    Rsyntax OCTET STRING(SIZE(0..32))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The name of the ELAN this LEC belongs. "
+    ::= { elanLecNameEntry 1 }
+
+elanLecNameRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        destroy entries in this table."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { elanLecNameEntry 2 }
+
+lecsConfNextId OBJECT-TYPE
+    SYNTAX ElanLocalIndex
+--    Rsyntax Integer32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The next available LECS index.  The
+        value of this object can be used as
+        the index to the lecsTable during
+        creation."
+    ::= { elanLecsConfGroup 1 }
+
+lecsConfTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecsConfEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains the configuration 
+         information of all LECS this agent
+         manages.  This table can also be
+         used to create, delete or configure
+         a LECS."
+    ::= { elanLecsConfGroup 2 }
+
+lecsConfEntry OBJECT-TYPE
+    SYNTAX LecsConfEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LECS this
+        agent maintains. 
+        Objects lecsAtmIfIndex, lecsAtmAddrSpec,
+        and lecsAtmAddrMask cannot be modified
+        unless the lecsAdminStatus is set to
+        down(2).  And the change does not take
+        effect until the lecsAdminStatus is set
+        to up(1)."
+    INDEX { lecsConfIndex }
+    ::= { lecsConfTable 1 }
+
+LecsConfEntry ::= SEQUENCE {
+    lecsConfIndex Integer32,
+    lecsAtmIfIndex IfIndexOrZero,
+    lecsAtmAddrSpec AtmLaneAddress,
+    lecsAtmAddrMask AtmLaneMask,
+    lecsAtmAddrActual AtmLaneAddress,
+    lecsPolicySelIndex PolicySelectorIndexType,
+    lecsLastInitialized TimeStamp,
+    lecsOperStatus INTEGER,
+    lecsAdminStatus INTEGER,
+    lecsRowStatus RowStatus
+    }
+
+lecsConfIndex OBJECT-TYPE
+    SYNTAX Integer32
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An arbitrary integer which represents
+        a LECS this agent manages.  
+        If the conceptual row identified by this value
+        of lecsConfIndex is recreated following an agent
+        restart, the same value of elanConfIndex must be
+        used to identify the recreated row."
+    ::= { lecsConfEntry 1 }
+
+lecsAtmIfIndex OBJECT-TYPE
+    SYNTAX IfIndexOrZero
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "An ATM interface which the LECS receives 
+         CONFIGURE requests 
+         from.  This value must match an existing
+         value  in the   ifTable.  This object
+         is set to zero when the ATM interface
+         is not specified or there is more than
+         one ATM interface used by the LECS."
+    DEFVAL { '0'h }
+    ::= { lecsConfEntry 2 }
+
+lecsAtmAddrSpec OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "An ATM  address specified by  the  
+        network or local management that, 
+        with the ATM address mask, determines
+        a  portion of  the  ATM address  that 
+        the  LECS on the designated ATM interface  
+        will use  to derive the actual ATM
+        address from the network or ILMI.  The derived
+        ATM address is specified in the object
+        lecsAtmAddrActual, which is used to
+        receive CONFIGURE requests.
+        The value of this object, if not
+        specified, is defaulted to the 
+        well-known LECS ATM address specified
+        in the LAN Emulation Spec. 1.0."
+    DEFVAL { '4700790000000000000000000000A03E00000100'h }
+    ::= { lecsConfEntry 3 }
+
+lecsAtmAddrMask OBJECT-TYPE
+    SYNTAX AtmLaneMask
+--    Rsyntax OCTET STRING(SIZE(20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address mask associated with
+        the object lecsAtmAddrSpec.  The value
+        of the mask is an ATM address with
+        the don't care portion set to zero
+        and the valid ATM address portion set to one."
+    DEFVAL { 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'h }
+    ::= { lecsConfEntry 4 }
+
+lecsAtmAddrActual OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        " The resulting ATM address that the   
+        LECS is accepting CONFIGURE    
+        requests on the interface indicated
+        by the object lecsAtmIfIndex.
+        This  address is   the  result of  the 
+        specified   ATM address,  its   mask   and 
+        interaction through the ILMI  with  the  
+        switch. Note  that   this object is only 
+        valid  when the corresponding lecsOperStatus 
+        is 'up'."
+    ::= { lecsConfEntry 5 }
+
+lecsPolicySelIndex OBJECT-TYPE
+    SYNTAX PolicySelectorIndexType
+--    Rsyntax Integer32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The set of policies used
+        by this LECS in dertermining
+        requesters ELAN membership.
+        The policies are defined in
+        the elanPolicyTable.  The value
+        of this object must exist in the
+        elanPolicyTable."
+    ::= { lecsConfEntry 6 }
+
+lecsLastInitialized OBJECT-TYPE
+    SYNTAX TimeStamp
+--    Rsyntax TimeTicks
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The value of the sysUpTime since
+         LECS has last entered the state
+         indicated by the object lecsOperStatus."
+    ::= { lecsConfEntry 7 }
+
+lecsOperStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        other(1),
+        up(2),
+        down(3)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        " This  object reflects the actual  
+        state of  the LECS which  may differ  
+        from that   of the  lecsAdminStatus
+        object.   This     can occur    when    
+        the  interface ifOperStatus     is   
+        'down'   but the   corresponding
+        lecsAdminStatus is 'up'."
+    ::= { lecsConfEntry 8 }
+
+lecsAdminStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        up(1),
+        down(2)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The desired  state of the  LECS on 
+        this interface as prescribed by the 
+        operator.   The actions of the agent
+        will,  if  at all possible,  eventually  
+        result in the desired  state being 
+        reflected in the lecsOperStatus."
+    DEFVAL { up }
+    ::= { lecsConfEntry 9 }
+
+lecsRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        delete entries in this table."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { lecsConfEntry 10 }
+
+lecsElanTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecsElanEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains the mapping between 
+         ELANs and LECS.
+        
+         When a LECS is deleted from the lecsConfTable, 
+         all entries associated with this entry will 
+         also be deleted."
+    ::= { elanLecsConfGroup 3 }
+
+lecsElanEntry OBJECT-TYPE
+    SYNTAX LecsElanEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents an ELAN to LECS
+         mapping."
+    INDEX { elanConfIndex, lecsConfIndex }
+    ::= { lecsElanTable 1 }
+
+LecsElanEntry ::= SEQUENCE {
+    elanLecsRowStatus RowStatus
+    }
+
+elanLecsRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        delete an entry from this table."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { lecsElanEntry 1 }
+
+lecsTlvTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecsTlvEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains currently configured
+        sets of TLVs in this LECS. These sets can
+        include not only the standard TLVs specified
+        in the LAN Emulation Spec. 1.0 [1] but
+        also the additional parameters
+        exchanged between the LECS and LEC.
+        This table is indexed by a selector
+        index, which allows more than one
+        TLV to be selected by an ELAN; and
+        the TLV tag, which specified the type
+        of the TLV; and a TLV index which
+        is used to distinguish between different
+        entries with the same TLV tag.
+        How does the LECS treat the TLVs
+        that are not specified in this table
+        in the CONFIGURE requests are not
+        defined in this MIB."
+    ::= { elanLecsConfGroup 4 }
+
+lecsTlvEntry OBJECT-TYPE
+    SYNTAX LecsTlvEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a set of TLV 
+        encodings for an ELAN represented 
+        by the elanConfIndex.  Objects lecsTlvVal 
+        and lecsTlvRowStatus are required during 
+        row creation."
+    INDEX { lecsTlvSelectorIndex, lecsTlvTag, lecsTlvIndex }
+    ::= { lecsTlvTable 1 }
+
+LecsTlvEntry ::= SEQUENCE {
+    lecsTlvSelectorIndex TlvSelectorIndexType,
+    lecsTlvTag OCTET STRING,
+    lecsTlvIndex Integer32,
+    lecsTlvVal OCTET STRING,
+    lecsTlvRowStatus RowStatus
+    }
+
+lecsTlvSelectorIndex OBJECT-TYPE
+    SYNTAX TlvSelectorIndexType
+--    Rsyntax Integer32
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The value of this object indicates 
+        a group of TLVs that can be selected."
+    ::= { lecsTlvEntry 1 }
+
+lecsTlvTag OBJECT-TYPE
+    SYNTAX OCTET STRING(SIZE(4))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The value of this object represents the 
+        type of the contents of the lecsTlvVal 
+        field in the entry.  The OUI field
+        in this object occupies the first
+        ( or most significant )3 octets.  
+        The OUI value 00-A0-3E is used for 
+        the standard values defined by the ATM 
+        Forum specification."
+    ::= { lecsTlvEntry 2 }
+
+lecsTlvIndex OBJECT-TYPE
+    SYNTAX Integer32(1..2147483647)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The index of this TLV encoding entry.  
+         The value of this object can be used 
+         to distinguish between different entries 
+         with the same lecsTlvTag value."
+    ::= { lecsTlvEntry 3 }
+
+lecsTlvVal OBJECT-TYPE
+    SYNTAX OCTET STRING(SIZE(0..1024))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The value of this TLV entry.  Note that
+         the length is implied by the length of
+         the OCTET STRING."
+    ::= { lecsTlvEntry 4 }
+
+lecsTlvRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        destroy entries in this table. "
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { lecsTlvEntry 5 }
+
+lecsVccTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecsVccEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all the CONFIG VCCs of the
+         LECS.  The CONFIG VCC is used by the LEC to send/
+         receive ATM LE CONFIGURE request/response to/from
+         the LECS.  This table is writable if PVC is used
+         and read only if SVC is used. "
+    ::= { elanLecsConfGroup 5 }
+
+lecsVccEntry OBJECT-TYPE
+    SYNTAX LecsVccEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a CONFIG VCC
+         between a pair of LEC and LECS."
+    INDEX { lecsConfIndex, lecsVccIfIndex, lecsVccVpi, lecsVccVci }
+    ::= { lecsVccTable 1 }
+
+LecsVccEntry ::= SEQUENCE {
+    lecsVccIfIndex IfIndexOrZero,
+    lecsVccVpi VpiInteger,
+    lecsVccVci VciInteger,
+    lecsVccRowStatus RowStatus
+    }
+
+lecsVccIfIndex OBJECT-TYPE
+    SYNTAX IfIndexOrZero
+--    Rsyntax INTEGER(0..65535)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM interface which the CONFIG VCC is established.
+         This value must be an existing value in the 
+         ifTable.  The value of this object is set to zero
+         when the ATM interface is an internal connection. "
+    ::= { lecsVccEntry 1 }
+
+lecsVccVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..255)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The VPI value of the CONFIG VCC.  The object
+         lecsVccIfIndex, lecsVccVci and this object
+         uniquely identifies a VCC within an ATM system."
+    ::= { lecsVccEntry 2 }
+
+lecsVccVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The VCI value of the CONFIG VCC. The object
+         lecsVccIfIndex, lecsVccVpi and this object
+         uniquely identifies a VCC within an ATM system "
+    ::= { lecsVccEntry 3 }
+
+lecsVccRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        destroy entries in this table. "
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { lecsVccEntry 4 }
+
+lecsStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecsStatsEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        " A (conceptual) table of statistics 
+        associated with all
+        LECS instances on the device."
+    ::= { elanLecsStatGroup 1 }
+
+lecsStatsEntry OBJECT-TYPE
+    SYNTAX LecsStatsEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        " A (conceptual) row in the 
+        lecsStatsTable which corresponds 
+        to the statistics kept by a particular
+        instance of a LECS."
+    INDEX { lecsConfIndex }
+-- Augments lecsConfEntry
+    ::= { lecsStatsTable 1 }
+
+LecsStatsEntry ::= SEQUENCE {
+    lecsStatSuccessful Counter32,
+    lecsStatInBadFrames Counter32,
+    lecsStatInvalidParam Counter32,
+    lecsStatInsufRes Counter32,
+    lecsStatAccDenied Counter32,
+    lecsStatInvalidReq Counter32,
+    lecsStatInvalidDest Counter32,
+    lecsStatInvalidAddr Counter32,
+    lecsStatNoConf Counter32,
+    lecsStatConfError Counter32,
+    lecsStatInsufInfo Counter32
+    }
+
+lecsStatSuccessful OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests 
+        successfully granted since the agent 
+        was last initialized."
+    ::= { lecsStatsEntry 1 }
+
+lecsStatInBadFrames OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of mal formed CONFIGURE
+        requests dropped by the LECS."
+    ::= { lecsStatsEntry 2 }
+
+lecsStatInvalidParam OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests 
+        rejected due to the invalid request 
+        parameters error."
+    REFERENCE
+        "LAN Emulation Over ATM Spec. v1.0. Table 13"
+    ::= { lecsStatsEntry 3 }
+
+lecsStatInsufRes OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests rejected due
+        to the insufficent resources to grant request 
+        error."
+    REFERENCE
+        "LAN Emulation Over ATM Spec. v1.0. Table 13"
+    ::= { lecsStatsEntry 4 }
+
+lecsStatAccDenied OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests rejected due
+        to the access denied error."
+    REFERENCE
+        "LAN Emulation Over ATM Spec. v1.0. Table 13"
+    ::= { lecsStatsEntry 5 }
+
+lecsStatInvalidReq OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests rejected due
+        to the invalid requester-id error."
+    REFERENCE
+        "LAN Emulation Over ATM Spec. v1.0. Table 13"
+    ::= { lecsStatsEntry 6 }
+
+lecsStatInvalidDest OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests rejected due
+        to the invalid destination error."
+    REFERENCE
+        "LAN Emulation Over ATM Spec. v1.0. Table 13"
+    ::= { lecsStatsEntry 7 }
+
+lecsStatInvalidAddr OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests rejected due
+        to the invalid ATM address error."
+    REFERENCE
+        "LAN Emulation Over ATM Spec. v1.0. Table 13"
+    ::= { lecsStatsEntry 8 }
+
+lecsStatNoConf OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests rejected due
+        to the LE Client is not recognized error."
+    REFERENCE
+        "LAN Emulation Over ATM Spec. v1.0. Table 13"
+    ::= { lecsStatsEntry 9 }
+
+lecsStatConfError OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests rejected due
+        to the LE_CONFIGURE error."
+    REFERENCE
+        "LAN Emulation Over ATM Spec. v1.0. Table 13"
+    ::= { lecsStatsEntry 10 }
+
+lecsStatInsufInfo OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of CONFIGURE requests rejected due
+        to the insufficient information error."
+    REFERENCE
+        "LAN Emulation Over ATM Spec. v1.0. Table 13"
+    ::= { lecsStatsEntry 11 }
+
+lecsErrCtlTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecsErrCtlEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains error log control 
+         information of all LECS instances.
+         This table is an extention to the
+         lecsConfTable.  It is used to enable
+         or disable error logs for a particular
+         LECS entry."
+    ::= { elanLecsFaultGroup 1 }
+
+lecsErrCtlEntry OBJECT-TYPE
+    SYNTAX LecsErrCtlEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LECS entry
+        in the lecsConfTable."
+    INDEX { lecsConfIndex }
+-- Augments lecsConfEntry
+    ::= { lecsErrCtlTable 1 }
+
+LecsErrCtlEntry ::= SEQUENCE {
+    lecsErrCtlAdminStatus INTEGER,
+    lecsErrCtlOperStatus INTEGER,
+    lecsErrCtlClearLog INTEGER,
+    lecsErrCtlMaxEntries INTEGER,
+    lecsErrCtlLastEntry LecsErrLogIndexType
+    }
+
+lecsErrCtlAdminStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        enable(1),
+        disable(2)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to enable/disable error 
+             logging for the LECS."
+    ::= { lecsErrCtlEntry 1 }
+
+lecsErrCtlOperStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        other(1),
+        active(2),
+        outOfRes(3),
+        failed(4),
+        disabled(5)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to indicate
+        the result of a set operation to the
+        object lecsErrCtlAdminStatus.
+        If the error log was successfully
+        started, it is in active(2) mode.
+        Otherwise, it is set to either
+        outOfRes(3) or failed(4) for
+        the respective reasons."
+    ::= { lecsErrCtlEntry 2 }
+
+lecsErrCtlClearLog OBJECT-TYPE
+    SYNTAX INTEGER {
+        noOp(1),
+        clear(2)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to clear the error log
+         entries associated with this LECS."
+    ::= { lecsErrCtlEntry 3 }
+
+lecsErrCtlMaxEntries OBJECT-TYPE
+    SYNTAX INTEGER(1..65535)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The maximum entries of the error
+        log a LECS can support."
+    ::= { lecsErrCtlEntry 4 }
+
+lecsErrCtlLastEntry OBJECT-TYPE
+    SYNTAX LecsErrLogIndexType
+--    Rsyntax Integer32(1..2147483647)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The index to the last entry in the error
+        log table associated with this LECS."
+    ::= { lecsErrCtlEntry 5 }
+
+lecsErrLogTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LecsErrLogEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains error logs
+        of the LECS instances enabled
+        in the lecsErrCtlTable.  This table
+        is indexed by the LECS instance
+        index and an arbitrary integer
+        uniquely identifies an error
+        log."
+    ::= { elanLecsFaultGroup 2 }
+
+lecsErrLogEntry OBJECT-TYPE
+    SYNTAX LecsErrLogEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LEC that
+         was rejected due to a violation 
+         against the policies or an error."
+    INDEX { lecsConfIndex, lecsErrLogIndex }
+    ::= { lecsErrLogTable 1 }
+
+LecsErrLogEntry ::= SEQUENCE {
+    lecsErrLogIndex LecsErrLogIndexType,
+    lecsErrLogAtmAddr AtmLaneAddress,
+    lecsErrLogErrCode INTEGER,
+    lecsErrLogTime TimeStamp
+    }
+
+lecsErrLogIndex OBJECT-TYPE
+    SYNTAX LecsErrLogIndexType
+--    Rsyntax Integer32(1..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "An arbitrary integer which uniquely
+        identifies an error log entry. The first
+        entry after reset or clearing the error
+        log is an assigned value (2^32-1).  Succeding
+        entries are assigned with descending values 
+        consecutively.  Entries after 1 are discarded.The enabling/disabling 
+        of
+        the error log capability is done in
+        the lecsErrCtlTable."
+    ::= { lecsErrLogEntry 1 }
+
+lecsErrLogAtmAddr OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address of the requester
+        which sends the CONFIGURE request
+        and causes the error to occur. 
+        The corresponding error code is
+        specified in the object lecsErrLogErrCode."
+    ::= { lecsErrLogEntry 2 }
+
+lecsErrLogErrCode OBJECT-TYPE
+    SYNTAX INTEGER(0..22)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The Error code which indicates the
+        cause of the error triggered by the
+        CONFIGURE request sent by the
+        requester indicated by the value of
+        the object lecsErrLogAtmAddr."
+    ::= { lecsErrLogEntry 3 }
+
+lecsErrLogTime OBJECT-TYPE
+    SYNTAX TimeStamp
+--    Rsyntax TimeTicks
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The sysUpTime when this entry was logged by
+         the LECS."
+    ::= { lecsErrLogEntry 4 }
+
+elanCConfGroup OBJECT IDENTIFIER ::= { elanMIBGroups 1 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects providing configuration
+--     information about an Emulated LAN.
+--  objects
+--    elanConfNextId, elanConfName, elanConfTlvIndex, 
+--    elanConfLanType, elanConfMaxFrameSize, elanConfRowStatus, 
+--    elanLecPktSizeRowStatus, elanLecNameRowStatus, 
+--    elanLesAtmAddress, elanLesRowStatus, elanPolicyPriority, 
+--    elanPolicyType, elanPolicyRowStatus
+
+elanLecAssignByAtmGroup OBJECT IDENTIFIER ::= { elanMIBGroups 2 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects providing ATM addresses
+--    of LECs.
+--  objects
+--    elanLecAtmRowStatus, elanLecAtmMask
+
+elanLecAssignByMacGroup OBJECT IDENTIFIER ::= { elanMIBGroups 3 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects providing MAC addresses
+--    of LECs.
+--  objects
+--    elanLecMacRowStatus
+
+elanLecAssignByRdGroup OBJECT IDENTIFIER ::= { elanMIBGroups 4 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects providing Route Descriptors
+--    of LECs.
+--  objects
+--    elanLecRdRowStatus
+
+lecsCStatGroup OBJECT IDENTIFIER ::= { elanMIBGroups 5 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects providing information
+--    about LECS statistics.
+--  objects
+--    lecsStatSuccessful, lecsStatInBadFrames, lecsStatInvalidParam, 
+--    lecsStatInsufRes, lecsStatAccDenied, lecsStatInvalidReq, 
+--    lecsStatInvalidDest, lecsStatInvalidAddr, lecsStatNoConf, 
+--    lecsStatConfError, lecsStatInsufInfo
+
+lecsCGroup OBJECT IDENTIFIER ::= { elanMIBGroups 6 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A group of objects used for LECS
+--    management only.
+--  objects
+--    lecsConfNextId, lecsAtmIfIndex, lecsAtmAddrSpec, 
+--    lecsAtmAddrMask, lecsAtmAddrActual, elanLecsRowStatus, 
+--    lecsPolicySelIndex, lecsTlvVal, lecsTlvRowStatus, 
+--    lecsVccRowStatus, lecsLastInitialized, lecsOperStatus, 
+--    lecsAdminStatus, lecsRowStatus
+
+lecsCFaultGroup OBJECT IDENTIFIER ::= { elanMIBGroups 7 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A group of objects used for LECS
+--     fault management only.
+--  objects
+--    lecsErrCtlAdminStatus, lecsErrCtlOperStatus, 
+--    lecsErrCtlClearLog, lecsErrCtlMaxEntries, lecsErrCtlLastEntry, 
+--    lecsErrLogTime, lecsErrLogIndex, lecsErrLogAtmAddr, 
+--    lecsErrLogErrCode
+
+elanMIBCompliance OBJECT IDENTIFIER ::= { elanMIBCompliances 1 }
+-- MODULE-COMPLIANCE
+--  Status
+--    mandatory
+--  Descr
+--    The compliance statement for SNMP 
+--    entities which support ATM LAN Emulation
+--    ELAN MIB.
+--  Module
+--    >>current<<
+--   MandGroup
+--    elanCConfGroup
+--   OptGroup
+--    elanLecAssignByAtmGroup
+--   OptGroup
+--    elanLecAssignByMacGroup
+--   OptGroup
+--    elanLecAssignByRdGroup
+--   OptGroup
+--    lecsCStatGroup
+--   OptGroup
+--    lecsCGroup
+--   OptGroup
+--    lecsCFaultGroup
+
+
+END
+
+
+LAN-EMULATION-LES-MIB DEFINITIONS ::= BEGIN
+
+-- From file: "atm1129r5.mi2"
+
+IMPORTS
+    Counter32, Integer32
+            FROM SNMPv2-SMI-v1
+    OBJECT-TYPE
+            FROM RFC-1212
+    DisplayString, RowStatus, MacAddress, TruthValue, TimeStamp
+            FROM SNMPv2-TC-v1
+    LeArpTableEntryType, AtmLaneAddress, VpiInteger, VciInteger, 
+    atmfLanEmulation
+            FROM LAN-EMULATION-CLIENT-MIB
+    IfIndexOrZero, AtmLaneMask
+            FROM LAN-EMULATION-ELAN-MIB;
+
+lesMIB OBJECT IDENTIFIER ::= { atmfLanEmulation 3 }
+-- MODULE-IDENTITY
+--  LastUpdated
+--    9602121200Z
+--  OrgName
+--    ATM Forum LAN Emulation Sub-Working Group
+--  ContactInfo
+--    
+--      The ATM Forum
+--    
+--      2570 West EL camino Real,
+--      Ste 304, Mountain View,
+--      CA 94040-1313, USA
+--      Tel: 415-578-6860
+--      E-mail: info@atmforum.com
+--  Descr
+--    This is the MIB module for managing ATM
+--    LAN Emulation Servers.
+
+lesConfGroup    OBJECT IDENTIFIER ::= { lesMIB 1 }
+lesStatGroup    OBJECT IDENTIFIER ::= { lesMIB 2 }
+lesLecStatGroup OBJECT IDENTIFIER ::= { lesMIB 3 }
+lesFaultGroup   OBJECT IDENTIFIER ::= { lesMIB 4 }
+lesMIBConformance OBJECT IDENTIFIER ::= { lesMIB 5 }
+lesMIBGroups    OBJECT IDENTIFIER ::= { lesMIBConformance 1 }
+lesMIBCompliances OBJECT IDENTIFIER ::= { lesMIBConformance 2 }
+
+LecId ::= INTEGER(0..65279)
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    C14 LE Client Identifier.
+
+BusConfIndex ::= Integer32
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A value which uniquely identifies a BUS.
+--    This number is only used locally by the agent to
+--    distinguish between BUSs.
+
+LesLocalIndex ::= Integer32
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A value which uniquely identifies a 
+--    conceptual row in the lesConfTable.
+--    This number is only used locally by the agent to
+--    distinguish between LESs.
+
+LesLecDataFrameFormat ::= INTEGER {
+        aflane8023(2),
+        aflane8025(3)
+        }
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A 'LAN Type' value.
+--    
+--     S2  LAN Type.  The type of LAN that the LE Server is servicing.
+--  Refer
+--    ATM Forum LAN Emulation Over ATM Specification, V1.0,
+--     Section 5.1.2.
+
+LesLecDataFrameSize ::= INTEGER {
+        max1516(2),
+        max4544(3),
+        max9234(4),
+        max18190(5)
+        }
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    A 'Maximum Data Frame Size' value.
+--    
+--    S3  Maximum Data Frame Size.  The maximum AAL-5 SDU size.
+--  Refer
+--    ATM Forum LAN Emulation Over ATM Specification, V1.0,
+--     Section 5.1.2.
+
+LesErrLogIndexType ::= Integer32(1..2147483647)
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An arbitrary integer used in identifying
+--    an erro log associated with a LES.
+
+lesConfNextId OBJECT-TYPE
+    SYNTAX LesLocalIndex
+--    Rsyntax Integer32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The next available LES index.  The
+        value of this object can be used as
+        the index by the network manager to
+        create an entry in the lesConfTable."
+    ::= { lesConfGroup 1 }
+
+lesConfTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesConfEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all LAN Emulation
+        Servers this agent manages.  The LES
+        is one of the components in the Emulated
+        LAN which implements the control coordination function.
+        It is the address resolution server for a given ELAN.
+        The LES provides a facility for registering and resolving 
+        MAC addresses and/or route descriptors to ATM
+        addresses.  There can be multiple LES per ELAN 
+        but a LES can serve only one ELAN."
+    ::= { lesConfGroup 2 }
+
+lesConfEntry OBJECT-TYPE
+    SYNTAX LesConfEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents a
+        LES.  The parameters in each entry apply
+        to one emulated LAN served by one LES.
+        Objects lesLanType and lesMaxFrameSize
+        are also required besides lesRowStatus
+        during row creation."
+    INDEX { lesConfIndex }
+    ::= { lesConfTable 1 }
+
+LesConfEntry ::= SEQUENCE {
+    lesConfIndex LesLocalIndex,
+    lesAtmAddrSpec AtmLaneAddress,
+    lesAtmAddrMask AtmLaneMask,
+    lesAtmAddrActual AtmLaneAddress,
+    lesElanName DisplayString,
+    lesLanType LesLecDataFrameFormat,
+    lesLastChange TimeStamp,
+    lesMaxFrameSize LesLecDataFrameSize,
+    lesControlTimeOut INTEGER,
+    lesOperStatus INTEGER,
+    lesAdminStatus INTEGER,
+    lesRowStatus RowStatus
+    }
+
+lesConfIndex OBJECT-TYPE
+    SYNTAX LesLocalIndex
+--    Rsyntax Integer32
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A value which uniquely identifies a
+        conceptual row in the lesConfTable.
+        
+        If the conceptual row identified by this value
+        of lesConfIndex is recreated following an agent
+        restart, the same value of lesConfIndex must be
+        used to identify the recreated row."
+    ::= { lesConfEntry 1 }
+
+lesAtmAddrSpec OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "An ATM  address specified by  the  
+        network or local management that, 
+        with the ATM address mask, determines
+        a  portion of  the  ATM address  that 
+        the  LES on the designated ATM interface  
+        will use  to derive the actual ATM
+        address from the network or ILMI.  The derived
+        ATM address is specified in the object
+        lesAtmAddrActual, which is used to
+        receive ATM ARP requests."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. S1."
+    ::= { lesConfEntry 2 }
+
+lesAtmAddrMask OBJECT-TYPE
+    SYNTAX AtmLaneMask
+--    Rsyntax OCTET STRING(SIZE(20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address mask associated with
+        the object lesAtmAddrSpec.  The value
+        of the mask is an ATM address with
+        the don't care portion set to zero
+        and the valid ATM address portion set to one."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. S1."
+    DEFVAL { 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'h }
+    ::= { lesConfEntry 3 }
+
+lesAtmAddrActual OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        " The resultant ATM address  in use by  the LES.  This
+        object is a product of the specified ATM address, mask
+        and  interaction  with  the network.  This object is
+        created by the agent."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. S1."
+    ::= { lesConfEntry 4 }
+
+lesElanName OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..32))
+--    Rsyntax OCTET STRING(SIZE(0..32))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The name of the Emulated LAN this LES
+        is providing service for.  This object
+        may be used to identify the ELAN the LES
+        is in."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. C5."
+    DEFVAL { "" }
+    ::= { lesConfEntry 5 }
+
+lesLanType OBJECT-TYPE
+    SYNTAX LesLecDataFrameFormat
+--    Rsyntax INTEGER {
+--        aflane8023(2),
+--        aflane8025(3)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The type of the ATM Emulated LAN this
+        LES is providing service to."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. S2."
+    ::= { lesConfEntry 6 }
+
+lesLastChange OBJECT-TYPE
+    SYNTAX TimeStamp
+--    Rsyntax TimeTicks
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The  value of   sysUpTime  when  this LES 
+        has entered the state indicated by the 
+        object lesOperStatus."
+    ::= { lesConfEntry 7 }
+
+lesMaxFrameSize OBJECT-TYPE
+    SYNTAX LesLecDataFrameSize
+--    Rsyntax INTEGER {
+--        max1516(2),
+--        max4544(3),
+--        max9234(4),
+--        max18190(5)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The maximum AAL-5 SDU size of a data
+        frame that the LE service can guarantee
+        not to drop because it is too large."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. S3."
+    ::= { lesConfEntry 8 }
+
+lesControlTimeOut OBJECT-TYPE
+    SYNTAX INTEGER(10..300)
+--  Units
+--    “seconds
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Time out period used for timing out most
+        request/response control frame interactions.
+        This is the time a Client has to issue a join
+        request to a LES after a control direct VCC is
+        established with a LES."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. S4."
+    DEFVAL { 120 }
+    ::= { lesConfEntry 9 }
+
+lesOperStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        other(1),
+        up(2),
+        down(3)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The operational state of this LES entry. 
+         When in 'up' state the LES will respond
+         to LEC requests.  Any other state the
+         LES is notavailable for service and may
+         release all the existing VCCs and refuse
+         service to all clients."
+    ::= { lesConfEntry 11 }
+
+lesAdminStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        up(2),
+        down(3)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "  The  desired  state   of  the  designated   LES  as
+        prescribed by the operator. The  actions of the  agent
+        will, if at  all  possible, eventually  result  in the
+        desired state being  reflected in  the lesOperStatus."
+    DEFVAL { up }
+    ::= { lesConfEntry 12 }
+
+lesRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        delete entries in the elanConfTable."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { lesConfEntry 13 }
+
+lesVccTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesVccEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all the Control Distribute 
+        VCCs used by the LES to distribute control traffic
+        to the participating LECs.  The Control Distribute
+        VCC can either be point-to-point or point-to-
+        multipoint calls.  This table is read only if
+        SVCs are used and writable if PVCs are used."
+    ::= { lesConfGroup 3 }
+
+lesVccEntry OBJECT-TYPE
+    SYNTAX LesVccEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents a
+        LES entry and it's associated Control Distribute VCC. "
+    INDEX { lesConfIndex, lesVccAtmIfIndex, lesVccCtlDistVpi, lesVccCtlDistVci }
+    ::= { lesVccTable 1 }
+
+LesVccEntry ::= SEQUENCE {
+    lesVccAtmIfIndex IfIndexOrZero,
+    lesVccCtlDistVpi VpiInteger,
+    lesVccCtlDistVci VciInteger,
+    lesVccRowStatus RowStatus
+    }
+
+lesVccAtmIfIndex OBJECT-TYPE
+    SYNTAX IfIndexOrZero
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM interface which the Control
+        Distribute VCC is running on.
+        This value must match an existing
+        value  in the   ifTable.  
+        The value of this object is set
+        to zero when the ATM interface is
+        an internal connection."
+    ::= { lesVccEntry 1 }
+
+lesVccCtlDistVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..255)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The VPI value of the Control
+        Distribute VCC.  The object
+        lesVccAtmIfIndex, lesVccCtlDistVci
+        and the value of this object uniquely
+        identfies a VCC within a ATM host."
+    ::= { lesVccEntry 2 }
+
+lesVccCtlDistVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The VCI value of the Control
+        Distribute VCC.  The object
+        lesVccAtmIfIndex, lesVccCtlDistVci
+        and the value of this object uniquely
+        identfies a VCC within a ATM host."
+    ::= { lesVccEntry 3 }
+
+lesVccRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        delete entries in the elanConfTable."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { lesVccEntry 4 }
+
+lesBusTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesBusEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains the BUSs paired
+        with the LESs found in the lesConfTable.
+        The BUS (Broadcast and Unknown Server)
+        handles data sent by a LE client to
+        the broadcast MAC address, all multicast
+        traffic, and initial unicast frames
+        which are sent by a LAN Emulation Client
+        before the data direct target ATM address
+        has been resolved."
+    ::= { lesConfGroup 4 }
+
+lesBusEntry OBJECT-TYPE
+    SYNTAX LesBusEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents aLES/BUS 
+        pair. Object lesBusAddress is required duringrow 
+        creation. This table is indexed by lesConfIndex 
+        and lesBusConfIndexto show the pairing 
+        relationship betweenthe LES and BUS."
+    INDEX { lesConfIndex, lesBusConfIndex }
+    ::= { lesBusTable 1 }
+
+LesBusEntry ::= SEQUENCE {
+    lesBusConfIndex BusConfIndex,
+    lesBusAddress AtmLaneAddress
+    }
+
+lesBusConfIndex OBJECT-TYPE
+    SYNTAX BusConfIndex
+--    Rsyntax Integer32
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A value which uniquely identifies a
+        BUS ATM address.
+               
+        If the BUS ATM address identified by this value
+        of lesBusConfIndex is recreated following an agent
+        restart, the same value of lesBusConfIndex must be
+        used to identify the recreated BUS ATM address."
+    ::= { lesBusEntry 1 }
+
+lesBusAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address of the BUS. This BUS is associated
+        with LES specified by the lesConfIndex. A BUS may
+        have several ATM addresses, this object provides
+        the ATM address the LES returns in response to the
+        LE-ARP request by the LEC."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. S6."
+    ::= { lesBusEntry 2 }
+
+lesLeArpMacTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesLeArpMacEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table provides access to an ATM LAN Emulation
+        Server's MAC-to-ATM ARP table.  It contains entries
+        for unicast addressed, the broadcast address.
+        
+        When the entry is for broadcast MAC address the 
+        corresponding ATM address is of a BUS.
+        When the entry is for unicast MAC 
+        address the corresponding ATM address represents
+        a LEC."
+    ::= { lesConfGroup 5 }
+
+lesLeArpMacEntry OBJECT-TYPE
+    SYNTAX LesLeArpMacEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An ATM LAN Emulation ARP table entry containing
+        information about the binding of one MAC address
+        to one ATM address."
+    INDEX { lesConfIndex, lesLeArpMacAddr }
+    ::= { lesLeArpMacTable 1 }
+
+LesLeArpMacEntry ::= SEQUENCE {
+    lesLeArpMacAddr MacAddress,
+    lesLeArpLecId LecId,
+    lesLeArpAtmAddr AtmLaneAddress,
+    lesLeArpEntryType LeArpTableEntryType,
+    lesLeArpRowStatus RowStatus
+    }
+
+lesLeArpMacAddr OBJECT-TYPE
+    SYNTAX MacAddress
+--    Rsyntax OCTET STRING(SIZE(6))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The MAC address for which this table entry provides
+         a translation.  Since ATM LAN Emulation uses an LE ARP
+         protocol to locate the Broadcast and Unknown Server,
+         the value of this object could be the broadcast MAC
+         address.
+        
+         MAC addresses should be unique within any given ATM
+         Emulated LAN.  However, there's no requirement that
+         they be unique across disjoint emulated LANs."
+    ::= { lesLeArpMacEntry 1 }
+
+lesLeArpLecId OBJECT-TYPE
+    SYNTAX LecId
+--    Rsyntax INTEGER(0..65279)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The LE Client Identifier (LECID) of this
+        entry.  Each LE Client requires a LECID
+        assigned by the LE Server during the
+        Join phase.  
+        If this entry is for a BUS then this object
+        value will be zero."
+    ::= { lesLeArpMacEntry 2 }
+
+lesLeArpAtmAddr OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address of the Broadcast & Unknown Server
+         or LAN Emulation Client whose MAC address is stored
+         in 'lesLeArpMacAddr'.
+         This volume may be registered by a LAN Emulation
+         Client or specified by network management."
+    ::= { lesLeArpMacEntry 3 }
+
+lesLeArpEntryType OBJECT-TYPE
+    SYNTAX LeArpTableEntryType
+--    Rsyntax INTEGER {
+--        other(1),
+--        learnedViaControl(2),
+--        learnedViaData(3),
+--        staticVolatile(4),
+--        staticNonVolatile(5)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to indicate how
+        this LE-ARP entry was created.
+        The possible values for this object are:
+        
+          viaRegister(1),  -  agent
+          staticVolatile(2), - network manager
+          staticNonVolatile(3) - network manager
+        
+        This object is filled in by agent or network
+        manager depending on the type."
+    REFERENCE
+        "LAN Emulation Client MIB definition."
+    DEFVAL { staticVolatile }
+    ::= { lesLeArpMacEntry 4 }
+
+lesLeArpRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        delete entries in the elanConfTable."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { lesLeArpMacEntry 5 }
+
+lesLeArpRdTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesLeArpRdEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table provides access to an ATM LAN Emulation
+        Server's RouteDescriptor-to-ATM ARP cache.  
+        The entries in this table are set-up by the agent
+        or network manager depending on the entry type.
+        
+        The Route Descriptors are presented as Segment Id 
+        (ring number) and Bridge number."
+    ::= { lesConfGroup 6 }
+
+lesLeArpRdEntry OBJECT-TYPE
+    SYNTAX LesLeArpRdEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An ATM LAN Emulation ARP cache entry containing
+        information about the binding of one Route
+        Descriptor to one ATM address."
+    INDEX { lesConfIndex, lesLeArpRdSegId, lesLeArpRdBridgeNum }
+    ::= { lesLeArpRdTable 1 }
+
+LesLeArpRdEntry ::= SEQUENCE {
+    lesLeArpRdSegId INTEGER,
+    lesLeArpRdBridgeNum INTEGER,
+    lesLeArpRdLecId LecId,
+    lesLeArpRdAtmAddr AtmLaneAddress,
+    lesLeArpRdEntryType LeArpTableEntryType,
+    lesLeArpRdRowStatus RowStatus
+    }
+
+lesLeArpRdSegId OBJECT-TYPE
+    SYNTAX INTEGER(0..4095)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The LAN ID (ring number) portion of the 
+         IEEE 802.5 route descriptor associated 
+         with this LES."
+    ::= { lesLeArpRdEntry 1 }
+
+lesLeArpRdBridgeNum OBJECT-TYPE
+    SYNTAX INTEGER(0..15)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The Bridge Number portion of the 
+         IEEE 802.5 route descriptor associated 
+         with this LES."
+    ::= { lesLeArpRdEntry 2 }
+
+lesLeArpRdLecId OBJECT-TYPE
+    SYNTAX LecId
+--    Rsyntax INTEGER(0..65279)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The LE Client Identifier (LECID) of this
+        entry.  Each LE Client requires a LECID
+        assigned by the LE Server during the
+        Join phase.  "
+    ::= { lesLeArpRdEntry 3 }
+
+lesLeArpRdAtmAddr OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address associated with the 
+        Route Descriptor."
+    ::= { lesLeArpRdEntry 4 }
+
+lesLeArpRdEntryType OBJECT-TYPE
+    SYNTAX LeArpTableEntryType
+--    Rsyntax INTEGER {
+--        other(1),
+--        learnedViaControl(2),
+--        learnedViaData(3),
+--        staticVolatile(4),
+--        staticNonVolatile(5)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to indicate how
+        this LE-ARP entry was learned:
+        
+          viaRegister(1),  -  agent
+          staticVolatile(2), - network manager
+          staticNonVolatile(3) - network manager
+        
+        This object is filled in by agent or network
+        manager depending on the type."
+    DEFVAL { staticVolatile }
+    ::= { lesLeArpRdEntry 5 }
+
+lesLeArpRdRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        delete entries in the elanConfTable."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { lesLeArpRdEntry 6 }
+
+lesLecTableLastChange OBJECT-TYPE
+    SYNTAX TimeStamp
+--    Rsyntax TimeTicks
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The value of sysUptime when an entry was created/deleted."
+    ::= { lesConfGroup 7 }
+
+lesLecTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesLecEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all LAN Emulation
+        clients serviced by LESs specified in
+        the lesConfTable.  This table can be
+        used to retrieve the topology of an
+        ELAN, in particular, the LES to LECs
+        mapping information.
+        
+        An entry in this table is filled in 
+        by the agent when a LEC registers successfully 
+        with the LES.  Objects lesLecCtlDirectVpi
+        and lesLecCtlDirectVci can be modified  by the
+        network manager after creation if PVC is used."
+    ::= { lesConfGroup 8 }
+
+lesLecEntry OBJECT-TYPE
+    SYNTAX LesLecEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LANE client to LES
+        binding."
+    INDEX { lesConfIndex, lesLecIndex }
+    ::= { lesLecTable 1 }
+
+LesLecEntry ::= SEQUENCE {
+    lesLecIndex INTEGER,
+    lesLecAtmAddr AtmLaneAddress,
+    lesLecProxy TruthValue,
+    lesLecId LecId,
+    lesLecAtmIfIndex IfIndexOrZero,
+    lesLecCtlDirectVpi VpiInteger,
+    lesLecCtlDirectVci VciInteger,
+    lesLecLastChange TimeStamp,
+    lesLecState INTEGER,
+    lesLecRowStatus RowStatus
+    }
+
+lesLecIndex OBJECT-TYPE
+    SYNTAX INTEGER(1..65535)
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "An arbitrary integer which uniquely identifies
+        a LEC in this table."
+    ::= { lesLecEntry 1 }
+
+lesLecAtmAddr OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address of the LANE client.  This
+        is the primary ATM address of the LEC used
+        in joining phase."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 5.4.3"
+    ::= { lesLecEntry 2 }
+
+lesLecProxy OBJECT-TYPE
+    SYNTAX TruthValue
+--    Rsyntax INTEGER {
+--        true(1),
+--        false(2)
+--        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Whether this client is acting as a 
+        proxy.  Proxy clients are allowed 
+        to represent unregistered MAC addresses, 
+        and receive copies of LE_ARP_REQUEST
+        packets for such addresses."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Section 5.1.1"
+    DEFVAL { false }
+    ::= { lesLecEntry 3 }
+
+lesLecId OBJECT-TYPE
+    SYNTAX LecId
+--    Rsyntax INTEGER(0..65279)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The LE Client Identifier (LECID) of this
+        entry.  Each LE Client requires a LECID 
+        assigned by the LE Server during the 
+        Join phase.  The LECID is placed
+        in control requests by the LE Client and MAY be
+        used for echo suppression on multicast data frames
+        sent by that LE Client."
+    DEFVAL { 0 }
+    ::= { lesLecEntry 4 }
+
+lesLecAtmIfIndex OBJECT-TYPE
+    SYNTAX IfIndexOrZero
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ifIndex of ATM port where this LEC entry
+        has established the control direct VCC to 
+        the LES.  The value of this object 
+        maps to an existing ifIndex value in the 
+        ifTable of MIB-II. 
+        When an internal connection is used, this object is 
+        set to zero."
+    ::= { lesLecEntry 5 }
+
+lesLecCtlDirectVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..255)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        " The VPI of the bi-directional control 
+        direct connection between the LEC and LES."
+    ::= { lesLecEntry 6 }
+
+lesLecCtlDirectVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        " The VCI of the bi-directional control 
+        direct connection between the LEC and LES."
+    ::= { lesLecEntry 7 }
+
+lesLecLastChange OBJECT-TYPE
+    SYNTAX TimeStamp
+--    Rsyntax TimeTicks
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The value of sysUpTime of this entry when the LEC enters
+         the state indicated by the object lesLecState."
+    ::= { lesLecEntry 8 }
+
+lesLecState OBJECT-TYPE
+    SYNTAX INTEGER {
+        other(1),
+        noLesConnect(2),
+        lesConnect(3),
+        joining(4),
+        addLec(5),
+        joinedLes(6)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to indicate the
+        status this LEC entry is in from the
+        LES's perspective.  The state of this
+        object is updated by the agent as 
+        it discovers various phases of this LEC."
+    ::= { lesLecEntry 9 }
+
+lesLecRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        " This object provides a way for the network manager
+        to selectively remove a LE Client from the designated
+        LES.  Or in a system where PVCs are used, this table
+        is used to configure Control Direct VCCs between LES
+        and LEC."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { lesLecEntry 10 }
+
+lesStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesStatEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all counters the
+        LES maintain.  This table is an extention
+        to the lesConfTable.  It provides performance
+        and fault counters on a per LES basis."
+    ::= { lesStatGroup 1 }
+
+lesStatEntry OBJECT-TYPE
+    SYNTAX LesStatEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table contains a
+        LES and its counters."
+    INDEX { lesConfIndex }
+-- Augments lesConfEntry
+    ::= { lesStatTable 1 }
+
+LesStatEntry ::= SEQUENCE {
+    lesStatJoinOk Counter32,
+    lesStatVerNotSup Counter32,
+    lesStatInvalidReqParam Counter32,
+    lesStatDupLanDest Counter32,
+    lesStatDupAtmAddr Counter32,
+    lesStatInsRes Counter32,
+    lesStatAccDenied Counter32,
+    lesStatInvalidReqId Counter32,
+    lesStatInvalidLanDest Counter32,
+    lesStatInvalidAtmAddr Counter32,
+    lesStatInBadPkts Counter32,
+    lesStatOutRegFails Counter32,
+    lesStatLeArpIn Counter32,
+    lesStatLeArpFwd Counter32
+    }
+
+lesStatJoinOk OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of successful Join responses
+        send out by the LAN Emulation Server."
+    ::= { lesStatEntry 1 }
+
+lesStatVerNotSup OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of version not supported errors."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Table 13."
+    ::= { lesStatEntry 2 }
+
+lesStatInvalidReqParam OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of invalid request parameters errors."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Table 13."
+    ::= { lesStatEntry 3 }
+
+lesStatDupLanDest OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of duplicate LAN destination errors."
+    ::= { lesStatEntry 4 }
+
+lesStatDupAtmAddr OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of duplicate ATM address errors."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Table 13."
+    ::= { lesStatEntry 5 }
+
+lesStatInsRes OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of insufficient resources to grant 
+        errors."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Table 13."
+    ::= { lesStatEntry 6 }
+
+lesStatAccDenied OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of access denied for security 
+        reasons errors."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Table 13."
+    ::= { lesStatEntry 7 }
+
+lesStatInvalidReqId OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of invalid LEC ID errors."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Table 13."
+    ::= { lesStatEntry 8 }
+
+lesStatInvalidLanDest OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of invalid LAN destination errors."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Table 13."
+    ::= { lesStatEntry 9 }
+
+lesStatInvalidAtmAddr OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of invalid ATM address errors."
+    REFERENCE
+        "ATM Forum LAN Emulation Over ATM Specification, V1.0,
+         Table 13."
+    ::= { lesStatEntry 10 }
+
+lesStatInBadPkts OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of mal formed ATM ARP requests
+        received by the LES."
+    ::= { lesStatEntry 11 }
+
+lesStatOutRegFails OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of registration failures sent
+         out by this LES."
+    ::= { lesStatEntry 12 }
+
+lesStatLeArpIn OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The total number of LE_ARP_REQUEST frames the LES has
+        accepted since its last initialization."
+    ::= { lesStatEntry 13 }
+
+lesStatLeArpFwd OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The number of LE_ARP_REQUESTs that the LES forwarded
+        onto the clients (either via the control distribute or
+        individually over each control direct) rather than
+        answering directly.  This may be due to implementation
+        decision (forward all requests) or because the resolution
+        to the request did not reside in the LES's LE ARP cache."
+    ::= { lesStatEntry 14 }
+
+lesLecStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesLecStatEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all LE-ARP request
+        related counters and error counts on 
+        a per LEC-LES pair basis."
+    ::= { lesLecStatGroup 1 }
+
+lesLecStatEntry OBJECT-TYPE
+    SYNTAX LesLecStatEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents a
+        LEC and its ARP counters.  This table
+        is an extention to the lesLecTable."
+    INDEX { lesConfIndex, lesLecIndex }
+-- Augments lesLecEntry
+    ::= { lesLecStatTable 1 }
+
+LesLecStatEntry ::= SEQUENCE {
+    lesLecRecvs Counter32,
+    lesLecSends Counter32,
+    lesLecInRegReq Counter32,
+    lesLecInUnReg Counter32,
+    lesLecInLeArpUcast Counter32,
+    lesLecInLeArpBcast Counter32,
+    lesLecInLeArpResp Counter32,
+    lesLecInNarp Counter32
+    }
+
+lesLecRecvs OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of requests received from this
+        LEC.  This includes all control
+        frames as well as LE-ARP requests."
+    ::= { lesLecStatEntry 1 }
+
+lesLecSends OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of requests or responses
+        sent to the LEC entry from this
+        LES."
+    ::= { lesLecStatEntry 3 }
+
+lesLecInRegReq OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of Register requests received 
+        from this LEC.  "
+    ::= { lesLecStatEntry 4 }
+
+lesLecInUnReg OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of UnRegister requests received 
+        from this LEC.  "
+    ::= { lesLecStatEntry 5 }
+
+lesLecInLeArpUcast OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of LE-ARP requests for UNICAST
+        address received from this LEC. "
+    ::= { lesLecStatEntry 6 }
+
+lesLecInLeArpBcast OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of LE-ARP requests for MULTICAST
+        and Broadcast address received from this LEC. "
+    ::= { lesLecStatEntry 7 }
+
+lesLecInLeArpResp OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of LE-ARP responses 
+        received from this LEC. "
+    ::= { lesLecStatEntry 8 }
+
+lesLecInNarp OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of NARP requests 
+        received from this LEC. "
+    ::= { lesLecStatEntry 10 }
+
+lesErrCtlTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesErrCtlEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains error log control 
+         information of all LES instances.
+         This table is an extention to the
+         lesConfTable.  It is used to enable
+         or disable error logs for a particular
+         LES entry."
+    ::= { lesFaultGroup 1 }
+
+lesErrCtlEntry OBJECT-TYPE
+    SYNTAX LesErrCtlEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a LES entry
+        in the lesConfTable."
+    INDEX { lesConfIndex }
+-- Augments lesConfEntry
+    ::= { lesErrCtlTable 1 }
+
+LesErrCtlEntry ::= SEQUENCE {
+    lesErrCtlAdminStatus INTEGER,
+    lesErrCtlOperStatus INTEGER,
+    lesErrCtlClearLog INTEGER,
+    lesErrCtlMaxEntries INTEGER,
+    lesErrCtlLastEntry LesErrLogIndexType
+    }
+
+lesErrCtlAdminStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        enable(1),
+        disable(2)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to enable/disable error 
+        logging for the LES."
+    ::= { lesErrCtlEntry 1 }
+
+lesErrCtlOperStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        other(1),
+        active(2),
+        outOfRes(3),
+        failed(4)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to indicate
+        the result of a set operation to the
+        object lesErrCtlAdminStatus.
+        If the error log was successfully
+        started, it is in active(2) mode.
+        Otherwise, it is set to either
+        outOfRes(3) or failed(4) for
+        the respective reasons."
+    ::= { lesErrCtlEntry 2 }
+
+lesErrCtlClearLog OBJECT-TYPE
+    SYNTAX INTEGER {
+        noOp(1),
+        clear(2)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to clear the error log
+         entries associated with this LES."
+    ::= { lesErrCtlEntry 3 }
+
+lesErrCtlMaxEntries OBJECT-TYPE
+    SYNTAX INTEGER(1..65535)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The maximum entries of the error
+        log a LES can support."
+    ::= { lesErrCtlEntry 4 }
+
+lesErrCtlLastEntry OBJECT-TYPE
+    SYNTAX LesErrLogIndexType
+--    Rsyntax Integer32(1..2147483647)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The index to the last entry in the error
+         log table for this LES."
+    ::= { lesErrCtlEntry 5 }
+
+lesErrLogTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF LesErrLogEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains error logs
+        of the LES instances enabled
+        in the lesErrCtlTable.  This table
+        is indexed by the LES instance
+        index and an arbitrary integer
+        uniquely identifies an error
+        log."
+    ::= { lesFaultGroup 2 }
+
+lesErrLogEntry OBJECT-TYPE
+    SYNTAX LesErrLogEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a JOIN or REGISTER that
+         was rejected due to an error."
+    INDEX { lesConfIndex, lesErrLogIndex }
+    ::= { lesErrLogTable 1 }
+
+LesErrLogEntry ::= SEQUENCE {
+    lesErrLogIndex LesErrLogIndexType,
+    lesErrLogAtmAddr AtmLaneAddress,
+    lesErrLogErrCode INTEGER,
+    lesErrLogTime TimeStamp
+    }
+
+lesErrLogIndex OBJECT-TYPE
+    SYNTAX LesErrLogIndexType
+--    Rsyntax Integer32(1..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "An arbitrary integer which uniquely
+        identifies an error log entry. The first
+        entry after reset or clearing the error
+        log is an assigned value (2^32-1).  Succeding
+        entries are assigned with descending values 
+        consecutively.  Entries after 1 are discarded. The enabling/disabling 
+        of
+        the error log capability is done in
+        the lesErrCtlTable."
+    ::= { lesErrLogEntry 1 }
+
+lesErrLogAtmAddr OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address of the requester
+        which sends the JOIN or REGISTER request
+        and causes the error to occur. 
+        The corresponding error code is
+        specified in the object lesErrLogErrCode."
+    ::= { lesErrLogEntry 2 }
+
+lesErrLogErrCode OBJECT-TYPE
+    SYNTAX INTEGER(0..22)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The Error code which indicates the
+        cause of the error triggered by the
+        JOIN or REGISTER request sent by the
+        requester indicated by the value of
+        the object lesErrLogAtmAddr."
+    ::= { lesErrLogEntry 3 }
+
+lesErrLogTime OBJECT-TYPE
+    SYNTAX TimeStamp
+--    Rsyntax TimeTicks
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The sysUpTime when this entry was logged by
+         the LES."
+    ::= { lesErrLogEntry 4 }
+
+lesCConfGroup OBJECT IDENTIFIER ::= { lesMIBGroups 1 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects providing configuration
+--     information about the LAN Emulation Services.
+--  objects
+--    lesConfNextId, lesAtmAddrSpec, lesAtmAddrMask, 
+--    lesAtmAddrActual, lesElanName, lesLanType, lesLastChange, 
+--    lesControlTimeOut, lesMaxFrameSize, lesVccAtmIfIndex, 
+--    lesVccCtlDistVpi, lesVccCtlDistVci, lesVccRowStatus, 
+--    lesOperStatus, lesAdminStatus, lesRowStatus, lesBusAddress, 
+--    lesLeArpLecId, lesLeArpAtmAddr, lesLeArpEntryType, 
+--    lesLeArpRowStatus, lesLecTableLastChange, lesLecAtmIfIndex, 
+--    lesLecProxy, lesLecAtmAddr, lesLecId, lesLecCtlDirectVpi, 
+--    lesLecCtlDirectVci, lesLecLastChange, lesLecRowStatus, 
+--    lesLecState
+
+lesRdGroup OBJECT IDENTIFIER ::= { lesMIBGroups 2 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A group of objects used for 802.5 
+--    ATM LAN Emulation management only.
+--  objects
+--    lesLeArpRdLecId, lesLeArpRdAtmAddr, lesLeArpRdEntryType, 
+--    lesLeArpRdRowStatus
+
+lesCStatGroup OBJECT IDENTIFIER ::= { lesMIBGroups 3 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects providing
+--    monitoring information about the
+--    LES.
+--  objects
+--    lesStatJoinOk, lesStatInBadPkts, lesStatOutRegFails, 
+--    lesStatVerNotSup, lesStatInvalidReqParam, lesStatDupLanDest, 
+--    lesStatDupAtmAddr, lesStatInsRes, lesStatAccDenied, 
+--    lesStatInvalidReqId, lesStatInvalidLanDest, 
+--    lesStatInvalidAtmAddr, lesStatLeArpIn, lesStatLeArpFwd
+
+lesLecCStatGroup OBJECT IDENTIFIER ::= { lesMIBGroups 4 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects providing
+--    monitoring information about the
+--    LEC to/from LES traffic.
+--  objects
+--    lesLecRecvs, lesLecSends, lesLecInRegReq, lesLecInUnReg, 
+--    lesLecInLeArpUcast, lesLecInLeArpBcast, lesLecInLeArpResp, 
+--    lesLecInNarp
+
+lesFaultCGroup OBJECT IDENTIFIER ::= { lesMIBGroups 5 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--    A collection of objects providing
+--    fault management for the LES.
+--  objects
+--    lesErrCtlAdminStatus, lesErrCtlOperStatus, lesErrCtlClearLog, 
+--    lesErrCtlMaxEntries, lesErrCtlLastEntry, lesErrLogIndex, 
+--    lesErrLogAtmAddr, lesErrLogErrCode, lesErrLogTime
+
+lesMIBCompliance OBJECT IDENTIFIER ::= { lesMIBCompliances 1 }
+-- MODULE-COMPLIANCE
+--  Status
+--    mandatory
+--  Descr
+--    The compliance statement for SNMP 
+--    entities which support the ATM LAN Emulation
+--    LES MIB.
+--  Module
+--    >>current<<
+--   MandGroup
+--    lesCConfGroup
+--   MandGroup
+--    lesCStatGroup
+--   MandGroup
+--    lesLecCStatGroup
+--   MandGroup
+--    lesFaultCGroup
+--   ObjVar
+--    lesVccCtlDistVpi
+--   ObjVar
+--    lesVccCtlDistVci
+--   ObjVar
+--    lesVccRowStatus
+--   ObjVar
+--    lesLecAtmIfIndex
+--   ObjVar
+--    lesLecCtlDirectVpi
+--   ObjVar
+--    lesLecCtlDirectVci
+--   ObjVar
+--    lesLecRowStatus
+--   OptGroup
+--    lesRdGroup
+
+
+END
+
+
+LAN-EMULATION-BUS-MIB DEFINITIONS ::= BEGIN
+
+-- From file: "atm1129r5.mi2"
+
+IMPORTS
+    Counter32, Integer32
+            FROM SNMPv2-SMI-v1
+    OBJECT-TYPE
+            FROM RFC-1212
+    RowStatus, DisplayString, TimeStamp
+            FROM SNMPv2-TC-v1
+    AtmLaneAddress, VpiInteger, VciInteger, atmfLanEmulation
+            FROM LAN-EMULATION-CLIENT-MIB
+    IfIndexOrZero, AtmLaneMask
+            FROM LAN-EMULATION-ELAN-MIB;
+
+busMIB OBJECT IDENTIFIER ::= { atmfLanEmulation 4 }
+-- MODULE-IDENTITY
+--  LastUpdated
+--    9602121200Z
+--  OrgName
+--    ATM Forum LAN Emulation Sub-Working Group
+--  ContactInfo
+--    
+--      The ATM Forum
+--    
+--      2570 West El Camino Real, Ste 304,
+--      Mountain View, CA 94040-1313
+--      E-mail: info@atmforum.com
+--  Descr
+--     The MIB module for the management of LANE broadcast and 
+--    known servers. This MIB should be used in conjunction
+--    with the ELAN and LES MIBs.
+
+busConfGroup    OBJECT IDENTIFIER ::= { busMIB 1 }
+busStatGroup    OBJECT IDENTIFIER ::= { busMIB 2 }
+busFaultGroup   OBJECT IDENTIFIER ::= { busMIB 3 }
+busMIBConformance OBJECT IDENTIFIER ::= { busMIB 4 }
+busMIBGroups    OBJECT IDENTIFIER ::= { busMIBConformance 1 }
+busMIBCompliances OBJECT IDENTIFIER ::= { busMIBConformance 2 }
+
+BusLocalIndex ::= Integer32
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An unique number identifying an
+--    BUS.  This number is only
+--    used locally by the agent to
+--    distinguish between BUS.
+
+BusErrLogIndexType ::= Integer32(1..2147483647)
+-- TEXTUAL-CONVENTION
+--  Status
+--    mandatory
+--  Descr
+--    An arbitrary integer used in identifying
+--    an erro log associated with a BUS.
+
+busConfNextId OBJECT-TYPE
+    SYNTAX BusLocalIndex
+--    Rsyntax Integer32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The next available BUS index.  The
+        value of this object can be used as
+        the index by the network manager to
+        create an entry in the busConfTable."
+    ::= { busConfGroup 1 }
+
+busConfTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BusConfEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all LAN Emulation
+        Broadcast and Unknown Servers (BUS) this 
+        agent manages.  The BUS handles data sent
+        by an LE Client to the broadcast MAC
+        address, all multicast traffic, and initial unicast
+        frames which are sent by a LEC before the data
+        direct target ATM address has been resolved.
+        There can be multiple BUSs per ELAN, but a
+        BUS can service only one ELAN."
+    ::= { busConfGroup 2 }
+
+busConfEntry OBJECT-TYPE
+    SYNTAX BusConfEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents a
+        BUS.  The parameters in each entry apply
+        to one emulated LAN served by one BUS.
+        Object busRowStatus is required during
+        row creation and deletion.  Object busElanName
+        is used to indicate the ELAN this BUS
+        is servicing and is used to cross reference
+        tables defined in the LAN Emulation Server MIB.
+        Note that objects busAtmAddrSpec and busAtmAddrMask
+        are used to configure the ATM address of a BUS.
+        The BUS typically derives it's ATM address
+        from the switch or the network and the actual
+        ATM address used is indicated in the object
+        busAtmAddrActual."
+    INDEX { busConfIndex }
+    ::= { busConfTable 1 }
+
+BusConfEntry ::= SEQUENCE {
+    busConfIndex BusLocalIndex,
+    busConfAtmAddrSpec AtmLaneAddress,
+    busConfAtmAddrMask AtmLaneMask,
+    busConfAtmAddrActual AtmLaneAddress,
+    busConfElanName DisplayString,
+    busConfLastChange TimeStamp,
+    busConfMaxFrameAge INTEGER,
+    busConfOperStatus INTEGER,
+    busConfAdminStatus INTEGER,
+    busConfRowStatus RowStatus
+    }
+
+busConfIndex OBJECT-TYPE
+    SYNTAX BusLocalIndex
+--    Rsyntax Integer32
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "A value which uniquely identifies a
+        conceptual row in the busConfTable.
+        
+        If the conceptual row identified by this value
+        of busConfIndex is recreated following an agent
+        restart, the same value of busConfIndex must be
+        used to identify the recreated row."
+    ::= { busConfEntry 1 }
+
+busConfAtmAddrSpec OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "An ATM  address specified by  the  
+        network or local management that, 
+        with the ATM address mask, determines
+        a  portion of  the  ATM address  that 
+        the  BUS on the designated ATM interface  
+        will use  to derive the actual ATM
+        address from the network or ILMI.  The derived
+        ATM address is specified in the object
+        busAtmAddrActual, which is used to
+        receive multicast or broadcast traffic."
+    ::= { busConfEntry 2 }
+
+busConfAtmAddrMask OBJECT-TYPE
+    SYNTAX AtmLaneMask
+--    Rsyntax OCTET STRING(SIZE(20))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address mask associated with
+        the object busAtmAddrSpec.  The value
+        of the mask is an ATM address with
+        the don't care portion set to zero
+        and the valid ATM address portion set to one."
+    DEFVAL { 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'h }
+    ::= { busConfEntry 3 }
+
+busConfAtmAddrActual OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        " The resultant ATM address  in use by  the BUS.  This
+        object is a product of the specified ATM address, mask
+        and  interaction  with  the network.  This object is
+        created by the agent."
+    ::= { busConfEntry 4 }
+
+busConfElanName OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..32))
+--    Rsyntax OCTET STRING(SIZE(0..32))
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The name of the ELAN this BUS is providing service to."
+    ::= { busConfEntry 5 }
+
+busConfLastChange OBJECT-TYPE
+    SYNTAX TimeStamp
+--    Rsyntax TimeTicks
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The  value of the sysUpTime  when  this BUS 
+        has entered the state indicated by the 
+        object busConfOperStatus."
+    ::= { busConfEntry 6 }
+
+busConfMaxFrameAge OBJECT-TYPE
+    SYNTAX INTEGER(1..4)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Time out period for a frame that has been
+        received but not been transmitted by BUS
+        to all relevant Multicast Send VCCs or
+        Multicast Forward VCCs."
+    REFERENCE
+        "LAN Emulation Over ATM Specification -
+        version 1.0. S5."
+    DEFVAL { 1 }
+    ::= { busConfEntry 7 }
+
+busConfOperStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        other(1),
+        up(2),
+        down(3)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The operational state of this BUS entry. 
+         When in 'up' state the BUS will forward
+         LEC traffic.  Any other state the
+         BUS is not available for service and may
+         release all the existing VCCs and refuse
+         service to all clients."
+    ::= { busConfEntry 8 }
+
+busConfAdminStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        up(2),
+        down(3)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "  The  desired  state   of  the  designated   BUS  as
+        prescribed by the operator. The  actions of the  agent
+        will, if at  all  possible, eventually  result  in the
+        desired state being  reflected in  the busOperStatus."
+    DEFVAL { up }
+    ::= { busConfEntry 9 }
+
+busConfRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        delete entries in the busConfTable."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { busConfEntry 10 }
+
+busVccTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BusVccEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all the Multicast Forward
+        VCCs used by the BUS to forward multicast traffic
+        to the participating LECs.  The Multicast Forward
+        VCC can either be point-to-point or point-to-
+        multipoint calls.  This table is read only if
+        SVCs are used and writable if PVCs are used."
+    ::= { busConfGroup 3 }
+
+busVccEntry OBJECT-TYPE
+    SYNTAX BusVccEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents a
+         Multicast Forward VCC of the BUS."
+    INDEX { busConfIndex, busVccAtmIfIndex, busVccMtFwdVpi, busVccMtFwdVci }
+    ::= { busVccTable 1 }
+
+BusVccEntry ::= SEQUENCE {
+    busVccAtmIfIndex IfIndexOrZero,
+    busVccMtFwdVpi VpiInteger,
+    busVccMtFwdVci VciInteger,
+    busVccRowStatus RowStatus
+    }
+
+busVccAtmIfIndex OBJECT-TYPE
+    SYNTAX IfIndexOrZero
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM interface which the Multicast
+        Forward VCC is running on.
+        This value must match an existing
+        value  in the   ifTable.  
+        The value of this object is set
+        to zero when the ATM interface is
+        undefined."
+    ::= { busVccEntry 1 }
+
+busVccMtFwdVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..255)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The VPI value of the Multicast
+        Forward VCC.  The object
+        busVccAtmIfIndex, busVccMtFwdVci
+        and the value of this object uniquely
+        identfies a VCC within a ATM host."
+    ::= { busVccEntry 2 }
+
+busVccMtFwdVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The VCI value of the Multicast
+        Forward VCC.  The object
+        busVccAtmIfIndex, busVccMtFwdVpi
+        and the value of this object uniquely
+        identfies a VCC within a ATM host."
+    ::= { busVccEntry 3 }
+
+busVccRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to create or
+        delete entries in the busConfTable."
+    REFERENCE
+        "RFC 1443, [10] Textual Conventions
+        for version 2 of the Simple Network Management 
+        Protocol (SNMPv2)."
+    ::= { busVccEntry 4 }
+
+busLecTableLastChange OBJECT-TYPE
+    SYNTAX TimeStamp
+--    Rsyntax TimeTicks
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The value of sysUpTime when an entry of the
+         busLecTable was created/deleted."
+    ::= { busConfGroup 4 }
+
+busLecTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BusLecEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        " This table contains the BUS and the 
+        actual LECs being serviced by the BUS.
+        It can be used as the actual mapping
+        between BUS and LEC.
+        
+        This table provides information
+        for Multicast send VCCs
+        between BUS and clients.  Objects
+        busLecMcastSendAtmIfIndex, busLecMcastSendVpi,
+        and busLecMcstSendVci can only be modified
+        if PVC is used."
+    ::= { busConfGroup 5 }
+
+busLecEntry OBJECT-TYPE
+    SYNTAX BusLecEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a BUS to LEC
+        mapping."
+    INDEX { busConfIndex, busLecAtmAddr }
+    ::= { busLecTable 1 }
+
+BusLecEntry ::= SEQUENCE {
+    busLecAtmAddr AtmLaneAddress,
+    busLecMcastSendAtmIfIndex IfIndexOrZero,
+    busLecMcastSendVpi VpiInteger,
+    busLecMcastSendVci VciInteger,
+    busLecRowStatus RowStatus
+    }
+
+busLecAtmAddr OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "The ATM address of the LEC.  This
+        is the primary ATM address of the LEC."
+    ::= { busLecEntry 1 }
+
+busLecMcastSendAtmIfIndex OBJECT-TYPE
+    SYNTAX IfIndexOrZero
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The  ATM  interface  index this BUS uses for 
+        Multicast Send traffic.  The value of this
+        object has to exist in the ifTable in MIB II
+        unless an internal connection is used.  When
+        an internal connection is used, this object
+        is set to zero."
+    ::= { busLecEntry 2 }
+
+busLecMcastSendVpi OBJECT-TYPE
+    SYNTAX VpiInteger
+--    Rsyntax INTEGER(0..255)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        " The   virtual  path  identifier used to receive
+        multicast traffic by this BUS."
+    ::= { busLecEntry 4 }
+
+busLecMcastSendVci OBJECT-TYPE
+    SYNTAX VciInteger
+--    Rsyntax INTEGER(0..65535)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        " The   virtual  channel  identifier used to receive
+        multicast traffic by this BUS."
+    ::= { busLecEntry 5 }
+
+busLecRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+--    Rsyntax INTEGER {
+--        active(1),
+--        notInService(2),
+--        notReady(3),
+--        createAndGo(4),
+--        createAndWait(5),
+--        destroy(6)
+--        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        " This object provides a way for the network manager
+        to selectively remove a LE Client from the designated
+        BUS.  Or in a system where PVCs are used, this table
+        is used to create Multicast Send VCCs between BUS
+        and LEC."
+    ::= { busLecEntry 6 }
+
+busStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BusStatEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all counters the
+        BUS maintain.  This table is an extention
+        to the busConfTable."
+    ::= { busStatGroup 1 }
+
+busStatEntry OBJECT-TYPE
+    SYNTAX BusStatEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table contains a
+        BUS and its counters."
+    INDEX { busConfIndex }
+-- Augments busConfEntry
+    ::= { busStatTable 1 }
+
+BusStatEntry ::= SEQUENCE {
+    busStatInDiscards Counter32,
+    busStatInOctets Counter32,
+    busStatInUcastFrms Counter32,
+    busStatInMcastFrms Counter32,
+    busStatFrmTimeOuts Counter32,
+    busStatMcastSendRefused Counter32,
+    busStatMcastFwdFailure Counter32
+    }
+
+busStatInDiscards OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "  The number of frames discarded due to resource
+        error."
+    ::= { busStatEntry 1 }
+
+busStatInOctets OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "  The number of  octets that  this  BUS has received
+        since its initialization."
+    ::= { busStatEntry 2 }
+
+busStatInUcastFrms OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        " The number  of  frames that  the BUS  has  received
+        which were  unicast data frames  and all control
+        frames (i.e. they were flooded from the client)."
+    ::= { busStatEntry 3 }
+
+busStatInMcastFrms OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "  The number of  frames  that  the BUS has  received
+        which were multicast frames."
+    ::= { busStatEntry 4 }
+
+busStatFrmTimeOuts OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        " The number of frames dropped by 
+        the BUS due to time out."
+    ::= { busStatEntry 5 }
+
+busStatMcastSendRefused OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "  The number of  multicast send VCCconnection setup attempts to 
+        the BUS which were refused."
+    ::= { busStatEntry 6 }
+
+busStatMcastFwdFailure OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "  The number of  multicast forward VCCconnection setup attempts 
+        from the BUS which were unsuccessful
+        for any reason."
+    ::= { busStatEntry 7 }
+
+busLecStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BusLecStatEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains all LEC counters
+        the BUS maintains.  This table can also
+        be used to retrieve all LECs a BUS
+        is providing service to."
+    ::= { busStatGroup 2 }
+
+busLecStatEntry OBJECT-TYPE
+    SYNTAX BusLecStatEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry in this table represents a
+        LEC and its counters."
+    INDEX { busConfIndex, busLecAtmAddr }
+-- Augments busLecEntry
+    ::= { busLecStatTable 1 }
+
+BusLecStatEntry ::= SEQUENCE {
+    busLecRecvs Counter32,
+    busLecForwards Counter32,
+    busLecDiscards Counter32
+    }
+
+busLecRecvs OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of Multicast, Broadcast and
+        Unknown Forward requests received by
+        the BUS from this LEC."
+    ::= { busLecStatEntry 1 }
+
+busLecForwards OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of Multicast, Broadcast and
+        Unkown Forward requests forwarded by
+        the BUS from this LEC.  The value
+        of this object indicate how many requests
+        have been forwarded by the BUS."
+    ::= { busLecStatEntry 2 }
+
+busLecDiscards OBJECT-TYPE
+    SYNTAX Counter32
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Number of Multicast, Broadcast and
+        Unkown Forward requests discarded by
+        the BUS from this LEC.  The value
+        of this object indicate how many requests
+        have been discarded by the BUS."
+    ::= { busLecStatEntry 3 }
+
+busErrCtlTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BusErrCtlEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains error log control 
+         information of all BUS instances.
+         This table is an extention to the
+         busConfTable.  It is used to enable
+         or disable error logs for a particular
+         BUS entry."
+    ::= { busFaultGroup 1 }
+
+busErrCtlEntry OBJECT-TYPE
+    SYNTAX BusErrCtlEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents a BUS entry
+        in the busConfTable."
+    INDEX { busConfIndex }
+-- Augments busConfEntry
+    ::= { busErrCtlTable 1 }
+
+BusErrCtlEntry ::= SEQUENCE {
+    busErrCtlAdminStatus INTEGER,
+    busErrCtlOperStatus INTEGER,
+    busErrCtlClearLog INTEGER,
+    busErrCtlMaxEntries INTEGER,
+    busErrCtlLastEntry BusErrLogIndexType
+    }
+
+busErrCtlAdminStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        enable(1),
+        disable(2)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to enable/disable error 
+        logging for the BUS."
+    ::= { busErrCtlEntry 1 }
+
+busErrCtlOperStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        other(1),
+        active(2),
+        outOfRes(3),
+        failed(4)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to indicate
+        the result of a set operation to the
+        object busErrCtlAdminStatus.
+        If the error log was successfully
+        started, it is in active(2) mode.
+        Otherwise, it is set to either
+        outOfRes(3) or failed(4) for
+        the respective reasons."
+    ::= { busErrCtlEntry 2 }
+
+busErrCtlClearLog OBJECT-TYPE
+    SYNTAX INTEGER {
+        noOp(1),
+        clear(2)
+        }
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "This object is used to clear the error log
+         entries associated with this BUS."
+    ::= { busErrCtlEntry 3 }
+
+busErrCtlMaxEntries OBJECT-TYPE
+    SYNTAX INTEGER(1..65535)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The maximum entries of the error
+        log a BUS can support."
+    ::= { busErrCtlEntry 4 }
+
+busErrCtlLastEntry OBJECT-TYPE
+    SYNTAX BusErrLogIndexType
+--    Rsyntax Integer32(1..2147483647)
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "The index to the last entry in the error
+         log table for this BUS."
+    ::= { busErrCtlEntry 5 }
+
+busErrLogTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BusErrLogEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "This table contains error logs
+        of the BUS instances enabled
+        in the busErrCtlTable.  This table
+        is indexed by the BUS instance
+        index and an arbitrary integer
+        uniquely identifies an error
+        log."
+    ::= { busFaultGroup 2 }
+
+busErrLogEntry OBJECT-TYPE
+    SYNTAX BusErrLogEntry
+    ACCESS not-accessible
+    STATUS mandatory
+    DESCRIPTION
+        "Each entry represents aan error detected by the BUS."
+    INDEX { busConfIndex, busErrLogIndex }
+    ::= { busErrLogTable 1 }
+
+BusErrLogEntry ::= SEQUENCE {
+    busErrLogIndex BusErrLogIndexType,
+    busErrLogAtmAddr AtmLaneAddress,
+    busErrLogErrCode INTEGER,
+    busErrLogTime TimeStamp
+    }
+
+busErrLogIndex OBJECT-TYPE
+    SYNTAX BusErrLogIndexType
+--    Rsyntax Integer32(1..2147483647)
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "An arbitrary integer which uniquely
+        identifies an error log entry. The first
+        entry after reset or clearing the error
+        log is an assigned value (2^32-1).  Succeding
+        entries are assigned with descending values 
+        consecutively.  Entries after 1 are discarded.The enabling/disabling 
+        of
+        the error log capability is done in
+        the busErrCtlTable."
+    ::= { busErrLogEntry 1 }
+
+busErrLogAtmAddr OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+--    Rsyntax OCTET STRING(SIZE(0 | 20))
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The primary ATM address of the LE Client on whose Multicast
+        Send VCC the error occured. 
+        The corresponding error code is
+        specified in the object busErrLogErrCode."
+    ::= { busErrLogEntry 2 }
+
+busErrLogErrCode OBJECT-TYPE
+    SYNTAX INTEGER {
+        outOfRes(1),
+        badCtlFrame(2),
+        badDataFrame(3),
+        other(4)
+        }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The Error code which indicates the
+        cause of the error."
+    ::= { busErrLogEntry 3 }
+
+busErrLogTime OBJECT-TYPE
+    SYNTAX TimeStamp
+--    Rsyntax TimeTicks
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "The sysUpTime when this entry was logged by
+         the BUS."
+    ::= { busErrLogEntry 4 }
+
+busCConfGroup OBJECT IDENTIFIER ::= { busMIBGroups 1 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--     A collection of objects for the 
+--    managing of BUS operation.
+--  objects
+--    busConfNextId, busConfAtmAddrSpec, busConfAtmAddrMask, 
+--    busConfAtmAddrActual, busConfElanName, busConfLastChange, 
+--    busConfMaxFrameAge, busConfOperStatus, busConfAdminStatus, 
+--    busConfRowStatus, busVccAtmIfIndex, busVccMtFwdVpi, 
+--    busVccMtFwdVci, busVccRowStatus, busLecTableLastChange, 
+--    busLecMcastSendAtmIfIndex, busLecMcastSendVpi, 
+--    busLecMcastSendVci, busLecRowStatus
+
+busCStatGroup OBJECT IDENTIFIER ::= { busMIBGroups 2 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--     A collection of objects providing information
+--    about BUS statistics.
+--  objects
+--    busStatInOctets, busStatInDiscards, busStatInUcastFrms, 
+--    busStatInMcastFrms, busStatFrmTimeOuts, 
+--    busStatMcastSendRefused, busStatMcastFwdFailure
+
+busCFaultGroup OBJECT IDENTIFIER ::= { busMIBGroups 3 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--     A collection of objects providing information
+--    about BUS statistics.
+--  objects
+--    busErrLogAtmAddr, busErrLogIndex, busErrLogErrCode, 
+--    busErrLogTime, busErrCtlAdminStatus, busErrCtlOperStatus, 
+--    busErrCtlClearLog, busErrCtlMaxEntries, busErrCtlLastEntry
+
+busLecCGroup OBJECT IDENTIFIER ::= { busMIBGroups 4 }
+-- OBJECT-GROUP
+--  Status
+--    mandatory
+--  Descr
+--     A collection of objects providing information
+--    about LEC-BUS statistics.
+--  objects
+--    busLecRecvs, busLecForwards, busLecDiscards
+
+busMIBCompliance OBJECT IDENTIFIER ::= { busMIBCompliances 1 }
+-- MODULE-COMPLIANCE
+--  Status
+--    mandatory
+--  Descr
+--     The compliance statement for SNMP entities that support
+--    the ATM LAN Emulation BUS MIB.
+--  Module
+--    >>current<<
+--   MandGroup
+--    busCConfGroup
+--   MandGroup
+--    busCStatGroup
+--   MandGroup
+--    busCFaultGroup
+--   ObjVar
+--    busConfAtmAddrSpec
+--   ObjVar
+--    busConfAtmAddrMask
+--   ObjVar
+--    busConfElanName
+--   ObjVar
+--    busConfAdminStatus
+--   ObjVar
+--    busConfRowStatus
+--   ObjVar
+--    busVccAtmIfIndex
+--   ObjVar
+--    busVccMtFwdVpi
+--   ObjVar
+--    busVccMtFwdVci
+--   ObjVar
+--    busVccRowStatus
+--   ObjVar
+--    busLecMcastSendAtmIfIndex
+--   ObjVar
+--    busLecMcastSendVpi
+--   ObjVar
+--    busLecMcastSendVci
+--   ObjVar
+--    busLecRowStatus
+--   OptGroup
+--    busLecCGroup
+
+
+END
+

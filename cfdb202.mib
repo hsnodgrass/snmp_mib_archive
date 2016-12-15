@@ -1,0 +1,507 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-FDB-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion Forwarding Database MIB Release 2.0.0
+-- Revision 03/20/96
+
+-- Copyright 1995-96 Bay Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	PhysAddress
+		FROM RFC1213-MIB
+	OBJECT-TYPE
+		FROM RFC-1212
+	CardId, PortId, StatusIndicator,
+	BitField, sysConfig
+		FROM CENTILLION-ROOT-MIB;
+
+
+-- Textual Conventions
+
+FdbTypeId ::= INTEGER {
+		unknown(1),		-- none of the following
+		token-ring(2),		-- token-ring format
+		ethernet(3),		-- Ethernet format
+		route-descriptor(4)	-- route descriptor
+	}
+
+VlanId ::= INTEGER(1..4095)
+
+-- Groups
+
+fdbGroup	OBJECT IDENTIFIER ::= { sysConfig 22 }
+
+
+-- SECTION 2:	Forwarding Database Group
+--
+-- This group contains information relevant to the forwarding database
+-- in the system.
+
+--
+-- The following textual-convention defines the station types that
+-- are represented in the station table.
+--
+
+fdbRemoteAgingTimer	OBJECT-TYPE
+	SYNTAX	INTEGER (10..1000000)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The timeout period in seconds for aging out dynamically
+		learned remote (off-ring) stations. The default value is
+		300 seconds."
+	::= { fdbGroup 1 }
+
+fdbTableFlush OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..4))
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"When read, this object returns a zero length string.
+		If set, the octets describe which stations to flush. All 
+		4 octets must be specified. The encoding of the octet string
+		follows:
+		octet 1: the fdb type identifier to flush, unknown (1)
+			 indicates flush any fdb type.
+		octet 2: 0x0 to flush remote stations
+			 0x1 to flush local stations
+			 0x2 to flush all stations
+		octet 3: the card number to flush, a value of 0xff will
+			 flush all cards.
+		octet 4: the port number to flush, a value of 0xff will
+			 flush all ports."
+	::= { fdbGroup 2 }
+
+-- The Fdb Table
+--
+-- This table contains all MAC addresses in the system. Static stations
+-- may be configured.
+
+fdbTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF FdbEntry
+	ACCESS	not-accessible
+	STATUS	deprecated
+	DESCRIPTION
+		"This table contains fdb information for each station
+		known to the system, one entry per station. Static stations
+		may be created by setting fdbStatus to be valid. The
+		index of fdbStatus will contains infomation on the
+		station type, stationAddress, stationCard and stationPort. 
+		Entries may be subsequently modified by
+		setting the appropriate object for the entry. Entries are
+		deleted by clearing stationInUse."
+	::= { fdbGroup 3 }
+
+fdbEntry OBJECT-TYPE
+	SYNTAX	FdbEntry
+	ACCESS	not-accessible
+	STATUS	deprecated
+	DESCRIPTION
+		"An list of station information for each station known to
+		the system. Static stations may be configured by properly
+		specifying at least the fdbType, fdbAddress,
+		fdbCard and fdbPort."
+	INDEX	{ fdbType, fdbAddress, fdbCard, fdbPort }
+	::= { fdbTable 1 }
+
+
+FdbEntry ::= SEQUENCE {
+	fdbType
+		FdbTypeId,
+	fdbAddress
+		PhysAddress,
+	fdbCard
+		CardId,
+	fdbPort
+		PortId,
+	fdbIfIndex
+		INTEGER,
+	fdbStatus
+		StatusIndicator,
+	fdbLocal
+		BitField,
+	fdbStatic
+		BitField,
+	fdbDuplicate
+		BitField,
+	fdbRIFPath
+		OCTET STRING
+	}
+
+fdbType OBJECT-TYPE
+	SYNTAX	FdbTypeId
+	ACCESS	read-only
+	STATUS	deprecated
+	DESCRIPTION
+		"The type of the station. Station address are represented
+		in the canonical form as specified by their type."
+	::= { fdbEntry 1 }
+
+fdbAddress OBJECT-TYPE
+	SYNTAX	PhysAddress
+	ACCESS	read-only
+	STATUS	deprecated
+	DESCRIPTION
+		"The fdbs physical address. The physical address is
+		represented in the canonical form according to the
+		corresponding stationType. If the entry is a
+		route-descriptor type, then the physical address is in
+		the form of ring-ring-bridge."
+	::= { fdbEntry 2 }
+
+fdbCard OBJECT-TYPE
+	SYNTAX	CardId
+	ACCESS	read-only
+	STATUS	deprecated
+	DESCRIPTION
+		"The card number through which this station is reached."
+	::= { fdbEntry 3 }
+
+fdbPort OBJECT-TYPE
+	SYNTAX	PortId
+	ACCESS	read-only
+	STATUS	deprecated
+	DESCRIPTION
+		"The interface through which this station is reached."
+	::= { fdbEntry 4 }
+
+fdbIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	deprecated
+	DESCRIPTION
+		"The interface through which this station is reached. The
+		value for this object identifies the instance of the ifIndex
+		object defined in MIB-II. If no such entry exists, the value
+		0 may be returned."
+	::= { fdbEntry 5 }
+
+fdbStatus OBJECT-TYPE
+	SYNTAX	StatusIndicator
+	ACCESS	read-write
+	STATUS	deprecated
+	DESCRIPTION
+		"This indicates the validity of the station. Stations
+		are added by supplying the required objects as index of
+		fdbStatus, and setting the status to valid. Static stations 
+		may be deleted by setting this object to invalid."
+	::= { fdbEntry 6 }
+
+fdbLocal OBJECT-TYPE
+	SYNTAX	BitField
+	ACCESS	read-write
+	STATUS	deprecated
+	DESCRIPTION
+		"If set, this object indicates the station is attached to a
+                 ring that is directly attached to the token ring port.
+                 This object does not apply to Ethernet stations."
+	::= { fdbEntry 7 }
+
+fdbStatic OBJECT-TYPE
+	SYNTAX	BitField
+	ACCESS	read-only
+	STATUS	deprecated
+	DESCRIPTION
+		"Fdb is static if this bit is set."
+	::= { fdbEntry 8 }
+
+fdbDuplicate OBJECT-TYPE
+	SYNTAX	BitField
+	ACCESS	read-only
+	STATUS	deprecated
+	DESCRIPTION
+		"Indicates that another fdb with the same address was
+		learned from a different card and port."
+	::= { fdbEntry 9 }
+
+fdbRIFPath OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..28))
+	ACCESS	read-write
+	STATUS	deprecated
+	DESCRIPTION
+		"The RIF path to the station. The RIF Path is specified
+		as being sourced from the system, as read from left-to-right.
+		A RIF path is valid only for objects whose stationType
+		is token-ring. The value may be a zero length string."
+	::= { fdbEntry 10 }
+
+
+-- Static Station Table (Read Only)
+--
+-- This table contains the list of user defined static stations.  All objects
+-- in this table are read-only.  The columnar objects for this table are
+-- the indices to the fdbTable, hence addition information pertaining to
+-- such MAC address can be retrieved easily.
+
+
+fdbSSTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF FdbSSEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "This table contains the list of user defined static
+                 stations.  All the objects in this table are read-only
+                 and are intended to aid reading static station
+                 configuration."
+        ::= { fdbGroup 4 }
+ 
+fdbSSEntry OBJECT-TYPE
+        SYNTAX  FdbSSEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+		"This is an entry in the fdbSSTable which is indexed by
+                 fdbSSIndex.  Adding to the static station list is done
+                 via fdbTable.  All objects here are read-only."
+        INDEX   { fdbSSIndex }
+        ::= { fdbSSTable 1 }
+ 
+ 
+FdbSSEntry ::= SEQUENCE {
+        fdbSSIndex
+                INTEGER,
+        fdbSSType
+                FdbTypeId,
+        fdbSSAddress
+                PhysAddress,
+        fdbSSCard
+                CardId,
+        fdbSSPort
+                PortId,
+        fdbSSVlanId
+                VlanId
+        }
+ 
+fdbSSIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+		"This is the index to the static station table." 
+        ::= { fdbSSEntry 1 }
+ 
+fdbSSType OBJECT-TYPE
+	SYNTAX	FdbTypeId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This represents the media type for this static station."
+	::= { fdbSSEntry 2 }
+
+fdbSSAddress OBJECT-TYPE
+	SYNTAX	PhysAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This is the MAC address for this static station."
+	::= { fdbSSEntry 3 }
+
+fdbSSCard OBJECT-TYPE
+	SYNTAX	CardId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This is the card where this station station is."
+	::= { fdbSSEntry 4 }
+
+fdbSSPort OBJECT-TYPE
+	SYNTAX	PortId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This is the port where this station station is."
+	::= { fdbSSEntry 5 }
+
+fdbSSVlanId OBJECT-TYPE
+	SYNTAX	VlanId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This is a vlan id of a vlan to which this static station 
+		belongs to."
+	::= { fdbSSEntry 6 }
+
+
+
+-- The Fdb Table for Vlan
+--
+-- This table contains all MAC addresses in the system. Static stations
+-- may be configured.
+
+cnfdbTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnfdbEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"This table contains fdb information for each station
+		known to the system, one entry per station per vlan. Static 
+		stations may be created by setting fdbStatus to be valid. The
+		index of fdbStatus will contains infomation on the
+		station type, stationAddress, stationCard, stationPort
+		and vlanId. Entries may be subsequently modified by
+		setting the appropriate object for the entry. Entries are
+		deleted by clearing stationInUse. Basically, this table
+		is identical with the fdbTable except with fdbVlanId
+		being introduced"
+	::= { fdbGroup 5 }
+
+cnfdbEntry OBJECT-TYPE
+	SYNTAX	CnfdbEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An list of station information for each station per vlan known
+		to the system. Static stations may be configured by properly
+		specifying at least the cnfdbType, cnfdbAddress,
+		cnfdbCard, cnfdbPort and cnfdbVlanId."
+	INDEX	{ cnfdbType, cnfdbAddress, cnfdbCard, cnfdbPort, cnfdbVlanId}
+	::= { cnfdbTable 1 }
+
+
+CnfdbEntry ::= SEQUENCE {
+	cnfdbType
+		FdbTypeId,
+	cnfdbAddress
+		PhysAddress,
+	cnfdbCard
+		CardId,
+	cnfdbPort
+		PortId,
+	cnfdbVlanId
+		VlanId,
+	cnfdbIfIndex
+		INTEGER,
+	cnfdbStatus
+		StatusIndicator,
+	cnfdbLocal
+		BitField,
+	cnfdbStatic
+		BitField,
+	cnfdbDuplicate
+		BitField,
+	cnfdbRIFPath
+		OCTET STRING
+	}
+
+cnfdbType OBJECT-TYPE
+	SYNTAX	FdbTypeId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The type of the station. Station address are represented
+		in the canonical form as specified by their type."
+	::= { cnfdbEntry 1 }
+
+cnfdbAddress OBJECT-TYPE
+	SYNTAX	PhysAddress
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The fdbs physical address. The physical address is
+		represented in the canonical form according to the
+		corresponding stationType. If the entry is a
+		route-descriptor type, then the physical address is in
+		the form of ring-ring-bridge."
+	::= { cnfdbEntry 2 }
+
+cnfdbCard OBJECT-TYPE
+	SYNTAX	CardId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The card number through which this station is reached."
+	::= { cnfdbEntry 3 }
+
+cnfdbPort OBJECT-TYPE
+	SYNTAX	PortId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The interface through which this station is reached."
+	::= { cnfdbEntry 4 }
+
+cnfdbVlanId OBJECT-TYPE
+	SYNTAX	VlanId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The vlan ID through which this station is reached."
+	::= { cnfdbEntry 5 }
+
+cnfdbIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The interface through which this station is reached. The
+		value for this object identifies the instance of the ifIndex
+		object defined in MIB-II. If no such entry exists, the value
+		0 may be returned."
+	::= { cnfdbEntry 6 }
+
+cnfdbStatus OBJECT-TYPE
+	SYNTAX	StatusIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This indicates the validity of the station. Stations
+		are added by supplying the required objects as index of
+		fdbStatus, and setting the status to valid. Static stations 
+		may be deleted by setting this object to invalid."
+	::= { cnfdbEntry 7 }
+
+cnfdbLocal OBJECT-TYPE
+	SYNTAX	BitField
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"If set, this object indicates the station is attached to a
+                 ring that is directly attached to the token ring port.
+                 This object does not apply to Ethernet stations."
+	::= { cnfdbEntry 8 }
+
+cnfdbStatic OBJECT-TYPE
+	SYNTAX	BitField
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Fdb is static if this bit is set."
+	::= { cnfdbEntry 9 }
+
+cnfdbDuplicate OBJECT-TYPE
+	SYNTAX	BitField
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicates that another fdb with the same address was
+		learned from a different card and port."
+	::= { cnfdbEntry 10 }
+
+cnfdbRIFPath OBJECT-TYPE
+	SYNTAX	OCTET STRING (SIZE(0..28))
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The RIF path to the station. The RIF Path is specified
+		as being sourced from the system, as read from left-to-right.
+		A RIF path is valid only for objects whose stationType
+		is token-ring. The value may be a zero length string."
+	::= { cnfdbEntry 11 }
+
+END

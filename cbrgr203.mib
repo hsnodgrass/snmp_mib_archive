@@ -1,0 +1,343 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-BRIDGEGROUP-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion Bridge Group MIB Release 2.0.3
+-- Revision 04/05/99
+
+-- Copyright 1994-99 Nortel Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	StatusIndicator, sysConfig, EnableIndicator
+		FROM CENTILLION-ROOT-MIB;
+
+
+-- Textual Conventions
+
+-- After VLAN is introduced, the old bridge group is split into  
+-- the spanning group and the VLAN. The bridge group is equivalent to  
+-- a spanning tree instance, and the VLAN defines the broadcast domain.
+-- In this Bridge Configuration MIB, the object identifiers are not 
+-- changed. But the terminology "bridge group" is changed to "spanning  
+-- tree group" both in the description and in the comments. 
+--
+-- C100/BH switches support multiple spanning tree groups, which 
+-- are identified by a unique spanning tree group identifier as 
+-- specified by this textual convention:
+
+BridgeGroupId ::= INTEGER (1..32)
+
+
+-- Groups
+
+bridgeGroup	OBJECT IDENTIFIER ::= { sysConfig 24 }
+
+
+-- SECTION 2: Bridge Group
+--
+-- C100/BH switches allow a multiple number of spanning tree groups to be 
+-- configured. This bridge group MIB allows a management application 
+-- to perform configuration across any of the spanning tree groups. 
+
+
+dot1dBaseGroupIdentifier OBJECT-TYPE
+	SYNTAX	BridgeGroupId
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The spanning tree group identifier for which the standard 
+                bridging MIBS apply. Modifications of the spanning tree group 
+                through the standard bridging MIBs effect this spanning tree 
+                group only. This object is super governed by specific SET 
+                community string. For example if a network management station 
+                uses SET community string setcommunitystring@bg3, all 
+                related SET requests will effect spanning tree group 3 only."
+	::= { bridgeGroup 1 }
+
+bridgeGroupTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF BridgeGroupEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A specific spanning tree group. A spanning tree group consists 
+                of a number of bridging ports running the same spanning tree
+		protocol."
+	::= { bridgeGroup 2 }
+
+bridgeGroupEntry OBJECT-TYPE
+	SYNTAX	BridgeGroupEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"An entry in the spanning tree group table. Spanning tree 
+                groups are added by specifying a bridgeGroupIdentifier, 
+                bridgeGroupBaseType, bridgeGroupStpProtocol and a 
+                bridgeGroupPortType with a value of valid(1) in 
+                bridgeGroupStatus. Entries may be deleted by specifying 
+                an entry with an value of invalid(2) in bridgeGroupStatus."
+	INDEX	{ bridgeGroupIdentifier }
+	::= { bridgeGroupTable 1 }
+
+BridgeGroupEntry ::= SEQUENCE {
+	bridgeGroupIdentifier
+		BridgeGroupId,
+	bridgeGroupStatus
+		StatusIndicator,
+	bridgeGroupBaseType
+		INTEGER,
+	bridgeGroupStpProtocol
+		INTEGER,
+	bridgeGroupPortType
+		INTEGER,
+	bridgeGroupNextPortIndex
+		INTEGER,
+	bridgeGroupTbRifEnable
+		EnableIndicator,
+	bridgeGroupTbRifRing
+		INTEGER
+	}
+
+bridgeGroupIdentifier OBJECT-TYPE
+	SYNTAX	BridgeGroupId
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The unique spanning tree group identifier of this spanning   
+                tree group."
+	::= { bridgeGroupEntry 1 }
+
+bridgeGroupStatus OBJECT-TYPE
+	SYNTAX	StatusIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The current status of the spanning tree group. Spanning tree 
+                groups may be added by specifiying a valid status, and removed 
+                by specifying an invalid status."
+	::= { bridgeGroupEntry 2 }
+
+bridgeGroupBaseType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		none(1),	-- no bridging
+		unknown(2),	-- none of the following
+		transparent-only(3),
+		sourceroute-only(4),
+		srt(5),
+		translation(6)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicates the type of bridging this spanning tree group is 
+                performing.A value of none(1) implies that switching is 
+                performed between ports in this spanning tree group. A value 
+                of unknown(2) implies that some unknown bridging rules are 
+                applied on the ports in this spanning tree group. Modifying 
+                the bridgeGroupBaseType requires a complete reset of the 
+                spanning tree group. This value must be specified during 
+                spanning tree group creation."
+	::= { bridgeGroupEntry 3 }
+
+bridgeGroupStpProtocol OBJECT-TYPE
+	SYNTAX	INTEGER {
+		none(1),
+		unknown(2),
+		decLb100(3),
+		ieee8021d(4),
+		ibm(5)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"An indication of the version of the Spanning Tree Protocol
+		is being run, if the value of bridgeGroupBaseType is not 
+                none(1). This field may be ignored if the bridgeGroupBaseType 
+                value is none(1)."
+	::= { bridgeGroupEntry 4 }
+
+bridgeGroupPortType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		unknown(1),
+		token-ring(2),
+		ethernet(3)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Indicates the type of the spanning tree group ports. This 
+		value may only be altered if there are no spanning tree group 
+		ports currentlyin the spanning tree group. This value must be  
+                specified during spanning tree group creation."
+	::= { bridgeGroupEntry 5 }
+
+bridgeGroupNextPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of the next spanning tree group port number which 
+		will be assigned by the switch. When adding spanning tree 
+		group ports bridging mode, the specified bridgeGroupPortIndex
+		must match this value."
+	::= { bridgeGroupEntry 6 }
+
+bridgeGroupTbRifEnable OBJECT-TYPE
+    SYNTAX  EnableIndicator
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+		"Enables the learning of Rif's by Token Ring Transparent
+		Bridging spanning tree groups and processing of LE_ARP's for 
+		route descrptors."
+	::= { bridgeGroupEntry 7 }
+
+bridgeGroupTbRifRing OBJECT-TYPE
+    SYNTAX  INTEGER(0..4095)
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+		"The value of the ring used for learning RIF's when
+		bridgeGroupTbRifEnable is set."
+	::= { bridgeGroupEntry 8 }
+
+
+--
+-- The bridgeGroupPort Table
+--
+
+bridgeGroupPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF BridgeGroupPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A table that contains information about each port that is
+		associated with this spanning tree group."
+	::= { bridgeGroup 3 }
+
+bridgeGroupPortEntry OBJECT-TYPE
+	SYNTAX	BridgeGroupPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A list of information for each port of the spanning tree 
+                group. These entries are created and deleted by switch."
+	INDEX	{ bridgeGroupPortGroupId, bridgeGroupPortIndex }
+	::= { bridgeGroupPortTable 1 }
+
+BridgeGroupPortEntry ::= SEQUENCE {
+	bridgeGroupPortGroupId
+		BridgeGroupId,
+	bridgeGroupPortIndex
+		INTEGER,
+	bridgeGroupPortStatus
+		StatusIndicator,
+	bridgeGroupPortIfIndex
+		INTEGER,
+        bridgeGroupPortSpanMode
+		INTEGER,
+	bridgeGroupPortFastStart
+		EnableIndicator
+	}
+
+bridgeGroupPortGroupId OBJECT-TYPE
+	SYNTAX	BridgeGroupId
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The spanning tree group identifier to which this port 
+                belongs."
+	::= { bridgeGroupPortEntry 1 }
+
+bridgeGroupPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of the instance of the dot1dBasePort object, 
+                defined in the Bridge MIB, for the spanning tree group 
+                port corresponding to this port."
+	::= { bridgeGroupPortEntry 2 }
+
+bridgeGroupPortStatus OBJECT-TYPE
+	SYNTAX	StatusIndicator
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current status of the spanning tree group port entry. 
+                Spanning tree group ports is added or deleted when a virtual 
+                segment port is added to or deleted from a virtual segment."
+	::= { bridgeGroupPortEntry 3 }
+
+bridgeGroupPortIfIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The value of the instance of the ifIndex object, defined
+		in MIB-II, for the interface corresponding to this port.
+		Spanning tree group ports are added by specifying the 
+                ifIndex instance for the spanning tree group port."
+	::= { bridgeGroupPortEntry 4 }
+
+bridgeGroupPortSpanMode OBJECT-TYPE
+         SYNTAX  INTEGER {
+                     auto-span(1),
+                     disabled(2),
+                     forced(3)
+                 }
+         ACCESS  read-write
+         STATUS  mandatory
+         DESCRIPTION
+                 "In SR mode, this object determines how this port behaves 
+                 when presented with a Spanning Tree Explorer frame. The 
+                 value 'disabled(2)' indicates that the port will not accept 
+                 or send Spanning Tree Explorer packets; any STE packets 
+                 received will be silently discarded. The value 'forced(3)' 
+                 indicates the port will always accept and propagate Spanning 
+                 Tree Explorer frames. This allows a manually configured
+                 Spanning Tree for this class of packet to be configured.  
+                 Note that unlike transparent bridging, this is not 
+                 catastrophic to the network if there are loops. 
+                 The value 'auto-span(1)' can only be returned by a bridge 
+                 that both implements the Spanning Tree Protocol and has use 
+                 of the protocol enabled on this port. The behavior of the 
+                 port for Spanning Tree Explorer frames is determined by the 
+                 state of dot1dStpPortState. If the port is in the 'forwarding' 
+                 state, the frame will be accepted or propagated.  Otherwise, 
+                 it will be silently discarded. 
+                 In TB mode, this object provides the means to statically 
+                 configure a port to forwarding/blocking modes. 'disabled(2)' 
+                 indicates that the port is statically configured to blocking 
+                 mode. 'forced(3)' indicates that the port is statically 
+                 configured to forwarding mode. 'auto-span(1)' indicates that 
+                 STP protocol is running."
+         ::= { bridgeGroupPortEntry 5 }
+
+bridgeGroupPortFastStart OBJECT-TYPE
+	SYNTAX	EnableIndicator
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+                 "When FastStart is enabled, a port uses the minimum of hello 
+                 time and forward delay time for transition from listening to 
+                 learning to forwarding state. Once the port is in forwarding 
+                 state, it will behave as a normal spanning tree port."
+	 ::= { bridgeGroupPortEntry 6 }
+END

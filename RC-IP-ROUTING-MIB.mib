@@ -1,0 +1,660 @@
+
+RC-IP-ROUTING-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, IpAddress
+        FROM SNMPv2-SMI
+    TruthValue, RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    rcIpRouting, rcIpStaticRoute
+        FROM RC-IP-MIB
+    rcIp
+        FROM RAPID-CITY;
+
+
+rcIpRoutingMib MODULE-IDENTITY
+       LAST-UPDATED     "200502160000Z"
+       ORGANIZATION     "Bay Networks, Rapid-City Group"
+       CONTACT-INFO     "
+                                        Edwin Tsang
+                         Postal:        Bay Networks, Inc.
+                                        4401 Great America Parkway
+                                        Santa Clara, CA 95052-8185
+
+                         Tel:           408-495-6159
+                         Fax:           408-495-5215
+                         E-mail:        edwin_tsang@baynetworks.com
+                        "
+       DESCRIPTION      "Enterprise MIB for the Accelar product family."
+       REVISION "200502160000Z" -- 16 Feb 2005
+       DESCRIPTION "Version 5: changed range for rcIpStaticRouteIfIndex"
+       REVISION "200409300000Z" -- 30 Sept 2004
+       DESCRIPTION "Version 4: add range for rcIpRouteAltSequence"
+       REVISION "200409210000Z" -- 21 Sept 2004
+       DESCRIPTION "Version 3: remove range for rcIpRouteAltSequence"
+       REVISION "200407200000Z" -- 20 July 2004
+       DESCRIPTION "Version 3: Added version info"  
+
+       ::= { rcIpRouting 0 }
+
+-- Routing group
+
+-- rcIpRouting/rcIpRoutingRedistributeRipToOspf Group
+
+rcIpRoutingRedistributeRipToOspf OBJECT IDENTIFIER ::= {rcIpRouting 1}
+
+rcIpRoutingRedistributeRipToOspfEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether or not to Redistribute
+                      RIP routes to OSPF."
+        DEFVAL        { false }
+        ::= { rcIpRoutingRedistributeRipToOspf 1 }
+
+rcIpRoutingRedistributeRipToOspfExplicitMetric OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Value of metric that is used to translate the
+                      RIP route to OSPF."
+        DEFVAL        { 1 }
+        ::= { rcIpRoutingRedistributeRipToOspf 2 }
+
+rcIpRoutingRedistributeRipToOspfUseExplicitMetric OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether or not to use the user
+                      specified default metric for redistributing
+                      RIP routes to OSPF."
+        DEFVAL        { false }
+        ::= { rcIpRoutingRedistributeRipToOspf 3 }
+
+rcIpRoutingRedistributeRipToOspfExternalMetricType  OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         type1(1),          -- extenal metric type1
+                         type2(2)           -- extenal metric type2
+                      }
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to configure the metric type of the
+                      distributed routes to OSPF domain.
+                      type1 means the metric is comparable directly
+                      to the link state metric
+                      (cost = internal cost + external cost).
+                      type2 means the metric is considered larger
+                      than any link state metric (cost = external
+                      cost)."
+        DEFVAL        { type2 }
+        ::= { rcIpRoutingRedistributeRipToOspf 4 }
+
+
+-- rcIpRouting/rcIpRoutingRedistributeOspfToRip Group
+
+rcIpRoutingRedistributeOspfToRip OBJECT IDENTIFIER ::= {rcIpRouting 2}
+
+rcIpRoutingRedistributeOspfToRipEnable OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether or not to redistribute
+                      OSPF routes to RIP."
+        DEFVAL        { false }
+        ::= { rcIpRoutingRedistributeOspfToRip 1 }
+
+rcIpRoutingRedistributeOspfToRipExplicitMetric OBJECT-TYPE
+        SYNTAX        INTEGER (1..16)
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Value of metric that is used to translate the
+                      OSPF route to RIP."
+        DEFVAL        { 1 }
+        ::= { rcIpRoutingRedistributeOspfToRip 2 }
+
+rcIpRoutingRedistributeOspfToRipUseExplicitMetric OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether or not to use the user
+                      specified default metric for redistributing
+                      OSPF routes to RIP."
+        DEFVAL        { true }
+        ::= { rcIpRoutingRedistributeOspfToRip 3 }
+
+-- rcIpRouting/rcIpRoutingRedistributeDirectToOspf Group
+
+rcIpRoutingRedistributeDirectToOspf OBJECT IDENTIFIER ::= {rcIpRouting 3}
+
+rcIpRoutingRedistributeDirectToOspfEnable  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether directly connected
+                      networks through non-ospf interfaces are
+                      distributed to OSPF database or not. If
+                      set to true all the static routes
+                      will be added as external routes to OSPF
+                      routing domain, provided the router is
+                      configured as AS Border router. Also originates
+                      asExtern link LSA."
+        DEFVAL        { false }
+        ::= { rcIpRoutingRedistributeDirectToOspf 1 }
+
+rcIpRoutingRedistributeDirectToOspfMethod OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         usePortSpeed(1),
+                         useExplicitMetric(2)
+                      }
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether or not to use the user
+                      specified default metric for redistributing
+                      direct routes to OSPF."
+        DEFVAL        { usePortSpeed }
+        ::= { rcIpRoutingRedistributeDirectToOspf 2 }
+
+rcIpRoutingRedistributeDirectToOspfExplicitMetric OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Value of metric that is used to translate the
+                      routes to directly connected networks to OSPF."
+        DEFVAL        { 1 }
+        ::= { rcIpRoutingRedistributeDirectToOspf 3 }
+
+rcIpRoutingRedistributeDirectToOspfExternalMetricType  OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         type1(1),          -- extenal metric type1
+                         type2(2)           -- extenal metric type2
+                      }
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to configure the metric type of the
+                      distributed routes to OSPF domain.
+                      type1 means the metric is comparable directly
+                      to the link state metric
+                      (cost = internal cost + external cost).
+                      type2 means the metric is considered larger
+                      than any link state metric (cost = external
+                      cost)."
+        DEFVAL        { type1 }
+        ::= { rcIpRoutingRedistributeDirectToOspf 4 }
+
+
+-- rcIpRouting/rcIpRoutingRedistributeStaticToOspf Group
+
+rcIpRoutingRedistributeStaticToOspf OBJECT IDENTIFIER ::= {rcIpRouting 4}
+
+rcIpRoutingRedistributeStaticToOspfEnable  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether static routes (that
+                      are configured locally through management
+                      protocol) are distributed to OSPF database
+                      or not. If set to true all the static routes
+                      will be added as external routes to OSPF
+                      routing domain, provided the router is
+                      configured as AS Border router. Also originates
+                      asExtern link LSA."
+        DEFVAL        { false }
+        ::= { rcIpRoutingRedistributeStaticToOspf 1 }
+
+rcIpRoutingRedistributeStaticToOspfExplicitMetric OBJECT-TYPE
+        SYNTAX        INTEGER (1..'FFFF'h)
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Value of metric that is used to translate the
+                      static routes to OSPF."
+        DEFVAL        { 10 }
+        ::= { rcIpRoutingRedistributeStaticToOspf 2 }
+
+rcIpRoutingRedistributeStaticToOspfUseExplicitMetric OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether or not to use the user
+                      specified default metric for redistributing
+                      static routes to OSPF."
+        DEFVAL        { false }
+        ::= { rcIpRoutingRedistributeStaticToOspf 3 }
+
+rcIpRoutingRedistributeStaticToOspfExternalMetricType  OBJECT-TYPE
+        SYNTAX        INTEGER {
+                         type1(1),          -- extenal metric type1
+                         type2(2)           -- extenal metric type2
+                      }
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to configure the metric type of the
+                      distributed routes to OSPF domain.
+                      type1 means the metric is comparable directly
+                      to the link state metric
+                      (cost = internal cost + external cost).
+                      type2 means the metric is considered larger
+                      than any link state metric (cost = external
+                      cost)."
+        DEFVAL        { type2 }
+        ::= { rcIpRoutingRedistributeStaticToOspf 4 }
+
+rcIpRoutingRedistributeStaticToOspfAdvertDefRte  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether default route (that
+                      are configured locally through management
+                      protocol) should be distributed to OSPF database
+                      or not. If set to true then the default route will
+                      be added as external route to OSPF routing domain,
+                      provided the router is configured as AS Border router.
+                      Also originates asExtern link LSA."
+        DEFVAL        { false }
+        ::= { rcIpRoutingRedistributeStaticToOspf 5 }
+
+-- rcIpRouting/rcIpRoutingRedistributeDirectToRip Group
+
+rcIpRoutingRedistributeDirectToRip OBJECT IDENTIFIER ::= {rcIpRouting 5}
+
+rcIpRoutingRedistributeDirectToRipEnable  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether directly connected
+                      networks through non-rip interfaces are
+                      distributed to RIP or not."
+        DEFVAL        { false }
+        ::= { rcIpRoutingRedistributeDirectToRip 1 }
+
+
+-- rcIpRouting/rcIpRoutingRedistributeStaticToRip Group
+
+rcIpRoutingRedistributeStaticToRip OBJECT IDENTIFIER ::= {rcIpRouting 6}
+
+rcIpRoutingRedistributeStaticToRipEnable  OBJECT-TYPE
+        SYNTAX        TruthValue
+        MAX-ACCESS    read-write
+        STATUS        obsolete
+        DESCRIPTION   "Used to indicate whether static routes (that
+                      are configured locally through management
+                      protocol) are distributed to RIP database
+                      or not. If set to true all the static routes
+                      will be added as external routes to RIP
+                      routing domain."
+        DEFVAL        { false }
+        ::= { rcIpRoutingRedistributeStaticToRip 1 }
+
+
+-- IP Route Table
+
+rcIpRouteTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF RcIpRouteEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "This entity's IP Routing table."
+    ::= { rcIp 7 }
+
+rcIpRouteEntry OBJECT-TYPE
+        SYNTAX          RcIpRouteEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "A route to a particular destination."
+        INDEX   { rcIpRouteDest, rcIpRouteMask,
+                  rcIpRouteNextHop, rcIpRouteAltSequence }
+    ::= { rcIpRouteTable 1 }
+
+RcIpRouteEntry ::=
+        SEQUENCE {
+                rcIpRouteDest IpAddress,
+                rcIpRouteMask IpAddress,
+                rcIpRouteNextHop IpAddress,
+                rcIpRouteMetric  Integer32,
+                rcIpRouteIfIndex InterfaceIndex,
+                rcIpRouteType INTEGER,
+                rcIpRouteProto INTEGER,
+                rcIpRouteAge Integer32,
+                            rcIpRouteRowStatus RowStatus,
+                rcIpRoutePref INTEGER,
+                rcIpRouteAltSequence Integer32,
+                rcIpRoutePathType INTEGER
+              }
+
+rcIpRouteDest OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The destination IP address of this route.  An
+                        entry with a value of 0.0.0.0 is considered a
+                        default route.  Multiple routes to a single
+                        destination can appear in the table, but access to
+                        such multiple entries is dependent on the table-
+                        access mechanisms defined by the network
+                        management protocol in use."
+    ::= { rcIpRouteEntry 1 }
+
+rcIpRouteMask OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Indicate the mask to be logical-ANDed with the
+                        destination address before being compared to the
+                        value in the rcIpRouteDest field.  For those systems
+                        that do not support arbitrary subnet masks, an
+                        agent constructs the value of the rcIpRouteMask by
+                        determining whether the value of the correspondent
+                        rcIpRouteDest field belong to a class-A, B, or C
+                        network, and then using one of:
+
+                           mask           network
+                           255.0.0.0      class-A
+                           255.255.0.0    class-B
+                           255.255.255.0  class-C
+
+                        If the value of the rcIpRouteDest is 0.0.0.0 (a
+                        default route), then the mask value is also
+                        0.0.0.0.  It should be noted that all IP routing
+                        subsystems implicitly use this mechanism."
+    ::= { rcIpRouteEntry 2 }
+
+rcIpRouteNextHop OBJECT-TYPE
+        SYNTAX          IpAddress
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The IP address of the next hop of this route.
+                        (In the case of a route bound to an interface
+                        which is realized via a broadcast media, the value
+                        of this field is the agent's IP address on that
+                        interface)."
+    ::= { rcIpRouteEntry 3 }
+
+rcIpRouteMetric OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The primary routing metric for this route.  The
+                        semantics of this metric are determined by the
+                        routing-protocol specified in the route's
+                        rcIpRouteProto value.  If this metric is not used,
+                        its value should be set to -1."
+    ::= { rcIpRouteEntry 4 }
+
+rcIpRouteIfIndex OBJECT-TYPE
+        SYNTAX          InterfaceIndex
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The index value which uniquely identifies the
+                        local interface through which the next hop of this
+                        route should be reached.  The interface identified
+                        by a particular value of this index is the same
+                        interface as identified by the same value of
+                        ifIndex."
+    ::= { rcIpRouteEntry 5 }
+
+rcIpRouteType OBJECT-TYPE
+        SYNTAX  INTEGER {
+                    other(1),
+                    direct(3),
+                    indirect(4)
+               }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The type of route."
+    ::= { rcIpRouteEntry 6 }
+
+rcIpRouteProto OBJECT-TYPE
+        SYNTAX  INTEGER {
+                    other(1),       -- none of the following
+
+                                    -- non-protocol information,
+                                    -- e.g., manually configured
+                    local(2),       -- entries
+
+                                    -- set via a network
+                    netmgmt(3),     -- management protocol
+
+                                    -- obtained via ICMP,
+                    icmp(4),        -- e.g., Redirect
+
+                                    -- the remaining values are
+                                    -- all gateway routing
+                                    -- protocols
+                    egp(5),
+                    ggp(6),
+                    hello(7),
+                    rip(8),
+                    is-is(9),
+                    es-is(10),
+                    ciscoIgrp(11),
+                    bbnSpfIgp(12),
+                    ospf(13),
+                    bgp(14)
+                }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The routing mechanism via which this route was
+                        learned.  Inclusion of values for gateway routing
+                        protocols is not intended to imply that hosts
+                        should support those protocols."
+    ::= { rcIpRouteEntry 7 }
+
+rcIpRouteAge OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The number of seconds since this route was last
+                        updated or otherwise determined to be correct.
+                        Note that no semantics of `too old' can be implied
+                        except through knowledge of the routing protocol
+                        by which the route was learned."
+    ::= { rcIpRouteEntry 8 }
+
+rcIpRouteRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS              read-write
+        STATUS          current
+        DESCRIPTION     "Used to create/delete entries"
+    ::= { rcIpRouteEntry 9 }
+
+rcIpRoutePref OBJECT-TYPE
+        SYNTAX          INTEGER (0..255)
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     ""
+    ::= { rcIpRouteEntry 10 }
+
+rcIpRouteAltSequence OBJECT-TYPE
+        SYNTAX          Integer32 (0..2147483647)
+        MAX-ACCESS              read-only
+        STATUS          current
+        DESCRIPTION     "Alternative Route Sequence. 0 denotes Best Route."
+    ::= { rcIpRouteEntry 11 }
+
+rcIpRoutePathType OBJECT-TYPE
+        SYNTAX  INTEGER {
+                    iA(0),  -- Indirect Alternative Route w/o ECMP path
+                    iAE(1), -- Indirect Alternative ECMP path
+                    iB(2),  -- Indirect Best Route w/o ECMP path
+                    iBE(3), -- Indirect Best ECMP path
+                    dB(6),   -- Direct Best Route
+                    iAU(16), -- Indirect Alternative Route Unresolved
+                    iAEU(17), -- Indirect Alternative ECMP Unresolved
+                    iBU(18), -- Indirect Best Route Unresolved
+                    iBEU(19), -- Indirect Best ECMP Unresolved
+                    dBU(22) -- Direct Best Route Unresolved
+               }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The type of route. It is a combination of
+                       direct, indirect, best, alternative and ECMP path."
+    ::= { rcIpRouteEntry 12 }
+
+ 
+--IP Static Route
+
+rcIpStaticRouteTableSize OBJECT-TYPE
+        SYNTAX        Integer32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "size of Ip Static Route Table."
+        ::= { rcIpStaticRoute 1 }
+
+rcIpStaticRouteTable OBJECT-TYPE 
+        SYNTAX          SEQUENCE OF RcIpStaticRouteEntry
+        MAX-ACCESS      not-accessible 
+        STATUS          current 
+        DESCRIPTION     "This table is used to add static IP routes to
+			the device.  Routes added into this table will
+			automatically show-up in the 'rcIpRouteTable'
+			when the device is actively using the route
+			to forward IP traffic." 
+    ::= { rcIpStaticRoute 2 }
+
+rcIpStaticRouteEntry OBJECT-TYPE
+        SYNTAX        	RcIpStaticRouteEntry
+        MAX-ACCESS        	not-accessible
+        STATUS        	current
+        DESCRIPTION   	"A static route to a particular destination."
+        INDEX         	{ rcIpStaticRouteDest,
+                          rcIpStaticRouteMask,
+                          rcIpStaticRouteNextHop }
+        ::= { rcIpStaticRouteTable 1 }
+ 
+RcIpStaticRouteEntry ::=
+        SEQUENCE {
+                rcIpStaticRouteDest   	      IpAddress,
+                rcIpStaticRouteMask   	      IpAddress,
+                rcIpStaticRouteNextHop	      IpAddress,
+                rcIpStaticRouteMetric         INTEGER,
+                rcIpStaticRouteIfIndex        InterfaceIndex,
+                rcIpStaticRoutePreference     INTEGER,
+                rcIpStaticRouteEnable         TruthValue,
+                rcIpStaticRouteStatus         INTEGER,
+                rcIpStaticRouteRowStatus      RowStatus,
+                rcIpStaticRouteLocalNextHop   TruthValue
+ 
+        }
+ 
+rcIpStaticRouteDest OBJECT-TYPE
+        SYNTAX        	IpAddress 
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The destination IP address of this route.  An
+                        entry with a value of 0.0.0.0 is considered a
+                        default route.  Multiple routes to a single
+                        destination can appear in the table, but access to
+                        such multiple entries is dependent on the table-
+                        access mechanisms defined by the network
+                        management protocol in use."
+        ::= { rcIpStaticRouteEntry 1 }
+ 
+rcIpStaticRouteMask OBJECT-TYPE
+        SYNTAX        	IpAddress 
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Indicate the mask to be logical-ANDed with the
+                        destination address before being compared to the
+                        value in the rcIpRouteDest field.  For those systems
+                        that do not support arbitrary subnet masks, an
+                        agent constructs the value of the rcIpRouteMask by
+                        determining whether the value of the correspondent
+                        rcIpRouteDest field belong to a class-A, B, or C
+                        network, and then using one of:
+ 
+                           mask           network
+                           255.0.0.0      class-A
+                           255.255.0.0    class-B
+                           255.255.255.0  class-C
+ 
+                        If the value of the rcIpRouteDest is 0.0.0.0 (a
+                        default route), then the mask value is also
+                        0.0.0.0.  It should be noted that all IP routing
+                        subsystems implicitly use this mechanism."
+        ::= { rcIpStaticRouteEntry 2 }
+ 
+rcIpStaticRouteNextHop OBJECT-TYPE
+        SYNTAX        	IpAddress 
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The IP address of the next hop of this route.
+                        (In the case of a route bound to an interface
+                        which is realized via a broadcast media, the value
+                        of this field is the agent's IP address on that
+                        interface)."
+        ::= { rcIpStaticRouteEntry 3 }
+ 
+rcIpStaticRouteMetric OBJECT-TYPE
+        SYNTAX        	INTEGER (1..'FFFF'h)
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"The primary routing metric for this route.  The
+                        semantics of this metric are determined by the
+                        routing-protocol specified in the route's
+                        rcIpRouteProto value.  If this metric is not used,
+                        its value should be set to -1."
+	DEFVAL        	{ 1 }
+        ::= { rcIpStaticRouteEntry 4 }
+
+rcIpStaticRouteIfIndex OBJECT-TYPE
+        SYNTAX        	InterfaceIndex (0..65535)
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"The index value which uniquely identifies the
+                        local interface through which the next hop of this
+                        route should be reached.  The interface identified
+                        by a particular value of this index is the same
+                        interface as identified by the same value of
+                        ifIndex."
+        ::= { rcIpStaticRouteEntry 5 }
+
+rcIpStaticRoutePreference OBJECT-TYPE
+        SYNTAX        	INTEGER (1..255) 
+        MAX-ACCESS        	read-write
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate the route preference of this
+			entry.  If there are more than one route that can
+			be used to forward IP traffic, the route that has
+			a highest preference will be used instead of a
+			lower preference one. The higher the number, the higher the preference."
+        ::= { rcIpStaticRouteEntry 6 }
+
+rcIpStaticRouteEnable OBJECT-TYPE
+        SYNTAX         	TruthValue
+        MAX-ACCESS         	read-write
+        STATUS         	current
+        DESCRIPTION    	"Used to enable/disable this entry."
+	DEFVAL        { true }
+        ::= { rcIpStaticRouteEntry 7 }
+
+rcIpStaticRouteStatus OBJECT-TYPE
+        SYNTAX        	INTEGER {
+		         	inactive(0),
+			 	active(1)
+		      	}
+        MAX-ACCESS        	read-only
+        STATUS        	current
+        DESCRIPTION   	"Used to indicate the current status of
+			this entry."
+	DEFVAL        	{ active }
+        ::= { rcIpStaticRouteEntry 8 }
+
+rcIpStaticRouteRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to create/delete entries"
+        ::= { rcIpStaticRouteEntry 9 }
+
+rcIpStaticRouteLocalNextHop OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "Used to enable/disable this entry. True indicate that the 
+                         static route becomes active only if switch has a local route
+                         to the network. False indicates that the static route becomes
+                         active if switch has a local route or dynamic route."
+        DEFVAL        { true }
+        ::= { rcIpStaticRouteEntry 10 }
+
+END

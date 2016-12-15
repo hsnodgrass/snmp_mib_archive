@@ -1,0 +1,1179 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-ATMCFG-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion ATM Configuration MIB Release 2.1.1
+-- Revision 06/24/99
+
+-- Copyright 1999 Nortel Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	atmConfig, EnableIndicator
+		FROM CENTILLION-ROOT-MIB
+	VirtualSegmentTypeId
+		FROM CENTILLION-VIRTUALSEGMENT-MIB;
+
+
+-- Groups
+
+atmElanConfig	OBJECT IDENTIFIER ::=	{ atmConfig 1 }
+atmCktTable	OBJECT IDENTIFIER ::=	{ atmConfig 2 }
+atmPortConfig	OBJECT IDENTIFIER ::=	{ atmConfig 3 }
+atmSysConfig	OBJECT IDENTIFIER ::=	{ atmConfig 4 }
+atmPortLogConfig OBJECT IDENTIFIER ::=  { atmConfig 5 }
+
+
+-- SECTION 2: Elan Configuration Group
+
+-- This group contains information pertaining to ATM elan
+-- configuration in the system
+
+atmElanConfigTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF AtmElanConfigEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"ATM elan table"
+	::= { atmElanConfig 1 }
+
+atmElanConfigEntry OBJECT-TYPE
+	SYNTAX  AtmElanConfigEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"ATM elan table.
+		Each entry is indexed by one field:
+		elan id."
+	INDEX  { atmElanIndex } 
+	::= { atmElanConfigTable 1 }
+
+AtmElanConfigEntry ::= SEQUENCE {
+	atmElanIndex
+		INTEGER,
+	atmElanType
+		INTEGER,
+	atmElanEnable
+		INTEGER,
+	atmElanAllCkts
+		OCTET STRING,
+	atmElanVirtualCard
+		INTEGER,
+	atmElanVirtualPort
+		INTEGER,
+	atmElanVirtualSegmentId
+		INTEGER,
+	atmElanStatus
+		INTEGER,
+	atmElanVirtualSegmentType
+		VirtualSegmentTypeId,
+	atmElanBridgeGroupId
+		INTEGER,
+      	atmElanMaxUnknownFrameCount
+              	INTEGER,
+      	atmElanMaxUnknownFrameTime
+              	INTEGER,
+      	atmElanVcBridgingEnable
+                EnableIndicator,
+	atmElanOneMModemEnable
+                EnableIndicator
+	}
+
+atmElanIndex OBJECT-TYPE
+	SYNTAX 	INTEGER (1..32)
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The index to the atm elan table.
+		support total of 32 circuits."
+	::= { atmElanConfigEntry 1 }
+
+atmElanType OBJECT-TYPE
+	SYNTAX 	INTEGER {
+		atmElanXob(1),
+		atmElanBe(2),
+		atmLecXob(3),		-- ATM Forum Circuit Saver LEC
+		atmLecBe(4),            -- ATM Forum Turbo LEC
+		atm1483Xob(5),		-- RFC 1483 PVC Circuit Saver
+		atmNullXob(6)		-- RFC 1483 NULL Encap PVC Circuit Saver
+		}
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The elan type."
+	::= { atmElanConfigEntry 2 }
+
+atmElanEnable OBJECT-TYPE
+	SYNTAX  INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Enable bit of the elan.
+		1 = enable elan
+		2 = disable elan"
+	::= { atmElanConfigEntry 3 }
+
+atmElanAllCkts OBJECT-TYPE
+	SYNTAX	OCTET STRING
+	ACCESS 	read-only
+	STATUS 	mandatory
+	DESCRIPTION
+		"Return all pvc circuits that belong to this elan.
+		Each circuit id is a 32 bit field"
+	::= { atmElanConfigEntry 4}
+
+atmElanVirtualCard OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS 	read-only
+	STATUS 	mandatory
+	DESCRIPTION
+		"Virtual card number."
+	::= { atmElanConfigEntry 5}
+
+atmElanVirtualPort OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS 	read-only
+	STATUS 	mandatory
+	DESCRIPTION
+		"Virtual port number. Currently this number is the Elan id"
+	::= { atmElanConfigEntry 6}
+
+atmElanVirtualSegmentId OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS 	read-only
+	STATUS 	mandatory
+	DESCRIPTION
+		"Virtual Segment ID of the segment that this Elan is a member of"
+	::= { atmElanConfigEntry 7}
+
+atmElanStatus OBJECT-TYPE
+	SYNTAX 	INTEGER {
+		add(1),
+		delete(2)
+		}
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The current status of the entry. Entries may be added by 
+		specifying a value of valid, and removed by setting the status
+		to invalid."
+	::= { atmElanConfigEntry 8 }
+
+atmElanVirtualSegmentType OBJECT-TYPE
+	SYNTAX	VirtualSegmentTypeId
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION 
+		"The virtual segment type."
+	::= { atmElanConfigEntry 9 }
+
+
+atmElanBridgeGroupId OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "Spanning Tree Group ID of the spanning tree group that the
+                virtual segment and this Elan are members of."
+        ::= { atmElanConfigEntry 10}
+ 
+
+atmElanMaxUnknownFrameCount OBJECT-TYPE
+      	SYNTAX  INTEGER(1..10)
+      	ACCESS  read-write
+      	STATUS  mandatory
+      	DESCRIPTION
+               	"Maximum Unknown Frame Count.  See the description of
+               	atmElanMaxUnknownFrameTime below."
+      	DEFVAL { 10 }
+      	::= { atmElanConfigEntry 11 }
+
+atmElanMaxUnknownFrameTime OBJECT-TYPE
+      	SYNTAX  INTEGER(1..60)
+      	ACCESS  read-write
+      	STATUS  mandatory
+      	DESCRIPTION
+               	"Maxinum Unknown Frame Time.  Within the period of time
+              	 defined by the Maxinum Unknown Frame Time, a LAN Client
+              	 will send no more than Maxinum Unknown Frame Count frames
+              	 for a given unicast LAN Destination.
+              	 This time value is expressed in seconds."
+      	DEFVAL { 1 }
+      	::= { atmElanConfigEntry 12 }
+
+atmElanVcBridgingEnable OBJECT-TYPE
+      	SYNTAX  EnableIndicator
+      	ACCESS  read-write
+      	STATUS  mandatory
+      	DESCRIPTION
+               	"This object is used to enable or disable VC Bridging on the vport.
+              	 The default value for this object is disable."
+      	DEFVAL { disabled }
+      	::= { atmElanConfigEntry 13 }
+
+atmElanOneMModemEnable OBJECT-TYPE
+        SYNTAX  EnableIndicator
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+		"Flag to indicate whether the vport supports one meg modem 
+		feature.  When this feature is enabled, data received from 
+		all LAN ports in the same VLAN as the vport will be 
+		forwarded only to the vport. "
+        DEFVAL { disabled }
+        ::= { atmElanConfigEntry 14 }
+
+-- SECTION 3: Circuit Table Group
+
+-- This group contains information pertaining to ATM pktckt connections
+-- in the system.
+
+-- The ATM Packet Circuit Table.
+
+atmPktCktTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF AtmPktCktEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM virtual circuit table."
+	::= { atmCktTable 1 }
+
+atmPktCktEntry OBJECT-TYPE
+	SYNTAX	AtmPktCktEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM Packet Circuit table entry.
+		 Each entry is indexed by one field:
+		 The circuit index."
+	INDEX	{ atmPktCktIndex }
+	::= { atmPktCktTable 1 }
+
+AtmPktCktEntry ::= SEQUENCE {
+	atmPktCktIndex
+		INTEGER, 
+	atmPktCktPriority
+		INTEGER,
+	atmPktCktEnable
+		INTEGER,
+	atmPktCktType
+		INTEGER,
+	atmPktCktCost
+		INTEGER,
+	atmPktCktElanIndex
+		INTEGER,
+	atmPktCktCardPort
+		INTEGER,
+	atmPktCktVpi
+		INTEGER,
+	atmPktCktVci
+		INTEGER,
+	atmPktCktStatus
+		INTEGER,
+	atmPktCktCardPort2
+		INTEGER
+	}
+
+atmPktCktIndex OBJECT-TYPE
+	SYNTAX 	INTEGER (1..256)
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The index to the packet circuit table.
+		support total of 256 circuits."
+	::= { atmPktCktEntry 1 }
+
+atmPktCktPriority OBJECT-TYPE
+	SYNTAX  INTEGER {
+		normalPriority(1),
+		highPriority(2)
+		}
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Priority bit of the circuit.
+		1 = normal priority
+		2 = high priority"
+	::= { atmPktCktEntry 2 }
+
+atmPktCktEnable OBJECT-TYPE
+	SYNTAX  INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Enable bit of the circuit.
+		1 = enable circuit
+		2 = disable circuit"
+	::= { atmPktCktEntry 3 }
+
+atmPktCktType OBJECT-TYPE
+	SYNTAX  INTEGER {
+		virtualCkt(1),
+		virtualPathCkt(2)
+		}
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"type bit of the circuit.
+		1 = virtual circuit
+		2 = virtual path circuit"
+	::= { atmPktCktEntry 4 }
+
+atmPktCktCost OBJECT-TYPE
+	SYNTAX 	INTEGER (0..255)
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The cost of the circuit.
+		range from 0 to 255 with 0 the least cost."
+	::= { atmPktCktEntry 5 }
+
+atmPktCktElanIndex OBJECT-TYPE
+	SYNTAX 	INTEGER (1..32)
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The elan id this circuit belongs to."
+	::= { atmPktCktEntry 6 }
+
+atmPktCktCardPort OBJECT-TYPE
+	SYNTAX 	INTEGER 
+	ACCESS 	read-write
+	STATUS  deprecated
+	DESCRIPTION 
+		"The atm card/port of the circuit. The card/port  
+		takes one byte. This will be replaced by
+		atmPktCktCardPort2"
+	::= { atmPktCktEntry 7 }
+
+atmPktCktVpi OBJECT-TYPE
+	SYNTAX 	INTEGER 
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The packet circuit vpi number."
+	::= { atmPktCktEntry 8 }
+
+atmPktCktVci OBJECT-TYPE
+	SYNTAX 	INTEGER
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The packet circuit vci number."
+	::= { atmPktCktEntry 9 }
+
+atmPktCktStatus OBJECT-TYPE
+	SYNTAX 	INTEGER {
+		add(1),
+		delete(2)
+		}
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The current status of the entry. Entries may be added by 
+		specifying a value of valid, and removed by setting the status
+		to invalid."
+	::= { atmPktCktEntry 10 }
+
+atmPktCktCardPort2 OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+                "This mib is added for 24 ports card. This will replace 
+		atmPktCktCardPort. The atm card/port of the circuit.
+		The card and port takes one byte each."
+	::= { atmPktCktEntry 11 }
+			
+-- The ATM Cell Circuit Table.
+
+atmCellCktTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF AtmCellCktEntry
+	ACCESS  not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM virtual circuit table."
+	::= { atmCktTable 2 }
+
+atmCellCktEntry OBJECT-TYPE
+	SYNTAX	AtmCellCktEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM Cell Circuit table entry.
+		 Each entry is indexed by one field:
+		 The circuit index."
+	INDEX	{ atmCellCktIndex }
+	::= { atmCellCktTable 1 }
+
+AtmCellCktEntry ::= SEQUENCE {
+	atmCellCktIndex
+		INTEGER, 
+	atmCellCktPriority
+		INTEGER,
+	atmCellCktEnable
+		INTEGER,
+	atmCellCktType
+		INTEGER,
+	atmCellCktNumEndpt
+		INTEGER,
+	atmCellCktEndptList
+		OCTET STRING,
+	atmCellCktStatus
+		INTEGER
+	}
+
+atmCellCktIndex OBJECT-TYPE
+	SYNTAX 	INTEGER
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The index to the packet circuit table.
+		support total of 256 circuits."
+	::= { atmCellCktEntry 1 }
+
+atmCellCktPriority OBJECT-TYPE
+	SYNTAX  INTEGER {
+		normPriority(1),
+		highPriority(2)
+		}
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Priority bit of the circuit.
+		1 = normal priority
+		2 = high priority"
+	::= { atmCellCktEntry 2 }
+
+atmCellCktEnable OBJECT-TYPE
+	SYNTAX  INTEGER {
+		enable(1),
+		disable(2)
+		}	
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Enable bit of the cell circuit.
+		1 = enable cell circuit
+		2 = disable cell circuit"
+	::= { atmCellCktEntry 3 }
+
+atmCellCktType OBJECT-TYPE
+	SYNTAX  INTEGER {
+		virtualCkt(1),
+		virtualPathCkt(2)
+		}
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"type bit of the circuit.
+		1 = virtual circuit
+		2 = virtual path circuit"
+	::= { atmCellCktEntry 4 }
+
+atmCellCktNumEndpt OBJECT-TYPE
+	SYNTAX  INTEGER
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Number of endpoints in  the circuit.
+		An endpoint is defined as a combination of 
+		card/port/vpi/vci."
+	::= { atmCellCktEntry 5 }
+
+atmCellCktEndptList OBJECT-TYPE
+	SYNTAX  OCTET STRING
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"List of endpoints for the circuit.
+		Each endpoint includes
+			Card 	(32 bit)
+			Port 	(32 bit)
+			Vpi	(32 bit)
+			Vci 	(32 bit)"
+	::= { atmCellCktEntry 6 }
+
+atmCellCktStatus OBJECT-TYPE
+	SYNTAX 	INTEGER {
+		add(1),
+		delete(2)
+		}
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The current status of the entry. Entries may be added by 
+		specifying a value of valid, and removed by setting the status
+		to invalid."
+	::= { atmCellCktEntry 7 }
+
+
+-- SECTION 4: Port Table  Configuration Group
+
+-- This group contains information pertaining to ATM port
+-- configuration in the system
+
+-- The ATM Port Table
+
+atmPortConfigTable	OBJECT-TYPE
+	SYNTAX	SEQUENCE OF AtmPortConfigEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM Hardware Port Configuration Table"
+	::= { atmPortConfig 1 }
+
+atmPortConfigEntry OBJECT-TYPE
+	SYNTAX	AtmPortConfigEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM port configuration table.
+		 Each entry is indexed by two fields:
+		 The card index and the port index."
+	INDEX	{atmPortCardIndex, atmPortPortIndex }
+	::= { atmPortConfigTable 1 }
+
+AtmPortConfigEntry ::= SEQUENCE {
+	atmPortCardIndex
+		INTEGER,
+	atmPortPortIndex
+		INTEGER,
+	atmPortEnable
+		INTEGER,
+	atmPortLoopTimingEnable
+		INTEGER,
+	atmPortHecCosetEnable
+		INTEGER,
+	atmPortHecCorrectionEnable
+		INTEGER,
+	atmPortHardwareFrameMode
+		INTEGER,
+	atmPortLocalLoopEnable
+		INTEGER,
+	atmPortRemoteLoopEnable
+		INTEGER,
+	atmPortForceHecErrorEnable
+		INTEGER,
+	atmPortScramblingEnable
+		INTEGER,
+        atmPortSigEntityType
+                INTEGER,
+        atmPortSigEntityRole
+                INTEGER,
+        atmPortSigVersion
+                INTEGER,
+        atmPortSigIlmi
+                INTEGER,
+	atmPortAdminFrameMode
+		INTEGER,
+	atmPortSscopStatus
+		INTEGER,
+        atmPortStatusEnquiryEnable
+                EnableIndicator,
+        atmPortTimerT309
+                INTEGER,
+        atmPortTrafficShapingEnable
+                INTEGER
+	}
+
+atmPortCardIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..16)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates the ATM card id."
+	::= { atmPortConfigEntry 1 }
+
+atmPortPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..16)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates ATM port id."
+	::= { atmPortConfigEntry 2 }
+
+atmPortEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates if the ATM port is enabled or disabled.
+		 2=Disable, 1=Enable.  When the port is disabled, no cell
+		 traffic will be ggenerated nor accepted and not SONET signal
+		 is generated.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+	::= { atmPortConfigEntry 3 }
+
+atmPortLoopTimingEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates if loop timing is enabled or disabled.
+		 2=Disable, 1=Enable.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+	::= { atmPortConfigEntry 4 }
+
+atmPortHecCosetEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates if heccoset  is enabled or disabled.
+		 2=Disable, 1=Enable.  When the port is disabled, no cell
+		 traffic will be ggenerated nor accepted and not SONET signal
+		 is generated.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+	::= { atmPortConfigEntry 5 }
+
+atmPortHecCorrectionEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates if hec correction is enabled or disabled.
+		 2=Disable, 1=Enable.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+	::= { atmPortConfigEntry 6 }
+
+atmPortHardwareFrameMode OBJECT-TYPE
+	SYNTAX	INTEGER {
+		sonet(1),
+		sdh(2),
+		notapply(3),
+		other(4)
+		}
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates the atm frame mode detected by hardware,
+                 Sonet, SDH or NotApply (no cable plugged in) or 
+  		 other (value other than sonet and sdh)."
+	::= { atmPortConfigEntry 7 }
+
+atmPortLocalLoopEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates if local loop  is enabled or disabled.
+		 2=Disable, 1=Enable.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+	::= { atmPortConfigEntry 8 }
+
+atmPortRemoteLoopEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates if loop timing is enabled or disabled.
+		 2=Disable, 1=Enable.  When the port is disabled, no cell
+		 traffic will be ggenerated nor accepted and not SONET signal
+		 is generated.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+	::= { atmPortConfigEntry 9 }
+
+atmPortForceHecErrorEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates if forcing cell header checksum error 
+		 is enabled or disabled.
+		 2=Disable, 1=Enable.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+	::= { atmPortConfigEntry 10 }
+
+atmPortScramblingEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates if scrambing is enabled or disabled.
+		 2=Disable, 1=Enable.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+	::= { atmPortConfigEntry 11 }
+
+atmPortSigEntityType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		noSig(1),            -- no signalling
+		uni(2),              -- UNI
+                iisp(3)              -- NNI
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object indicates the type of the siganlling entity
+                 that is associated with this ATM port.  The type of
+                 a signalling instance can either be no signalling,
+                 UNI which is the User-Network Interface, or Network-
+                 Network Interface iisp(3).  Note that there are more
+                 than one NNI supported by the ATM Forum and we support
+                 only IISP.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+        ::= { atmPortConfigEntry 12 }
+
+atmPortSigEntityRole OBJECT-TYPE
+	SYNTAX	INTEGER {
+                other(1),            -- unspecified
+                user(2),             -- User side of UNI
+                netw(3)              -- Network side of UNI
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object indicates the role of the signalling entity 
+                 that is associated with this ATM port.  When
+                 the object atmPortSigEntity is set to a value other
+                 than uni(2), this object is set to other(1).
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+        ::= { atmPortConfigEntry 13 }
+
+atmPortSigVersion OBJECT-TYPE
+	SYNTAX	INTEGER {
+                other(1),    	     -- unspecified
+                auto(2),             -- learn it thru ILMI
+                uni30(3),            -- UNI 3.0
+                uni31(4)             -- UNI 3.1
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object indicates the version of the siganlling entity
+                 that is associated with this ATM port.  This object is
+                 always set to other(1) when the object atmPortSigEntityType
+                 is set to a value other than uni(2).  When the value of
+                 this object is set to auto(2), the signalling entity will
+                 start running with UNI 3.1 and learn the correct version
+                 through ILMI.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+        ::= { atmPortConfigEntry 14 }
+
+atmPortSigIlmi OBJECT-TYPE
+	SYNTAX	INTEGER {
+                enabled(1),          -- ILMI enabled
+                disabled(2)          -- ILMI disabled
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object is used to enable/disable ILMI.
+		 Exception: this field is read-only for 5782 Goldfish
+		 Module. That is, the user is not allowed to configure
+		 the port on this module."
+        ::= { atmPortConfigEntry 15 }
+
+atmPortAdminFrameMode OBJECT-TYPE
+	SYNTAX	INTEGER {
+		sonet(1),
+		sdh(2),
+		invalid(3)
+		}
+	ACCESS  read-write
+	STATUS  mandatory
+	DESCRIPTION
+                "When read, this object returns the configured atm
+                 frame mode.  When set, only modes sonet and sdh
+                 are supported."
+	::= { atmPortConfigEntry 16 }
+
+atmPortSscopStatus  OBJECT-TYPE
+    SYNTAX  INTEGER {
+                other(1),
+                up(2),
+                down(3)
+                }
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        "Indicates the operational status of the
+         service specific connection-oriented protocol
+         ( SSCOP ). SSCOP's  function is to correct
+        transmission errors or losses by selectively
+        retransmitting the missing frames.
+
+         down -  Indicates that the peer protocol has
+                 failed to respond to the max number
+                 of status polls by its peer.
+
+         up   -  Indicates the peer protocol is responding
+                  to the status polls.
+
+         other - is an undetermined state of the SSCOP
+                 peer protocol."
+    ::= {atmPortConfigEntry 17 }
+ 
+atmPortStatusEnquiryEnable OBJECT-TYPE
+        SYNTAX  EnableIndicator
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "This object is used to enable or disable the Status
+                enquiry for this logical link. The default value for
+                this object is enabled except for the UNI links.
+                Note that this parameter is used only if the ATM
+                signalling is enabled."
+        DEFVAL { disabled }
+        ::= { atmPortConfigEntry 18 }
+ 
+atmPortTimerT309 OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                " Timer value of timer T309.T309 is a SAAL disconnect timer.
+                The T309 timer is started when SAAL disconnect is sent
+                and it is stopped when SAAL disconnect is sent. When the
+               timer is expired internal connection will be cleared and
+                virtual calls will be released."
+        DEFVAL { 10 }
+        ::= { atmPortConfigEntry 19 }
+
+atmPortTrafficShapingEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                " This field indicates if traffic shaping for the ATM
+                port is enabled or disabled.  When traffic shaping is 
+                disabled, the port operates at full wire rate. 
+                When traffic shaping is enabled, the port will operate
+		at the configured rate or available pacing rate."
+        DEFVAL { disable }
+        ::= { atmPortConfigEntry 20 }
+
+-- SECTION 5: System Configuration Group
+
+atmSysSigEnable OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object is used to enable or disable the ATM signalling
+		task within the switch.  Note that by disabling the ATM
+		signalling, the switch will not be able to support any ATM
+		applications such as the LAN Emulation Client.  The default
+		of this value is disable."
+	::= { atmSysConfig 1 }
+
+
+
+
+-- SECTION 6: Logical Link Table Configuration Group
+
+-- This group contains information pertaining to ATM logical
+-- link configuration in the system
+
+-- The ATM Logical Link Table
+
+atmMaxPortLogConfig OBJECT-TYPE
+	SYNTAX	INTEGER (0..65535)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The maximum number of logical links
+		 in the atmPortLogConfigTable."
+	::= { atmPortLogConfig 1 }
+
+atmCurPortLogConfig OBJECT-TYPE
+	SYNTAX	INTEGER (0..65535)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The current number of logical links
+		 in the atmPortLogConfigTable."
+	::= { atmPortLogConfig 2 }
+
+
+atmPortLogConfigTable	OBJECT-TYPE
+	SYNTAX	SEQUENCE OF AtmPortLogConfigEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM Logical link Configuration Table."
+	::= { atmPortLogConfig 3 }
+
+atmPortLogConfigEntry OBJECT-TYPE
+	SYNTAX	AtmPortLogConfigEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"ATM logical link configuration table.
+		 Each entry is indexed by three fields:
+		 The card index, port index and the VPI."
+
+	INDEX	{atmPortLogConfigCardIndex,
+	         atmPortLogConfigPortIndex,
+		 atmPortLogConfigVPI }
+	::= { atmPortLogConfigTable 1 }
+
+AtmPortLogConfigEntry ::= SEQUENCE {
+	atmPortLogConfigCardIndex
+		INTEGER,
+	atmPortLogConfigPortIndex
+		INTEGER,
+	atmPortLogConfigVPI
+		INTEGER,
+	atmPortLogConfigStatus
+		INTEGER,
+        atmPortLogConfigSigEntityType
+                INTEGER,
+        atmPortLogConfigSigEntityRole
+                INTEGER,
+        atmPortLogConfigSigVersion
+                INTEGER,
+        atmPortLogConfigSigIlmi
+                INTEGER,
+	atmPortLogConfigAdmWeightCbr
+                INTEGER,
+	atmPortLogConfigAdmWeightUbr
+                INTEGER,
+        atmPortLogConfigStatusEnquiryEnable
+                EnableIndicator,
+        atmPortLogConfigTimerT309
+                INTEGER
+	}
+
+atmPortLogConfigCardIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..16)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates the ATM card id."
+	::= { atmPortLogConfigEntry 1 }
+
+atmPortLogConfigPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER (1..24)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates ATM port id."
+	::= { atmPortLogConfigEntry 2 }
+
+atmPortLogConfigVPI OBJECT-TYPE
+	SYNTAX	INTEGER (0..15)
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates ATM virtual path identifier."
+	::= { atmPortLogConfigEntry 3 }
+
+atmPortLogConfigStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		other(1),
+		up(2),
+		add(3),
+		modify(4),
+		remove(5)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+                "This object is used to add, modify or delete a logical
+                 link. A value of other(1) will be returned for read
+                 operations on logical links.
+
+		 The value add(3) is written when setting up a new link
+		 and modify(4) is used for modifying an existing link.
+                 The value remove(5) is used to release the link."
+	::= { atmPortLogConfigEntry 4 }
+
+atmPortLogConfigSigEntityType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		noSig(1),            -- no signaling
+		uni(2),              -- UNI
+		iisp(3),             -- IISP
+		pnni(4)              -- PNNI
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object indicates the type of the signaling entity
+                 associated with this ATM port. The type of a signaling
+		 can either be no signaling, User-Network Interface, 
+		 uni(2), Interim Interswitch Signaling Protocol, 
+		 iisp(3) or Private Network-Network Interface, pnni(4)."
+        ::= { atmPortLogConfigEntry 5 }
+
+atmPortLogConfigSigEntityRole OBJECT-TYPE
+	SYNTAX	INTEGER {
+                other(1),            -- unspecified
+                user(2),             -- User side of UNI
+                netw(3)              -- Network side of UNI
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object indicates the role of the signaling entity 
+                 that is associated with this ATM logical port. This
+                 object can only be set to user(2) or netw(3).
+  
+                 A value of other(1) is returned when neither user(2)
+                 or netw(3) has been specified."
+        ::= { atmPortLogConfigEntry 6 }
+
+atmPortLogConfigSigVersion OBJECT-TYPE
+	SYNTAX	INTEGER {
+                other(1),    	     -- unspecified
+                auto(2),             -- learn it thru ILMI
+                uni30(3),            -- UNI 3.0
+                uni31(4),            -- UNI 3.1
+		pnni10(5)            -- PNNI 1.0
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object indicates the version of the signaling entity
+                 that is associated with this ATM port.
+		  
+		 When atmPortLogConfigSigEntityType is set to pnni(4), the 
+		 signaling entity cannot be set to uni30(3) or uni31(4);
+		 It can be set to pnni10(5) or auto(2).
+		 		 
+		 When this object is set to auto(2), the signaling entity will
+		 start running with UNI 3.1 and learn the correct version 
+		 through ILMI."
+        ::= { atmPortLogConfigEntry 7 }
+
+atmPortLogConfigSigIlmi OBJECT-TYPE
+	SYNTAX	INTEGER {
+                enabled(1),          -- ILMI enabled
+                disabled(2)          -- ILMI disabled
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object is used to enable or disable ILMI.
+  
+                 When atmPortLogConfigSigEntityType is set to uni(2) and
+                 atmPortLogConfigSigVersion is set to auto(2), this
+                 object must be set to enabled(1).
+  
+                 When atmPortLogConfigSigEntityType is set to iisp(3), this
+                 object must be set to disabled(2)."
+        ::= { atmPortLogConfigEntry 8 }
+
+atmPortLogConfigAdmWeightCbr OBJECT-TYPE
+	SYNTAX	INTEGER 
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The Administrative weight of this VP for
+		 the constant bit rate service category. A value
+		 of zero is returned if the link is non-PNNI."
+       	DEFVAL { 5040 }
+        ::= { atmPortLogConfigEntry 9 }
+
+atmPortLogConfigAdmWeightUbr OBJECT-TYPE
+	SYNTAX	INTEGER 
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The Administrative weight of this VP for
+		 the unspecified bit rate service category.
+		 A value of zero is returned if the link is
+		 non-PNNI."
+       	DEFVAL { 5040 }
+        ::= { atmPortLogConfigEntry 10 }
+
+atmPortLogConfigStatusEnquiryEnable OBJECT-TYPE
+        SYNTAX  EnableIndicator
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "This object is used to enable or disable the Status
+                enquiry. Note that this parametwer is used only
+                if the ATM signalling is enabled."
+        DEFVAL { disabled }
+        ::= { atmPortLogConfigEntry 11 }
+ 
+atmPortLogConfigTimerT309 OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                " Timer value of timer T309.T309 is a SAAL disconnect timer.
+                The T309 timer is started when SAAL disconnect is sent
+                and it is stopped when SAAL disconnect is sent. When the
+               timer is expired internal connection will be cleared and
+                virtual calls will be released."
+        DEFVAL { 10 }
+        ::= { atmPortLogConfigEntry 12 }
+
+END
+

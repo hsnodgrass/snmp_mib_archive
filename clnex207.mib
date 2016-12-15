@@ -1,0 +1,896 @@
+-- SECTION 1: Top Level Definitions
+
+
+CENTILLION-LESBUS-MIB DEFINITIONS ::= BEGIN
+
+
+-- Centillion LANE Extention MIB Release 2.0.7
+-- Revision 04/18/00
+
+-- Copyright 1994-2000 Nortel Networks, Inc.
+-- All rights reserved.
+-- This Bay Networks SNMP Management Information Base Specification
+-- (Specification) embodies Bay Networks' confidential and
+-- proprietary intellectual property. Bay Networks retains all
+-- title and ownership in the Specification, including any
+-- revisions.
+
+-- This Specification is supplied "AS IS," and Bay Networks makes
+-- no warranty, either express or implied, as to the use,
+-- operation, condition, or performance of the Specification.
+
+
+-- Imports
+
+IMPORTS
+	OBJECT-TYPE
+		FROM RFC-1212
+	lecIndex, AtmLaneAddress
+		FROM LAN-EMULATION-CLIENT-MIB
+	LesLocalIndex
+		FROM LAN-EMULATION-LES-MIB
+	TimeIntervalSec
+		FROM S5-TCS-MIB
+	atmLane, EnableIndicator
+		FROM CENTILLION-ROOT-MIB
+        lecsConfIndex
+                FROM LAN-EMULATION-ELAN-MIB
+    TruthValue
+            FROM SNMPv2-TC-v1;
+
+--  Groups
+
+cnLesBusExtnGroup	OBJECT IDENTIFIER ::=	{ atmLane 1 }
+cnLecExtnGroup  	OBJECT IDENTIFIER ::=	{ atmLane 2 }
+cnLecsExtnGroup		OBJECT IDENTIFIER ::=	{ atmLane 3 }
+atmCallRoutingConfig	OBJECT IDENTIFIER ::=	{ atmLane 4 }
+cnLaneGlobalConf	OBJECT IDENTIFIER ::=	{ atmLane 5 }
+
+
+-- SECTION 2: LES/BUS Extention Group
+
+cnLesBusTable  OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnLesBusEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"smart les/bus enable and unique server id."
+	::= { cnLesBusExtnGroup 1 }
+
+cnLesBusEntry OBJECT-TYPE
+	SYNTAX	CnLesBusEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		" ."
+	INDEX	{ cnLesBusConfIndex }
+	::= { cnLesBusTable 1 }
+
+CnLesBusEntry ::= SEQUENCE {
+	cnLesBusConfIndex
+		LesLocalIndex,
+	cnLesBusSmartLes
+		INTEGER,
+	cnLesBusServerId
+		INTEGER,
+	cnLesBusBusAddrSpec
+		AtmLaneAddress,
+	cnLesBusBusAddrActual
+		AtmLaneAddress
+	}
+
+cnLesBusConfIndex OBJECT-TYPE
+	SYNTAX LesLocalIndex
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		" A value which uniquely identifies a conceptual row in the lesConfTable."
+	::= {cnLesBusEntry 1}
+
+cnLesBusSmartLes OBJECT-TYPE
+	SYNTAX  INTEGER {
+		enabled (1),
+		disabled (2)
+		}
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+		" This object is used to turn on/off smart les/bus."
+	::= { cnLesBusEntry 2}
+
+cnLesBusServerId OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+		" This object specifies the unique server id among all les/bus pairs
+		  that serve the same elan."
+	::= {cnLesBusEntry 3}
+
+cnLesBusBusAddrSpec OBJECT-TYPE
+	SYNTAX AtmLaneAddress
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+		" The bus address."
+	::= {cnLesBusEntry 4}
+
+cnLesBusBusAddrActual OBJECT-TYPE
+	SYNTAX AtmLaneAddress
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		" The bus address."
+	::= {cnLesBusEntry 5}
+	
+cnLesBusPeerTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnLesBusPeerEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The LES/BUS peer table.  This table contains the all
+		LES/BUS pairs of the ELANs managed by the agent.  The
+		LES/BUS instantiated by the agent is also included
+		in this table.  Other LES/BUS pairs that are not 
+		running in the same system being managed by the agent
+		are configured by the user.  Note that there is no
+		verification protocol supported for the entries configured
+		by the user."
+	::= { cnLesBusExtnGroup 2 }
+
+cnLesBusPeerEntry OBJECT-TYPE
+	SYNTAX	CnLesBusPeerEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A pair of LES/BUS for the ELAN managed by the agent."
+	INDEX	{ cnLesBusIndex, cnLesBusPeerIndex }
+	::= { cnLesBusPeerTable 1 }
+
+CnLesBusPeerEntry ::= SEQUENCE {
+	cnLesBusIndex 
+		LesLocalIndex,
+	cnLesBusPeerIndex 
+		INTEGER,
+   	cnLesBusPeerLesAddr  
+		AtmLaneAddress,
+	cnLesBusPeerBusAddr 
+		AtmLaneAddress,
+	cnLesBusPeerStatus  
+		INTEGER 
+	}
+
+cnLesBusIndex OBJECT-TYPE
+	SYNTAX	LesLocalIndex
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Index into the ELAN this pair of LES/BUS is servicing."
+	::= { cnLesBusPeerEntry 1 }
+
+cnLesBusPeerIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An arbitrary integer which uniquly identifies a pair
+		of LES/BUS within an ELAN."
+	::= { cnLesBusPeerEntry 2 }
+
+cnLesBusPeerLesAddr OBJECT-TYPE
+	SYNTAX	AtmLaneAddress
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The ATM address of the LES."
+	::= { cnLesBusPeerEntry 3 }
+
+cnLesBusPeerBusAddr OBJECT-TYPE
+	SYNTAX	AtmLaneAddress
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The ATM address of the BUS."
+	::= { cnLesBusPeerEntry 4 }
+
+cnLesBusPeerStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		create(1),        -- create an entry, write only
+		delete(2),        -- delete an entry, write only
+		active(3),	  -- read only value
+		inactive(4)	  -- read only value
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This object is used to create or destroy an entry
+		from this table.  This object also reflect the current
+		state of the peer LES/BUS.  If both peer LES and BUS are
+		connected to this LES/BUS, then active(3) is returned 
+		when read, otherwise inactive(4) will be returned."
+	::= { cnLesBusPeerEntry 5 }
+
+
+-- Port range support for LESBUS
+
+cnLesBusPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnLesBusPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The ATM port a LESBUS uses to establish virtual circuits(VCC). 
+		A User can choose to either select the any-port capability,
+		which let the LESBUS choose whichever the ATM port is available.
+		Or the user can specify a list of ATM ports the LESBUS will
+		request the VCCs.  When a list of ATM ports are specified,
+		There are four objects used for specifying the ATM port
+		numbers.  The object cnLesBusPortAtmPort1 is used first,
+		the object cnLesBusPortAtmPort2 second if the first failed
+		and so on."
+	::= { cnLesBusExtnGroup 3 }
+
+cnLesBusPortEntry OBJECT-TYPE
+	SYNTAX	CnLesBusPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Each entry represent a LESBUS maintained by this agent.
+		The entries are indexed by the same index (LesBusIndex)
+		from the LesBusConfigTable defined in the ATM Forum LESBUS MIB."
+	INDEX	{ cnLesBusPortElanIndex, cnLesBusPortIndex }
+	::= { cnLesBusPortTable 1 }
+
+CnLesBusPortEntry ::= SEQUENCE {
+	cnLesBusPortElanIndex
+		INTEGER,
+	cnLesBusPortIndex
+		INTEGER,
+	cnLesBusCardId
+		INTEGER,
+	cnLesBusPortId
+		INTEGER,
+	cnLesBusPortStatus
+		INTEGER
+	}
+
+cnLesBusPortElanIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An index to the LESBUS pair that will use this table."
+	::= { cnLesBusPortEntry 1 }
+
+cnLesBusPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An index to an entry in the port table"
+	::= { cnLesBusPortEntry 2 }
+
+cnLesBusCardId OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Card ID of the ATM card."
+	::= { cnLesBusPortEntry 3 }
+
+cnLesBusPortId OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Port ID of the ATM port."
+	::= { cnLesBusPortEntry 4 }
+
+cnLesBusPortStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		create(1),        -- create an entry, write only
+		delete(2),        -- delete an entry, write only
+		active(3),	  -- read only value
+		inactive(4)		  -- read only value
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The object is used to create or destroy an entry
+		from this table.  This object also reflect the current
+		state of the port entry.  If the client uses this port
+		to join the ELAN, then active(3) is returned when read."
+	::= { cnLesBusPortEntry 5 }
+
+
+--  SECTION 3: LEC Extention Group
+
+cnLecServerTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnLecServerEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The LE Client's user configured server list.
+		 The LEC can use any pf the servers defined in this
+		 table.  The search order matches the order of the
+		 entries in the table."
+	::= { cnLecExtnGroup 1 }
+
+cnLecServerEntry OBJECT-TYPE
+	SYNTAX	CnLecServerEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"A LE server that the LEC can use."
+	INDEX	{ lecIndex, cnLecServerIndex }
+	::= { cnLecServerTable 1 }
+
+CnLecServerEntry ::= SEQUENCE {
+	cnLecServerIndex
+		INTEGER,
+	cnLecServerType
+		INTEGER,
+	cnLecServerAddress
+		AtmLaneAddress,
+	cnLecServerStatus
+		INTEGER
+	}
+
+cnLecServerIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An index to the lec server table."
+	::= { cnLecServerEntry 1 }
+
+cnLecServerType OBJECT-TYPE
+	SYNTAX	INTEGER {
+		lecsAtmForum(1),
+		lecsFromIlmi(2),
+		directLecs(3),
+		directLes(4),
+		lecsFromPvc(5)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The field specifies how the the LEC can get to the server
+		 and the server type (LES or LECS).  The LEC can connect
+		 to either the LECS via ILMI/PVC/ATM address or the LES
+		 via ATm address."
+	::= { cnLecServerEntry 2 }
+
+cnLecServerAddress OBJECT-TYPE
+	SYNTAX	AtmLaneAddress
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The field specifies the ATM address (20 octets) of the
+		 server when an ATM address is needed.  If an ATM address
+		 is not needed, zero will be returned when read."
+	::= { cnLecServerEntry 3 }
+
+cnLecServerStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		create(1),        -- create an entry, write only
+		delete(2),        -- delete an entry, write only
+		active(3)	  -- read only value
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The object is used to create or destroy an entry
+		from this table.  The entry is always in active
+		state once created."
+	::= { cnLecServerEntry 4 }
+
+-- Port range support for LEC
+
+cnLecPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnLecPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The ATM port a LEC uses to establish virtual circuits(VCC). 
+		A User can choose to either select the any-port capability,
+		which let the LEC choose whichever the ATM port is available.
+		Or the user can specify a list of ATM ports the LEC will
+		request the VCCs.  When a list of ATM ports are specified,
+		There are four objects used for specifying the ATM port
+		numbers.  The object cnLecPortAtmPort1 is used first,
+		the object cnlecPortAtmPort2 second if the first failed
+		and so on."
+	::= { cnLecExtnGroup 2 }
+
+cnLecPortEntry OBJECT-TYPE
+	SYNTAX	CnLecPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Each entry represent a LEC maintained by this agent.
+		The entries are indexed by the same index (lecIndex)
+		from the lecConfigTable defined in the ATM Forum LEC MIB."
+	INDEX	{ cnLecPortlecIndex, cnLecPortIndex }
+	::= { cnLecPortTable 1 }
+
+CnLecPortEntry ::= SEQUENCE {
+	cnLecPortlecIndex
+		INTEGER,
+	cnLecPortIndex
+		INTEGER,
+	cnLecCardId
+		INTEGER,
+	cnLecPortId
+		INTEGER,
+	cnLecPortStatus
+		INTEGER
+	}
+
+cnLecPortlecIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An index to the LEC that will use this table."
+	::= { cnLecPortEntry 1 }
+
+cnLecPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An index to an entry in the port table"
+	::= { cnLecPortEntry 2 }
+
+cnLecCardId OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Card ID of the ATM card."
+	::= { cnLecPortEntry 3 }
+
+cnLecPortId OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Port ID of the ATM port."
+	::= { cnLecPortEntry 4 }
+
+cnLecPortStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		create(1),        -- create an entry, write only
+		delete(2),        -- delete an entry, write only
+		active(3),	  -- read only value
+		inactive(4)		  -- read only value
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The object is used to create or destroy an entry
+		from this table.  This object also reflect the current
+		state of the port entry.  If the client uses this port
+		to join the ELAN, then active(3) is returned when read."
+	::= { cnLecPortEntry 5 }
+
+
+--  SECTION 4: LECS Extention Group
+
+-- Port range support for LESBUS
+
+cnLecsPortTable OBJECT-TYPE
+	SYNTAX	SEQUENCE OF CnLecsPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"The ATM port a Lecs uses to establish virtual circuits(VCC). 
+		A User can choose to either select the any-port capability,
+		which let the Lecs choose whichever the ATM port is available.
+		Or the user can specify a list of ATM ports the Lecs will
+		request the VCCs.  When a list of ATM ports are specified,
+		There are four objects used for specifying the ATM port
+		numbers.  The object cnLecsPortAtmPort1 is used first,
+		the object cnLecsPortAtmPort2 second if the first failed
+		and so on."
+	::= { cnLecsExtnGroup 1 }
+
+cnLecsPortEntry OBJECT-TYPE
+	SYNTAX	CnLecsPortEntry
+	ACCESS	not-accessible
+	STATUS	mandatory
+	DESCRIPTION
+		"Each entry represent a Lecs maintained by this agent.
+		The entries are indexed by the same index (LecsIndex)
+		from the LecsConfigTable defined in the ATM Forum Lecs MIB."
+	INDEX	{ cnLecsIndex, cnLecsPortIndex }
+	::= { cnLecsPortTable 1 }
+
+CnLecsPortEntry ::= SEQUENCE {
+	cnLecsIndex
+		INTEGER,
+	cnLecsPortIndex
+		INTEGER,
+	cnLecsCardId
+		INTEGER,
+	cnLecsPortId
+		INTEGER,
+	cnLecsPortStatus
+		INTEGER
+	}
+
+cnLecsIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An index to the Lecs pair that will use this table."
+	::= { cnLecsPortEntry 1 }
+
+cnLecsPortIndex OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"An index to an entry in the port table"
+	::= { cnLecsPortEntry 2 }
+
+cnLecsCardId OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Card ID of the ATM card."
+	::= { cnLecsPortEntry 3 }
+
+cnLecsPortId OBJECT-TYPE
+	SYNTAX	INTEGER
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Port ID of the ATM port."
+	::= { cnLecsPortEntry 4 }
+
+cnLecsPortStatus OBJECT-TYPE
+	SYNTAX	INTEGER {
+		create(1),        -- create an entry, write only
+		delete(2),        -- delete an entry, write only
+		active(3),	  -- read only value
+		inactive(4)		  -- read only value
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"The object is used to create or destroy an entry
+		from this table.  This object also reflect the current
+		state of the port entry.  If the client uses this port
+		to join the ELAN, then active(3) is returned when read."
+	::= { cnLecsPortEntry 5 }
+
+cnLecsExtnTable  OBJECT-TYPE
+        SYNTAX  SEQUENCE OF CnLecsExtnEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "LECS LANE extension table"
+        ::= { cnLecsExtnGroup 2 }
+ 
+cnLecsExtnEntry OBJECT-TYPE
+        SYNTAX  CnLecsExtnEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "An extension to the lecsConfEntry which contains
+                 objects associated to a LECS."
+        INDEX   { lecsConfIndex }
+        ::= { cnLecsExtnTable 1 }
+ 
+CnLecsExtnEntry ::= SEQUENCE {
+        cnLecsExtnAtmAddressSelect
+                INTEGER
+        }
+
+cnLecsExtnAtmAddressSelect OBJECT-TYPE
+        SYNTAX INTEGER {
+            atmForum(1),
+            userDefined(2)
+            }
+        ACCESS read-write
+        STATUS mandatory
+        DESCRIPTION
+                "LECS ATM Address selection.
+                 atmForum(1) - ATM Forum well known ATM Address.
+                 userDefined(2) - User defined ATM Address."
+        ::= {cnLecsExtnEntry 1}
+
+
+--  SECTION 5: ATM Call Routing Table (IISP)
+
+-- This group contains information pertaining to ATM elan
+-- configuration in the system
+
+atmCallRoutingConfigTable OBJECT-TYPE
+	SYNTAX  SEQUENCE OF AtmCallRoutingConfigEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+		"ATM call routing config table"
+	::= { atmCallRoutingConfig 1 }
+
+atmCallRoutingConfigEntry OBJECT-TYPE
+	SYNTAX  AtmCallRoutingConfigEntry
+	ACCESS  not-accessible
+	STATUS  mandatory
+	DESCRIPTION
+        	"Objects atmCallRoutingId, and atmCallRoutingRowStatus are 
+		 required during row creation.  And object elanLesRowStatus 
+		 is required during row deletion."
+    	INDEX { atmCallRoutingId }
+	::= { atmCallRoutingConfigTable 1 }
+
+AtmCallRoutingConfigEntry ::= SEQUENCE {
+	atmCallRoutingId
+		INTEGER,
+	atmCallRoutingAtmAddress
+		AtmLaneAddress,
+	atmCallRoutingType
+		INTEGER,
+	atmCallRoutingCard
+		INTEGER,
+	atmCallRoutingPort
+		INTEGER,
+	atmCallRoutingCost
+		INTEGER,
+	atmCallRoutingEnable
+		INTEGER,
+	atmCallRoutingRowStatus
+		INTEGER,
+	atmCallRoutingScope
+		INTEGER,
+	atmCallRoutingVpi
+		INTEGER,
+	atmCallRoutingFilterEnable
+		EnableIndicator
+	}
+
+atmCallRoutingId OBJECT-TYPE
+    SYNTAX INTEGER
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+        " Route id "
+    ::= { atmCallRoutingConfigEntry 1 }
+ 
+atmCallRoutingAtmAddress OBJECT-TYPE
+    SYNTAX AtmLaneAddress
+    ACCESS read-write
+    STATUS mandatory
+    DESCRIPTION
+        "Routable ATM address for route type host and network.
+	 Filter prefix for a default route entry."
+    ::= { atmCallRoutingConfigEntry 2 }
+ 
+atmCallRoutingType OBJECT-TYPE
+	SYNTAX 	INTEGER {
+		host(1),
+		network(2),
+		linkGroup(3),
+		default(4)
+		}
+    	ACCESS read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"A complete ATM address is specified in a routing entry 
+		when the route type is host.  For the network route 
+		type, only partial ATM address, usually the network 
+		prefix portion, is specified.  Linkgroup is a special
+		route type which can be defined in a way that loops are
+		eliminated.  The default type allows a route entry 
+		to be created that forwards to all destinations. "
+	::= { atmCallRoutingConfigEntry 3 }
+
+atmCallRoutingCard OBJECT-TYPE
+	SYNTAX	INTEGER (1..16)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates the ATM card id."
+	::= { atmCallRoutingConfigEntry 4 }
+
+atmCallRoutingPort OBJECT-TYPE
+	SYNTAX	INTEGER (1..16)
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"This field indicates ATM port id."
+	::= { atmCallRoutingConfigEntry 5 }
+
+atmCallRoutingCost OBJECT-TYPE
+	SYNTAX 	INTEGER (0..255)
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The cost of the route. range from 0 to 255 with 0 
+		the least cost. This is the link group id if 
+		atmCallRoutingType is linkGroup."
+	::= { atmCallRoutingConfigEntry 6 }
+
+atmCallRoutingEnable OBJECT-TYPE
+	SYNTAX  INTEGER {
+		enable(1),
+		disable(2)
+		}
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Enable bit of the call routing.
+		1 = enable routing
+		2 = disable routing "
+	::= { atmCallRoutingConfigEntry 7 }
+
+
+atmCallRoutingRowStatus OBJECT-TYPE
+	SYNTAX 	INTEGER {
+		add(1),
+		delete(2)
+		}
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"The current status of the entry. Entries may be added by 
+		specifying a value of valid, and removed by setting the status
+		to invalid."
+	::= { atmCallRoutingConfigEntry 8 }
+
+atmCallRoutingScope OBJECT-TYPE
+	SYNTAX 	INTEGER (0..104) 
+	ACCESS 	read-write
+	STATUS  mandatory
+	DESCRIPTION 
+		"PNNI scope value"
+	::= { atmCallRoutingConfigEntry 9 }
+
+atmCallRoutingVpi OBJECT-TYPE
+        SYNTAX INTEGER (0..15)
+        ACCESS read-write
+        STATUS mandatory
+        DESCRIPTION
+               " The VPI of the route."
+        ::= { atmCallRoutingConfigEntry 10 }
+
+atmCallRoutingFilterEnable OBJECT-TYPE
+        SYNTAX  EnableIndicator
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Enable bit of the filter for a default route.
+		When the filter is enabled, data will be forwarded
+		to all destinations except for a defined prefix."
+        DEFVAL { disabled } 
+	::= { atmCallRoutingConfigEntry 11 }
+
+
+--  SECTION 6: ATM Golobal Config
+
+cnLaneSig OBJECT-TYPE
+	SYNTAX	INTEGER {
+		enabled(1),
+		disabled(2)
+		}
+	ACCESS	read-write
+	STATUS	mandatory
+	DESCRIPTION
+		"Global parameter to enable or disable signalling
+		 in the box."
+	::= { cnLaneGlobalConf 1}
+
+cnLaneEdge OBJECT-TYPE
+	SYNTAX  INTEGER {
+		edgeOnly(1),
+		edgeAndSwitch(2),
+		switchOnly(3)
+		}
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Global configuration of the box
+		 edge: configured as LEC only services
+		 edgeAndswitch: configured as full LANE services
+		 switchOnly: configured as switch only services."
+	::= { cnLaneGlobalConf 2 }
+
+cnLaneNetPrefix OBJECT-TYPE
+	SYNTAX  OCTET STRING(SIZE(13))
+	ACCESS	read-write
+	STATUS 	mandatory
+	DESCRIPTION
+		"Useful if the box is configured as edgeAndswitch."
+	::= { cnLaneGlobalConf 3 }
+	
+cnLaneStatusEnquiryEnable OBJECT-TYPE
+        SYNTAX  EnableIndicator
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "This object is used to enable or disable the Status
+                 enquiry. Note that this parametwer is used only
+                if the ATM signalling is enabled."
+        DEFVAL { disabled } 
+        ::= { cnLaneGlobalConf 4 }
+ 
+cnLaneStatusEnquiryInterval OBJECT-TYPE
+        SYNTAX  TimeIntervalSec (120..9999)
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "The Status Enquiry requests for each call are sent
+                 periodically at this interval (in secs). Note that
+                 this parametwer is used only if the ATM signalling
+                 and atmSysStatusEnquiryEnable are enabled."
+        DEFVAL { 600 }
+        ::= { cnLaneGlobalConf 5 }
+
+--  SECTION 7: LEC Config Extention Group
+
+cnLecConfigExtnTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF CnLecConfigExtnEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "This the extension table of lecConfigTable. "
+        ::= { cnLecExtnGroup 3 }
+
+cnLecConfigExtnEntry OBJECT-TYPE
+        SYNTAX  CnLecConfigExtnEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+                "Each table entry contains configuration information
+                for one LAN Emulation Client."
+        INDEX   { lecIndex }
+        ::= { cnLecConfigExtnTable 1 }
+ 
+CnLecConfigExtnEntry ::= SEQUENCE {
+        cnLecTargetlessArp
+                EnableIndicator,
+        cnLecQoSAdminStatus
+                EnableIndicator,
+        cnLecQoSOperStatus
+                TruthValue
+        }
+ 
+ 
+cnLecTargetlessArp OBJECT-TYPE
+        SYNTAX  EnableIndicator
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "This object is used to enable or disable the
+                targetless LE_ARP."
+        DEFVAL { enabled }
+        ::= { cnLecConfigExtnEntry 1 }
+ 
+cnLecQoSAdminStatus OBJECT-TYPE
+        SYNTAX  EnableIndicator
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+                "This object is used to enable or disable QoS
+                features for the LEC.  QoS can be enabled for
+                V2 capable LECs in Ethernet ELANs."
+        DEFVAL { disabled }
+        ::= { cnLecConfigExtnEntry 2 }
+ 
+cnLecQoSOperStatus OBJECT-TYPE
+        SYNTAX  TruthValue
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "This object is true when the LEC is able to
+                conduct QoS feature operation.  It is false
+                when QoS features are not permitted, such as
+                when cnLecQoSAdminStatus is not enabled or the
+                LEC does not join a V2 capable ELAN."
+        ::= { cnLecConfigExtnEntry 3 }
+
+END

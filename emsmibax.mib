@@ -1,0 +1,133 @@
+--
+-- This MIB defines Tandem EMS event messages as traps
+--
+--   The MIB source is set for installation on HP OpenView for
+--   Windows and Unix.  Installation on other platforms may require
+--   editing:
+--
+--   Sun NetManager:  comment out entire IMPORTS section;
+--                    uncomment iso, dod, etc.
+--
+
+TANDEM-EMS-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+      enterprises FROM RFC1155-SMI;
+--    DisplayString, OBJECT-TYPE FROM RFC-1212
+--    TRAP-TYPE FROM RFC-1215;
+
+--
+-- EMS event MIB
+--
+
+--  iso              OBJECT IDENTIFIER ::= { 1 }
+--  org              OBJECT IDENTIFIER ::= { iso 3 }
+--  dod              OBJECT IDENTIFIER ::= { org 6 }
+--  internet         OBJECT IDENTIFIER ::= { dod 1 }
+--  directory        OBJECT IDENTIFIER ::= { internet 1 }
+--  mgmt             OBJECT IDENTIFIER ::= { internet 2 }
+--  experimental     OBJECT IDENTIFIER ::= { internet 3 }
+--  private          OBJECT IDENTIFIER ::= { internet 4 }
+--  enterprises      OBJECT IDENTIFIER ::= { private 1 }
+
+
+  tandem           OBJECT IDENTIFIER ::= { enterprises 169 }
+  nonstopsystems   OBJECT IDENTIFIER ::= { tandem 3 }
+  ems              OBJECT IDENTIFIER ::= { nonstopsystems 12 }
+  snmp             OBJECT IDENTIFIER ::= { nonstopsystems 155 }
+  snmpagent        OBJECT IDENTIFIER ::= { snmp 1 }
+
+--
+-- items in each event
+--
+
+
+  TrapSSIDtype            ::= DisplayString (SIZE (5..24))
+  TrapEventNumbertype     ::= DisplayString (SIZE (1..6))
+  TrapContentStandardtype ::= DisplayString (SIZE (1..24))
+  TrapSubjecttype         ::= DisplayString (SIZE (1..50))
+  TrapProcesstype         ::= DisplayString (SIZE (1..50))
+  TrapGenerationtimetype  ::= DisplayString (SIZE (19))
+  TrapCriticaltype        ::= DisplayString (SIZE (1..14))
+  TrapTexttype            ::= DisplayString (SIZE (1..1000))
+
+
+--
+-- item definitions
+--
+
+  trapSSID OBJECT-TYPE
+      SYNTAX   TrapSSIDtype                --
+      ACCESS   not-accessible
+      STATUS   mandatory
+      DESCRIPTION "subsystem ID that generated the EMS event"
+      ::= { ems 1}
+
+  trapEventNumber  OBJECT-TYPE
+      SYNTAX   TrapEventNumbertype         --
+      ACCESS   not-accessible
+      STATUS   mandatory
+      DESCRIPTION "Event number of event"
+      ::= { ems 2}
+
+  trapContentStandard OBJECT-TYPE
+      SYNTAX   TrapContentStandardtype     --
+      ACCESS   not-accessible
+      STATUS   mandatory
+      DESCRIPTION "standard content of event"
+      ::= { ems 3}
+
+  trapSubject OBJECT-TYPE
+      SYNTAX   TrapSubjecttype             --
+      ACCESS   not-accessible
+      STATUS   mandatory
+      DESCRIPTION " The value of the first subject token in
+                    the event "
+      ::= { ems 4}
+
+  trapProcess OBJECT-TYPE
+      SYNTAX   TrapProcesstype             --
+      ACCESS   not-accessible
+      STATUS   mandatory
+      DESCRIPTION " The process name that generated the event "
+      ::= { ems 5}
+
+  trapGenerationtime OBJECT-TYPE
+      SYNTAX   TrapGenerationtimetype
+      ACCESS   not-accessible
+      STATUS   mandatory
+      DESCRIPTION " GMT the event was generated, rendered
+                    yyyy/mm/dd hh:mm:ss.  Timestamp is GMT. "
+      ::= { ems 6}
+
+  trapCritical OBJECT-TYPE                 --
+      SYNTAX   TrapCriticaltype
+      ACCESS   not-accessible
+      STATUS   mandatory
+      DESCRIPTION " zems-tkn-critical == zspi-val-false ->
+                    then '(not critical)'
+                    else '(CRITICAL)    ' "
+      ::= { ems 7}
+
+  trapText OBJECT-TYPE                     --
+      SYNTAX   TrapTexttype
+      ACCESS   not-accessible
+      STATUS   mandatory
+      DESCRIPTION " The text expansion of the EMS event "
+      ::= { ems 8}
+
+
+emsMessage TRAP-TYPE
+  ENTERPRISE      ems
+  VARIABLES       { trapSSID,
+                  trapEventNumber,
+                  trapContentStandard,
+                  trapSubject,
+                  trapProcess,
+                  trapGenerationtime,
+                  trapCritical,
+                  trapText }
+  DESCRIPTION "A generic format for an EMS event."
+::= 0
+
+END -- TANDEM-EMS-MIB
