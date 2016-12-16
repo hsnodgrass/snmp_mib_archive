@@ -8,7 +8,7 @@ I created this out of frustration at the severe lack of large, free MIB reposito
 
 ## Installation
 
-Clone or download the repository, the move the MIB files to where they are needed. On *nix systems, this is typically `/usr/share/snmp/mibs`.
+Clone or download the repository, the move the MIB files to where they are needed. On \*nix systems, this is typically `/usr/share/snmp/mibs`.
 
 ## Contributers
 
