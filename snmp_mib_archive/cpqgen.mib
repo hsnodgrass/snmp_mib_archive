@@ -1,0 +1,100 @@
+-- ****************************************************************************
+-- :CPQ,DEV:
+--
+-- * COMPAQ GENERIC UNREGISTERED TRAP INFORMATION SNMP MIB DEFINITIONS
+--
+-- * $Date: 2003-09-19 03:40:35 +0530 (Fri, 19 Sep 2003) $
+-- * $Revision: 11101 $
+--
+-- Compaq Computer Corporation
+-- Confidential - Need To Know
+-- ****************************************************************************
+-- :CPQ,ENDDEV:
+--
+--                  Generic Unregistered Trap Information
+--         Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 2000, Compaq Computer Corporation.
+--      All Rights Reserved.
+--
+--      The information in this document is subject to change without notice.
+--
+--      COMPAQ COMPUTER CORPORATION SHALL NOT BE LIABLE FOR TECHNICAL
+--      OR EDITORIAL ERRORS OR OMISSIONS CONATINED HEREIN; NOR FOR INCIDENTAL
+--      OR CONSEQUENTIAL DAMAGES RESULTING FROM THE FURNISHING, PERFORMANCE,
+--      OR USE OF THIS MATERIAL.
+--
+--      Refer to the READMIB.RDM file for more information about the
+--      organization of the information in the Compaq Enterprise.
+--
+--
+--      The Compaq Enterprise number is 232.
+--      The ASN.1 prefix to, and including the Compaq Enterprise is:
+--           1.3.6.1.4.1.232
+--
+-- ****************************************************************************
+
+
+CPQGEN-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        enterprises             FROM RFC1155-SMI
+        Counter                 FROM RFC1155-SMI
+        IpAddress               FROM RFC1155-SMI
+        DisplayString           FROM RFC1213-MIB
+        OBJECT-TYPE             FROM RFC-1212
+        TRAP-TYPE               FROM RFC-1215
+        sysName                 FROM RFC1213-MIB;
+
+    compaq               OBJECT IDENTIFIER ::= { enterprises 232 }
+    cpqGenUnreg          OBJECT IDENTIFIER ::= { compaq 151 }
+    cpqGenComponent      OBJECT IDENTIFIER ::= { cpqGenUnreg 2 }  
+    cpqTrapVarBind       OBJECT IDENTIFIER ::= { cpqGenComponent 2 }  
+
+    cpqGenEntOIDStr      OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..64))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "Enterprise OID String."
+        ::= { cpqTrapVarBind 1 }  
+
+    cpqGenTrapID         OBJECT-TYPE 
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "Generic Trap ID."
+        ::= { cpqTrapVarBind 2 }  
+
+    cpqSpecTrapID        OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "Specific Trap ID."
+        ::= { cpqTrapVarBind 3 }  
+
+-- ****************************************************************************
+
+     cpqGenericUnregistered TRAP-TYPE
+        ENTERPRISE  compaq
+        VARIABLES {cpqGenEntOIDStr,cpqGenTrapID,cpqSpecTrapID}
+        DESCRIPTION
+                          "A genericUnregistered trap signifies that a system has sent
+                           a trap to the management server for a MIB that has not yet been compiled. 
+                           Try compiling any MIBs from the vendor for this system to obtain additional
+                           information. See Details for more information."
+              --#TYPE "Generic Unregistered"
+              --#SUMMARY "Generic Unregistered."
+              --#ARGUMENTS {0}
+              --#SEVERITY INFORMATIONAL
+              --#TIMEINDEX 99
+        ::= 99999
+
+
+
+
+
+END

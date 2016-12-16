@@ -1,0 +1,430 @@
+ADTRAN-ATLAS-UNIT-MIB           DEFINITIONS ::= BEGIN
+
+-- TITLE:               Atlas MIB
+-- FILENAME:            atunit.mib
+-- PARTNUMBER:
+-- AUTHOR:              Jason Schock
+
+-- HISTORY:
+--   04/03/2002  Created.
+
+-- The Atlas MIB contains ASN.1 objects that store general information
+-- common among the Atlas family of products
+
+IMPORTS
+        enterprises, IpAddress
+                FROM RFC1155-SMI
+        OBJECT-TYPE
+                FROM RFC-1212
+        ifIndex, DisplayString
+                FROM RFC1213-MIB
+        TRAP-TYPE
+                FROM RFC-1215
+        frCircuitIfIndex, frCircuitDlci
+                FROM RFC1315-MIB;
+
+-- OBJECT IDENTIFIERS
+adtran                  OBJECT IDENTIFIER ::= { enterprises 664 }
+adMgmt                  OBJECT IDENTIFIER ::= { adtran 2 }
+adATLASmg               OBJECT IDENTIFIER ::= { adMgmt 154 }
+adGenATLASmg            OBJECT IDENTIFIER ::= { adATLASmg 1 }
+adATLASUnitmg           OBJECT IDENTIFIER ::= { adGenATLASmg 5 }
+
+adATLASUnitInfo         OBJECT IDENTIFIER ::= { adATLASUnitmg  1 }
+--adATLASUnitConfig       OBJECT IDENTIFIER ::= { adATLASUnitmg  2 }
+adATLASUnitUtil         OBJECT IDENTIFIER ::= { adATLASUnitmg  3 }
+adATLASUnitStatus       OBJECT IDENTIFIER ::= { adATLASUnitmg  4 }
+
+--adATLASUnitGenCfg       OBJECT IDENTIFIER ::= { adATLASUnitConfig 1 }
+--adATLASUnitUserCfg      OBJECT IDENTIFIER ::= { adATLASUnitConfig 2 }
+--adATLASUnitSnmpCfg      OBJECT IDENTIFIER ::= { adATLASUnitConfig 3 }
+--adATLASUnitConsoleCfg   OBJECT IDENTIFIER ::= { adATLASUnitConfig 4 }
+--adATLASUnitSyslogCfg    OBJECT IDENTIFIER ::= { adATLASUnitConfig 5 }
+--adATLASUnitIQCfg        OBJECT IDENTIFIER ::= { adATLASUnitConfig 6 }
+
+adATLASUpdateFw         OBJECT IDENTIFIER ::= { adATLASUnitUtil  1 }
+adATLASConfigXfer       OBJECT IDENTIFIER ::= { adATLASUnitUtil  2 }
+
+AdTftpConfigXferStatus ::= INTEGER
+{
+        idle(1),
+        tftpFilenotFound(2),
+        tftpServerTimeout(3),
+        errorNotEnoughMmemory(4),
+        tftpDownloadInProgress(5),
+        tftpUploadInProgress(6),
+        tftpDownloadFailed(7),
+        tftpUploadFailed(8),
+        tftpDownloadComplete(9),
+        tftpUploadComplete(10),
+        tftpBadConfigFile(11),
+        tftpBadFilesize(12),
+        tftpNVRAMcfgCopyFailed(13),
+        downloadCopyingInternalConfig(14),
+        tftpFiletypeNotBinary(15),
+        tftpFileRevisionTooOld(16),
+        tftpRemoteDiskFull(17),
+        tftpFileAlreadyExists(18),
+        tftpFileAccessViolation(19),
+        tftpBadFileChecksum(20),
+        tftpReadNVRAMparseFailed(21),
+        downoadWaitingOnNVRAMsave(22),
+        uploadWritingInternalConfig(23)
+}
+
+adATLASUnitIfNumber          OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The number of physical interfaces (regardless of
+        their current state) present on this system. The same
+        as ifNumber defined in the MIB-2 interfaces group."
+
+    ::= { adATLASUnitInfo 1 }
+
+adATLASUnitPortInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF AdATLASUnitPortInfoEntry
+    ACCESS      not-accessible
+    STATUS      mandatory
+    DESCRIPTION
+        "A table of hardware oriented port information on each card.
+        This only includes actual card ports, and not layered
+        logical interfaces."
+    ::= { adATLASUnitInfo 2 }
+
+adATLASUnitPortInfoEntry OBJECT-TYPE
+    SYNTAX      AdATLASUnitPortInfoEntry
+    ACCESS      not-accessible
+    STATUS      mandatory
+    DESCRIPTION
+        "A row table entry exists for each card/port pair."
+    INDEX   { adATLASUnitSlotAddress, adATLASUnitPortAddress }
+    ::= { adATLASUnitPortInfoTable 1 }
+
+AdATLASUnitPortInfoEntry ::=
+    SEQUENCE {
+        adATLASUnitPortStatus                INTEGER,
+        adATLASUnitPortIfIndex               INTEGER,
+--        adATLASUnitPortAlarmStatus           OCTET STRING,
+        adATLASUnitPortDescription           DisplayString
+    }
+
+adATLASUnitPortStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                up(1),
+                down(2),
+                inTest(3)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The current status of the port."
+    ::= { adATLASUnitPortInfoEntry 1 }
+
+adATLASUnitPortIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "The interface number identified as ifIndex from the MIB-II
+        interfaces table as defined by the slot and port numbers in
+        this device."
+    ::= { adATLASUnitPortInfoEntry 2  }
+
+--adATLASUnitPortAlarmStatus OBJECT-TYPE
+--    SYNTAX      OCTET STRING
+--    ACCESS      read-only
+--    STATUS      mandatory
+--    DESCRIPTION
+--        "A bit encoded string representing the alarm state of the
+--        port."
+--    ::= { adATLASUnitPortInfoEntry 3 }
+
+adATLASUnitPortDescription OBJECT-TYPE
+    SYNTAX      DisplayString
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "A character string to identify the name of a port."
+    ::= { adATLASUnitPortInfoEntry 4 }
+
+
+adATLASUnitPortSlotMapTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLASUnitPortSlotMapEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+         "Table to map ifIndex to slot and port."
+    ::= { adATLASUnitInfo 3 }
+
+adATLASUnitPortSlotMapEntry OBJECT-TYPE
+    SYNTAX  AdATLASUnitPortSlotMapEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry exists for each interface which is mapped to a
+         physical slot/port pair."
+    INDEX   { ifIndex }
+    ::= { adATLASUnitPortSlotMapTable 1 }
+
+AdATLASUnitPortSlotMapEntry ::=
+    SEQUENCE {
+        adATLASUnitSlotAddress          INTEGER,
+        adATLASUnitPortAddress          INTEGER
+    }
+
+adATLASUnitSlotAddress OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The slot in which this port is contained.  Slot 0 is reported
+         for the system controller and all logical interfaces."
+    ::= { adATLASUnitPortSlotMapEntry 1 }
+
+adATLASUnitPortAddress OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The port number within the slot.  Port 0 is reported for all
+         logical interfaces."
+    ::= { adATLASUnitPortSlotMapEntry 2 }
+
+
+
+--adATLASUnitTime OBJECT-TYPE
+--         SYNTAX      DisplayString
+--         ACCESS      read-write
+--         STATUS      mandatory
+--         DESCRIPTION
+--        "Sets the Time of Day with format hh:mm."
+--         ::= { adATLASUnitGenCfg 1 }
+
+--adATLASUnitDate OBJECT-TYPE
+--         SYNTAX      DisplayString
+--         ACCESS      read-write
+--         STATUS      mandatory
+--         DESCRIPTION
+--        "Sets the Date with the format MM-DD-YY."
+--         ::= { adATLASUnitGenCfg 2 }
+
+
+--adATLASUnitIQNetPortMaxPVCs    OBJECT-TYPE
+--         SYNTAX      INTEGER
+--         ACCESS      read-only
+--         STATUS      mandatory
+--         DESCRIPTION
+--        "The maxium PVCs supported by the unit."
+--         ::= { adATLASUnitIQCfg 1 }
+
+--adATLASUnitIQNetPortHistIntervals    OBJECT-TYPE
+--         SYNTAX      INTEGER
+--         ACCESS      read-write
+--         STATUS      mandatory
+--         DESCRIPTION
+--        "Sets the number of history intervals for storage."
+--         ::= { adATLASUnitIQCfg 2 }
+
+--adATLASUnitIQNetPortHistIntervalsAvailable    OBJECT-TYPE
+--         SYNTAX      INTEGER
+--         ACCESS      read-only
+--         STATUS      mandatory
+--         DESCRIPTION
+--        "The number of history intervals allowed based on the maxium number of PVCs selected."
+--         ::= { adATLASUnitIQCfg 3 }
+
+
+--____________________________
+-- Unit Update Firmware Group
+--____________________________
+
+adATLASUpdateFwModuleNum  OBJECT-TYPE
+    SYNTAX      INTEGER
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "The slot containing the module to be updated with
+         the firmware.  If -1 is returned, no slot has been
+         selected."
+    ::= { adATLASUpdateFw  1 }
+
+adATLASUpdateFwTFTPSrvAddr  OBJECT-TYPE
+    SYNTAX      IpAddress
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "The IP address of the TFTP server."
+    ::= { adATLASUpdateFw  2 }
+
+adATLASUpdateFwTFTPSrvFileName  OBJECT-TYPE
+    SYNTAX      DisplayString
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "The name of the file to transfer from the TFTP
+         server."
+    ::= { adATLASUpdateFw  3 }
+
+adATLASUpdateFwCurrStatus  OBJECT-TYPE
+    SYNTAX      DisplayString
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "Status of the current firmware update."
+    ::= { adATLASUpdateFw  4 }
+
+adATLASUpdateFwPrevStatus  OBJECT-TYPE
+    SYNTAX      DisplayString
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "Status of the previous firmware update."
+    ::= { adATLASUpdateFw  5 }
+
+adATLASUpdateFwControl  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    start(1),
+                    stop(2)
+                }
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "Start the firmware update by setting value to 1
+        and stop the firmware update in progress by setting
+        value to 2.  The value will be 2 if a firmware
+        update is in progress, and 1 otherwise."
+    ::= { adATLASUpdateFw  6 }
+
+
+--_____________________________________
+--  Unit Configuration Transfer Group
+--_____________________________________
+
+adATLASConfigXferTFTPSrvAddr  OBJECT-TYPE
+    SYNTAX      IpAddress
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "The IP address of the TFTP server."
+    ::= { adATLASConfigXfer  1 }
+
+adATLASConfigXferTFTPSrvFileName  OBJECT-TYPE
+    SYNTAX      DisplayString
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "The name of the file to transfer to/from the TFTP
+         server."
+    ::= { adATLASConfigXfer  2 }
+
+adATLASConfigXferCurrStatus  OBJECT-TYPE
+    SYNTAX      AdTftpConfigXferStatus
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "Status of the current configuration transfer."
+    ::= { adATLASConfigXfer  3 }
+
+adATLASConfigXferPrevStatus  OBJECT-TYPE
+    SYNTAX      AdTftpConfigXferStatus
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "Status of the previous configuration transfer."
+    ::= { adATLASConfigXfer  4 }
+
+adATLASConfigXferDwnldControl  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    loadAndUseCfg(1)
+                }
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "Set value to 1 to transfer the configuration file from the
+        TFTP server and switch to the configuration."
+    ::= { adATLASConfigXfer  5 }
+
+adATLASConfigXferUpldControl  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    saveCfg(1)
+                }
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "Set value to 1 to transfer the configuration file to the
+         TFTP server."
+    ::= { adATLASConfigXfer  6 }
+
+
+adATLASUnitFPStatus          OBJECT-TYPE
+    SYNTAX  INTEGER (0..255)
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "A bit-encoded variable that gives the overall front panel
+         status of the Atlas product.  It is encoded as follows:
+
+        OFF              0x00
+        OK               0x01
+        ONLINE           0x02
+        TESTING          0x04
+        FLASH DOWNLOAD   0x08
+        ERROR            0x10
+        ALARM            0x20
+        STANDBY          0x40
+        WARN             0x80
+
+        Note: Multiple bits may be set concurrently, based on the
+        current state of the modules contained within the Atlas
+        product."
+
+    ::= { adATLASUnitStatus 1 }
+
+
+--_______________________________________________
+-- Atlas Enterprise Specific Frame Relay Traps --
+--_______________________________________________
+
+adATLASFrSwToBkup TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                frCircuitIfIndex,
+                frCircuitDlci
+        }
+        DESCRIPTION
+                "This trap indicates that the indicated Virtual
+                 Circuit has switched to a backup state."
+        --#TYPE       "Error - A Switch to Backup Event has Occurred"
+        --#SUMMARY    "ATLAS 15400500:  Switch to backup has occurred for "
+        --#SUMMARY    "Line %d, DLCI %d."
+        --#ARGUMENTS  {0,1}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400500
+
+adATLASFrSwToPrimary TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                frCircuitIfIndex,
+                frCircuitDlci
+        }
+        DESCRIPTION
+                "This trap indicates that the indicated Virtual
+                 Circuit has been restored to the primary state."
+        --#TYPE       "Error - A Switch to Primary Event has Occurred"
+        --#SUMMARY    "ATLAS 15400501:  Restore to primary has occurred for "
+        --#SUMMARY    "Line %d, DLCI %d."
+        --#ARGUMENTS  {0,1}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400501
+
+END

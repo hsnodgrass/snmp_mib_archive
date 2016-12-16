@@ -1,0 +1,1607 @@
+-- ****************************************************************************
+-- LEFTHAND-NETWORKS-NSM-NOTIFICATION-MIB
+-- Management Information Base for SNMP Network Management
+--
+-- This MIB provides notification (trap) information for a storage node.
+
+-- This MIB must be loaded after:
+--                                LEFTHAND-NETWORKS-GLOBAL-REG-MIB.mib
+--                                LEFTHAND-NETWORKS-NSM-MIB.mib
+--
+-- The LeftHand Networks Enterprise number is 9804.
+-- The ASN.1 prefix to, and including the LeftHand Networks Enterprise is:
+--     1.3.6.1.4.1.9804
+-- ****************************************************************************
+-- Copyright 2009,2010 Hewlett-Packard Development Company, L.P.
+-- Copyright 2008,2009 LeftHand Networks, Inc.
+-- All Rights Reserved.
+--
+-- Hewlett-Packard Company shall not be liable for technical or
+-- editorial errors or omissions contained herein. The information in
+-- this document is provided "as is" without warranty of any kind and
+-- is subject to change without notice. The warranties for HP products
+-- are set forth in the express limited warranty statements
+-- accompanying such products. Nothing herein should be construed as
+-- constituting an additional warranty.
+--
+-- Confidential computer software. Valid license from HP required for
+-- possession, use or copying. Consistent with FAR 12.211 and 12.212,
+-- Commercial Computer Software, Computer Software Documentation, and
+-- Technical Data for Commercial Items are licensed to the U.S.
+-- Government under vendor's standard commercial license.
+-- ****************************************************************************
+
+LEFTHAND-NETWORKS-NSM-NOTIFICATION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY, OBJECT-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, Integer32, Unsigned32, Gauge32
+		FROM SNMPv2-SMI
+	OBJECT-GROUP, NOTIFICATION-GROUP, MODULE-COMPLIANCE
+		FROM SNMPv2-CONF
+	TEXTUAL-CONVENTION, DisplayString, DateAndTime, TruthValue
+		FROM SNMPv2-TC
+	lhnModules, lhnNsm
+		FROM LEFTHAND-NETWORKS-GLOBAL-REG-MIB
+	lhnNsmNotification, lhnNsmEvents, lhnNsmOldNotification, lhnNsmOldEvents
+		FROM LEFTHAND-NETWORKS-NSM-MIB;
+
+-- lhnNsm is imported but never used, this will create a smilint warning
+-- however, it's necessary for some MIB compilers
+
+--
+-- Module definition and a brief description of this mib.
+--
+lhnNsmNotificationModule MODULE-IDENTITY
+    LAST-UPDATED        "201007160000Z"
+    ORGANIZATION        "Hewlett Packard Company, StorageWorks Division"
+    CONTACT-INFO        "Product Support
+                         Product URL: www.hp.com/go/p4000
+                         Support URL: www.itrc.hp.com
+                         Product Phone: www.hp.com/go/contact
+                                        1-800-786-7967 (US only)
+                         Support Phone: www.hp.com/go/contact
+                                        1-800-334-5144 (US only)"
+    DESCRIPTION         "HP StorageWorks P4000 Notifications:
+                         Traps(v1) and Informs(v2c)"
+    REVISION            "201007160000Z"
+    DESCRIPTION         "SAN/iQ 7.0, SAN/iQ 8.0, SAN/iQ 8.1, SAN/iQ 8.5"
+
+	::= { lhnModules 15 }
+
+-- lhnNsmDevices and lhnNsmEvents are redefined(duplicated) in this MIB to
+-- increase compatability with some SNMP clients
+
+lhnNsmDevices OBJECT-IDENTITY
+    STATUS              current
+	DESCRIPTION         "sub-tree for NSM devices"
+    ::= { lhnNsm 1 }
+
+lhnNsmEvents OBJECT-IDENTITY
+    STATUS              current
+	DESCRIPTION         "sub-tree for NSM events"
+    ::= { lhnNsmDevices 0 }
+
+--******************************************************************************
+--
+-- Conformance
+--
+--******************************************************************************
+
+lhnNsmNotificationModuleConformance OBJECT IDENTIFIER
+	::= { lhnNsmNotificationModule 1 }
+
+lhnNsmNotificationModuleCompliances OBJECT IDENTIFIER
+	::= { lhnNsmNotificationModuleConformance 1 }
+
+lhnNsmNotificationModuleGroups OBJECT IDENTIFIER
+	::= { lhnNsmNotificationModuleConformance 2 }
+
+lefthandNetworksNsmNotificationMibCompliance MODULE-COMPLIANCE
+	STATUS current
+	DESCRIPTION "The compliance statement."
+	MODULE
+	MANDATORY-GROUPS {
+			lefthandNetworksNsmNotificationGroup,
+			lefthandNetworksNsmNotificationMibAllNotifications
+		}
+	::= { lhnNsmNotificationModuleCompliances 1 }
+
+lefthandNetworksNsmNotificationGroup OBJECT-GROUP
+    OBJECTS {
+					notificationOldMessageCount,
+					notificationMessage,
+					notificationTime,
+                    notificationMessageCount,
+                    message,
+                    messageTime,
+                    eventID,
+                    severity,
+                    hostname,
+                    primaryIP,
+                    mac,
+                    serialNumber,
+                    modelName,
+                    productName,
+                    productID,
+                    hpim,
+                    softwareVersion,
+                    managementGroupVersion,
+                    managementGroupSerialNumber,
+                    managementGroup,
+                    cluster,
+                    site,
+					componentName,
+					systemName,
+					logicalName,
+					componentState,
+					componentModel,
+					componentSerialNumber,
+					componentFirmwareVersion,
+					componentHardwareVersion,
+					driverVersion,
+					biosVersion,
+					raidConfiguration,
+					diskInterface,
+					diskCapacity,
+                    raidState,
+					parityInitStatus,
+					healthState,
+					bbuState,
+					cacheState,
+					linkState,
+					vipState,
+					maintenanceMode,
+					minFanSpeed,
+					fanSpeed,
+					highTemperatureLimit,
+					temperatureState,
+					temperature,
+					highVoltageLimit,
+					lowVoltageLimit,
+					voltage,
+					utilization,
+					latency,
+					memoryUtilization,
+					memoryConfig,
+					cpuUtilization,
+					cpuConfig,
+					diskSpeed,
+					licenseState,
+					utilizationState,
+					latencyState,
+					serverVIPAddress,
+					serverVIPState,
+					replicationState,
+					snapshotState,
+					snapshotSchedState
+            }
+    STATUS              current
+    DESCRIPTION         "The default group for all NSM Notification objects."
+    ::= { lhnNsmNotificationModuleGroups 1 }
+
+lefthandNetworksNsmNotificationMibAllNotifications NOTIFICATION-GROUP
+    NOTIFICATIONS       {
+                            userNotification,
+                            lhnNsmNotificationGeneric,
+							lhnNsmNotificationBackplane,
+							lhnNsmNotificationController,
+							lhnNsmNotificationRAID,
+							lhnNsmNotificationDisk,
+							lhnNsmNotificationBootDevice,
+							lhnNsmNotificationFan,
+							lhnNsmNotificationTemperature,
+							lhnNsmNotificationPowerSupply,
+							lhnNsmNotificationVoltage,
+							lhnNsmNotificationNetwork,
+							lhnNsmNotificationMemory,
+							lhnNsmNotificationCPU,
+							lhnNsmNotificationLogging,
+							lhnNsmNotificationManagementGroup,
+							lhnNsmNotificationRemoteManagementGroup,
+							lhnNsmNotificationCluster,
+							lhnNsmNotificationStorageServer,
+							lhnNsmNotificationRemoteCopy,
+							lhnNsmNotificationVolume,
+							lhnNsmNotificationSnapshot
+                        }
+    STATUS              current
+    DESCRIPTION         "The default group for all NSM Notification objects."
+    ::= { lhnNsmNotificationModuleGroups 2 }
+
+--******************************************************************************
+--
+-- Notification Objects
+--
+--******************************************************************************
+
+--******************************************************************************
+-- In SAN/iQ 8.1 and earlier all notifications were SNMP v2c notifications
+-- from a single OID:
+--                      LEFTHAND-NETWORKS-NSM-NOTIFICATION-MIB::userNotification
+--                      .1.3.6.1.4.1.9804.3.1.1.3.1
+--
+-- In SAN/iQ 8.5 and later notifications can be sent as SNMP v1 traps or
+-- SNMP v2 notifications and use multiple OIDs defined in this MIB.
+--******************************************************************************
+
+notificationMessageCount OBJECT-TYPE
+    SYNTAX              Integer32
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "The number of notification messages available in the history."
+    ::= { lhnNsmNotification 1 }
+
+notificationMessageTable OBJECT-TYPE
+    SYNTAX              SEQUENCE OF NotificationMessageEntry
+    MAX-ACCESS          not-accessible
+    STATUS              current
+    DESCRIPTION         "A table of the last 100 notifications for the NSM.
+                        The number of entries is given by messageNotificationCount."
+    ::= { lhnNsmNotification 2 }
+
+    notificationMessageEntry OBJECT-TYPE
+        SYNTAX              NotificationMessageEntry
+        MAX-ACCESS          not-accessible
+        STATUS              current
+        DESCRIPTION         "A row of notification message information.
+							The information contained in each row is dependant on the trap type
+							and the event that caused the trap.  Not all NotificationMessageEntry
+							objects will have values."
+        INDEX               {
+                                notificationMessageIndex
+                            }
+        ::= { notificationMessageTable 1 }
+
+    NotificationMessageEntry ::= SEQUENCE {
+        notificationMessageIndex Unsigned32,
+        message								DisplayString,
+        messageTime							DateAndTime,
+        eventID								DisplayString,
+        severity							INTEGER,
+        hostname							DisplayString,
+        primaryIP							DisplayString,
+        mac									DisplayString,
+        serialNumber						DisplayString,
+        modelName							DisplayString,
+        productName							DisplayString,
+        productID							DisplayString,
+        hpim								TruthValue,
+        softwareVersion						DisplayString,
+        managementGroupVersion				DisplayString,
+        managementGroupSerialNumber			DisplayString,
+        managementGroup						DisplayString,
+        cluster								DisplayString,
+        site								DisplayString,
+		componentName						DisplayString,
+		systemName							DisplayString,
+		logicalName							DisplayString,
+		componentState						DisplayString,
+		componentModel						DisplayString,
+		componentSerialNumber				DisplayString,
+		componentFirmwareVersion			DisplayString,
+		componentHardwareVersion			DisplayString,
+		driverVersion						DisplayString,
+		biosVersion							DisplayString,
+		raidConfiguration					DisplayString,
+		diskInterface						DisplayString,
+		diskCapacity						Integer32,
+        raidState							DisplayString,
+		parityInitStatus					DisplayString,
+		healthState							DisplayString,
+		bbuState							DisplayString,
+		cacheState							DisplayString,
+		linkState							DisplayString,
+		vipState							DisplayString,
+		maintenanceMode						DisplayString,
+		minFanSpeed							Integer32,
+		fanSpeed							Gauge32,
+		highTemperatureLimit				Integer32,
+		temperatureState					DisplayString,
+		temperature							Gauge32,
+		highVoltageLimit					Integer32,
+		lowVoltageLimit						Integer32,
+		voltage								Gauge32,
+		utilization							Gauge32,
+		latency								Gauge32,
+		memoryUtilization					Gauge32,
+		memoryConfig						Integer32,
+		cpuUtilization						Gauge32,
+		cpuConfig							Integer32,
+		diskSpeed							DisplayString,							
+		licenseState						DisplayString,
+		utilizationState					DisplayString,
+		latencyState						DisplayString,
+		serverVIPAddress					DisplayString,
+		serverVIPState						DisplayString,
+		replicationState					DisplayString,
+		snapshotState						DisplayString,
+		snapshotSchedState					DisplayString
+}
+
+    notificationMessageIndex OBJECT-TYPE
+        SYNTAX              Unsigned32
+        MAX-ACCESS          not-accessible
+        STATUS              current
+        DESCRIPTION         "The index for the notificationMessageTable table."
+        ::= { notificationMessageEntry 1 }
+
+    message OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The notification message."
+        ::= { notificationMessageEntry 2 }
+
+    messageTime OBJECT-TYPE
+        SYNTAX              DateAndTime
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The time the notification was sent."
+        ::= { notificationMessageEntry 3 }
+
+    eventID OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The event ID in symbolic format."
+        ::= { notificationMessageEntry 4 }
+
+    severity OBJECT-TYPE
+        SYNTAX              INTEGER { critical(0), warning(1), info(2) }
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The event severity."
+        ::= { notificationMessageEntry 5 }
+
+    hostname OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The NSM hostname."
+        ::= { notificationMessageEntry 6 }
+
+    primaryIP OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The primary IP address."
+        ::= { notificationMessageEntry 7 }
+
+    mac OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The MAC address of the primary IP address."
+        ::= { notificationMessageEntry 8 }
+
+    serialNumber OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The chassis serial number."
+        ::= { notificationMessageEntry 9 }
+
+    modelName OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The system model name."
+        ::= { notificationMessageEntry 10 }
+
+    productName OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The OEM product name."
+        ::= { notificationMessageEntry 11 }
+
+    productID OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The OEM product ID."
+        ::= { notificationMessageEntry 12 }
+
+    hpim OBJECT-TYPE
+        SYNTAX              TruthValue
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "HP Insight Manager SNMP agent installed on NSM"
+        ::= { notificationMessageEntry 13 }
+
+    softwareVersion OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The SAN/iQ software version"
+        ::= { notificationMessageEntry 14 }
+
+    managementGroupVersion OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The management group version."
+        ::= { notificationMessageEntry 15 }
+
+    managementGroupSerialNumber OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The management group serial number."
+        ::= { notificationMessageEntry 16 }
+
+    managementGroup OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The management group name."
+        ::= { notificationMessageEntry 17 }
+
+    cluster OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The cluster name."
+        ::= { notificationMessageEntry 18 }
+
+    site OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The site the cluster is in."
+        ::= { notificationMessageEntry 19 }
+
+    componentName OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The component name."
+        ::= { notificationMessageEntry 20 }
+
+    systemName OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The system hostname."
+        ::= { notificationMessageEntry 21 }
+
+    logicalName OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The logical name for the component."
+        ::= { notificationMessageEntry 22 }
+
+    componentState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The component state."
+        ::= { notificationMessageEntry 23 }
+
+    componentModel OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The component model."
+        ::= { notificationMessageEntry 24 }
+
+    componentSerialNumber OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The component serial number."
+        ::= { notificationMessageEntry 25 }
+
+    componentFirmwareVersion OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The component firmware version."
+        ::= { notificationMessageEntry 26 }
+
+    componentHardwareVersion OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The component hardware version."
+        ::= { notificationMessageEntry 27 }
+
+    driverVersion OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The driver version."
+        ::= { notificationMessageEntry 28 }
+
+    biosVersion OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The BIOS version."
+        ::= { notificationMessageEntry 29 }
+
+    raidConfiguration OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The RAID configuration."
+        ::= { notificationMessageEntry 30 }
+
+    diskInterface OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The disk interface type."
+        ::= { notificationMessageEntry 31 }
+
+    diskCapacity OBJECT-TYPE
+        SYNTAX              Integer32
+		UNITS				"MB"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The disk capacity."
+        ::= { notificationMessageEntry 32 }
+
+    raidState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The RAID state."
+        ::= { notificationMessageEntry 33 }
+
+    parityInitStatus OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The RAID Parity Initialization status."
+        ::= { notificationMessageEntry 34 }
+
+    healthState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The disk health state."
+        ::= { notificationMessageEntry 35 }
+
+    bbuState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The BBU state."
+        ::= { notificationMessageEntry 36 }
+
+    cacheState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The cache state."
+        ::= { notificationMessageEntry 37 }
+
+    linkState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The link state."
+        ::= { notificationMessageEntry 38 }
+
+    vipState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The cluster VIP state."
+        ::= { notificationMessageEntry 39 }
+
+    maintenanceMode OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The management group maintenance mode."
+        ::= { notificationMessageEntry 40 }
+
+    minFanSpeed OBJECT-TYPE
+        SYNTAX              Integer32
+		UNITS               "RPM"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The minimal fan speed."
+        ::= { notificationMessageEntry 41 }
+
+    fanSpeed OBJECT-TYPE
+        SYNTAX              Gauge32
+		UNITS               "RPM"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The fan speed."
+        ::= { notificationMessageEntry 42 }
+
+    highTemperatureLimit OBJECT-TYPE
+        SYNTAX              Integer32
+		UNITS               "Celsius"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The high temperature limit."
+        ::= { notificationMessageEntry 43 }
+
+    temperatureState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The component temperature state."
+        ::= { notificationMessageEntry 44 }
+
+    temperature OBJECT-TYPE
+        SYNTAX              Gauge32
+		UNITS               "Celsius"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The component temperature."
+        ::= { notificationMessageEntry 45 }
+
+    highVoltageLimit OBJECT-TYPE
+        SYNTAX              Integer32
+		UNITS				"Volts"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The high voltage limit."
+        ::= { notificationMessageEntry 46 }
+
+    lowVoltageLimit OBJECT-TYPE
+        SYNTAX              Integer32
+		UNITS				"Volts"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The low voltage limit."
+        ::= { notificationMessageEntry 47 }
+
+    voltage OBJECT-TYPE
+        SYNTAX              Gauge32
+		UNITS				"Volts"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The voltage."
+        ::= { notificationMessageEntry 48 }
+
+    utilization OBJECT-TYPE
+        SYNTAX              Gauge32
+		UNITS				"%"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The rescource utilization."
+        ::= { notificationMessageEntry 49 }
+
+    latency OBJECT-TYPE
+		SYNTAX				Gauge32
+		UNITS				"ms"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The storage server latency."
+        ::= { notificationMessageEntry 50 }
+
+    memoryUtilization OBJECT-TYPE
+        SYNTAX              Gauge32
+		UNITS				"%"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The memory utilization."
+        ::= { notificationMessageEntry 51 }
+
+    memoryConfig OBJECT-TYPE
+        SYNTAX              Integer32
+		UNITS				"MB"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The system memory configuration."
+        ::= { notificationMessageEntry 52 }
+
+    cpuUtilization OBJECT-TYPE
+        SYNTAX              Gauge32
+		UNITS				"%"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The CPU utilization."
+        ::= { notificationMessageEntry 53 }
+
+    cpuConfig OBJECT-TYPE
+        SYNTAX              Integer32
+		UNITS				"cores"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The number of CPU cores."
+        ::= { notificationMessageEntry 54 }
+
+    diskSpeed OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The disk interface speed."
+        ::= { notificationMessageEntry 55 }
+
+    licenseState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The feature license state."
+        ::= { notificationMessageEntry 56 }
+
+    utilizationState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The utilization state."
+        ::= { notificationMessageEntry 57 }
+
+    latencyState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The storage server latency state."
+        ::= { notificationMessageEntry 58 }
+
+    serverVIPAddress OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The VIP address."
+        ::= { notificationMessageEntry 59 }
+
+    serverVIPState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The VIP state."
+        ::= { notificationMessageEntry 60 }
+
+    replicationState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The volume/snapshot replication state."
+        ::= { notificationMessageEntry 61 }
+
+    snapshotState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The snapshot state."
+        ::= { notificationMessageEntry 62 }
+
+    snapshotSchedState OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "The snapshot schedule state."
+        ::= { notificationMessageEntry 63 }
+
+--******************************************************************************
+--
+-- Current Notifications
+--
+--******************************************************************************
+
+lhnNsmNotificationGeneric NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site
+			}
+	STATUS              current
+	DESCRIPTION         "A generic system event was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 1 }
+
+lhnNsmNotificationBackplane NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState,
+					componentSerialNumber,
+					componentFirmwareVersion
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the system backplane was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 2 }
+
+lhnNsmNotificationController NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState,
+					componentModel,
+					componentSerialNumber,
+					componentHardwareVersion,
+					componentFirmwareVersion,
+					driverVersion,
+					biosVersion,
+					cacheState,
+					bbuState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the RAID controller was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 3 }
+
+lhnNsmNotificationRAID NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentState,
+					raidConfiguration,
+					parityInitStatus
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the system RAID was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 4 }
+
+lhnNsmNotificationDisk NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState,
+					componentModel,
+					componentSerialNumber,
+					componentFirmwareVersion,
+					diskInterface,
+					diskCapacity,
+					healthState,
+					temperatureState,
+					temperature,
+					diskSpeed
+
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a disk was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 5 }
+
+lhnNsmNotificationBootDevice NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a boot device was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 6 }
+
+lhnNsmNotificationFan NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState,
+					minFanSpeed,
+					fanSpeed
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a fan was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 7 }
+
+lhnNsmNotificationTemperature NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState,
+					highTemperatureLimit,
+					temperature
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a temperature sensor was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 8 }
+
+lhnNsmNotificationPowerSupply NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a power supply was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 9 }
+
+lhnNsmNotificationVoltage NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState,
+					highVoltageLimit,
+					lowVoltageLimit,
+					voltage
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a voltage sensor was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 10 }
+
+lhnNsmNotificationNetwork NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					systemName,
+					logicalName,
+					linkState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the network was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 11 }
+
+lhnNsmNotificationMemory NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					memoryConfig,
+					memoryUtilization
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the system memory was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 12 }
+
+lhnNsmNotificationCPU NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					cpuConfig,
+					cpuUtilization
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the CPU was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 13 }
+
+lhnNsmNotificationLogging NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					utilization
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the log partition was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 14 }
+
+lhnNsmNotificationManagementGroup NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					maintenanceMode,
+					licenseState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the management group was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 15 }
+
+lhnNsmNotificationRemoteManagementGroup NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a remote management group was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 16 }
+
+lhnNsmNotificationCluster NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					utilization,
+					vipState,
+					utilizationState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the cluster was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 17 }
+
+lhnNsmNotificationStorageServer NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState,
+					latency,
+					latencyState,
+					serverVIPAddress,
+					serverVIPState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for the storage server was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 18 }
+
+lhnNsmNotificationRemoteCopy NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState,
+					replicationState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a remote copy operation was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 19 }
+
+lhnNsmNotificationVolume NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a volume was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 20 }
+
+lhnNsmNotificationSnapshot NOTIFICATION-TYPE
+	OBJECTS {           
+					message,
+					messageTime,
+					eventID,
+					severity,
+					hostname,
+					primaryIP,
+					mac,
+					serialNumber,
+					modelName,
+					productName,
+					productID,
+					hpim,
+					softwareVersion,
+					managementGroupVersion,
+					managementGroupSerialNumber,
+					managementGroup,
+					cluster,
+					site,
+					componentName,
+					componentState,
+					snapshotState
+			}
+	STATUS              current
+	DESCRIPTION         "An event for a snapshot was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Added in SAN/iQ 8.5"
+	::= { lhnNsmEvents 21 }
+
+--******************************************************************************
+--
+-- Obsolete Notifications
+--
+--******************************************************************************
+
+notificationOldMessageCount OBJECT-TYPE
+    SYNTAX              Integer32
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "number of notification messages
+						Used by SAN/iQ 8.1 and earlier.
+						Obsolete in SAN/iQ 8.5.
+						Marked as current to increase compatability with some SNMP clients."
+    ::= { lhnNsmOldNotification 1 }
+
+notificationOldMessageTable OBJECT-TYPE
+    SYNTAX              SEQUENCE OF NotificationOldMessageEntry
+    MAX-ACCESS          not-accessible
+    STATUS              current
+    DESCRIPTION         "A table of notification messages for the NSM.
+                        The number of entries is given by notificationMessageCount.
+						Used by SAN/iQ 8.1 and earlier.
+						Obsolete in SAN/iQ 8.5.
+						Marked as current to increase compatability with some SNMP clients."
+    ::= { lhnNsmOldNotification 2 }
+
+    notificationOldMessageEntry OBJECT-TYPE
+        SYNTAX              NotificationOldMessageEntry
+        MAX-ACCESS          not-accessible
+        STATUS              current
+        DESCRIPTION         "row of notification message parameters
+							Used by SAN/iQ 8.1 and earlier.
+							Obsolete in SAN/iQ 8.5.
+							Marked as current to increase compatability with some SNMP clients."
+        INDEX               {
+                                notificationIndex
+                            }
+        ::= { notificationOldMessageTable 1 }
+
+    NotificationOldMessageEntry ::= SEQUENCE {
+        notificationIndex
+            Unsigned32,
+        notificationMessage
+            DisplayString,
+        notificationTime
+            DateAndTime
+    }
+
+    notificationIndex OBJECT-TYPE
+        SYNTAX              Unsigned32
+        MAX-ACCESS          not-accessible
+        STATUS              current
+        DESCRIPTION         "notification message index
+							Used by SAN/iQ 8.1 and earlier.
+							Obsolete in SAN/iQ 8.5.
+							Marked as current to increase compatability with some SNMP clients."
+        ::= { notificationOldMessageEntry 1 }
+
+    notificationMessage OBJECT-TYPE
+        SYNTAX              DisplayString
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "notification message contents
+							Used by SAN/iQ 8.1 and earlier.
+							Obsolete in SAN/iQ 8.5.
+							Marked as current to increase compatability with some SNMP clients."
+        ::= { notificationOldMessageEntry 2 }
+
+    notificationTime OBJECT-TYPE
+        SYNTAX              DateAndTime
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "time notification occurred
+							Used by SAN/iQ 8.1 and earlier.
+							Obsolete in SAN/iQ 8.5.
+							Marked as current to increase compatability with some SNMP clients."
+        ::= { notificationOldMessageEntry 3 }
+
+userNotification NOTIFICATION-TYPE
+	OBJECTS {           
+					notificationMessage,
+					notificationTime
+			}
+	STATUS              current
+	DESCRIPTION         "A system event was generated.
+						The user chose to be notified of this condition
+						via SNMP. A table of messages exists which stores
+						all the notifications issued. This trap will
+						contain the OID referring to the corresponding
+						message stored in this table.
+						Used by SAN/iQ 8.1 and earlier.
+						Obsolete in SAN/iQ 8.5.
+						Marked as current to increase compatability with some SNMP clients."
+	::= { lhnNsmOldEvents 1 }
+
+END
+
+-- END: some MIB compilers require a CR/LF after the END statement --

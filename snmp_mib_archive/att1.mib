@@ -1,0 +1,1331 @@
+ADTRAN-ATLAS-T1-MIB     DEFINITIONS ::= BEGIN
+
+-- TITLE:               Atlas T1 MIB
+-- FILENAME:            att1.mib
+-- PARTNUMBER:
+-- AUTHOR:              Jason Schock
+
+-- HISTORY:
+--   03/20/2002	 Created.
+
+-- This MIB defines a generic ATLAS T1 interface.
+
+-- Note: The NxT1 HSSI cards do not support the following variables:
+--        adATLAST1TstRemoteLpBk
+--        adATLAST1TstRemoteLpBkStatus
+--        adATLAST1TstPattern
+--        adATLAST1TstPatternSync
+--        adATLAST1TstPatternSyncLost
+--        adATLAST1TstPatternESs
+--        adATLAST1TstPatternBESs
+--        adATLAST1TstPatternSESs
+--        adATLAST1TstClearResults
+--        adATLAST1TstInjectError
+
+-- The adATLAST1TstRemoteLpBk and adATLAST1TstRemoteLpBkStatus
+-- variables will be supported in a future release.
+
+IMPORTS
+        enterprises, Gauge, Counter
+                FROM RFC1155-SMI
+        OBJECT-TYPE
+                FROM RFC-1212
+        ifIndex
+                FROM RFC1213-MIB
+        TRAP-TYPE
+                FROM RFC-1215
+        dsx1LineStatus
+                FROM RFC1406-MIB
+        adATLASModuleInfoFPStatus
+                FROM ADTRAN-ATLAS-MODULE-MIB
+        adATLASUnitSlotAddress, adATLASUnitPortAddress, adATLASUnitFPStatus
+                FROM ADTRAN-ATLAS-UNIT-MIB;
+
+-- OBJECT IDENTIFIERS
+
+adtran          OBJECT IDENTIFIER ::= { enterprises 664 }
+adMgmt          OBJECT IDENTIFIER ::= { adtran 2 }
+adATLASmg       OBJECT IDENTIFIER ::= { adMgmt 154 }
+adGenATLASmg    OBJECT IDENTIFIER ::= { adATLASmg 1 }
+adATLAST1mg     OBJECT IDENTIFIER ::= { adGenATLASmg 9 }
+
+adATLAST1IfNumber      OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The number of T1 ports (regardless of their current
+        state) present on this system."
+
+    ::= { adATLAST1mg 1}
+
+--___________________________________________________________
+-- The Atlas T1 Interface Status Table
+--___________________________________________________________
+
+adATLAST1IfTable       OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLAST1IfEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The Atlas T1 Interface Status Table"
+
+    ::= { adATLAST1mg 2}
+
+adATLAST1IfEntry       OBJECT-TYPE
+    SYNTAX  AdATLAST1IfEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the Atlas T1 Interface Status Table"
+    INDEX   { adATLAST1IfIndex }
+
+    ::= { adATLAST1IfTable 1}
+
+AdATLAST1IfEntry ::=
+    SEQUENCE {
+        adATLAST1IfIndex                 INTEGER,
+        adATLAST1IfSlotNum               INTEGER,
+        adATLAST1IfPortNum               INTEGER,
+        adATLAST1IfAlarmStatus           INTEGER,
+        adATLAST1IfRxLevel               INTEGER,
+        adATLAST1IfCurrentLOFC           Counter,
+        adATLAST1IfTotalLOFC             Counter,
+        adATLAST1IfResetPRMStats         INTEGER
+    }
+
+adATLAST1IfIndex       OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the interface number of a
+        particular T1 port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+    ::= { adATLAST1IfEntry 1 }
+
+adATLAST1IfSlotNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the slot number of a
+        particular ATLAS module with a T1 interface."
+
+    ::= { adATLAST1IfEntry 2 }
+
+adATLAST1IfPortNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the port number of a
+        particular T1 interface on an ATLAS module."
+
+    ::= { adATLAST1IfEntry 3 }
+
+adATLAST1IfAlarmStatus  OBJECT-TYPE
+    SYNTAX      INTEGER
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the status of each alarm by
+        setting a bit.  If the bit is set the alarm is
+        active.  Multiple bits can be set at one time.
+
+        Bit #   ALARM
+        ------  -----
+        0x01    LOS
+        0x02    Red
+        0x04    Yellow
+        0x08    Blue
+        0x10    DS0"
+
+    ::= { adATLAST1IfEntry 4 }
+
+adATLAST1IfRxLevel  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                zerodb      (1),   --  0 db
+                neg7pt5db   (2),   -- -7.5 db
+                neg15db     (3),   -- -15 db
+                neg22pt5db  (4)    -- -22.5 db
+                }
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable represents the recieved signal strength
+        in dB."
+
+    ::= { adATLAST1IfEntry 5 }
+
+adATLAST1IfCurrentLOFC  OBJECT-TYPE
+    SYNTAX      Counter
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable indicates the value of the loss of
+        frame count for the current 15 minute interval."
+
+    ::= { adATLAST1IfEntry 6 }
+
+adATLAST1IfTotalLOFC  OBJECT-TYPE
+    SYNTAX      Counter
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable indicates the value of the loss of
+        frame count for the current 24 hours."
+
+    ::= { adATLAST1IfEntry 7 }
+
+adATLAST1IfResetPRMStats  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                reset (1)
+                }
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable resets the performance monitoring
+        statistics for all of the intervals: current, 15 min,
+        and total."
+
+    ::= { adATLAST1IfEntry 8 }
+
+--___________________________________________________________
+-- The Atlas T1 Interface Interval Performance Table
+--___________________________________________________________
+
+adATLAST1IfIntervalTable       OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLAST1IfIntervalEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The Atlas T1 Interface Interval Performance Table"
+
+    ::= { adATLAST1mg 3}
+
+adATLAST1IfIntervalEntry       OBJECT-TYPE
+    SYNTAX  AdATLAST1IfIntervalEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the Atlas T1 Interface Interval Performance Table"
+    INDEX   { adATLAST1IfIntervalIndex, adATLAST1IfIntervalNumber }
+
+    ::= { adATLAST1IfIntervalTable 1}
+
+AdATLAST1IfIntervalEntry ::=
+    SEQUENCE {
+        adATLAST1IfIntervalIndex             INTEGER,
+        adATLAST1IfIntervalNumber            INTEGER,
+        adATLAST1IfIntervalLOFC              Counter
+    }
+
+adATLAST1IfIntervalIndex       OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the interface number of a
+        particular T1 port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+    ::= { adATLAST1IfIntervalEntry 1 }
+
+adATLAST1IfIntervalNumber       OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "A number between 1 and 96, where 1 is the most
+         recently completed 15 minute interval and 96 is
+         the least recently completed 15 minutes  inter-
+         val   (assuming   that  all  96  intervals  are
+         valid)."
+
+    ::= { adATLAST1IfIntervalEntry 2 }
+
+adATLAST1IfIntervalLOFC  OBJECT-TYPE
+    SYNTAX      Counter
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "The Loss of Frame Count encountered by a DS1
+         interface in one of the previous 96, individual
+         15 minute, intervals."
+
+    ::= { adATLAST1IfIntervalEntry 3 }
+
+
+--___________________________________________________________
+-- The Atlas T1 Interface DS0 Table
+--___________________________________________________________
+
+adATLAST1IfDS0Table       OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLAST1IfDS0Entry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The Atlas T1 Interface DS0 Table"
+
+    ::= { adATLAST1mg 4}
+
+adATLAST1IfDS0Entry       OBJECT-TYPE
+    SYNTAX  AdATLAST1IfDS0Entry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the Atlas T1 Interface DS0 Table"
+    INDEX   { adATLAST1IfDS0Index  }
+
+    ::= { adATLAST1IfDS0Table 1}
+
+AdATLAST1IfDS0Entry ::=
+    SEQUENCE {
+        adATLAST1IfDS0Index             INTEGER,
+        adATLAST1IfDS0Status            OCTET STRING,
+        adATLAST1IfDS0Alarm             OCTET STRING,
+        adATLAST1IfDS0RxSignalStatusA   OCTET STRING,
+        adATLAST1IfDS0RxSignalStatusB   OCTET STRING,
+        adATLAST1IfDS0TxSignalStatusA   OCTET STRING,
+        adATLAST1IfDS0TxSignalStatusB   OCTET STRING
+    }
+
+adATLAST1IfDS0Index       OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the interface number of a
+        particular T1 port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+    ::= { adATLAST1IfDS0Entry 1 }
+
+adATLAST1IfDS0Status  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (24))
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the overall status of each DS0.
+        There are 24 octets, each corresponding to a single
+        DS0.
+
+        These are the values for the different status states
+        in each octet:
+
+        Value(decimal)      Status
+        --------------      ------
+        0                   Unallocated
+        1                   Inactive
+        2                   Signalling Mismatch
+        3                   Active B Channel
+        4                   Active D Channel
+        5                   Maintenance
+        6                   Dedicated(Nailed)
+        7                   Offhook-Originate(RBS)
+        8                   Ringing(RBS)-Restart(ISDN)
+        9                   Waiting Dialtone"
+
+    ::= { adATLAST1IfDS0Entry 2 }
+
+adATLAST1IfDS0Alarm  OBJECT-TYPE
+    SYNTAX      OCTET STRING ( SIZE (24))
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the overall alarm status of each
+        DS0.  There are 24 octets, each corresponding to a
+        single DS0.
+
+        These are the values for the different alarm states
+        in each octet:
+
+        Value(decimal)      Alarm
+        --------------      ------
+        0                   No Alarm
+        1                   D Channel Alarm
+        2                   Frame Alarm
+        3                   TBOP Alarm
+        4                   PPP Alarm"
+
+    ::= { adATLAST1IfDS0Entry 3 }
+
+adATLAST1IfDS0RxSignalStatusA  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (24))
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the status of the receive
+        signal's A bit in each DS0.  There are 24 octets,
+        each corresponding to a single DS0.
+
+        These are the values for the different status states
+        in each octet:
+
+        Value(decimal)      Status
+        --------------      ------
+        0                   0
+        1                   1
+        2                   Port Not Active"
+
+    ::= { adATLAST1IfDS0Entry 4 }
+
+adATLAST1IfDS0RxSignalStatusB  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (24))
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the status of the receive
+        signal's B bit in each DS0.  There are 24 octets,
+        each corresponding to a single DS0.
+
+        These are the values for the different status states
+        in each octet:
+
+        Value(decimal)      Status
+        --------------      ------
+        0                   0
+        1                   1
+        2                   Port Not Active"
+
+    ::= { adATLAST1IfDS0Entry 5 }
+
+adATLAST1IfDS0TxSignalStatusA  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (24))
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the status of the transmit
+        signal's A bit in each DS0.  There are 24 octets,
+        each corresponding to a single DS0.
+
+        These are the values for the different status states
+        in each octet:
+
+        Value(decimal)      Status
+        --------------      ------
+        0                   0
+        1                   1
+        2                   Transparent
+        3                   Port Not Active"
+
+    ::= { adATLAST1IfDS0Entry 6 }
+
+adATLAST1IfDS0TxSignalStatusB  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (24))
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the status of the transmit
+        signal's B bit in each DS0.  There are 24 octets,
+        each corresponding to a single DS0.
+
+        These are the values for the different status states
+        in each octet:
+
+        Value(decimal)      Status
+        --------------      ------
+        0                   0
+        1                   1
+        2                   Transparent
+        3                   Port Not Active"
+
+    ::= { adATLAST1IfDS0Entry 7 }
+
+--___________________________________________________________
+-- The Atlas T1 Interface Test Table
+--___________________________________________________________
+
+adATLAST1TstTable       OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLAST1TstEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The Atlas T1 Test Table"
+
+    ::= { adATLAST1mg 5}
+
+adATLAST1TstEntry       OBJECT-TYPE
+    SYNTAX  AdATLAST1TstEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the Atlas T1 Test Table"
+    INDEX   { adATLAST1TstIndex }
+
+    ::= { adATLAST1TstTable 1}
+
+AdATLAST1TstEntry ::=
+    SEQUENCE {
+        adATLAST1TstIndex             INTEGER,
+        adATLAST1TstLocalLpBk         INTEGER,
+        adATLAST1TstRemoteLpBk        INTEGER,
+        adATLAST1TstRemoteLpBkStatus  INTEGER,
+        adATLAST1TstPattern           INTEGER,
+        adATLAST1TstPatternSync       INTEGER,
+        adATLAST1TstPatternSyncLost   INTEGER,
+        adATLAST1TstPatternESs        Counter,
+        adATLAST1TstPatternBESs       Counter,
+        adATLAST1TstPatternSESs       Counter,
+        adATLAST1TstClearResults      INTEGER,
+        adATLAST1TstInjectError       INTEGER
+    }
+
+adATLAST1TstIndex       OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the interface number of a
+        particular T1 port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+    ::= { adATLAST1TstEntry 1 }
+
+adATLAST1TstLocalLpBk  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                none        (1),
+                payload     (2),
+                line        (3)
+                }
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable sets the status of the local loopback
+        for sending test signals."
+
+    ::= { adATLAST1TstEntry 2 }
+
+adATLAST1TstRemoteLpBk  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                none            (1),
+                attInbandLine   (2),
+                ansiFDLLine     (3),
+                ansiFDLPayload  (4),
+                inbandNIU       (5)
+                }
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable sets the status of the remote loopback
+        for sending test signals."
+
+    ::= { adATLAST1TstEntry 3 }
+
+adATLAST1TstRemoteLpBkStatus  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                noRemoteLoops      (1),
+                remLpUpStarted     (2),
+                remLpUpInProgress  (3),
+                remLpUpTimeout     (4),
+                remLpUpDone        (5),
+                remLpDwnStarted    (6),
+                remLpDwnInProgress (7),
+                remLpDwnDone       (8)
+                }
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable indicates the current remote loopback
+        status."
+
+    ::= { adATLAST1TstEntry 4 }
+
+adATLAST1TstPattern  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                none      (1),
+                allOnes   (2),
+                allZeros  (3),
+                qRSS      (4)
+                }
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable sets the pattern to be sent for
+        testing."
+
+    ::= { adATLAST1TstEntry 5 }
+
+adATLAST1TstPatternSync  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                synced         (1),
+                noSync         (2)
+                }
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows whether there is sync between
+        transmitting and recieving the test pattern."
+
+    ::= { adATLAST1TstEntry 6 }
+
+adATLAST1TstPatternSyncLost  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                syncLost      (1),
+                syncNotLost   (2)
+                }
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows whether sync has been lost since
+        it was last cleared."
+
+    ::= { adATLAST1TstEntry 7 }
+
+adATLAST1TstPatternESs  OBJECT-TYPE
+    SYNTAX      Counter
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the amount of errored seconds
+        since it was last cleared."
+
+    ::= { adATLAST1TstEntry 8 }
+
+adATLAST1TstPatternBESs  OBJECT-TYPE
+    SYNTAX      Counter
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the amount of bursty errored
+        seconds since it was last cleared."
+
+    ::= { adATLAST1TstEntry 9 }
+
+adATLAST1TstPatternSESs  OBJECT-TYPE
+    SYNTAX      Counter
+    ACCESS      read-only
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable shows the amount of severely errored
+        seconds since it was last cleared."
+
+    ::= { adATLAST1TstEntry 10 }
+
+adATLAST1TstClearResults  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                clear (1)
+                }
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable is used to clear the results of the
+        test."
+
+    ::= { adATLAST1TstEntry 11 }
+
+adATLAST1TstInjectError  OBJECT-TYPE
+    SYNTAX      INTEGER {
+                inject (1)
+                }
+    ACCESS      read-write
+    STATUS      mandatory
+    DESCRIPTION
+        "This variable is used to inject an error in the test
+        pattern."
+
+    ::= { adATLAST1TstEntry 12 }
+
+--______________________________________
+-- Atlas Enterprise Specific T1 Traps --
+--______________________________________
+
+adATLAST1RxYellowActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates a yellow alarm is being received."
+        --#TYPE       "Error - RX Yellow Alarm Active"
+        --#SUMMARY    "ATLAS 15400900: Received yellow alarm active for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MINOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400900
+
+adATLAST1RxYellowInActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates a yellow alarm is no longer being received."
+        --#TYPE       "Error - RX Yellow Alarm InActive"
+        --#SUMMARY    "ATLAS 15400901: Received yellow alarm inactive for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MINOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400901
+
+adATLAST1RxAISActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates an alarm indication signal (AIS) is being received."
+        --#TYPE       "Error - RX AIS Alarm"
+        --#SUMMARY    "ATLAS 15400902: Received AIS active for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MINOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400902
+
+adATLAST1RxAISInActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+
+        }
+        DESCRIPTION
+                "This trap indicates an alarm indication signal (AIS) is no longer being received."
+        --#TYPE       "Error - RX AIS Alarm"
+        --#SUMMARY    "ATLAS 15400903: Received AIS inactive for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MINOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400903
+
+adATLAST1RedAlarmActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+
+        }
+        DESCRIPTION
+                "This trap indicates a red alarm is active."
+        --#TYPE       "Error - RED Alarm"
+        --#SUMMARY    "ATLAS 15400904: Red alarm is active for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400904
+
+adATLAST1RedAlarmInActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+
+        }
+        DESCRIPTION
+                "This trap indicates a red alarm is inactive."
+        --#TYPE       "Error - RED Alarm"
+        --#SUMMARY    "ATLAS 15400905: Red alarm is inactive for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400905
+
+adATLAST1LOSActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+
+        }
+        DESCRIPTION
+                "This trap indicates a loss of signal (LOS) is active."
+        --#TYPE       "Error - Loss of Signal"
+        --#SUMMARY    "ATLAS 15400906: Loss of signal (LOS) is active for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400906
+
+adATLAST1LOSInActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates a loss of signal (LOS) is inactive."
+        --#TYPE       "Error - Loss of Signal"
+        --#SUMMARY    "ATLAS 15400907: Loss of signal (LOS) in inactive for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400907
+
+adATLAST1TxAISActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates an alarm indication signal (LOS) is being sent."
+        --#TYPE       "Error - Loss of Signal"
+        --#SUMMARY    "ATLAS 15400908: (AIS) being transmitted from "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400908
+
+adATLAST1TxAISInActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates an alarm indication signal (LOS) is no longer being sent."
+        --#TYPE       "Error - Loss of Signal"
+        --#SUMMARY    "ATLAS 15400909: (AIS) no longer being transmitted from "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400909
+
+adATLAST1TxYellowActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates a yellow alarm is being sent."
+        --#TYPE       "Error - Loss of Signal"
+        --#SUMMARY    "ATLAS 15400910: A yellow alarm is being transmitted from "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400910
+
+adATLAST1TxYellowInActive  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates a yellow alarm is no longer being sent."
+        --#TYPE       "Error - Loss of Signal"
+        --#SUMMARY    "ATLAS 15400911: A yellow alarm is no longer being transmitted from "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400911
+
+adATLAST1CurrentES  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the current interval errored second
+                threshold has been exceeded."
+        --#TYPE       "Threshold - Current Errored Seconds"
+        --#SUMMARY    "ATLAS 15400912: Current interval errored second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400912
+
+adATLAST1CurrentSES  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the current interval severely errored second
+                threshold has been exceeded."
+        --#TYPE       "Threshold - Current Severely Errored Seconds"
+        --#SUMMARY    "ATLAS 15400913: Current interval severely errored second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400913
+
+adATLAST1CurrentSEFS  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the current interval severely errored
+                framing second threshold has been exceeded."
+        --#TYPE       "Threshold - Current Severely Errored Framing Seconds"
+        --#SUMMARY    "ATLAS 15400914: Current interval severely errored framing second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400914
+
+adATLAST1CurrentUAS  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the current interval unavailable
+                second threshold has been exceeded."
+        --#TYPE       "Threshold - Current unavailable Seconds"
+        --#SUMMARY    "ATLAS 15400915: Current interval unavailable second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400915
+
+adATLAST1CurrentCSS  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the current interval controlled slip
+                second threshold has been exceeded."
+        --#TYPE       "Threshold - Current Controlled Slip Seconds"
+        --#SUMMARY    "ATLAS 15400916: Current interval controlled slip second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400916
+
+adATLAST1CurrentPCV  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the current interval path coding violations
+                threshold has been exceeded."
+        --#TYPE       "Threshold - Current Path Code Violations"
+        --#SUMMARY    "ATLAS 15400917: Current interval path code violations threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400917
+
+adATLAST1CurrentLES  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the current interval line errored
+                second threshold has been exceeded."
+        --#TYPE       "Threshold - Current Line Errored Seconds"
+        --#SUMMARY    "ATLAS 15400918: Current interval line errored second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400918
+
+adATLAST1CurrentLCV  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the current interval line code
+                violations threshold has been exceeded."
+        --#TYPE       "Threshold - Current Line Code Violations"
+        --#SUMMARY    "ATLAS 15400919: Current interval line code violations threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400919
+
+adATLAST1TotalES  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the total errored second
+                threshold has been exceeded."
+        --#TYPE       "Threshold - Total Errored Seconds"
+        --#SUMMARY    "ATLAS 15400920: Total errored second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400920
+
+adATLAST1TotalSES  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the total severely errored second
+                threshold has been exceeded."
+        --#TYPE       "Threshold - Total Severely Errored Seconds"
+        --#SUMMARY    "ATLAS 15400921: Total severely errored second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400921
+
+adATLAST1TotalSEFS  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the total severely errored
+                framing second threshold has been exceeded."
+        --#TYPE       "Threshold - Total Severely Errored Framing Seconds"
+        --#SUMMARY    "ATLAS 15400922: Total severely errored framing second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400922
+
+adATLAST1TotalUAS  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the total unavailable
+                second threshold has been exceeded."
+        --#TYPE       "Threshold - Total Unavailable Seconds"
+        --#SUMMARY    "ATLAS 15400923: Total unavailable second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400923
+
+adATLAST1TotalCSS  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the total controlled slip
+                second threshold has been exceeded."
+        --#TYPE       "Threshold - Total Controlled Slip Seconds"
+        --#SUMMARY    "ATLAS 15400924: Total controlled slip second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400924
+
+adATLAST1TotalPCV  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the total path coding violations
+                threshold has been exceeded."
+        --#TYPE       "Threshold - Total Path Code Violations"
+        --#SUMMARY    "ATLAS 15400925: Total path code violations threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400925
+
+adATLAST1TotalLES  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the total line errored
+                second threshold has been exceeded."
+        --#TYPE       "Threshold - Total Line Errored Seconds"
+        --#SUMMARY    "ATLAS 15400926: Total line errored second threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400926
+
+adATLAST1TotalLCV  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus,
+                dsx1LineStatus
+        }
+        DESCRIPTION
+                "This trap indicates that the total line code
+                violations threshold has been exceeded."
+        --#TYPE       "Threshold - Total Line Code Violations"
+        --#SUMMARY    "ATLAS 15400927: Total line code violations threshold exceeded for "
+        --#SUMMARY    "Line %d, Slot %d, Port %d, Module Status %d, "
+        --#SUMMARY    "Box Status %d, Line Status %d"
+        --#ARGUMENTS  {0,1,2,3,4,5}
+        --#SEVERITY   WARNING
+        --#GENERIC    6
+        --#CATEGORY   "Threshold Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15400927
+
+END

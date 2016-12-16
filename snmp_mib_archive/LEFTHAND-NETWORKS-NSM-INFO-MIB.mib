@@ -1,0 +1,1413 @@
+-- ****************************************************************************
+-- LEFTHAND-NETWORKS-NSM-INFO-MIB
+-- Management Information Base for SNMP Network Management
+--
+-- This MIB provides hardware and software information for a storage node.
+--
+-- This MIB must be loaded after:
+--                                LEFTHAND-NETWORKS-GLOBAL-REG-MIB.mib
+--                                LEFTHAND-NETWORKS-NSM-MIB.mib
+--
+-- The LeftHand Networks Enterprise number is 9804.
+-- The ASN.1 prefix to, and including the LeftHand Networks Enterprise is:
+--     1.3.6.1.4.1.9804
+-- ****************************************************************************
+-- Copyright 2009,2010 Hewlett-Packard Development Company, L.P.
+-- Copyright 2008,2009 LeftHand Networks, Inc.
+-- All Rights Reserved.
+--
+-- Hewlett-Packard Company shall not be liable for technical or
+-- editorial errors or omissions contained herein. The information in
+-- this document is provided "as is" without warranty of any kind and
+-- is subject to change without notice. The warranties for HP products
+-- are set forth in the express limited warranty statements
+-- accompanying such products. Nothing herein should be construed as
+-- constituting an additional warranty.
+--
+-- Confidential computer software. Valid license from HP required for
+-- possession, use or copying. Consistent with FAR 12.211 and 12.212,
+-- Commercial Computer Software, Computer Software Documentation, and
+-- Technical Data for Commercial Items are licensed to the U.S.
+-- Government under vendor's standard commercial license.
+-- ****************************************************************************
+
+-- ****************************************************************************
+-- The HP Insight Manager MIBs contain more information
+--
+-- CPQHOST-MIB: .1.3.6.1.4.1.232
+-- ****************************************************************************
+
+LEFTHAND-NETWORKS-NSM-INFO-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32, Gauge32
+		FROM SNMPv2-SMI
+	OBJECT-GROUP, MODULE-COMPLIANCE
+		FROM SNMPv2-CONF
+	TEXTUAL-CONVENTION, DisplayString, RowStatus, TruthValue
+		FROM SNMPv2-TC
+	lhnModules, lhnNsm
+		FROM LEFTHAND-NETWORKS-GLOBAL-REG-MIB
+	lhnNsmInfo
+		FROM LEFTHAND-NETWORKS-NSM-MIB;
+
+-- lhnNsm is imported but never used, this will create a smilint warning
+-- however, it's necessary for some MIB compilers
+
+--
+-- Module definition and a brief description of this mib.
+--
+
+lhnNsmInfoModule MODULE-IDENTITY
+    LAST-UPDATED        "201006230000Z"
+    ORGANIZATION        "Hewlett Packard Company, StorageWorks Division"
+    CONTACT-INFO        "Product Support
+                         Product URL: www.hp.com/go/p4000
+                         Support URL: www.itrc.hp.com
+                         Product Phone: www.hp.com/go/contact
+                                        1-800-786-7967 (US only)
+                         Support Phone: www.hp.com/go/contact
+                                        1-800-334-5144 (US only)"
+    DESCRIPTION         "HP StorageWorks P4000 Information"
+    REVISION            "201006230000Z"
+    DESCRIPTION         "SAN/iQ 7.0, SAN/iQ 8.0, SAN/iQ 8.1, SAN/iQ 8.5"
+
+	::= { lhnModules 2 }
+
+--******************************************************************************
+--
+-- Conformance
+--
+--******************************************************************************
+
+lhnNsmInfoModuleConformance OBJECT IDENTIFIER
+	::= { lhnNsmInfoModule 1 }
+
+lhnNsmInfoModuleCompliances OBJECT IDENTIFIER
+	::= { lhnNsmInfoModuleConformance 1 }
+
+lhnNsmInfoModuleGroups OBJECT IDENTIFIER
+	::= { lhnNsmInfoModuleConformance 2 }
+
+lefthandNetworksNsmInfoMibCompliance MODULE-COMPLIANCE
+	STATUS current
+	DESCRIPTION "The compliance statement."
+	MODULE
+		MANDATORY-GROUPS {
+			lefthandNetworksNsmInfoGroup
+		}
+	::= { lhnNsmInfoModuleCompliances 1 }
+
+lefthandNetworksNsmInfoGroup OBJECT-GROUP
+	OBJECTS {  
+					infoModel,
+					infoHostname,
+					infoIP,
+					infoMAC,
+					infoSerialNumber,
+					infoChassisUUID,
+					infoProductName,
+					infoProductID,
+					infoSupportKey,
+					infoHardwareDescription,
+					infoSoftwareType,
+					infoSoftwareVersion,
+					infoHPsmhdVersion,
+					infoHPSNMPAgent,
+					infoBIOSVersion,
+					infoControllerCount,
+					infoControllerName,
+					infoControllerModelNumber,
+					infoControllerSerialNumber,
+					infoControllerFirmwareVersion,
+					infoControllerBiosVersion,
+					infoControllerDriverVersion,
+					infoCacheCount,
+					infoCacheName,
+					infoCacheModel,
+					infoCacheSize,
+					infoCacheSerialNumber,
+					infoCacheHardwareVersion,
+					infoCacheFirmwareVersion,
+					infoCacheDriverVersion,
+					infoCacheBbuVoltage,
+					infoCacheBbuTestOverdue,
+					infoCacheBbuState,
+					infoCacheBbuStatus,
+					infoCacheEnabled,
+					infoCacheMode,
+					infoCacheState,
+					infoCacheStatus,
+					infoBackplaneCount,
+					infoBackplaneName,
+					infoBackplaneSerialNumber,
+					infoBackplaneFirmwareVersion,
+					infoBackplaneIDLed,
+					infoFanCount,
+					infoFanName,
+					infoFanSpeed,
+					infoFanMinSpeed,
+					infoFanState,
+					infoFanStatus,
+					infoTemperatureSensorCount,
+					infoTemperatureSensorName,
+					infoTemperatureSensorValue,
+					infoTemperatureSensorCritical,
+					infoTemperatureSensorLimit,
+					infoTemperatureSensorState,
+					infoTemperatureSensorStatus,
+					infoPowerSupplyCount,
+					infoPowerSupplyName,
+					infoPowerSupplyState,
+					infoPowerSupplyStatus,
+					infoPowerSupplyMode,
+					infoVoltageSensorCount,
+					infoVoltageSensorName,
+					infoVoltageSensorValue,
+					infoVoltageSensorLowLimit,
+					infoVoltageSensorHighLimit,
+					infoVoltageSensorState,
+					infoVoltageSensorStatus
+			}
+	STATUS              current
+	DESCRIPTION         "The default group for all NSM Info objects."
+	::= { lhnNsmInfoModuleGroups 1 }
+
+lefthandNetworksNsmInfoGroupObsolete OBJECT-GROUP
+	OBJECTS {  
+					infoSerialNumberOld,
+					infoModelOld,
+					infoSoftwareVersionOld,
+					infoEnclosureFirmwareVersionOld,
+					infoMotherboardTemperature,
+					infoCPUCount,
+					infoFlashCount,
+					infoDriveCardCount,
+					infoCacheBatteryCount,
+					infoCPUTemperature,
+					infoCPUFanSpeed,
+					infoObsoletePowerSupplyCount,
+					infoObsoletePowerSupplyState,
+					infoObsoleteFanCount,
+					infoObsoleteFanState,
+					infoFanStatus,
+					infoFlashState,
+					infoDriveCardModel,
+					infoDriveCardBiosVersion,
+					infoDriveCardFirmwareVersion,
+					infoCacheBatteryState,
+					infoControllerRowStatus,
+					infoCacheRowStatus,
+					infoBackplaneRowStatus,
+					infoFanRowStatus,
+					infoTemperatureSensorRowStatus,
+					infoPowerSupplyRowStatus,
+					infoVoltageSensorRowStatus
+			}
+	STATUS              obsolete
+	DESCRIPTION         "The group for obsolete NSM Info objects."
+	::= { lhnNsmInfoModuleGroups 2 }
+
+--******************************************************************************
+--
+-- NSM Hardware Information Objects
+--
+--******************************************************************************
+
+--
+-- Identification
+--
+infoSerialNumberOld OBJECT-TYPE
+    SYNTAX              DisplayString
+    MAX-ACCESS          read-only
+    STATUS              obsolete
+    DESCRIPTION         "The storage serial number. Obsolete in SAN/iQ 8.5."
+    ::= { lhnNsmInfo 1 }
+
+infoModelOld OBJECT-TYPE
+    SYNTAX              DisplayString
+    MAX-ACCESS          read-only
+    STATUS              obsolete
+    DESCRIPTION         "The storage node model name. Obsolete in SAN/iQ 8.5."
+    ::= { lhnNsmInfo 2 }
+
+infoSoftwareVersionOld OBJECT-TYPE
+    SYNTAX              DisplayString
+    MAX-ACCESS          read-only
+    STATUS              obsolete
+    DESCRIPTION         "The software version. Obsolete in SAN/iQ 8.5."
+    ::= { lhnNsmInfo 3 }
+
+infoEnclosureFirmwareVersionOld OBJECT-TYPE
+    SYNTAX              DisplayString
+    MAX-ACCESS          read-only
+    STATUS              obsolete
+    DESCRIPTION         "The enclosure firmware version. Obsolete in SAN/iQ 8.5."
+    ::= { lhnNsmInfo 4 }
+
+--
+-- Status Objects
+--
+
+infoMotherboardTemperature OBJECT-TYPE
+	SYNTAX              Gauge32
+	UNITS               "Celsius"
+	MAX-ACCESS          read-only
+	STATUS              obsolete
+	DESCRIPTION         "The motherboard temperature. Obsolete in SAN/iQ 8.5. Use 'infoTemperatureSensorTable'."
+	::= { lhnNsmInfo 5 }
+
+infoCPUCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              obsolete
+	DESCRIPTION         "The number of CPU's. Obsolete in SAN/iQ 8.5."
+	::= { lhnNsmInfo 14 }
+
+infoCPUTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoCPUEntry
+	MAX-ACCESS          not-accessible
+	STATUS              obsolete
+	DESCRIPTION         "A table of CPU's in the system. The number of
+						entries is given by infoCPUCount. Obsolete in SAN/iQ 8.5."
+	::= { lhnNsmInfo 15 }
+
+infoCPUEntry OBJECT-TYPE
+	SYNTAX              InfoCPUEntry
+	MAX-ACCESS          not-accessible
+	STATUS              obsolete
+	DESCRIPTION         "A row of CPU information. Obsolete in SAN/iQ 8.5."
+	INDEX               {
+							infoCPUIndex
+						}
+	::= { infoCPUTable 1 }
+
+	InfoCPUEntry ::= SEQUENCE {
+		infoCPUIndex
+			Unsigned32,
+		infoCPUTemperature
+			Gauge32,
+		infoCPUFanSpeed
+			Gauge32
+	}
+
+	infoCPUIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "The index for the infoCPUTable table. Obsolete in SAN/iQ 8.5."
+		::= { infoCPUEntry 1 }
+
+	infoCPUTemperature OBJECT-TYPE
+		SYNTAX              Gauge32
+		UNITS               "Celsius"
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The CPU temperature. Obsolete in SAN/iQ 8.5. Use 'infoTemperatureSensorTable'."
+		::= { infoCPUEntry 2 }
+
+	infoCPUFanSpeed OBJECT-TYPE
+		SYNTAX              Gauge32
+		UNITS               "RPM"
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The CPU fan speed. Obsolete in SAN/iQ 8.5. Use 'infoFanTable'."
+		::= { infoCPUEntry 3 }
+
+--
+-- Power Supplies
+--
+
+infoObsoletePowerSupplyCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              obsolete
+	DESCRIPTION         "The number of power supplies. Obsolete in SAN/iQ 8.5. Use 'infoPowerSupplyCount'."
+	::= { lhnNsmInfo 16 }
+
+infoObsoletePowerSupplyTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoObsoletePowerSupplyEntry
+	MAX-ACCESS          not-accessible
+	STATUS              obsolete
+	DESCRIPTION         "A table of power supplies in the system. The number
+						of entries is given by infoObsoletePowerSupplyCount. Obsolete in SAN/iQ 8.5. Use 'infoPowerSupplyTable'."
+	::= { lhnNsmInfo 17 }
+
+	infoObsoletePowerSupplyEntry OBJECT-TYPE
+		SYNTAX              InfoObsoletePowerSupplyEntry
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "A row of power supply information. Obsolete in SAN/iQ 8.5."
+		INDEX               {
+								infoObsoletePowerSupplyIndex
+							}
+		::= { infoObsoletePowerSupplyTable 1 }
+
+	InfoObsoletePowerSupplyEntry ::= SEQUENCE {
+		infoObsoletePowerSupplyIndex			Unsigned32,
+		infoObsoletePowerSupplyState			DisplayString
+	}
+
+	infoObsoletePowerSupplyIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "The index for the infoObsoletePowerSupplyTable table. Obsolete in SAN/iQ 8.5."
+		::= { infoObsoletePowerSupplyEntry 1 }
+
+	infoObsoletePowerSupplyState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The power supply state. Obsolete in SAN/iQ 8.5. Use 'infoPowerSupplyState'."
+		::= { infoObsoletePowerSupplyEntry 3 }
+
+--
+-- Fans
+--
+
+infoObsoleteFanCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              obsolete
+	DESCRIPTION         "The number of fans. Obsolete in SAN/iQ 8.5. Use 'infoFanCount'."
+	::= { lhnNsmInfo 18 }
+
+infoObsoleteFanTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoObsoleteFanEntry
+	MAX-ACCESS          not-accessible
+	STATUS              obsolete
+	DESCRIPTION         "A table of fans in the system. The number of entries
+						is given by infoObsoleteFanCount. Obsolete in SAN/iQ 8.5. Use 'infoFanTable'."
+	::= { lhnNsmInfo 19 }
+
+	infoObsoleteFanEntry OBJECT-TYPE
+		SYNTAX              InfoObsoleteFanEntry
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "A row of fan information. Obsolete in SAN/iQ 8.5."
+		INDEX               {
+								infoObsoleteFanIndex
+							}
+		::= { infoObsoleteFanTable 1 }
+
+	InfoObsoleteFanEntry ::= SEQUENCE {
+		infoObsoleteFanIndex		Unsigned32,
+		infoObsoleteFanState		DisplayString
+	}
+
+	infoObsoleteFanIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "The index for infoObsoleteFanTable table. Obsolete in SAN/iQ 8.5."
+		::= { infoObsoleteFanEntry 1 }
+
+	infoObsoleteFanState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The fan state. Obsolete in SAN/iQ 8.5. Use 'infoFanState'."
+		::= { infoObsoleteFanEntry 3 }
+
+--
+-- Flash Cards
+--
+
+infoFlashCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              obsolete
+	DESCRIPTION         "The number of flash cards. Obsolete in SAN/iQ 8.5."
+	::= { lhnNsmInfo 20 }
+
+infoFlashTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoFlashEntry
+	MAX-ACCESS          not-accessible
+	STATUS              obsolete
+	DESCRIPTION         "A table of flash cards in the system. The number
+						of entries is given by infoFlashCount. Obsolete in SAN/iQ 8.5."
+	::= { lhnNsmInfo 21 }
+
+	infoFlashEntry OBJECT-TYPE
+		SYNTAX              InfoFlashEntry
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "A row of flash card information. Obsolete in SAN/iQ 8.5."
+		INDEX               {
+								infoFlashIndex
+							}
+		::= { infoFlashTable 1 }
+
+	InfoFlashEntry ::= SEQUENCE {
+		infoFlashIndex
+			Unsigned32,
+		infoFlashState
+			DisplayString
+	}
+
+	infoFlashIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "The index for the infoFlashTable table. Obsolete in SAN/iQ 8.5."
+		::= { infoFlashEntry 1 }
+
+	infoFlashState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The flash card state. Obsolete in SAN/iQ 8.5."
+		::= { infoFlashEntry 2 }
+
+--
+-- Drive Interface Cards
+--
+
+infoDriveCardCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              obsolete
+	DESCRIPTION         "The number of drive interface cards. Obsolete in SAN/iQ 8.5. Use 'infoControllerCount'."
+	::= { lhnNsmInfo 24 }
+
+infoDriveCardTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoDriveCardEntry
+	MAX-ACCESS          not-accessible
+	STATUS              obsolete
+	DESCRIPTION         "A table of drive interface cards in the system.
+						The number of entries is given by infoDriveCardCount. Obsolete in SAN/iQ 8.5. Use 'infoControllerTable'."
+	::= { lhnNsmInfo 25 }
+
+	infoDriveCardEntry OBJECT-TYPE
+		SYNTAX              InfoDriveCardEntry
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "A row of drive card information. Obsolete in SAN/iQ 8.5."
+		INDEX               {
+								infoDriveCardIndex
+							}
+		::= { infoDriveCardTable 1 }
+
+	InfoDriveCardEntry ::= SEQUENCE {
+		infoDriveCardIndex
+			Unsigned32,
+		infoDriveCardModel
+			DisplayString,
+		infoDriveCardBiosVersion
+			DisplayString,
+		infoDriveCardFirmwareVersion
+			DisplayString
+	}
+
+	infoDriveCardIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "The index for the infoDriveCardTable table. Obsolete in SAN/iQ 8.5."
+		::= { infoDriveCardEntry 1 }
+
+	infoDriveCardModel OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The drive interface card model. Obsolete in SAN/iQ 8.5. Use 'infoControllerModelNumber'."
+		::= { infoDriveCardEntry 2 }
+
+	infoDriveCardBiosVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The drive interface card BIOS version. Obsolete in SAN/iQ 8.5. Use 'infoControllerBiosVersion'."
+		::= { infoDriveCardEntry 3 }
+
+	infoDriveCardFirmwareVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The drive interface card firmware version. Obsolete in SAN/iQ 8.5. Use 'infoControllerFirmwareVersion'."
+		::= { infoDriveCardEntry 4 }
+
+--
+-- Battery Backed Cache
+--
+
+infoCacheBatteryCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              obsolete
+	DESCRIPTION         "The number of cache batteries. Obsolete in SAN/iQ 8.5. Use 'infoCacheCount'."
+	::= { lhnNsmInfo 28 }
+
+infoCacheBatteryTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoCacheBatteryEntry
+	MAX-ACCESS          not-accessible
+	STATUS              obsolete
+	DESCRIPTION         "A table of cache batteries in the system. The
+						number of entries is given by infoCacheBatteryCount. Obsolete in SAN/iQ 8.5. Use 'infoCacheTable'."
+	::= { lhnNsmInfo 29 }
+
+	infoCacheBatteryEntry OBJECT-TYPE
+		SYNTAX              InfoCacheBatteryEntry
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "A row of cache battery information. Obsolete in SAN/iQ 8.5."
+		INDEX               {
+								infoCacheBatteryIndex
+							}
+		::= { infoCacheBatteryTable 1 }
+
+	InfoCacheBatteryEntry ::= SEQUENCE {
+		infoCacheBatteryIndex
+			Unsigned32,
+		infoCacheBatteryState
+			DisplayString
+	}
+
+	infoCacheBatteryIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              obsolete
+		DESCRIPTION         "The index for the infoBatteryTable. Obsolete in SAN/iQ 8.5."
+		::= { infoCacheBatteryEntry 1 }
+
+	infoCacheBatteryState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              obsolete
+		DESCRIPTION         "The cache battery state. Obsolete in SAN/iQ 8.5. Use 'infoCacheBbuState'."
+		::= { infoCacheBatteryEntry 2 }
+
+--
+-- System Information
+--
+
+infoModel OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The NSM model name."
+	::= { lhnNsmInfo 30 }
+
+infoHostname OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The hostname for the NSM."
+	::= { lhnNsmInfo 31 }
+
+infoIP OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The IP address of the primary network interface."
+	::= { lhnNsmInfo 32 }
+
+infoMAC OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The MAC address for the primary network interface."
+	::= { lhnNsmInfo 33 }
+
+infoSerialNumber OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The chassis serial number."
+	::= { lhnNsmInfo 34 }
+
+infoChassisUUID OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The chassis UUID (universally unique identifier). This may not be the same as the UUID the vendor uses."
+	::= { lhnNsmInfo 35 }
+
+infoProductName OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The chassis product name."
+	::= { lhnNsmInfo 36 }
+
+infoProductID OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The chassis product ID."
+	::= { lhnNsmInfo 37 }
+
+infoSupportKey OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The support key."
+	::= { lhnNsmInfo 38 }
+
+infoHardwareDescription OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "A description of the hardware platform."
+	::= { lhnNsmInfo 39 }
+
+--
+-- Software Information
+--
+
+infoSoftwareType OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The software type."
+	::= { lhnNsmInfo 50 }
+
+infoSoftwareVersion OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The software version."
+	::= { lhnNsmInfo 51 }
+
+infoHPsmhdVersion OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The HP System Management Home Page version."
+	::= { lhnNsmInfo 52 }
+
+infoHPSNMPAgent OBJECT-TYPE
+	SYNTAX              TruthValue
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The HP SNMP Agent installation state."
+	::= { lhnNsmInfo 53 }
+
+--
+-- Chassis Information
+--
+
+infoBIOSVersion OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The chassis BIOS version."
+	::= { lhnNsmInfo 70 }
+
+--
+-- Controller
+--
+
+infoControllerCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of RAID controllers."
+	::= { lhnNsmInfo 80 }
+
+infoControllerTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoControllerEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of RAID controllers in the system. The number of entries
+						is given by infoControllerCount."
+	::= { lhnNsmInfo 81 }
+
+	infoControllerEntry OBJECT-TYPE
+		SYNTAX              InfoControllerEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of RAID controller information."
+		INDEX               {
+								infoControllerIndex
+							}
+		::= { infoControllerTable 1 }
+
+	InfoControllerEntry ::= SEQUENCE {
+		infoControllerIndex				Unsigned32,
+		infoControllerName				DisplayString,
+		infoControllerModelNumber		DisplayString,
+		infoControllerSerialNumber		DisplayString,
+		infoControllerFirmwareVersion	DisplayString,
+		infoControllerBiosVersion		DisplayString,
+		infoControllerDriverVersion		DisplayString,
+		infoControllerRowStatus			RowStatus
+	}
+
+	infoControllerIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the infoControllerTable table."
+		::= { infoControllerEntry 1 }
+
+	infoControllerName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller name."
+		::= { infoControllerEntry 2 }
+
+	infoControllerModelNumber OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller model number."
+		::= { infoControllerEntry 3 }
+
+	infoControllerSerialNumber OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller serial number."
+		::= { infoControllerEntry 4 }
+
+	infoControllerFirmwareVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller firmware version."
+		::= { infoControllerEntry 5 }
+
+	infoControllerBiosVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller BIOID version."
+		::= { infoControllerEntry 6 }
+
+	infoControllerDriverVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller driver version."
+		::= { infoControllerEntry 7 }
+
+	infoControllerRowStatus OBJECT-TYPE
+		SYNTAX         RowStatus
+		MAX-ACCESS     read-only
+		STATUS         obsolete
+		DESCRIPTION    "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { infoControllerEntry 99 }
+
+--
+-- Cache
+--
+
+infoCacheCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of RAID controller caches."
+	::= { lhnNsmInfo 90 }
+
+infoCacheTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoCacheEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of RAID controller caches in the system. The number of entries
+						is given by infoCacheCount."
+	::= { lhnNsmInfo 91 }
+
+	infoCacheEntry OBJECT-TYPE
+		SYNTAX              InfoCacheEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of RAID controller cache information."
+		INDEX               {
+								infoCacheIndex
+							}
+		::= { infoCacheTable 1 }
+
+	InfoCacheEntry ::= SEQUENCE {
+        infoCacheIndex              Unsigned32,
+        infoCacheName               DisplayString,
+        infoCacheModel              DisplayString,
+        infoCacheSize               Integer32,
+        infoCacheSerialNumber       DisplayString,
+        infoCacheHardwareVersion    DisplayString,
+        infoCacheFirmwareVersion    DisplayString,
+        infoCacheDriverVersion      DisplayString,
+        infoCacheBbuVoltage         DisplayString,
+        infoCacheBbuTestOverdue     TruthValue,
+        infoCacheBbuState           DisplayString,
+        infoCacheBbuStatus          INTEGER,
+        infoCacheEnabled            TruthValue,
+        infoCacheMode				DisplayString,
+        infoCacheState              DisplayString,
+        infoCacheStatus             INTEGER,
+        infoCacheRowStatus          RowStatus
+	}
+
+	infoCacheIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "Index for the infoCacheTable table."
+		::= { infoCacheEntry 1 }
+
+	infoCacheName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller cach name."
+		::= { infoCacheEntry 2 }
+
+	infoCacheModel OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller cache model."
+		::= { infoCacheEntry 3 }
+
+	infoCacheSize OBJECT-TYPE
+		SYNTAX              Integer32
+		UNITS               "kB"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller cache size."
+		::= { infoCacheEntry 4 }
+
+	infoCacheSerialNumber OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller cache serial number."
+		::= { infoCacheEntry 5 }
+
+	infoCacheHardwareVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller hardware version."
+		::= { infoCacheEntry 6 }
+
+	infoCacheFirmwareVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller firmware version."
+		::= { infoCacheEntry 7 }
+
+	infoCacheDriverVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller driver version."
+		::= { infoCacheEntry 8 }
+
+	infoCacheBbuVoltage OBJECT-TYPE
+		SYNTAX              DisplayString
+		UNITS				"Volts"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller BBU (Battery Backup Unit) voltage."
+		::= { infoCacheEntry 20 }
+
+	infoCacheBbuTestOverdue OBJECT-TYPE
+		SYNTAX              TruthValue
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The BBU (Battery Backup Unit) test due state."
+		::= { infoCacheEntry 21 }
+
+	infoCacheBbuState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The BBU (Battery Backup Unit) state."
+		::= { infoCacheEntry 22 }
+
+	infoCacheBbuStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The BBU (Battery Backup Unit) status."
+		::= { infoCacheEntry 23 }
+
+	infoCacheEnabled OBJECT-TYPE
+		SYNTAX              TruthValue
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The BBU (Battery Backup Unit) write cache enabled state."
+		::= { infoCacheEntry 50 }
+
+	infoCacheMode OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The BBU (Battery Backup Unit) cache mode."
+		::= { infoCacheEntry 51 }
+
+	infoCacheState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller cache state."
+		::= { infoCacheEntry 90 }
+
+	infoCacheStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The RAID controller cache status."
+		::= { infoCacheEntry 91 }
+
+	infoCacheRowStatus OBJECT-TYPE
+		SYNTAX         RowStatus
+		MAX-ACCESS     read-only
+		STATUS         obsolete
+		DESCRIPTION    "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { infoCacheEntry 99 }
+
+--
+-- Backplane
+--
+
+infoBackplaneCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of chassis backplanes."
+	::= { lhnNsmInfo 100 }
+
+infoBackplaneTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoBackplaneEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of backplanes in the system. The number of entries
+						is given by infoBackplaneCount."
+	::= { lhnNsmInfo 101 }
+
+	infoBackplaneEntry OBJECT-TYPE
+		SYNTAX              InfoBackplaneEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of backplane information."
+		INDEX               {
+								infoBackplaneIndex
+							}
+		::= { infoBackplaneTable 1 }
+
+	InfoBackplaneEntry ::= SEQUENCE {
+		infoBackplaneIndex				Unsigned32,
+		infoBackplaneName				DisplayString,
+		infoBackplaneSerialNumber		DisplayString,
+		infoBackplaneFirmwareVersion	DisplayString,
+		infoBackplaneIDLed				DisplayString,
+		infoBackplaneRowStatus			RowStatus
+	}
+
+	infoBackplaneIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the infoBackplaneTable table."
+		::= { infoBackplaneEntry 1 }
+
+	infoBackplaneName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The backplane name."
+		::= { infoBackplaneEntry 2 }
+
+	infoBackplaneSerialNumber OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The backplane serial number."
+		::= { infoBackplaneEntry 3 }
+
+	infoBackplaneFirmwareVersion OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The backplane firmware version."
+		::= { infoBackplaneEntry 4 }
+
+	infoBackplaneIDLed OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The backplane LED state."
+		::= { infoBackplaneEntry 5 }
+
+	infoBackplaneRowStatus OBJECT-TYPE
+		SYNTAX         RowStatus
+		MAX-ACCESS     read-only
+		STATUS         obsolete
+		DESCRIPTION    "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { infoBackplaneEntry 99 }
+
+--
+-- Fans
+--
+
+infoFanCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of fans."
+	::= { lhnNsmInfo 110 }
+
+infoFanTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoFanEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of fans in the system. The number of entries
+						is given by infoFanCount."
+	::= { lhnNsmInfo 111 }
+
+	infoFanEntry OBJECT-TYPE
+		SYNTAX              InfoFanEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of fan information."
+		INDEX               {
+								infoFanIndex
+							}
+		::= { infoFanTable 1 }
+
+	InfoFanEntry ::= SEQUENCE {
+		infoFanIndex		Unsigned32,
+		infoFanName			DisplayString,
+		infoFanSpeed		Gauge32,
+		infoFanMinSpeed		Integer32,
+		infoFanState		DisplayString,
+		infoFanStatus		INTEGER,
+		infoFanRowStatus	RowStatus
+	}
+
+	infoFanIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the infoFanTable table."
+		::= { infoFanEntry 1 }
+
+	infoFanName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The fan name."
+		::= { infoFanEntry 2 }
+
+	infoFanSpeed OBJECT-TYPE
+		SYNTAX              Gauge32
+		UNITS				"RPM"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The current fan speed."
+		::= { infoFanEntry 3 }
+
+	infoFanMinSpeed OBJECT-TYPE
+		SYNTAX              Integer32
+		UNITS				"RPM"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The minimum fan speed of a functional fan."
+		::= { infoFanEntry 4 }
+
+	infoFanState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The fan state."
+		::= { infoFanEntry 90 }
+
+	infoFanStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The fan status."
+		::= { infoFanEntry 91 }
+
+	infoFanRowStatus OBJECT-TYPE
+		SYNTAX         RowStatus
+		MAX-ACCESS     read-only
+		STATUS         obsolete
+		DESCRIPTION    "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { infoFanEntry 99 }
+
+--
+-- Temperature Sensors
+--
+
+infoTemperatureSensorCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of temperature sensors."
+	::= { lhnNsmInfo 120 }
+
+infoTemperatureSensorTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoTemperatureSensorEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of temperature sensors in the system. The number of entries
+						is given by infoTemperatureSensorCount."
+	::= { lhnNsmInfo 121 }
+
+	infoTemperatureSensorEntry OBJECT-TYPE
+		SYNTAX              InfoTemperatureSensorEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of temperature sensor information."
+		INDEX               {
+								infoTemperatureSensorIndex
+							}
+		::= { infoTemperatureSensorTable 1 }
+
+	InfoTemperatureSensorEntry ::= SEQUENCE {
+		infoTemperatureSensorIndex		Unsigned32,
+		infoTemperatureSensorName		DisplayString,
+		infoTemperatureSensorValue		Gauge32,
+		infoTemperatureSensorCritical	Integer32,
+		infoTemperatureSensorLimit		Integer32,
+		infoTemperatureSensorState		DisplayString,
+		infoTemperatureSensorStatus		INTEGER,
+		infoTemperatureSensorRowStatus	RowStatus
+	}
+
+	infoTemperatureSensorIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the infoTemperatureSensorTable table."
+		::= { infoTemperatureSensorEntry 1 }
+
+	infoTemperatureSensorName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The temperature sensor name."
+		::= { infoTemperatureSensorEntry 2 }
+
+	infoTemperatureSensorValue OBJECT-TYPE
+		SYNTAX              Gauge32
+		UNITS				"Celsius"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The temperature sensor value."
+		::= { infoTemperatureSensorEntry 3 }
+
+	infoTemperatureSensorCritical OBJECT-TYPE
+		SYNTAX              Integer32
+		UNITS				"Celsius"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The value where the temperature becomes critical."
+		::= { infoTemperatureSensorEntry 4 }
+
+	infoTemperatureSensorLimit OBJECT-TYPE
+		SYNTAX              Integer32
+		UNITS				"Celsius"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The maximum temperature that can be tolerated."
+		::= { infoTemperatureSensorEntry 5 }
+
+	infoTemperatureSensorState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The temperature sensor state."
+		::= { infoTemperatureSensorEntry 90 }
+
+	infoTemperatureSensorStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The temperature sensor status."
+		::= { infoTemperatureSensorEntry 91 }
+
+	infoTemperatureSensorRowStatus OBJECT-TYPE
+		SYNTAX         RowStatus
+		MAX-ACCESS     read-only
+		STATUS         obsolete
+		DESCRIPTION    "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { infoTemperatureSensorEntry 99 }
+
+--
+-- Power Supplies
+--
+
+infoPowerSupplyCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of power supplies."
+	::= { lhnNsmInfo 130 }
+
+infoPowerSupplyTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoPowerSupplyEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of power supplies in the system. The number
+						of entries is given by infoPowerSupplyCount."
+	::= { lhnNsmInfo 131 }
+
+	infoPowerSupplyEntry OBJECT-TYPE
+		SYNTAX              InfoPowerSupplyEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of power supply information."
+		INDEX               {
+								infoPowerSupplyIndex
+							}
+		::= { infoPowerSupplyTable 1 }
+
+	InfoPowerSupplyEntry ::= SEQUENCE {
+		infoPowerSupplyIndex			Unsigned32,
+		infoPowerSupplyName				DisplayString,
+		infoPowerSupplyState			DisplayString,
+		infoPowerSupplyStatus			INTEGER,
+		infoPowerSupplyRowStatus		RowStatus
+	}
+
+	infoPowerSupplyIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the infoPowerSupplyTable table."
+		::= { infoPowerSupplyEntry 1 }
+
+	infoPowerSupplyName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The power supply name."
+		::= { infoPowerSupplyEntry 2 }
+
+	infoPowerSupplyState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The power supply state."
+		::= { infoPowerSupplyEntry 90 }
+
+	infoPowerSupplyStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The power supply status."
+		::= { infoPowerSupplyEntry 91 }
+
+	infoPowerSupplyRowStatus OBJECT-TYPE
+		SYNTAX         RowStatus
+		MAX-ACCESS     read-only
+		STATUS         obsolete
+		DESCRIPTION    "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { infoPowerSupplyEntry 99 }
+
+infoPowerSupplyMode OBJECT-TYPE
+	SYNTAX              DisplayString
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The power supply mode."
+	::= { lhnNsmInfo 132 }
+
+--
+-- Voltage Sensors
+--
+
+infoVoltageSensorCount OBJECT-TYPE
+	SYNTAX              Integer32
+	MAX-ACCESS          read-only
+	STATUS              current
+	DESCRIPTION         "The number of voltage sensors."
+	::= { lhnNsmInfo 140 }
+
+infoVoltageSensorTable OBJECT-TYPE
+	SYNTAX              SEQUENCE OF InfoVoltageSensorEntry
+	MAX-ACCESS          not-accessible
+	STATUS              current
+	DESCRIPTION         "A table of voltage sensors in the system. The number
+						of entries is given by infoVoltageSensorCount."
+	::= { lhnNsmInfo 141 }
+
+	infoVoltageSensorEntry OBJECT-TYPE
+		SYNTAX              InfoVoltageSensorEntry
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "A row of power supply information."
+		INDEX               {
+								infoVoltageSensorIndex
+							}
+		::= { infoVoltageSensorTable 1 }
+
+	InfoVoltageSensorEntry ::= SEQUENCE {
+		infoVoltageSensorIndex			Unsigned32,
+		infoVoltageSensorName			DisplayString,
+		infoVoltageSensorValue			DisplayString,
+		infoVoltageSensorLowLimit		DisplayString,
+		infoVoltageSensorHighLimit		DisplayString,
+		infoVoltageSensorState			DisplayString,
+		infoVoltageSensorStatus			INTEGER,
+		infoVoltageSensorRowStatus		RowStatus
+	}
+
+	infoVoltageSensorIndex OBJECT-TYPE
+		SYNTAX              Unsigned32
+		MAX-ACCESS          not-accessible
+		STATUS              current
+		DESCRIPTION         "The index for the voltageSensorTable table."
+		::= { infoVoltageSensorEntry 1 }
+
+	infoVoltageSensorName OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The voltage sensor name."
+		::= { infoVoltageSensorEntry 2 }
+
+	infoVoltageSensorValue OBJECT-TYPE
+		SYNTAX              DisplayString
+		UNITS				"Volts"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The voltage sensor value."
+		::= { infoVoltageSensorEntry 3 }
+
+	infoVoltageSensorLowLimit OBJECT-TYPE
+		SYNTAX              DisplayString
+		UNITS				"Volts"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The lower limit for proper voltage."
+		::= { infoVoltageSensorEntry 4 }
+
+	infoVoltageSensorHighLimit OBJECT-TYPE
+		SYNTAX              DisplayString
+		UNITS				"Volts"
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The upper limit for proper voltage."
+		::= { infoVoltageSensorEntry 5 }
+
+	infoVoltageSensorState OBJECT-TYPE
+		SYNTAX              DisplayString
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The voltage sensor state."
+		::= { infoVoltageSensorEntry 90 }
+
+	infoVoltageSensorStatus OBJECT-TYPE
+		SYNTAX              INTEGER { pass(1), fail(2) }
+		MAX-ACCESS          read-only
+		STATUS              current
+		DESCRIPTION         "The voltage sensor status."
+		::= { infoVoltageSensorEntry 91 }
+
+	infoVoltageSensorRowStatus OBJECT-TYPE
+		SYNTAX         RowStatus
+		MAX-ACCESS     read-only
+		STATUS         obsolete
+		DESCRIPTION    "The table row status. Obsolete in SAN/iQ 8.5."
+		::= { infoVoltageSensorEntry 99 }
+
+END
+
+-- END: some MIB compilers require a CR/LF after the END statement --

@@ -1,0 +1,1888 @@
+--
+-- Name:     MetaFrame Server Agent MIB
+-- Purpose:  MIB for MetaFrame Server 
+-- File:     MFAGENT.MIB
+-- OID:      1.3.6.1.4.1.3845.3.1.1
+--
+-- Copyright 1999 - 2000 Citrix Systems, Inc.  All Rights Reserved
+--
+
+MFAGENT-MIB DEFINITIONS ::= BEGIN
+
+-- Imports
+
+IMPORTS
+    OBJECT-TYPE             FROM RFC-1212
+    metaframe               FROM CITRIX-COMMON-MIB;
+
+    --
+    -- Textual Conventions
+    --
+    Bool ::= INTEGER { true(1), false(2) }
+    -- Except where noted, all strings contain the NULL terminator at the
+    -- end of the string.
+    -- Variables defined as DisplayString are in multibyte format.
+    -- Variables defined as UnicodeString are in UNICODE format.
+    DisplayString ::= OCTET STRING
+    UnicodeString ::= OCTET STRING
+
+    --
+    -- Scalars
+    --
+    activeSessions OBJECT-TYPE
+        SYNTAX    INTEGER 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of sessions. Querying this variable refreshes 
+             the session table."
+        ::= { metaframe 1 }
+
+    activeProcesses OBJECT-TYPE
+        SYNTAX    INTEGER 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of active processes on the Citrix server. Querying
+             this variable refreshes the process table."
+        ::= { metaframe 2 }
+
+    monitoredSessions OBJECT-TYPE
+        SYNTAX    INTEGER 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of sessions that are monitored (in the performance
+             counter table). Querying this variable refreshes 
+             the performance counter table."
+        ::= { metaframe 3 }
+
+    serverLicenses OBJECT-TYPE
+        SYNTAX    INTEGER 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of licenses assigned to the Citrix server.
+             Querying this value refreshes the license table."
+        ::= { metaframe 32 }
+
+    farmLicenses OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of ICA connections licensed for the farm in 
+	     which the Citrix server resides."
+        ::= { metaframe 4 }
+
+    farmLicensesUsed OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "For the farm in which the Citrix server resides, the total number
+	     of ICA connection licenses that are currently in use."
+        ::= { metaframe 5 }
+
+    serverFarm OBJECT-TYPE
+        SYNTAX    UnicodeString 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The name of the farm to which this Citrix server belongs."
+        ::= { metaframe 6 }
+
+    serverZone OBJECT-TYPE
+        SYNTAX    UnicodeString 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The name of the zone in the farm to which this Citrix server belongs."
+        ::= { metaframe 7 }
+
+    --
+    -- Multibyte versions of server farm and zone: These are provided for
+    -- management platforms that do not support UNICODE internally in
+    -- the object database and/or GUI.
+    --
+    serverFarmA OBJECT-TYPE
+        SYNTAX    DisplayString 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The name of the server farm to which this Citrix server belongs."
+        ::= { metaframe 30 }
+
+    serverZoneA OBJECT-TYPE
+        SYNTAX    DisplayString 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The name of the zone in the farm to which this Citrix 
+             server belongs."
+        ::= { metaframe 31 }
+
+    language OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The national language setting of this Citrix server and its
+             underlying operating system. The possible values (in hexidecimal
+             notation) are:
+			 0x0000 Language Neutral 
+			 0x0400 Process Default Language 
+			 0x0436 Afrikaans 
+			 0x041c Albanian 
+			 0x0401 Arabic (Saudi Arabia) 
+			 0x0801 Arabic (Iraq) 
+			 0x0c01 Arabic (Egypt) 
+			 0x1001 Arabic (Libya) 
+			 0x1401 Arabic (Algeria) 
+			 0x1801 Arabic (Morocco) 
+			 0x1c01 Arabic (Tunisia) 
+			 0x2001 Arabic (Oman) 
+			 0x2401 Arabic (Yemen) 
+			 0x2801 Arabic (Syria) 
+			 0x2c01 Arabic (Jordan) 
+			 0x3001 Arabic (Lebanon) 
+			 0x3401 Arabic (Kuwait) 
+			 0x3801 Arabic (U.A.E.) 
+			 0x3c01 Arabic (Bahrain) 
+			 0x4001 Arabic (Qatar) 
+			 0x042b Windows 2000: Armenian. This is Unicode only. 
+			 0x044d Windows 2000: Assamese. This is Unicode only. 
+			 0x042c Azeri (Latin) 
+			 0x082c Azeri (Cyrillic) 
+			 0x042d Basque 
+			 0x0423 Belarussian 
+			 0x0445 Windows 2000: Bengali. This is Unicode only. 
+			 0x0402 Bulgarian 
+			 0x0455 Burmese 
+			 0x0403 Catalan 
+			 0x0404 Chinese (Taiwan Region) 
+			 0x0804 Chinese (PRC) 
+			 0x0c04 Chinese (Hong Kong SAR, PRC) 
+			 0x1004 Chinese (Singapore) 
+			 0x1404 Chinese (Macau) 
+			 0x041a Croatian 
+			 0x0405 Czech 
+			 0x0406 Danish 
+			 0x0413 Dutch (Netherlands) 
+			 0x0813 Dutch (Belgium) 
+			 0x0409 English (United States) 
+			 0x0809 English (United Kingdom) 
+			 0x0c09 English (Australian) 
+			 0x1009 English (Canadian) 
+			 0x1409 English (New Zealand) 
+			 0x1809 English (Ireland) 
+			 0x1c09 English (South Africa) 
+			 0x2009 English (Jamaica) 
+			 0x2409 English (Caribbean) 
+			 0x2809 English (Belize) 
+			 0x2c09 English (Trinidad) 
+			 0x3009 English (Zimbabwe) 
+			 0x3409 English (Philippines) 
+			 0x0425 Estonian 
+			 0x0438 Faeroese 
+			 0x0429 Farsi 
+			 0x040b Finnish 
+			 0x040c French (Standard) 
+			 0x080c French (Belgian) 
+			 0x0c0c French (Canadian) 
+			 0x100c French (Switzerland) 
+			 0x140c French (Luxembourg) 
+			 0x180c French (Monaco) 
+			 0x0437 Windows 2000: Georgian. This is Unicode only. 
+			 0x0407 German (Standard) 
+			 0x0807 German (Switzerland) 
+			 0x0c07 German (Austria) 
+			 0x1007 German (Luxembourg) 
+			 0x1407 German (Liechtenstein) 
+			 0x0408 Greek 
+			 0x0447 Windows 2000: Gujarati. This is Unicode only. 
+			 0x040d Hebrew 
+			 0x0439 Windows 2000: Hindi. This is Unicode only. 
+			 0x040e Hungarian 
+			 0x040f Icelandic 
+			 0x0421 Indonesian 
+			 0x0410 Italian (Standard) 
+			 0x0810 Italian (Switzerland) 
+			 0x0411 Japanese 
+			 0x044b Windows 2000: Kannada. This is Unicode only. 
+			 0x0860 Kashmiri (India) 
+			 0x043f Kazakh 
+			 0x0457 Windows 2000: Konkani. This is Unicode only. 
+			 0x0412 Korean 
+			 0x0812 Korean (Johab) 
+			 0x0426 Latvian 
+			 0x0427 Lithuanian 
+			 0x0827 Lithuanian (Classic) 
+			 0x042f Macedonian 
+			 0x043e Malay (Malaysian) 
+			 0x083e Malay (Brunei Darussalam) 
+			 0x044c Windows 2000: Malayalam. This is Unicode only. 
+			 0x0458 Manipuri 
+			 0x044e Windows 2000: Marathi. This is Unicode only. 
+			 0x0861 Windows 2000: Nepali (India). This is Unicode only. 
+			 0x0414 Norwegian (Bokmal) 
+			 0x0814 Norwegian (Nynorsk) 
+			 0x0448 Windows 2000: Oriya. This is Unicode only. 
+			 0x0415 Polish 
+			 0x0416 Portuguese (Brazil) 
+			 0x0816 Portuguese (Standard) 
+			 0x0446 Windows 2000: Punjabi. This is Unicode only. 
+			 0x0418 Romanian 
+			 0x0419 Russian 
+			 0x044f Windows 2000: Sanskrit. This is Unicode only. 
+			 0x0c1a Serbian (Cyrillic) 
+			 0x081a Serbian (Latin) 
+			 0x0459 Sindhi 
+			 0x041b Slovak 
+			 0x0424 Slovenian 
+			 0x040a Spanish (Traditional Sort) 
+			 0x080a Spanish (Mexican) 
+			 0x0c0a Spanish (Modern Sort) 
+			 0x100a Spanish (Guatemala) 
+			 0x140a Spanish (Costa Rica) 
+			 0x180a Spanish (Panama) 
+			 0x1c0a Spanish (Dominican Republic) 
+			 0x200a Spanish (Venezuela) 
+			 0x240a Spanish (Colombia) 
+			 0x280a Spanish (Peru) 
+			 0x2c0a Spanish (Argentina) 
+			 0x300a Spanish (Ecuador) 
+			 0x340a Spanish (Chile) 
+			 0x380a Spanish (Uruguay) 
+			 0x3c0a Spanish (Paraguay) 
+			 0x400a Spanish (Bolivia) 
+			 0x440a Spanish (El Salvador) 
+			 0x480a Spanish (Honduras) 
+			 0x4c0a Spanish (Nicaragua) 
+			 0x500a Spanish (Puerto Rico) 
+			 0x0430 Sutu 
+			 0x0441 Swahili (Kenya) 
+			 0x041d Swedish 
+			 0x081d Swedish (Finland) 
+			 0x0449 Windows 2000: Tamil. This is Unicode only. 
+			 0x0444 Tatar (Tatarstan) 
+			 0x044a Windows 2000: Telugu. This is Unicode only. 
+			 0x041e Thai 
+			 0x041f Turkish 
+			 0x0422 Ukrainian 
+			 0x0420 Urdu (Pakistan) 
+			 0x0820 Urdu (India) 
+			 0x0443 Uzbek (Latin) 
+			 0x0843 Uzbek (Cyrillic) 
+			 0x042a Vietnamese "
+        ::= { metaframe 8 }
+
+
+    --
+    -- List
+    --
+    
+    -- OS info list -------------------------
+    osList OBJECT-TYPE
+        SYNTAX    OSListEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+            "Operating System Type, Edition, Version, Build Number,
+             Service Pack Level"
+        ::= { metaframe 9 }
+
+    OSListEntry ::= SEQUENCE {
+        osType		INTEGER,
+	osEdition	INTEGER,
+        osMajVersion	INTEGER,
+	osMinVersion	INTEGER,
+        osBuildNum	INTEGER,
+        osSPL	        UnicodeString
+    }
+
+    osType OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "OS type must be one of:
+             0 : Windows NT
+	     1 : Windows 2000."
+        ::={ osList 1 }
+
+    osEdition OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "OS edition must be one of:
+             0 : Server
+	     1 : DataCenter.
+	     2 : Terminal Server Edition"
+        ::={ osList 2 }
+
+    osMajVersion OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "OS major version must be one of:
+             4 : Windows NT
+             5 : Windows 2000"
+        ::={ osList 3 }
+
+    osMinVersion OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The OS minor version."
+        ::={ osList 4 }
+
+    osBuildNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The OS build number."
+        ::={ osList 5 }
+
+    osSPL OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The OS service pack level."
+        ::={ osList 6 }
+
+
+    -- Citrix Server info list --------------------
+    svrList OBJECT-TYPE
+        SYNTAX    SvrListEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+            "Server Type, Version, Build Number, Service Pack Level"
+        ::= { metaframe 10 }
+
+    SvrListEntry ::= SEQUENCE {
+        svrType	        INTEGER,
+        svrMajVersion   INTEGER,
+	svrMinVersion	INTEGER,
+        svrBuildNum     INTEGER,
+        svrSPL          UnicodeString
+    }
+
+    svrType OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The server type must be one of:
+	     0 : Citrix MetaFrame Application Server
+	     other : Unknown"
+        ::={ svrList 1 }
+
+    svrMajVersion OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The Citrix server major version number."
+        ::={ svrList 2 }
+
+    svrMinVersion OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The Citrix server minor version number."
+        ::={ svrList 3 }
+
+    svrBuildNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The Citrix server build number."
+        ::={ svrList 4 }
+
+    svrSPL OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The Citrix server Service Pack Level."
+        ::={ svrList 5 }
+
+    
+    --
+    -- Table
+    --
+
+    -- Server Session Data Table --------------------------
+    sessionTable    OBJECT-TYPE
+        SYNTAX    SEQUENCE OF sessionEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+             "Contains ICA, RDP and console session data."
+        ::= { metaframe 11 }
+
+    sessionEntry OBJECT-TYPE
+        SYNTAX    SessionEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+            "Each entry contains an index (sessionId) and a group of
+             session-related data."
+        INDEX
+            { sessionId }
+        ::= { sessionTable 1 }
+
+    SessionEntry ::= SEQUENCE {
+    sessionId           INTEGER,
+    sessionName         UnicodeString,
+    connState           INTEGER,
+    oemId               UnicodeString,
+    userName            UnicodeString,
+    userDomain          UnicodeString,
+    clientName          UnicodeString,
+    clientAddrFamily    INTEGER,
+    clientAddress       UnicodeString,
+    clientProdId        INTEGER,
+    clientHwId          INTEGER,
+    clientBuildNum      INTEGER,
+    clientDirectory     UnicodeString,
+    clientHResolution   INTEGER,
+    clientVResolution   INTEGER,
+    clientColorDepth    INTEGER,
+    clientCacheTiny     Counter,
+    clientCacheLMem     Counter,
+    clientCacheXms      Counter,
+    clientCacheDisk     Counter,
+    clientCacheSize     Counter,
+    clientCacheBm       Counter,
+    clientCacheLevel    Counter,
+    clientCacheFile     Counter,
+    initProgram         UnicodeString,
+    pubApp              UnicodeString,
+    workingDir          UnicodeString,
+    icaBuffer           INTEGER
+    }
+
+    sessionId OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "Session ID index value."
+        ::={ sessionEntry 1 }
+
+    sessionName OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "Session name."
+        ::={ sessionEntry 2 }
+
+    connState OBJECT-TYPE
+        SYNTAX    INTEGER (0..9)
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The state of session must be one of:
+             0 : User logged on to a session
+             1 : Session is connected to a client
+             2 : In the process of connecting to client
+             3 : Shadowing another session
+             4 : Session logged on without client (disconnected)
+             5 : Waiting for client to connect
+             6 : Session is listening for a connection
+             7 : Session is being reset
+             8 : Session is down due to error
+             9 : Session is initializing"
+        ::={ sessionEntry 3 }
+
+    oemId OBJECT-TYPE
+        SYNTAX    UnicodeString 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "Identifies the manufacturer of the client device." 
+        ::={ sessionEntry 4 }
+
+    userName OBJECT-TYPE
+        SYNTAX    UnicodeString 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The user who logged onto the server and started the session."
+        ::={ sessionEntry 5 }
+
+    userDomain OBJECT-TYPE
+        SYNTAX    UnicodeString 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The name of the Windows NT domain the user specified at logon."
+        ::={ sessionEntry 6 }
+
+    clientName OBJECT-TYPE
+        SYNTAX    UnicodeString 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The name of the client device."
+        ::={ sessionEntry 7 }
+
+    clientAddrFamily OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The type of network address used by the client
+             device. The supported types are:
+	     0 : Unspecified
+	     2 : Internetwork (TCP over IP)
+	     5 : IPX and SPX"
+        ::={ sessionEntry 8 }
+
+    clientAddress OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The network address of the client device."
+        ::={ sessionEntry 9 }
+
+    clientProdId OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The client product ID."
+        ::={ sessionEntry 10 }
+
+    clientHwId OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The hardware ID of the client device (typically the
+             serial number)."
+        ::={ sessionEntry 11 }
+
+    clientBuildNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The build number of the ICA client installed on the device.
+             For RDP sessions, the build number of the RDP client."
+        ::={ sessionEntry 12 }
+
+    clientDirectory OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The directory on the client file system where the ICA client
+             is installed. For RDP sessions, the directory where the RDP
+             client is installed."
+        ::={ sessionEntry 13 }
+
+    clientHResolution OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The horizontal screen resolution of the client device
+             in pixels."
+        ::={ sessionEntry 14 }
+
+    clientVResolution OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The vertical screen resolution of the client device
+             in pixels."
+        ::={ sessionEntry 15 }
+
+    clientColorDepth OBJECT-TYPE
+        SYNTAX    INTEGER (0..5)
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of colors configured for the session. The value
+             must be one of:
+             0 : N/A (session without client)
+             1 : 16
+             2 : 256
+             3 : 64K
+             4 : 16M"
+        ::={ sessionEntry 16 }
+
+    clientCacheTiny OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The cache size for small objects (32 bytes)."
+        ::={ sessionEntry 17 }
+
+    clientCacheLMem OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "For ICA DOS Clients, the size of the low memory cache. For 
+             ICA Win32 and Win16 Clients, the size of the virtual
+             memory cache."
+        ::={ sessionEntry 18 }
+
+    clientCacheXms OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The size of extended memory cache (ICA DOS Clients only)."
+        ::={ sessionEntry 19 }
+
+    clientCacheDisk OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The size of the disk cache (ICA DOS Clients only)."
+        ::={ sessionEntry 20 }
+
+    clientCacheSize OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The persistent cache size."
+        ::={ sessionEntry 21 }
+
+    clientCacheBm OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The minimum size for a bitmap to be stored in the
+             persistent cache."
+        ::={ sessionEntry 22 }
+
+    clientCacheLevel OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The version of persistent caching."
+        ::={ sessionEntry 23 }
+
+    clientCacheFile OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The amount of overhead that the file system on the client
+             device requires per cached bitmap."
+        ::={ sessionEntry 24 }
+
+    initProgram OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The initial program to be executed during this session."
+        ::={ sessionEntry 25 }
+
+    initPubApp OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The published application that the user requested to 
+            start this session."
+        ::={ sessionEntry 26 }
+
+    workingDir OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The working directory for the initial program executed
+             during this session."
+        ::={ sessionEntry 27 }
+
+    icaBuffer OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The ICA buffer length in bytes."
+        ::={ sessionEntry 28 }
+
+
+
+
+    -- Server Process Information Table --------------------------
+    procTable    OBJECT-TYPE
+        SYNTAX    SEQUENCE OF procEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+             "Contains process data for the Citrix server."
+        ::= { metaframe 12 }
+
+    procEntry OBJECT-TYPE
+        SYNTAX    ProcEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+            "Each entry contains an index (ctxProcId) and a group of
+             process-related data."
+        INDEX
+            { procId }
+        ::= { procTable 1 }
+
+    ProcEntry ::= SEQUENCE {
+        procId          INTEGER,
+        procName        UnicodeString,
+        procSessionId   INTEGER,
+        procUserName    UnicodeString,
+	procUserDomain	UnicodeString,
+	procCPUTime     Counter,
+	procMemory	Counter	
+    }
+
+    procId OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The process ID index value."
+        ::={ procEntry 1 }
+
+    procName OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The process name."
+        ::={ procEntry 2 }
+
+    procSessionId OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The session ID associated with the process."
+        ::={ procEntry 3 }
+
+    procUserName OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The name of the user that launched the process."
+        ::={ procEntry 4 }
+
+    procUserDomain OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The domain of the user who launched the process."
+        ::={ procEntry 5 }
+
+    procCPUTime OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total CPU time used by the process up to this point
+            (in seconds)."
+        ::={ procEntry 6 }
+
+    procMemory OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The current memory usage of the process (in bytes)."
+        ::={ procEntry 7 }
+
+    -- Performance Counters Table --------------------------
+    --
+    --
+    -- Processor time, working set, and virtual memory statistics
+    -- are calculated by summing the values of all processes of the
+    -- session.
+    --
+    -- ICA/RDP related statistics are gathered by various protocol
+    -- stack drivers.
+    --
+
+    perfCtrsTable    OBJECT-TYPE
+        SYNTAX    SEQUENCE OF perfCtrsEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+             "Contains performance counter data for each session."
+        ::= { metaframe 13 }
+
+    perfCtrsEntry OBJECT-TYPE
+        SYNTAX    PerfCtrsEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+            "Each entry contains an index (perfSessionId) and a group of
+             performance counter data."
+        INDEX
+            { perfSessionId }
+        ::= { perfCtrsTable 1 }
+
+    PerfCtrsEntry ::= SEQUENCE {
+    perfSessionId       Counter,
+    procTime            Counter,
+    userTime            Counter,              
+    kernTime            Counter,              
+    peakVertSz          Counter,                
+    vertSize            Counter,              
+    pageFaults          Counter,              
+    peakWset            Counter,              
+    wset                Counter,              
+    peakPgFile          Counter,              
+    pgFile              Counter,              
+    privPages           Counter,              
+    threads             Counter,              
+    pagedPool           Counter,              
+    nonpagedPool        Counter,              
+    inWdBytes           Counter,              
+    inFrames            Counter,              
+    inBytes             Counter,              
+    inCompBytes         Counter,              
+    inCompFlush         Counter,              
+    inErrors            Counter,              
+    inAsyncFerr         Counter,              
+    inAsyncOverr        Counter,              
+    inAsyncOverf        Counter,              
+    inAsyncParr         Counter,              
+    outWdBytes          Counter,              
+    outFrames           Counter,              
+    outBytes            Counter,              
+    outCompBytes        Counter,              
+    outCompFlush        Counter,              
+    outErrors           Counter,              
+    outAsyncFerr        Counter,              
+    outAsyncOverr       Counter,              
+    outAsyncOverf       Counter,              
+    outAsyncParr        Counter,              
+    totWdBytes          Counter,              
+    totFrames           Counter,              
+    totBytes            Counter,              
+    totCompBytes        Counter,              
+    totCompFlush        Counter,              
+    totErrors           Counter,              
+    totAsyncFerr        Counter,              
+    totAsyncOverr       Counter,              
+    totAsyncOverf       Counter,              
+    totAsyncParr        Counter,              
+    totCacheReads       Counter,              
+    totCacheHits        Counter,              
+    totCachePct         Counter,              
+    bmCacheReads        Counter,              
+    bmCacheHits         Counter,                      
+    bmCachePct          Counter,              
+    glCacheReads        Counter,              
+    glCacheHits         Counter,              
+    glCachePct          Counter,                  
+    brCacheReads        Counter,              
+    brCacheHits         Counter,              
+    brCachePct          Counter,              
+    ssCacheReads        Counter,              
+    ssCacheHits         Counter,              
+    ssCachePct          Counter,              
+    inCompPct           Counter,              
+    outCompPct          Counter,              
+    totCompPct          Counter,              
+    inWdFrames          Counter,              
+    inWaitOutBuf        Counter,              
+    inTimeouts          Counter,              
+    outWdFrames         Counter,              
+    outWaitOutBuf       Counter,              
+    outTimeouts         Counter,              
+    totWdFrames         Counter,              
+    totWaitOutBuf       Counter,              
+    totTimeouts         Counter,
+	perfUserName		UnicodeString	               
+    }
+
+    perfSessionId OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The session ID for the counters in this entry."
+        ::={ perfCtrsEntry 1 }
+
+    procTime OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total processor time used by the session (in milliseconds)."
+        ::={ perfCtrsEntry 2 }
+
+    userTime OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total user mode processor time used by the session
+            (in milliseconds)."
+        ::={ perfCtrsEntry 3 }
+
+    kernTime OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total kernel mode processor time used by the session
+             (in milliseconds)."
+        ::={ perfCtrsEntry 4 }
+
+    peakVertSz OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The peak virtual memory size of the session (in bytes)."
+        ::={ perfCtrsEntry 5 }
+
+    vertSize OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The current virtual memory size of the session (in bytes)."
+        ::={ perfCtrsEntry 6 }
+
+    pageFaults OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of page faults for all of the processes of
+             the session."
+        ::={ perfCtrsEntry 7 }
+
+    peakWset OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The peak working set size of the session (in bytes)."
+        ::={ perfCtrsEntry 8 }
+
+    wset OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The current working set size of the session (in bytes)."
+        ::={ perfCtrsEntry 9 }
+
+    peakPgFile OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The peak page file space used by the session (in bytes)."
+        ::={ perfCtrsEntry 10 }
+
+    pgFile OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The current page file space used by the session (in bytes)."
+        ::={ perfCtrsEntry 11 }
+
+    privPages OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of private pages used by the session."
+        ::={ perfCtrsEntry 12 }
+
+    threads OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total threads in use by the session."
+        ::={ perfCtrsEntry 13 }
+
+    pagedPool OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total paged pool space used by the session (in bytes)."
+        ::={ perfCtrsEntry 14 }
+
+    nonpagedPool OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total non-paged pool space used by the session (in bytes)."
+        ::={ perfCtrsEntry 15 }
+
+    inWdBytes OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input ICA bytes."
+        ::={ perfCtrsEntry 16 }
+
+    inFrames OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input frames."
+        ::={ perfCtrsEntry 17 }
+
+    inBytes OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total input bytes (all protocol layers)."
+        ::={ perfCtrsEntry 18 }
+    inCompBytes OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input compressed bytes."
+        ::={ perfCtrsEntry 19 }
+    inCompFlush OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input compression flushes."
+        ::={ perfCtrsEntry 20 }
+
+    inErrors OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input errors."
+        ::={ perfCtrsEntry 21 }
+
+    inAsyncFerr OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input async frame errors."
+        ::={ perfCtrsEntry 22 }
+
+    inAsyncOverr OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input async overrun errors."
+        ::={ perfCtrsEntry 23 }
+
+    inAsyncOverf OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input async overflow errors."
+        ::={ perfCtrsEntry 24 }
+
+    inAsyncParr OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input async parity errors."
+        ::={ perfCtrsEntry 25 }
+
+    outWdBytes OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of output ICA bytes."
+        ::={ perfCtrsEntry 26 }
+
+    outFrames OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of output frames."
+        ::={ perfCtrsEntry 27 }
+
+    outBytes OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of output bytes (all protocol layers)."
+        ::={ perfCtrsEntry 28 }
+    outCompBytes OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of output compressed bytes."
+        ::={ perfCtrsEntry 29 }
+    outCompFlush OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of output compression flushes."
+        ::={ perfCtrsEntry 30 }
+
+    outErrors OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of output errors."
+        ::={ perfCtrsEntry 31 }
+
+    outAsyncFerr OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of output async frame errors."
+        ::={ perfCtrsEntry 32 }
+
+    outAsyncOverr OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of output async overrun errors."
+        ::={ perfCtrsEntry 33 }
+
+    outAsyncOverf OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of output Async overflow errors."
+        ::={ perfCtrsEntry 34 }
+
+    outAsyncParr OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of output async parity errors."
+        ::={ perfCtrsEntry 35 }
+
+    totWdBytes OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of ICA bytes."
+        ::={ perfCtrsEntry 36 }
+
+    totFrames OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of frames."
+        ::={ perfCtrsEntry 37 }
+
+    totBytes OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of bytes."
+        ::={ perfCtrsEntry 38 }
+    totCompBytes OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of compressed bytes."
+        ::={ perfCtrsEntry 39 }
+    totCompFlush OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of compression flushes."
+        ::={ perfCtrsEntry 40 }
+
+    totErrors OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of errors."
+        ::={ perfCtrsEntry 41 }
+
+    totAsyncFerr OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of async frame errors."
+        ::={ perfCtrsEntry 42 }
+
+    totAsyncOverr OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of async overrun errors."
+        ::={ perfCtrsEntry 43 }
+
+    totAsyncOverf OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of async overflow errors."
+        ::={ perfCtrsEntry 44 }
+
+    totAsyncParr OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of async parity errors."
+        ::={ perfCtrsEntry 45 }
+
+    totCacheReads OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of Thinwire cache reads."
+        ::={ perfCtrsEntry 46 }
+
+    totCacheHits OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of Thinwire cache hits."
+        ::={ perfCtrsEntry 47 }
+
+    totCachePct OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total Thinwire cache hit percentage."
+        ::={ perfCtrsEntry 48 }
+
+    bmCacheReads OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of Thinwire bitmap cache reads."
+        ::={ perfCtrsEntry 49 }
+
+    bmCacheHits OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of Thinwire bitmap cache hits."
+        ::={ perfCtrsEntry 50 }
+
+    bmCachePct OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The Thinwire bitmap cache hit percentage."
+        ::={ perfCtrsEntry 51 }
+
+    glCacheReads OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of Thinwire glyph cache reads."
+        ::={ perfCtrsEntry 52 }
+
+    glCacheHits OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of Thinwire glyph cache hits."
+        ::={ perfCtrsEntry 53 }
+
+    glCachePct OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The Thinwire glyph cache hit percentage."
+        ::={ perfCtrsEntry 54 }
+
+    brCacheReads OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of Thinwire brush cache reads."
+        ::={ perfCtrsEntry 55 }
+
+    brCacheHits OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of Thinwire brush cache hits."
+        ::={ perfCtrsEntry 56 }
+
+    brCachePct OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The Thinwire brush cache hit percentage."
+        ::={ perfCtrsEntry 57 }
+
+    ssCacheReads OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of save screen cache reads."
+        ::={ perfCtrsEntry 58 }
+
+    ssCacheHits OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of save screen cache hits."
+        ::={ perfCtrsEntry 59 }
+
+    ssCachePct OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The save screen cache hit percentage."
+        ::={ perfCtrsEntry 60 }
+
+    inCompPct OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The input compression ratio percentage."
+        ::={ perfCtrsEntry 61 }
+
+    outCompPct OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The output compression ratio percentage."
+        ::={ perfCtrsEntry 62 }
+
+    totCompPct OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total compression ratio percentage."
+        ::={ perfCtrsEntry 63 }
+
+    inWdFrames OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input ICA frames."
+        ::={ perfCtrsEntry 64 }
+
+    inWaitOutBuf OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number input waits for Outbuf."
+        ::={ perfCtrsEntry 65 }
+
+    inTimeouts OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of input timeouts."
+        ::={ perfCtrsEntry 66 }
+
+    outWdFrames OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of output ICA frames."
+        ::={ perfCtrsEntry 67 }
+
+    outWaitOutBuf OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of waits for Outbuf."
+        ::={ perfCtrsEntry 68 }
+
+    outTimeouts OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of output timeouts."
+        ::={ perfCtrsEntry 69 }
+
+    totWdFrames OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of ICA frames."
+        ::={ perfCtrsEntry 70 }
+
+    totWaitOutBuf OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of waits for Outbuf."
+        ::={ perfCtrsEntry 71 }
+
+    totTimeouts OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The total number of timeouts."
+        ::={ perfCtrsEntry 72 }
+
+    perfUserName OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The user who logged onto the server and started the session."
+        ::={ perfCtrsEntry 73 }
+
+    -- License Table
+    licenseTable    OBJECT-TYPE
+        SYNTAX    SEQUENCE OF licenseEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+             "Contains license data for the Citrix server."
+        ::= { metaframe 14 }
+
+    licenseEntry OBJECT-TYPE
+        SYNTAX    LicenseEntry
+        ACCESS    not-accessible
+        STATUS    mandatory
+        DESCRIPTION
+            "Each entry contains an index and a group of
+             license-related data."
+        INDEX
+            { licenseId }
+        ::= { licenseTable 1 }
+
+    LicenseEntry ::= SEQUENCE {
+        licenseId       Counter,
+        licenseType	Counter,
+        licenseConn	Counter,
+	licenseStrEng   UnicodeString,
+	licenseStrFrn	UnicodeString,
+	licenseStrGer   UnicodeString,
+	licenseStrJpn	UnicodeString,
+	licenseStrSpa	UnicodeString
+    }
+
+    licenseId OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The text string ID that describes the software license."
+        ::={ licenseEntry 1 }
+
+    licenseType OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The type of license. Must be one of: 
+             0 : Product license
+             1 : Connection license"
+        ::={ licenseEntry 2 }
+
+    licenseConn OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of ICA connections enabled by this license. For a
+             product license, the number of servers enabled by the license."
+        ::={ licenseEntry 3 }
+
+    licenseStrEng OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "A description of the license in English."
+        ::={ licenseEntry 4 }
+
+    licenseStrFrn OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "A description of the license in French."
+        ::={ licenseEntry 5 }
+
+    licenseStrGer OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "A description of the license in German."
+        ::={ licenseEntry 6 }
+
+    licenseStrJpn OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "A description of the license in Japanese."
+        ::={ licenseEntry 7 }
+
+    licenseStrSpa OBJECT-TYPE
+        SYNTAX    UnicodeString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "A description of the license in Spanish."
+        ::={ licenseEntry 8 }
+
+    --
+    -- Scalers for Management Operations
+    --
+    sessionLogoff OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    write-only
+        STATUS    mandatory
+        DESCRIPTION
+            "Set to a Session ID to log that session off the server."
+        ::= { metaframe 15 }
+
+    sessionDisconnect OBJECT-TYPE
+        SYNTAX    Counter 
+        ACCESS    write-only
+        STATUS    mandatory
+        DESCRIPTION
+            "Set to a session ID to disconnect that session."
+        ::= { metaframe 16 }
+
+    sessionMsg OBJECT-TYPE
+        SYNTAX    UnicodeString 
+        ACCESS    read-write
+        STATUS    mandatory
+        DESCRIPTION
+            "Set to a message string to send that message to the user
+             identified by sessionIdMsg."
+        ::= { metaframe 17 }
+
+    sessionIdMsg OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    write-only
+        STATUS    mandatory
+        DESCRIPTION
+            "Set to a session ID to send the message stored in sessionMsg
+             to that session's user."
+        ::= { metaframe 18 }
+
+    processTerm OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    write-only
+        STATUS    mandatory
+        DESCRIPTION
+            "Set to a process ID to terminate that process."
+        ::= { metaframe 19 }
+
+    svrShutdown OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    write-only
+        STATUS    mandatory
+        DESCRIPTION
+            "Set to one of the following values to apply that operation
+             to the server:
+              0 : Log off all users except the console.
+              1 : Shut down the server.
+              2 : Shut down and reboot the server.
+              3 : Shut down and power off the server.
+              4 : Fast reboot - do not log users off or shut down
+                  the server."
+        ::= { metaframe 20 }
+
+    --
+    -- Scalers for monitoring purposes and traps:
+    -- 
+    tvSidLogoff OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The session ID of the session that just ended."
+        ::= { metaframe 21 }
+
+    tvUserLogoff OBJECT-TYPE
+        SYNTAX    DisplayString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The user name of a session that just ended. When provided in a
+             trap, the string is not NULL terminated. However, if the
+             variable is read via GET/GETNEXT, it is NULL terminated."
+        ::= { metaframe 22 }
+
+    tvSidLogon OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "Session ID of the new session."
+        ::= { metaframe 23 }
+
+    tvUserLogon OBJECT-TYPE
+        SYNTAX    DisplayString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The user name of the new session. When provided in a
+             trap, the string is not NULL terminated. However, if the
+             variable is read via GET/GETNEXT, it is NULL terminated."
+        ::= { metaframe 24 }
+
+    tvSidDisc OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The session Id of the session that was disconnected."
+        ::= { metaframe 25 }
+
+    tvUserDisc OBJECT-TYPE
+        SYNTAX    DisplayString
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The user name of the session that was disconnected. When provided
+             in a trap, the string is not NULL terminated. However, if the
+             variable is read via GET/GETNEXT, it is NULL terminated."
+        ::= { metaframe 26 }
+
+    tvSessThreshold OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of sessions when the session threshold is crossed."
+        ::= { metaframe 27 }
+
+    tvLicThreshold OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The number of available ICA licenses when low threshold is crossed."
+        ::= { metaframe 28 }
+
+    tvLicDenied OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The license ID of the request that has been denied."
+        ::= { metaframe 29 }
+
+    tvSessThresholdState OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The state of the session threshold for the session limit trap:
+	    0 : The number of sessions has passed the threshold. (Alert)
+	    1 : The number of sessions is still below the
+                threshold. (Normal)"
+        ::= { metaframe 33 }
+
+    tvLicThresholdState OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The state of available connection licenses for the server farm:
+	    0 : There are no available connection licenses. (Critical) 
+	    1 : The number of available connection licenses is still above
+                the low license threshold. (Normal)
+	    2 : The number of available connection licenses has fallen below 
+                the low license threshold. (Marginal)"
+        ::= { metaframe 34 }
+
+    tvLicOut OBJECT-TYPE
+        SYNTAX    Counter
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+            "The license ID of the license that has reached the low
+             threshhold or has run out of licenses."
+        ::= { metaframe 35 }
+
+    --
+    -- Citrix Server Trap Definitions
+    --
+    
+    trapSessionLogoff   TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvSidLogoff, tvUserLogoff }
+        DESCRIPTION     
+            "This trap indicates that user has logged off the server.
+             tvSidLogoff and tvUserLogoff are the Session ID and user name 
+             of the session, respectively."
+        ::= 1
+
+    trapSessionLogon    TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvSidLogon, tvUserLogon }
+        DESCRIPTION     
+            "This trap indicates that a user has logged on to the server.
+             tvSidLogon and tvUserLogon are the Session ID and user name 
+             of the new session, respectively."
+        ::= 2
+
+    trapSessionDisc TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvSidDisc, tvUserDisc }
+        DESCRIPTION     
+            "This trap indicates that a session has been disconnected.
+             tvSidLogoff and tvUserLogoff are the Session ID and user name 
+             of the session, respectively."
+        ::= 3
+
+    trapSessionLimitThreshold TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvSessThreshold }
+        DESCRIPTION     
+            "This trap indicates that the number of sessions on the server
+	     has passed the threshold that the server can support.
+             tvSessThreshold is the number of sessions when the 
+	     threshold is reached."
+        ::= 4
+
+
+    trapLicLowThreshold TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvLicThreshold, tvLicOut }
+        DESCRIPTION     
+            "This trap indicates that the server farm is running out of
+             connection licenses. The number of remaining licenses has
+             reached the lower threshold. tvLicThreshold is the number of
+             connection licenses remaining. tvLicOut is the License ID of the
+             license that reached the low threshold."
+        ::= 5
+
+    trapLicOut  TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvLicOut }
+        DESCRIPTION     
+            "This trap indicates that the server farm is out of connection
+             licenses. tvLicOut is the license ID of the license."
+        ::= 6
+
+    trapLicDenied   TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvLicDenied }
+        DESCRIPTION     
+            "This trap indicates that request for a license has been 
+             denied. tvLicDenied is used to show what license was denied."
+        ::= 7
+
+    trapMfAgentUp   TRAP-TYPE
+        ENTERPRISE      metaframe
+        DESCRIPTION     
+            "This trap indicates that the MetaFrame SNMP agent has
+	     started on the server."
+        ::= 8
+
+     trapSessionThresholdNormal TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvSessThreshold }
+        DESCRIPTION     
+            "This trap indicates that a previous session threshold
+             exceeded condition has been resolved. The number of concurrent            
+	     sessions has fallen below the warning threshold.
+             tvSessThreshold is the number of concurrent sessions when the 
+	     condition was resolved."
+        ::= 9
+
+    trapLicLowThresholdNormal TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvLicThreshold, tvLicOut }
+        DESCRIPTION     
+            "This trap indicates that a previous low license threshold
+             condition has been resolved. tvLicThreshold contains the number
+             of available connection licenses.  tvLicOut is the
+             license ID of the license indicated by the trap." 
+        ::= 10
+
+    trapLicOutNormal  TRAP-TYPE
+        ENTERPRISE      metaframe
+        VARIABLES       { tvLicOut }
+        DESCRIPTION     
+            "This trap indicates that a previous out-of-license 
+             condition has been resolved. The number of available licenses is
+             greater than the critical minimum available.
+             tvLicOut is the License Id of the license indicated by the trap." 
+        ::= 11
+
+
+END

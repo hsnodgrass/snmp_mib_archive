@@ -1,0 +1,283 @@
+ADTRAN-ATLAS-BRI-MIB         DEFINITIONS ::= BEGIN
+
+-- TITLE:               Atlas BRI Interface MIB
+-- FILENAME:            atbri.mib
+-- PARTNUMBER:
+-- AUTHOR:              Benny Sharp
+
+-- HISTORY:
+--   02/08/2002	 Created.
+
+-- This MIB defines a generic ATLAS BRI interface.
+
+IMPORTS
+        enterprises
+                FROM RFC1155-SMI
+        OBJECT-TYPE
+                FROM RFC-1212;
+
+-- OBJECT IDENTIFIERS
+adtran                OBJECT IDENTIFIER ::= { enterprises 664 }
+adMgmt                OBJECT IDENTIFIER ::= { adtran 2 }
+adATLASmg       	  OBJECT IDENTIFIER ::= { adMgmt 154 }
+adGenATLASmg    	  OBJECT IDENTIFIER ::= { adATLASmg 1 }
+adATLASBRImg              OBJECT IDENTIFIER ::= { adGenATLASmg 8 }
+
+adATLASBRIIfNumber OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The number of BRI ports (regardless of their current
+        state) present on this system."
+
+    ::= { adATLASBRImg 1 }
+
+
+--___________________________________________________________
+--          The ATLAS BRI Interface Status Table           --
+--___________________________________________________________
+
+
+adATLASBRIIfTable  OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLASBRIIfEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The ATLAS BRI Interface Status Table."
+
+    ::= { adATLASBRImg 2 }
+
+adATLASBRIIfEntry  OBJECT-TYPE
+    SYNTAX  AdATLASBRIIfEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the ATLAS BRI Interface Status Table"
+    INDEX   { adATLASBRIIfIndex }
+
+    ::= { adATLASBRIIfTable 1 }
+
+AdATLASBRIIfEntry ::=
+    SEQUENCE {
+        adATLASBRIIfIndex
+            INTEGER,
+		adATLASBRIIfSlotNum
+            INTEGER,
+		adATLASBRIIfPortNum
+            INTEGER,
+        adATLASBRIIfAlarmStatus
+            INTEGER
+    }
+
+-- Interface Number
+adATLASBRIIfIndex OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the interface number of a
+        particular BRI port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+    ::= { adATLASBRIIfEntry 1 }
+
+-- Slot Number
+adATLASBRIIfSlotNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the slot number of a
+        particular ATLAS module with a BRI interface."
+        ::= { adATLASBRIIfEntry 2 }
+
+-- Port Number
+adATLASBRIIfPortNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the port number of a
+        particular BRI interface on an ATLAS module."
+        ::= { adATLASBRIIfEntry 3 }
+
+-- Layer 1 Status
+adATLASBRIIfAlarmStatus   OBJECT-TYPE
+    SYNTAX  INTEGER {
+                layer1up(1),
+                layer1down(2)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable shows whether Layer 1 is up or down.
+        It has a value of 1 for up and 2 for down."
+
+    ::= { adATLASBRIIfEntry 4 }
+
+--___________________________________________________________
+-- 	    The ATLAS BRI Interface Channel Status Table       --
+--___________________________________________________________
+
+
+adATLASBRIIfChanStatTable  OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLASBRIIfChanStatEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The ATLAS BRI Interface Channel Status Table."
+
+    ::= { adATLASBRImg 3 }
+
+adATLASBRIIfChanStatEntry  OBJECT-TYPE
+    SYNTAX  AdATLASBRIIfChanStatEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the ATLAS BRI Interface Channel Status Table."
+    INDEX   {adATLASBRIIfChanStatIndex }
+
+    ::= { adATLASBRIIfChanStatTable 1 }
+
+AdATLASBRIIfChanStatEntry ::=
+    SEQUENCE {
+        adATLASBRIIfChanStatIndex
+            INTEGER,
+        adATLASBRIIfChanStatB1
+            INTEGER,
+        adATLASBRIIfChanStatB2
+            INTEGER,
+        adATLASBRIIfChanStatD
+            INTEGER
+    }
+
+-- The ATLAS BRI Port Channel Status Table Index
+adATLASBRIIfChanStatIndex OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the Interface number of a
+        particular BRI port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+
+    ::= { adATLASBRIIfChanStatEntry 1 }
+
+
+-- B1 Channel Status
+adATLASBRIIfChanStatB1  OBJECT-TYPE
+    SYNTAX  INTEGER {
+                unallocated(1),
+                active(2),
+                inactive(3)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This Variable shows the status of the first B channel.
+        It has a value of 1 for unallocated, 2 for active, and
+        3 for inactive."
+
+    ::= { adATLASBRIIfChanStatEntry 2 }
+
+-- B2 Channel Status
+adATLASBRIIfChanStatB2  OBJECT-TYPE
+    SYNTAX  INTEGER {
+                unallocated(1),
+                active(2),
+                inactive(3)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This Variable shows the status of the second B
+        channel.  It has a value of 1 for unallocated, 2 for
+        active, and 3 for inactive."
+
+    ::= { adATLASBRIIfChanStatEntry 3 }
+
+-- D Channel Status
+adATLASBRIIfChanStatD  OBJECT-TYPE
+    SYNTAX  INTEGER {
+                unallocated(1),
+                allocated(2)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This Variable shows the status of the D channel.  It
+        has a value of 1 for unallocated and 2 for allocated."
+    ::= { adATLASBRIIfChanStatEntry 4 }          
+    
+
+--______________________________________________________
+--	   	   The ATLAS BRI Interface Test Table         --
+--______________________________________________________
+
+adATLASBRITstTable  OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLASBRITstEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The ATLAS BRI Interface Test Table."
+
+    ::= { adATLASBRImg 4 }
+
+adATLASBRITstEntry  OBJECT-TYPE
+    SYNTAX  AdATLASBRITstEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the ATLAS BRI Interface Test Table."
+    INDEX   { adATLASBRITstIndex }
+
+    ::= { adATLASBRITstTable 1 }
+
+AdATLASBRITstEntry ::=
+    SEQUENCE {
+        adATLASBRITstIndex
+            INTEGER,
+        adATLASBRITstLLB
+            INTEGER
+    }
+
+-- The ATLAS BRI Interface Test Table Index
+adATLASBRITstIndex OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the Interface number of a
+        particular BRI port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+    ::= { adATLASBRITstEntry 1 }
+
+-- Local Loopback
+adATLASBRITstLLB OBJECT-TYPE
+    SYNTAX  INTEGER {
+                none(1),
+                lpBkB1(2),
+                lpBkB2(3),
+                lpBkB1B2(4),
+                lpBkAll(5)
+            }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable allows different channels to be looped
+        back.
+        1: None
+        2: B1
+        3: B2
+        4: B1&B2
+        5: All Channels"
+
+    ::= { adATLASBRITstEntry 2 }
+
+END

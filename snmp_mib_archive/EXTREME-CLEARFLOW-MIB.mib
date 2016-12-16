@@ -1,0 +1,491 @@
+EXTREME-CLEARFLOW-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+                MODULE-IDENTITY         FROM SNMPv2-SMI
+                OBJECT-TYPE             FROM SNMPv2-SMI
+                DisplayString           FROM RFC1213-MIB
+                Unsigned32              FROM SNMPv2-SMI
+                Integer32               FROM SNMPv2-SMI
+                Counter64               FROM SNMPv2-SMI
+                NOTIFICATION-TYPE       FROM SNMPv2-SMI
+                extremeAgent            FROM EXTREME-BASE-MIB;
+ 
+        extremeClearflow MODULE-IDENTITY
+                LAST-UPDATED "200503220000Z"
+                ORGANIZATION "Extreme Networks, Inc."
+                CONTACT-INFO "www.extremenetworks.com"
+                DESCRIPTION "CLEAR-Flow MIB"
+        ::= { extremeAgent 30 }
+        
+        extremeClearflowMsgId OBJECT-TYPE
+        SYNTAX     Unsigned32
+        MAX-ACCESS accessible-for-notify
+        STATUS     current
+        DESCRIPTION "User-defined message id"
+        ::= { extremeClearflow 1 }
+        
+        extremeClearflowMsg OBJECT-TYPE
+        SYNTAX     DisplayString (SIZE(1..256))
+        MAX-ACCESS accessible-for-notify
+        STATUS     current
+        DESCRIPTION "User-defined message"
+        ::= { extremeClearflow 2 }
+        
+        extremeClearflowPolicyName OBJECT-TYPE
+        SYNTAX     DisplayString (SIZE(1..32))
+        MAX-ACCESS accessible-for-notify
+        STATUS     current
+        DESCRIPTION "Policy file name"
+        ::= { extremeClearflow 3 }
+        
+        extremeClearflowRuleName OBJECT-TYPE
+        SYNTAX     DisplayString (SIZE(1..32))
+        MAX-ACCESS accessible-for-notify
+        STATUS     current
+        DESCRIPTION "Rule name which triggered this message"
+        ::= { extremeClearflow 4 }
+
+        extremeClearflowRuleValue OBJECT-TYPE
+        SYNTAX     Counter64
+        MAX-ACCESS accessible-for-notify
+        STATUS     current
+        DESCRIPTION "Calculated rule value"
+        ::= { extremeClearflow 5 }
+
+        extremeClearflowRuleThreshold OBJECT-TYPE
+        SYNTAX     Counter64
+        MAX-ACCESS accessible-for-notify
+        STATUS     current
+        DESCRIPTION "Rule threshold value"
+        ::= { extremeClearflow 6 }
+
+        extremeClearflowRuleInterval OBJECT-TYPE
+        SYNTAX     Unsigned32
+        MAX-ACCESS accessible-for-notify
+        STATUS     current
+        DESCRIPTION "Rule sampling and evaluation interval"
+        ::= { extremeClearflow 7 }
+
+        extremeClearflowVlanName OBJECT-TYPE
+        SYNTAX     DisplayString (SIZE(1..32))
+        MAX-ACCESS accessible-for-notify
+        STATUS     current
+        DESCRIPTION "Vlan name on which this policy is applied"
+        ::= { extremeClearflow 8 }
+        
+        extremeClearflowPortName OBJECT-TYPE
+        SYNTAX     DisplayString (SIZE(1..32))
+        MAX-ACCESS accessible-for-notify
+        STATUS     current
+        DESCRIPTION "Port name on which this policy is applied"
+        ::= { extremeClearflow 9 }
+
+        
+        extremeAclListTable OBJECT-TYPE
+            SYNTAX  SEQUENCE OF ExtremeAclListEntry
+            MAX-ACCESS  not-accessible
+            STATUS current
+            DESCRIPTION
+               "This table lists Access control list information that exist within
+                a device.  A single entry exists in this list for each
+                VLAN and Port interface in the system."
+        ::= { extremeClearflow 10 }
+
+        extremeAclListEntry OBJECT-TYPE
+            SYNTAX  ExtremeAclListEntry
+            MAX-ACCESS  not-accessible
+            STATUS current
+            DESCRIPTION
+               "An individual Access control list entry."
+        INDEX { extremeAclVlanIfIndex, extremeAclPortIfIndex }
+        ::= { extremeAclListTable 1 }
+
+        ExtremeAclListEntry ::=
+            SEQUENCE {
+                extremeAclVlanIfIndex
+                    Integer32,
+                extremeAclPortIfIndex
+                    Integer32,
+                extremeAclCounterName
+                    DisplayString,
+                extremeAclVlanName
+                    DisplayString,
+                extremeAclPolicyName
+                    DisplayString,
+                extremeAclDirection
+                    Integer32,
+                extremeAclPktCount
+                    Counter64,
+                extremeAclByteCount
+                    Counter64
+            }
+
+        extremeAclPortIfIndex OBJECT-TYPE
+            SYNTAX  Integer32 (1..65535)
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "An port index that uniquely identifies an entry in the
+                acl list table."
+        ::= { extremeAclListEntry 1 }
+
+        extremeAclVlanIfIndex OBJECT-TYPE
+            SYNTAX  Integer32
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "An vlan index that uniquely identifies an entry in the
+                acl list table."
+        ::= { extremeAclListEntry 2 }
+
+        extremeAclCounterName OBJECT-TYPE
+            SYNTAX  DisplayString (SIZE(0..33))
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "The access control list counter name"
+        ::= { extremeAclListEntry 3 }
+
+        extremeAclVlanName OBJECT-TYPE
+            SYNTAX  DisplayString (SIZE(0..32))
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Vlan name on which this policy is applied"    
+        ::= { extremeAclListEntry 4 }
+
+        extremeAclPolicyName OBJECT-TYPE
+            SYNTAX  DisplayString
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "The access control list name"
+        ::= { extremeAclListEntry 5 }
+
+        extremeAclDirection OBJECT-TYPE
+            SYNTAX  Integer32
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "The interface direction."
+        ::= { extremeAclListEntry 6 }
+
+        extremeAclPktCount OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+                "The access control list packet count"
+        ::= { extremeAclListEntry 7 }
+
+        extremeAclByteCount OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "The access control list byte count"
+        ::= { extremeAclListEntry 8 }
+
+        extremeTrafficQueueStatsTable OBJECT-TYPE
+            SYNTAX  SEQUENCE OF ExtremeTrafficQueueStatsTableEntry
+            MAX-ACCESS  not-accessible
+            STATUS current
+            DESCRIPTION
+               "This table lists traffic queue statistics information that exist 
+                within a device.  A single entry exists in this list for each
+                traffic queue in the system."
+        ::= { extremeClearflow 11 }
+
+        extremeTrafficQueueStatsTableEntry OBJECT-TYPE
+            SYNTAX  ExtremeTrafficQueueStatsTableEntry
+            MAX-ACCESS  not-accessible
+            STATUS current
+            DESCRIPTION
+               "An individual traffic queue stats table entry."
+        INDEX { extremeTrafficQueueName }
+        ::= { extremeTrafficQueueStatsTable 1 }
+
+        ExtremeTrafficQueueStatsTableEntry ::=
+            SEQUENCE {
+                extremeTrafficQueueName
+                    DisplayString,
+                extremeTrafficQueueDirection
+                    Integer32,
+                extremeTrafficQueueHighPassedPkts
+                    Counter64,
+                extremeTrafficQueueHighPassedBytes
+                    Counter64,
+                extremeTrafficQueueHighDroppedPkts
+                    Counter64,
+                extremeTrafficQueueHighDroppedBytes
+                    Counter64,
+                extremeTrafficQueueMedPassedPkts
+                    Counter64,
+                extremeTrafficQueueMedPassedBytes
+                    Counter64,
+                extremeTrafficQueueMedDroppedPkts
+                    Counter64,
+                extremeTrafficQueueMedDroppedBytes
+                    Counter64,
+                extremeTrafficQueueLowPassedPkts
+                    Counter64,
+                extremeTrafficQueueLowPassedBytes
+                    Counter64,
+                extremeTrafficQueueLowDroppedPkts
+                    Counter64,
+                extremeTrafficQueueLowDroppedBytes
+                    Counter64,
+                extremeTrafficQueueAggPassedPkts
+                    Counter64,
+                extremeTrafficQueueAggPassedBytes
+                    Counter64,
+                extremeTrafficQueueAggDroppedPkts
+                    Counter64,
+                extremeTrafficQueueAggDroppedBytes
+                   Counter64
+        }
+
+        extremeTrafficQueueName OBJECT-TYPE
+            SYNTAX  DisplayString (SIZE(0..33))
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "The traffic queue name that uniquely identifies an entry in the
+                traffic queue table."
+        ::= { extremeTrafficQueueStatsTableEntry 1 }
+
+        extremeTrafficQueueDirection OBJECT-TYPE
+            SYNTAX  Integer32
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Indicates the direction of traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 2 }
+
+        extremeTrafficQueueHighPassedPkts OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Maximum number of packets passed for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 3 }
+
+        extremeTrafficQueueHighPassedBytes OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Maximum number of bytes passed for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 4 }
+  
+        extremeTrafficQueueHighDroppedPkts OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Maximum number of packets dropped for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 5 }
+
+        extremeTrafficQueueHighDroppedBytes OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Maximum number of bytes dropped for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 6 }
+
+        extremeTrafficQueueMedPassedPkts OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Medium number of packets passed for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 7 }
+
+        extremeTrafficQueueMedPassedBytes OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Medium number of bytes passed for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 8 }
+
+        extremeTrafficQueueMedDroppedPkts OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Medium number of packets dropped for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 9 }
+
+        extremeTrafficQueueMedDroppedBytes OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Medium number of bytes dropped for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 10 }
+
+        extremeTrafficQueueLowPassedPkts OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Minimum number of packets passed for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 11 }
+
+        extremeTrafficQueueLowPassedBytes OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Minimum number of bytes passed for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 12 }
+
+        extremeTrafficQueueLowDroppedPkts OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Minimum number of packets dropped for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 13 }
+
+        extremeTrafficQueueLowDroppedBytes OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Minimum number of bytes dropped for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 14 }
+
+        extremeTrafficQueueAggPassedPkts OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Aggregate number of packets passed for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 15 }
+
+        extremeTrafficQueueAggPassedBytes OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Aggregate number of bytes passed for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 16 }
+
+        extremeTrafficQueueAggDroppedPkts OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Aggregate number of packets dropped for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 17 }
+
+        extremeTrafficQueueAggDroppedBytes OBJECT-TYPE
+            SYNTAX  Counter64
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Aggregate number of bytes dropped for this traffic queue"
+        ::= { extremeTrafficQueueStatsTableEntry 18 }
+
+        extremeTrafficQueueUtilTable OBJECT-TYPE
+            SYNTAX  SEQUENCE OF ExtremeTrafficQueueUtilTableEntry
+            MAX-ACCESS  not-accessible
+            STATUS current
+            DESCRIPTION
+               "This table lists traffic queue statistics information that exist 
+                within a device.  A single entry exists in this list for each
+                traffic queue in the system."
+        ::= { extremeClearflow 12 }
+
+        extremeTrafficQueueUtilTableEntry OBJECT-TYPE
+            SYNTAX  ExtremeTrafficQueueUtilTableEntry
+            MAX-ACCESS  not-accessible
+            STATUS current
+            DESCRIPTION
+               "An each traffic queue related utilization information"
+            INDEX { extremeUtilTrafficQueueName }
+        ::= { extremeTrafficQueueUtilTable 1 }
+
+        ExtremeTrafficQueueUtilTableEntry ::=
+            SEQUENCE {
+                extremeUtilTrafficQueueName
+                    DisplayString,
+                extremeUtilTrafficQueueDirection
+                    Integer32,
+                extremeTrafficQueueHighUtilization
+                    DisplayString,
+                extremeTrafficQueueMedUtilization
+                    DisplayString,
+                extremeTrafficQueueLowUtilization
+                    DisplayString
+           }
+
+        extremeUtilTrafficQueueName OBJECT-TYPE
+            SYNTAX  DisplayString (SIZE(0..33))
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "The traffic queue name that uniquely identifies an entry in the
+                traffic queue table."
+        ::= { extremeTrafficQueueUtilTableEntry 1 }
+
+        extremeUtilTrafficQueueDirection OBJECT-TYPE
+            SYNTAX  Integer32
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Indicates the direction of traffic queue"
+        ::= { extremeTrafficQueueUtilTableEntry 2 }
+
+        extremeTrafficQueueHighUtilization OBJECT-TYPE
+            SYNTAX  DisplayString
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "High level utilization of the traffic queue "
+        ::= { extremeTrafficQueueUtilTableEntry 3 }
+
+        extremeTrafficQueueMedUtilization OBJECT-TYPE
+            SYNTAX  DisplayString
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Medium level utilization of the traffic queue "
+        ::= { extremeTrafficQueueUtilTableEntry 4 }
+
+        extremeTrafficQueueLowUtilization OBJECT-TYPE
+            SYNTAX  DisplayString
+            MAX-ACCESS     read-only
+            STATUS current
+            DESCRIPTION
+               "Low level utilization of the traffic queue "
+        ::= { extremeTrafficQueueUtilTableEntry 5 }
+
+        extremeClearflowTraps     OBJECT IDENTIFIER
+        ::= { extremeClearflow 0 }
+    
+        extremeClearflowTrapsPrefix     OBJECT IDENTIFIER
+        ::= { extremeClearflowTraps 0 }
+
+        extremeClearflowMessage NOTIFICATION-TYPE
+            OBJECTS {   extremeClearflowMsgId, 
+                        extremeClearflowMsg,
+                        extremeClearflowPolicyName,
+                        extremeClearflowRuleName,
+                        extremeClearflowRuleValue,
+                        extremeClearflowRuleThreshold,
+                        extremeClearflowRuleInterval,
+                        extremeClearflowVlanName,
+                        extremeClearflowPortName}
+            STATUS  current
+            DESCRIPTION "CLEAR-Flow message trap"
+        ::= { extremeClearflowTrapsPrefix 1 }
+
+
+END
+
+-- ################################################################################
+

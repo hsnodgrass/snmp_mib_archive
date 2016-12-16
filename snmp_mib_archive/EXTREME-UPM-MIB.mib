@@ -1,0 +1,119 @@
+EXTREME-UPM-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS 
+        MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+         mib-2, Counter32, Unsigned32, Integer32,
+         Gauge32    FROM SNMPv2-SMI
+        DisplayString   FROM RFC1213-MIB
+                extremeAgent   FROM EXTREME-BASE-MIB
+                IpAddress       FROM SNMPv2-SMI;
+
+   
+
+
+    extremeUpm     MODULE-IDENTITY
+                LAST-UPDATED "200402140000Z"
+                ORGANIZATION "Extreme Networks, Inc."
+                CONTACT-INFO "www.extremenetworks.com"
+                DESCRIPTION "Extreme universal port management mib"
+        ::= { extremeAgent 35 }
+
+
+-- definition of UPM trap notifications.
+
+upmNotificationTrap OBJECT IDENTIFIER
+     ::= { extremeUpm 1 }
+upmConfig  OBJECT IDENTIFIER
+     ::= { extremeUpm 2 }
+
+upmProfileEventExecution NOTIFICATION-TYPE
+            OBJECTS { upmProfileName,
+              upmExecutionId,
+              upmEventType,
+              upmExecutionStatus,
+              upmPort,
+              upmProfileExecVars,
+              upmTimerName
+            }
+            STATUS      current
+        DESCRIPTION
+                "This trap will be generated, when a profile is executed."
+                ::= { upmNotificationTrap 1 }
+
+upmProfileName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+    "The textual string identifying the name of the profile."
+    ::= { upmConfig 1 }
+
+upmExecutionId OBJECT-TYPE
+    SYNTAX Unsigned32 (1..4294967296)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+    "The value uniquely identifies the execution of a UPM profile. Switch stores history of 100 last run executions."
+    ::= { upmConfig 2 }
+
+
+upmEventType OBJECT-TYPE
+    SYNTAX INTEGER {
+        devicedetect(1),
+        deviceundetect(2),
+        userauthenticated(3),
+        userunauthenticated(4),
+        upmTimer(5),
+        userrequest(7)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+    "The type of the event that triggered the profile execution."
+    ::= { upmConfig 3 }
+
+upmExecutionStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+        success (1),
+        failure (2)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+    "The state of the profile execution."
+
+    ::= { upmConfig 4 }
+
+upmPort OBJECT-TYPE
+    SYNTAX INTEGER (1..4294967296)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+    "The ifIndex of the port on which the profile was run. 
+     Is non-zero only when there is a valid port associated when 
+     the profile was run with the event. For ex: When a timer 
+     fires, the port may not be valid parameter"
+
+    ::= { upmConfig 5 }
+
+upmProfileExecVars OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..33))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+    "The textual string identifying the variables that were set when executing the profile."
+    ::= { upmConfig 6 }
+
+
+upmTimerName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+    "The textual string identifying the timer fired when executing the profile."
+    ::= { upmConfig 7 }
+
+END
+
+-- ################################################################################
+

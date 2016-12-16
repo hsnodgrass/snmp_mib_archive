@@ -1,0 +1,150 @@
+-- ****************************************************************************
+--
+--                       HP Automatic System Restart 
+--      Management Information Base for SNMP Network Management
+--
+--      Version A.01.00  (6/97)
+-- 
+--      Copyright 1997 Hewlett-Packard Company.
+--      All Rights Reserved.
+--
+--      The information in this document is subject to change without notice.
+--
+--      The HP Enterprise number is 11.
+--      The ASN.1 prefix to, and including the HP Enterprise is:
+--      1.3.6.1.4.1.11
+--
+-- ****************************************************************************
+-- Summary of HP NSA Storage Capacity Information MIB
+-- ****************************************************************************
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.25)
+--          hpnsaASR Group     (hpnsa.25)
+--             hpnsaASRMibRev Group    (hpnsa.25.1)             
+--                hpnsaASRMibRevMajor  (hpnsa.25.1.1)  
+--                hpnsaASRMibRevMinor  (hpnsa.25.1.2)
+--
+--             hpnsaASRParms Group                       (hpnsa.25.2)
+--                hpnsaASRMaxConsecutiveASR              (hpnsa.25.2.1)
+--                hpnsaASRCurrentConsecutiveASR          (hpnsa.25.2.2)
+--                hpnsaASRTimeOutInterval                (hpnsa.25.2.3)
+--                hpnsaASRKickInterval                   (hpnsa.25.2.4)
+--                hpnsaASRTimeoutAction                  (hpnsa.25.2.5)
+-- ******************************************************************************
+HPNSAASR-MIB DEFINITIONS ::= BEGIN
+   IMPORTS
+      enterprises    FROM RFC1155-SMI
+      DisplayString  FROM RFC1213-MIB
+		OBJECT-TYPE    FROM RFC-1212;
+		
+   hp              OBJECT IDENTIFIER ::= { enterprises 11 }
+   nm              OBJECT IDENTIFIER ::= { hp 2 }
+   hpnsa           OBJECT IDENTIFIER ::= { nm 23 }  
+   hpnsaASR        OBJECT IDENTIFIER ::= { hpnsa 25 }
+   hpnsaASRMibRev   OBJECT IDENTIFIER ::= { hpnsaASR 1 }
+   hpnsaASRParms      OBJECT IDENTIFIER ::= { hpnsaASR 2 }      
+
+-- ****************************************************************************
+--   HP Automatic System Restart Information MIB 
+--   ===========================================
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpnsaASR Group  (hpnsa.25)
+--             hpnsaASRMibRev Group  (hpnsa.25.1)             
+--                hpnsaASRMibRevMajor  (hpnsa.25.1.1)  
+--                hpnsaASRMibRevMinor  (hpnsa.25.1.2)
+--
+--    Implementation of the MibRev group is mandatory for all HPNSA Agents
+--    supporting the HP Storage Capacity MIB.
+--
+--    An HPNSA Agent conforming to this document will return a
+--    hpnsaSCMibRevMajor of 1 and a hpnsaSCMibRevMinor of 0. 
+--
+-- ****************************************************************************
+
+    hpnsaASRMibRevMajor OBJECT-TYPE
+        SYNTAX  INTEGER (1..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The major revision level of the MIB."
+        ::= { hpnsaASRMibRev 1 }
+
+    hpnsaASRMibRevMinor OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The minor revision level of the MIB."
+        ::= { hpnsaASRMibRev 2 }
+
+  
+-- *************************************************************************************
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpnsaASR Group  (hpnsa.25)
+--             hpnsaASRParms Group                       (hpnsa.25.2)
+--                hpnsaASRMaxConsecutiveASR              (hpnsa.25.2.1)
+--                hpnsaASRCurrentConsecutiveASR          (hpnsa.25.2.2)
+--                hpnsaASRTimeOutInterval                (hpnsa.25.2.3)
+--                hpnsaASRKickInterval                   (hpnsa.25.2.4)
+--                hpnsaASRTimeoutAction                  (hpnsa.25.2.5)
+--
+-- ****************************************************************************************
+--   HP ASR parameters Information Table
+-- ****************************************************************************
+
+   hpnsaASRMaxConsecutiveASR OBJECT-TYPE
+      SYNTAX INTEGER  (0..10)
+      ACCESS read-write
+      STATUS mandatory
+      DESCRIPTION
+         "This specifies the maximum number of consecutive ASR reboot allowed
+         in this system, if exceeding this value, no ASR will be performed.
+	 0 means no limit on maximum number of reboots, 1-10 for setting a
+	 limit"
+      ::= {hpnsaASRParms 1}
+
+   hpnsaASRCurrentConsecutiveASR OBJECT-TYPE      
+      SYNTAX  INTEGER 
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+          "The current value of the number of consecutive ASR reboot 
+	  happened so far." 
+      ::= { hpnsaASRParms 2 }
+
+   hpnsaASRTimeOutInterval OBJECT-TYPE 
+      SYNTAX  INTEGER 
+      ACCESS  read-write 
+      STATUS  mandatory
+      DESCRIPTION
+          " Time out interval used for ASR reboot, if the timer is not
+	  reset/kicked during this interval, system will reboot"
+      ::= { hpnsaASRParms 3 }
+
+   hpnsaASRKickInterval OBJECT-TYPE 
+      SYNTAX  INTEGER  
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+          " This is the fixed interval used to reset/kick the ASR watchdog
+	  timer to avoid the expiration of the timer which will trigger
+	  ASR"
+      ::= { hpnsaASRParms 4 }
+
+   hpnsaASRTimeoutAction  OBJECT-TYPE                      
+      SYNTAX DisplayString
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "This specifies the action that will be executed when the ASR 
+         timeout occurs, it can be no action - only logging, hard reset,
+	 or power cycle"
+      ::= {hpnsaASRParms 5}
+END

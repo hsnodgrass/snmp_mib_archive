@@ -1,0 +1,2404 @@
+-- ************************************************************************
+-- APPACCELERATION-STATUS-MIB.txt: Citrix Systems Application Acceleration
+--                                 System Status MIB
+--
+--
+-- Copyright (c) 2004-2013 by Citrix Systems, Inc.
+-- All rights reserved.
+--
+-- ************************************************************************
+--
+                                                                                
+APPACCELERATION-STATUS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MODULE-IDENTITY
+        FROM SNMPv2-SMI
+    InetAddress, InetAddressType, InetAddressPrefixLength
+        FROM INET-ADDRESS-MIB
+    AppAccelerationAlarmSeverity,
+    AppAccelerationSeqNum,
+    AppAccelerationYesNo,
+    AppAccelerationDescription
+        FROM APPACCELERATION-TC
+    appAccelerationMgmt,
+    appAccelerationNotifications
+        FROM APPACCELERATION-SMI;
+
+appAccelerationStatusMIB MODULE-IDENTITY
+    LAST-UPDATED    "201310110000Z"
+    ORGANIZATION    "www.citrix.com"
+    CONTACT-INFO
+            "       Citrix Systems, Inc.
+                                                                                
+            Postal: 851 West Cypress Creek Road
+                    Fort Lauderdale, Florida  33309
+                    United States"
+
+    DESCRIPTION
+        "This module defines the status variables that can be
+         retrieved from a Citrix Application Acceleration unit.
+        "
+    ::= { appAccelerationMgmt 1 }
+
+--
+-- Base assignments
+--
+
+wsStatusMIBObjects        OBJECT IDENTIFIER ::= { appAccelerationStatusMIB 1 }
+wsStatusMIBNotifications  OBJECT IDENTIFIER ::= { appAccelerationNotifications 1 }
+wsStatusMIBConformance    OBJECT IDENTIFIER ::= { appAccelerationStatusMIB 2 }
+
+--
+-- Status Scalars 
+--
+wsStatusMIBScalars        OBJECT IDENTIFIER ::= { wsStatusMIBObjects 1 }
+
+wsOperStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+        active(1),
+        busy(100),
+        down(101),
+        licenseExpired(102),
+        bypassTraffic(103)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The current operational state of the unit."
+    ::= { wsStatusMIBScalars 1 }
+
+
+wsLoad1Min OBJECT-TYPE
+    SYNTAX  INTEGER
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+	"The 1 minute load average that is also available in the
+         Unix TOP or UPTIME commands. It reports the average number
+         of processes ready to be run. The value is computed by
+	 taking the load average value and multiplying it by 100,
+	 then converting the value to an integer."
+    ::= { wsStatusMIBScalars 2 }
+
+wsLoad5Min OBJECT-TYPE
+    SYNTAX  INTEGER
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+	"The 5 minute load average that is also available in the
+         Unix TOP or UPTIME commands. It reports the average number
+         of processes ready to be run. The value is computed by
+	 taking the load average value and multiplying it by 100,
+	 then converting the value to an integer."
+    ::= { wsStatusMIBScalars 3 }
+
+wsLoad15Min OBJECT-TYPE
+    SYNTAX  INTEGER
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+	"The 15 minute load average that is also available in the
+         Unix TOP or UPTIME commands. It reports the average number
+         of processes ready to be run. The value is computed by
+	 taking the load average value and multiplying it by 100,
+	 then converting the value to an integer."
+    ::= { wsStatusMIBScalars 4 }
+
+wsBypass OBJECT-TYPE
+    SYNTAX  INTEGER {
+        normal(1),
+        bypass(2)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Traffic processing status. 
+         This is also available in the GUI Features page.
+        "
+    ::= { wsStatusMIBScalars 5 }
+
+wsLastAlarmSeqNum OBJECT-TYPE
+    SYNTAX  AppAccelerationSeqNum
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The value of the alarm sequence number for the last alarm generated
+         as a trap."
+    ::= { wsStatusMIBScalars 6 }
+
+wsBoostStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+        hardboost(1),
+        softboost(2)
+    }
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+        "The selected boost mode. This is also available in the 
+         GUI Bandwidth Management page.
+        "
+    ::= { wsStatusMIBScalars 7 }
+
+wsBandwidthMode OBJECT-TYPE
+    SYNTAX  INTEGER {
+        full(1),
+        partial(2)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The selected bandwidth usage. This is also available in the 
+         GUI Bandwidth Management page.
+        "
+    ::= { wsStatusMIBScalars 8 }
+
+wsBandwidthLimit OBJECT-TYPE
+    SYNTAX  INTEGER
+    UNITS      "K-Bits/sec"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Send bandwidth limit. This is also available
+         in the GUI Bandwidth Management page.
+        "
+    ::= { wsStatusMIBScalars 9 }
+
+wsWanOutOctets OBJECT-TYPE
+    SYNTAX  Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of accelerated octets transmitted on the WAN side.  
+         This is also available in the GUI Usage Graph page.
+        "
+    ::= { wsStatusMIBScalars 10 }
+
+wsWanInOctets OBJECT-TYPE
+    SYNTAX  Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of accelerated octets received on the WAN side. 
+         This is also available in the GUI Usage Graph page.
+        "
+    ::= { wsStatusMIBScalars 11}
+
+wsLanOutOctets OBJECT-TYPE
+    SYNTAX  Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of accelerated octets transmitted on the LAN side.  
+         This is also available in the GUI Usage Graph page.
+        "
+    ::= { wsStatusMIBScalars 12}
+
+wsLanInOctets OBJECT-TYPE
+    SYNTAX  Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of accelerated octets received on the LAN side.  
+         This is also available in the GUI Usage Graph page.
+        "
+    ::= { wsStatusMIBScalars 13}
+
+wsCompressionEffectiveBandwidth OBJECT-TYPE
+    SYNTAX  INTEGER
+    UNITS      "K-Bits/sec"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The equivalent throughput before compression.  
+         This is also available in the GUI Compression
+         Status page. This variable may be reset from
+         the above web page.
+        "
+    ::= { wsStatusMIBScalars 14}
+
+wsSendCompressionRatio OBJECT-TYPE
+    SYNTAX  INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Average send compression rate per 1000 octets,
+         e.g. 3500 means 3.5 to 1 compression.
+         This is also available in the GUI Compression
+         Status page. This variable may be reset from
+         the above web page.
+        "  
+    ::= { wsStatusMIBScalars 15}
+
+wsReceiveCompressionRatio OBJECT-TYPE
+    SYNTAX  INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Average receive compression rate per 1000 octets, 
+         e.g. 3500 means 3.5 to 1 compression.
+         This is also available in the GUI Compression
+         Status page. This variable may be reset from
+         the above web page.
+        "  
+    ::= { wsStatusMIBScalars 16}
+
+wsCompressionStatsCollectionTime OBJECT-TYPE
+    SYNTAX  TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The number of centiseconds (0.01 seconds) since the start 
+         of the compression statistics collection. This is also
+         available in the GUI Compression Status page.
+         This variable may be reset from the above web page.
+        "
+    ::= { wsStatusMIBScalars 17}
+
+wsAcceleratedConnections OBJECT-TYPE
+    SYNTAX  INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of current accelerated (active + inactive) connections. 
+         This is also available in the GUI System Status page.
+        "  
+    ::= { wsStatusMIBScalars 18}
+
+wsNonAcceleratedConnections OBJECT-TYPE
+    SYNTAX  INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of current non-accelerated connections. 
+         This is also available in the GUI System Status page.
+        "  
+    ::= { wsStatusMIBScalars 19}
+
+wsHaState OBJECT-TYPE
+    SYNTAX  INTEGER {
+        standalone (0),
+        primary (1),
+        secondary (2),
+        restarting (3),
+        starting (4),
+        invalid (5)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "High availability state of the unit.
+         This is also available in the GUI High Availability page.
+        "  
+    ::= { wsStatusMIBScalars 20}
+
+wsHaVmIp OBJECT-TYPE
+    SYNTAX  IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Virtual Management IP Address used in HA setup.
+         This is also available in the GUI High Availability page.
+        "  
+    ::= { wsStatusMIBScalars 21}
+
+wsHaSecondaryIp OBJECT-TYPE
+    SYNTAX  IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "When retrieved from the primary unit (in HA configuration),
+         this is the IP Address of the secondary unit.
+         When retrieved from a secondary or standalone unit,
+         this is 0.0.0.0.
+         This is also available in the GUI High Availability page.
+        "  
+    ::= { wsStatusMIBScalars 22}
+
+wsPrimaryIp OBJECT-TYPE
+    SYNTAX  IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "IP Address of the Primary Port,
+         which is for management data.
+        "  
+    ::= { wsStatusMIBScalars 23}
+
+wsCpuUsage OBJECT-TYPE
+    SYNTAX  INTEGER
+    UNITS      "%"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Averaged percent CPU used by the traffic accelerator
+         in the last minute.
+        "  
+    ::= { wsStatusMIBScalars 24}
+
+wsConnectedPlugIns OBJECT-TYPE
+    SYNTAX  Counter
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Current number of Plug-ins connected to this unit.
+         This is also available in the GUI System Status page.
+        "
+    ::= { wsStatusMIBScalars 25 }
+
+wsMaxPlugIns OBJECT-TYPE
+    SYNTAX  INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The Maximum number of Plug-ins that are allowed to connect
+         to this unit. This is also available in the GUI
+         System Status page.
+        "
+    ::= { wsStatusMIBScalars 26 }
+
+wsQosStatsCollectionTime OBJECT-TYPE
+    SYNTAX  TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The number of centiseconds (0.01 seconds) since the start 
+         of the QoS and ICA statistics collection. This is also
+         available in the GUI QoS Statistics page.
+         This variable may be reset from the above web page.
+        "
+    ::= { wsStatusMIBScalars 27}
+
+wsUpTime OBJECT-TYPE
+    SYNTAX  TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The time (in hundredths of a second) since the unit
+         was last re-initialized.
+        "
+    ::= { wsStatusMIBScalars 28}
+
+wsSerialNumber OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Appliance serial number.
+        "
+    ::= { wsStatusMIBScalars 29}
+
+wsNonAcceleratedVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "1000-Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Total non-accelerated k-bytes received by the unit, on all interfaces.
+        "  
+    ::= { wsStatusMIBScalars 30}
+
+wsActiveConnections OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of active accelerated connections. 
+         This is also available in the GUI System Status page.
+        "  
+    ::= { wsStatusMIBScalars 31}
+
+wsAccelerationStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+        enabled (1),
+        disabled (2)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Traffic acceleration (flow control and compression) status.
+         This is also available in the GUI Features page.
+        "  
+    ::= { wsStatusMIBScalars 32}
+
+wsTrafficShapingStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+        enabled (1),
+        disabled (2)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Traffic shaping (QoS) status.
+         This is also available in the GUI Features page.
+        "  
+    ::= { wsStatusMIBScalars 33}
+
+wsSystemLoad OBJECT-TYPE
+    SYNTAX  INTEGER
+    UNITS      "%"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Load indicator, 100 meant overload.
+        "  
+    ::= { wsStatusMIBScalars 34}
+
+wsWanSendRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The average WAN side send rate in the last minute.
+        "
+    ::= { wsStatusMIBScalars 35 }
+
+wsWanReceiveRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The average WAN side receive rate in the last minute.
+        "
+    ::= { wsStatusMIBScalars 36}
+
+wsLanSendRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The average LAN side send rate in the last minute.
+        "
+    ::= { wsStatusMIBScalars 37 }
+
+wsLanReceiveRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The average LAN side receive rate in the last minute.
+        "
+    ::= { wsStatusMIBScalars 38}
+
+wsNonAcceleratedRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The average non-accelerated traffic rate in the last minute.
+        "  
+    ::= { wsStatusMIBScalars 39}
+
+wsModelNumber OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Appliance model number.
+        "
+    ::= { wsStatusMIBScalars 40}
+
+wsWccpStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+        enabled (1),
+        disabled (2)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "WCCP status.
+         This is also available in the GUI Features page.
+        "  
+    ::= { wsStatusMIBScalars 41}
+
+
+
+--
+-- Status Tables
+--
+wsStatusMIBTables        OBJECT IDENTIFIER ::= { wsStatusMIBObjects 2 }
+
+--
+-- Active alarm table
+--
+
+wsActiveAlarmTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF ActiveAlarmEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of the active alarm entries. This represents the fault
+         conditions that are still active in the unit.
+        "
+    ::= { wsStatusMIBTables 1 }
+
+activeAlarmEntry OBJECT-TYPE
+    SYNTAX     ActiveAlarmEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The active alarm entries that are still valid system faults.
+         RFC2578 (SMIv2) requires this to be not-accessible.
+        "
+    INDEX { wsActiveAlarmIndex }
+    ::= { wsActiveAlarmTable 1 }
+ 
+ActiveAlarmEntry ::= SEQUENCE {
+    wsActiveAlarmIndex            Integer32,
+    wsActiveAlarmSeqNum           AppAccelerationSeqNum,
+    wsActiveAlarmID               OBJECT IDENTIFIER,
+    wsActiveAlarmSeverity         AppAccelerationAlarmSeverity,
+    wsActiveAlarmLogTime          TimeTicks,
+    wsActiveAlarmDesc             AppAccelerationDescription,
+    wsActiveAlarmAcked            AppAccelerationYesNo,
+    wsActiveAlarmServiceAffect    AppAccelerationYesNo
+}
+ 
+wsActiveAlarmIndex OBJECT-TYPE
+    SYNTAX     Integer32 (1..65535)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "An index that uniquely identifies an entry in the
+        active alarm table."
+    ::= { activeAlarmEntry 1 }
+
+wsActiveAlarmSeqNum OBJECT-TYPE
+    SYNTAX     AppAccelerationSeqNum
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The active alarm's sequence number at the time it was
+         generated."
+    ::= { activeAlarmEntry 2 }
+
+wsActiveAlarmID OBJECT-TYPE
+    SYNTAX     OBJECT IDENTIFIER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The OID identifying the actual trap that was generated."
+    ::= { activeAlarmEntry 3 }
+
+wsActiveAlarmSeverity OBJECT-TYPE
+    SYNTAX     AppAccelerationAlarmSeverity
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The alarm severity for the active alarm."
+    ::= { activeAlarmEntry 4 }
+
+wsActiveAlarmLogTime OBJECT-TYPE
+    SYNTAX     TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The value of sysUpTime when the alarm was generated."
+    ::= { activeAlarmEntry 5 }
+
+wsActiveAlarmDesc OBJECT-TYPE
+    SYNTAX     AppAccelerationDescription
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A description for the active alarm."
+    ::= { activeAlarmEntry 6 }
+
+wsActiveAlarmAcked OBJECT-TYPE
+    SYNTAX     AppAccelerationYesNo
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "Identifies if the user has acknowledged the alarm."
+    ::= { activeAlarmEntry 7 }
+
+wsActiveAlarmServiceAffect OBJECT-TYPE
+    SYNTAX     AppAccelerationYesNo
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Identifies if the alarm is service affecting."
+    ::= { activeAlarmEntry 8 }
+
+
+--
+-- Service class statistics table
+--
+
+wsServiceClassStatsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF WsServiceClassStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of service class statistics entries. This contains the 
+         performance statistics separated by service classes.
+        "
+    ::= { wsStatusMIBTables 2 }
+
+wsServiceClassStatsEntry OBJECT-TYPE
+    SYNTAX     WsServiceClassStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Each service class entry contains the performance statistics for
+         one service class.
+        "
+    INDEX { wsServiceClassIndex }
+    ::= { wsServiceClassStatsTable 1 }
+ 
+WsServiceClassStatsEntry ::= SEQUENCE {
+    wsServiceClassIndex                   INTEGER,
+    wsServiceClassName                    DisplayString,
+    wsScsCurrentAcceleratedConnections    INTEGER,
+    wsScsTotalAcceleratedConnections      Counter64,
+    wsScsTotalAcceleratedOctets           Counter64,
+    wsScsTotalNonAcceleratedConnections   Counter64,
+    wsScsTotalNonAcceleratedOctets        Counter64,
+    wsScsTotalPreCompressionOctets        Counter64,
+    wsScsCompressSentOctets               Counter64,
+    wsScsCompressReceivedOctets           Counter64,
+    wsScsPreCompressSentOctets            Counter64,
+    wsScsPreCompressReceivedOctets        Counter64,
+    wsScsSendBWSavings                    INTEGER,
+    wsScsRecvBWSavings                    INTEGER,
+    wsScsSendRecvBWSavings                INTEGER,
+    wsScsSendCompressionRatio             INTEGER,
+    wsScsRecvCompressionRatio             INTEGER,
+    wsScsSendRecvCompressionRatio         INTEGER
+}
+
+wsServiceClassIndex OBJECT-TYPE
+    SYNTAX     INTEGER(1 .. 2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "This is used as an index that uniquely identifies a service class 
+         in the service class statistics table.
+        "
+    ::= { wsServiceClassStatsEntry 1 }
+
+wsServiceClassName OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Name of the service class, e.g. HTTP, FTP, SMTP, CIFS, etc.
+         The list of service classes monitored is defined in the 
+         GUI Configure Settings: Service Class page.
+        "
+    ::= { wsServiceClassStatsEntry 2 }
+
+wsScsCurrentAcceleratedConnections OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Current number of accelerated connections for the
+         service class. This is also available in the
+         GUI Service Class Statistics Detail page. This 
+         counter is reset only on system restart.
+        "
+    ::= { wsServiceClassStatsEntry 3 }
+
+wsScsTotalAcceleratedConnections OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Total number of accelerated connections for the
+         service class. This is also available in the
+         GUI Service Class Statistics Detail page. This 
+         counter is reset only on system restart.
+        "
+    ::= { wsServiceClassStatsEntry 4 }
+
+wsScsTotalAcceleratedOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Total number of accelerated octets for the service class.
+         This is also available in the GUI Service Class Statistics
+         Detail page. This counter is reset only on system restart.
+        "
+    ::= { wsServiceClassStatsEntry 5 }
+
+wsScsTotalNonAcceleratedConnections OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Total number of non-accelerated connections for the
+         service class. This is also available in the
+         GUI Service Class Statistics Detail page. This 
+         counter is reset only on system restart.
+        "
+    ::= { wsServiceClassStatsEntry 6 }
+
+wsScsTotalNonAcceleratedOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Total number of non-accelerated octets for the service class.
+         This is also available in the GUI Service Class Statistics
+         Detail page. This counter is reset only on system restart.
+        "
+    ::= { wsServiceClassStatsEntry 7 }
+
+wsScsTotalPreCompressionOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Total number of accelerated octets for the service class before compression.
+        "
+    ::= { wsServiceClassStatsEntry 8 }
+
+wsScsCompressSentOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of accelerated octets sent for the service class after compression.
+        "
+    ::= { wsServiceClassStatsEntry 9 }
+
+wsScsCompressReceivedOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of accelerated octets received for the service class after compression.
+        "
+    ::= { wsServiceClassStatsEntry 10 }
+
+wsScsPreCompressSentOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of accelerated octets sent for the service class before compression.
+        "
+    ::= { wsServiceClassStatsEntry 11 }
+
+wsScsPreCompressReceivedOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of accelerated octets received for the service class before compression.
+        "
+    ::= { wsServiceClassStatsEntry 12 }
+
+wsScsSendBWSavings OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "%"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "WAN-side send bandwidth savings. 100% meant very high (above 99.5:1) compression.
+         0% meant no compression savings.  The formula is
+         (Pre-compress-send-bytes - Compressed-send-bytes) / Pre-compress-send-bytes * 100%
+        "
+    ::= { wsServiceClassStatsEntry 13 }
+
+wsScsRecvBWSavings OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "%"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "WAN-side receive bandwidth savings. 100% meant very high (above 99.5:1) compression.
+         0% meant no compression savings. The formula is
+         (Pre-compress-received-bytes - Compressed-received-bytes) / Pre-compress-received-bytes * 100%
+        "
+    ::= { wsServiceClassStatsEntry 14 }
+
+wsScsSendRecvBWSavings OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "%"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Combined send and receive bandwidth savings. The formula is
+         (Pre-compress-bytes - Compressed-bytes) / Pre-compress-bytes * 100%
+        "
+    ::= { wsServiceClassStatsEntry 15 }
+
+wsScsSendCompressionRatio OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "WAN-side send compression ratio per 1000 octets,
+         e.g. 3500 means 3.5 to 1 compression.
+        "  
+    ::= { wsServiceClassStatsEntry 16 }
+
+wsScsRecvCompressionRatio OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "WAN-side receive compression ratio per 1000 octets,
+         e.g. 3500 means 3.5 to 1 compression.
+        "
+    ::= { wsServiceClassStatsEntry 17 }
+
+wsScsSendRecvCompressionRatio OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Combined send and receive compression ratio per 1000 octets,
+         e.g. 3500 means 3.5 to 1 compression.
+        "  
+    ::= { wsServiceClassStatsEntry 18 }
+
+
+--
+-- Quality Of Service statistics table
+--
+
+wsQosTrafficClassStatsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF WsQosTcStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     deprecated
+    DESCRIPTION
+        "A list of QoS traffic class statistics.
+        "
+    ::= { wsStatusMIBTables 3 }
+
+wsQosTcStatsEntry OBJECT-TYPE
+    SYNTAX     WsQosTcStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     deprecated
+    DESCRIPTION
+        "Each entry contains performance statistics for one QoS traffic class.
+        "
+    INDEX { wsQosIndex }
+    ::= { wsQosTrafficClassStatsTable 1 }
+ 
+WsQosTcStatsEntry ::= SEQUENCE {
+    wsQosIndex                   INTEGER,
+    wsQosName                    DisplayString,
+    wsQosConfiguredSendRatio     INTEGER,
+    wsQosSentVolume              Counter64,
+    wsQosActualSendRatio         INTEGER
+}
+
+wsQosIndex OBJECT-TYPE
+    SYNTAX     INTEGER(1 .. 2147483647)
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+        "This index uniquely identifies a QoS traffic class
+         in the QoS traffic class statistics table.
+        "
+    ::= { wsQosTcStatsEntry 1 }
+
+wsQosName OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+        "Name of the QoS traffic class, which is defined in the 
+         GUI Configure Settings: QoS page.
+        "
+    ::= { wsQosTcStatsEntry 2 }
+
+wsQosConfiguredSendRatio OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "%"
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+        "The minimum share of the bandwidth configured for this 
+         traffic class. This is also available in the
+         GUI QoS Statistics page.
+        "
+    ::= { wsQosTcStatsEntry 3 }
+
+wsQosSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+        "The total volume of QoS traffic sent for this queue,
+	 measured in 1000-octets. This counter may be reset from the
+         GUI QoS Statistics page. The wsQosStatsCollectionTime 
+         variable indicates when the counter was reset.
+        "
+    ::= { wsQosTcStatsEntry 4 }
+
+wsQosActualSendRatio OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "%"
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+        "The bandwidth used by this traffic class. This is calculated
+         using the wsQosSentVolume for the traffic class divided by
+         the sum of wsQosSentVolume of all traffic classes.
+        "
+    ::= { wsQosTcStatsEntry 5 }
+
+
+--
+-- ICA statistics table
+--
+
+wsIcaStatsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF WsIcaStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of ICA Traffic Presentation Layer statistics.
+        "
+    ::= { wsStatusMIBTables 4 }
+
+wsIcaStatsEntry OBJECT-TYPE
+    SYNTAX     WsIcaStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Each entry contains the performance statistics for one ICA priority.
+        "
+    INDEX { wsIcaIndex }
+    ::= { wsIcaStatsTable 1 }
+ 
+WsIcaStatsEntry ::= SEQUENCE {
+    wsIcaIndex                   INTEGER,
+    wsIcaServiceName             DisplayString,
+    wsIcaPriority                INTEGER,
+    wsIcaSentVolume              Counter64,
+    wsIcaSentRatio               INTEGER,
+    wsIcaReceivedVolume          Counter64,
+    wsIcaReceivedRatio           INTEGER,
+    wsIcaSendRate                INTEGER,
+    wsIcaReceiveRate             INTEGER
+}
+
+wsIcaIndex OBJECT-TYPE
+    SYNTAX     INTEGER(1 .. 2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "This is used as an index that uniquely identifies an ICA service
+         in the ICA Traffic Presentation Layer statistics table.
+        "
+    ::= { wsIcaStatsEntry 1 }
+
+wsIcaServiceName OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Name of the ICA service, which is also in the GUI QoS Statistics
+         page,  Citrix ICA Traffic Presentation Layer Statistics section.
+        "
+    ::= { wsIcaStatsEntry 2 }
+
+wsIcaPriority OBJECT-TYPE
+    SYNTAX  INTEGER {
+        high(0),
+        medium(1),
+        low(2),
+        background(3),
+        notApplicable(9999)
+    }
+    MAX-ACCESS read-only
+    STATUS     deprecated
+    DESCRIPTION
+        "The ICA Priorities: high is for realtime traffic,
+         medium is for interactive traffic, low is for bulk transfer traffic,
+         background is for the lowest priority traffic.
+         This is no longer applicable starting from release 6.0.
+        "
+    ::= { wsIcaStatsEntry 3 }
+
+wsIcaSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent for this ICA applications
+	 measured in 1000-octets. This counter may be reset from the
+         GUI QoS Statistics page.
+        "
+    ::= { wsIcaStatsEntry 4 }
+
+wsIcaSentRatio OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "%"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The sent volume as a percent share of the different ICA applications.
+        "
+    ::= { wsIcaStatsEntry 5 }
+
+wsIcaReceivedVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic received for this ICA application,
+         measured in 1000-octets. This counter may be reset from the
+         GUI QoS Statistics page.
+        "
+    ::= { wsIcaStatsEntry 6 }
+
+wsIcaReceivedRatio OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "%"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The received volume as a percent share of the different priority of the
+         service. This counter may be reset from the GUI QoS Statistics page.
+        "
+    ::= { wsIcaStatsEntry 7 }
+
+wsIcaSendRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The last minute send rate of this ICA application.
+        "
+    ::= { wsIcaStatsEntry 8 }
+
+wsIcaReceiveRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The last minute receive rate of this ICA application.
+        "
+    ::= { wsIcaStatsEntry 9 }
+
+
+--
+-- Adapter configuration table
+--
+
+wsAdapterTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF WsAdapterEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of adapters configured for the unit. It is also in the GUI IP Address page.
+        "
+    ::= { wsStatusMIBTables 5 }
+
+wsAdapterEntry OBJECT-TYPE
+    SYNTAX     WsAdapterEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Each entry contains performance statistics for one ADAPTER.
+        "
+    INDEX { wsAdapterIndex }
+    ::= { wsAdapterTable 1 }
+ 
+WsAdapterEntry ::= SEQUENCE {
+    wsAdapterIndex            INTEGER,
+    wsAdapterName             DisplayString,
+    wsAdapterEnabled          INTEGER,
+    wsAdapterIp               IpAddress,
+    wsAdapterNetmask          IpAddress,
+    wsAdapterGateway          IpAddress,
+    wsAdapterVirtualIp        IpAddress,
+    wsAdapterVLanEnabled      INTEGER,
+    wsAdapterVLanGroup        INTEGER
+}
+
+wsAdapterIndex OBJECT-TYPE
+    SYNTAX     INTEGER(1 .. 2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "This is used as an index that uniquely identifies an adapter.
+        "
+    ::= { wsAdapterEntry 1 }
+
+wsAdapterName OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Adapter name.
+        "
+    ::= { wsAdapterEntry 2 }
+
+wsAdapterEnabled OBJECT-TYPE
+    SYNTAX     INTEGER { enabled(1), disabled(2) }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Adapter state.
+        "
+    ::= { wsAdapterEntry 3 }
+
+wsAdapterIp OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Adapter IP address.
+        "
+    ::= { wsAdapterEntry 4 }
+
+wsAdapterNetmask OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Adapter network mask.
+        "
+    ::= { wsAdapterEntry 5 }
+
+wsAdapterGateway OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Adapter gateway.
+        "
+    ::= { wsAdapterEntry 6 }
+
+wsAdapterVirtualIp OBJECT-TYPE
+    SYNTAX     IpAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        " HA virtual IP address.
+        "
+    ::= { wsAdapterEntry 7 }
+
+wsAdapterVLanEnabled OBJECT-TYPE
+    SYNTAX     INTEGER { enabled(1), disabled(2) }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        " VLAN state.
+        "
+    ::= { wsAdapterEntry 8 }
+
+wsAdapterVLanGroup OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        " VLAN group ID.
+        "
+    ::= { wsAdapterEntry 9 }
+
+
+--
+-- Link statistics table
+--
+
+wsLinkStatsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF LinkStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of link statistics.
+        "
+    ::= { wsStatusMIBTables 6 }
+
+linkStatsEntry OBJECT-TYPE
+    SYNTAX     LinkStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Each entry contains the performance statistics for
+         one link.
+        "
+    INDEX { linkIndex }
+    ::= { wsLinkStatsTable 1 }
+ 
+LinkStatsEntry ::= SEQUENCE {
+    linkIndex                   INTEGER,
+    linkName                    DisplayString,
+    linkSentVolume              Counter64,
+    linkReceivedVolume          Counter64,
+    linkSentPackets             Counter64,
+    linkReceivedPackets         Counter64,
+    linkDroppedSentVolume       Counter64,
+    linkDroppedReceivedVolume   Counter64,
+    linkDroppedSentPackets      Counter64,
+    linkDroppedReceivedPackets  Counter64
+}
+
+linkIndex OBJECT-TYPE
+    SYNTAX     INTEGER(1 .. 2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "This index uniquely identifies a link in the
+         link statistics table.
+        "
+    ::= { linkStatsEntry 1 }
+
+linkName OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Name of the link.
+        "
+    ::= { linkStatsEntry 2 }
+
+linkSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { linkStatsEntry 3 }
+
+linkReceivedVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic received on the link, measured
+         in 1000-octets.
+        "
+    ::= { linkStatsEntry 4 }
+
+linkSentPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets sent on the link.
+        "
+    ::= { linkStatsEntry 5 }
+
+linkReceivedPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets received on the link.
+         in 1000-octets.
+        "
+    ::= { linkStatsEntry 6 }
+
+linkDroppedSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total traffic not sent on the link due to QoS threshold,
+         measured in 1000-octets.
+        "
+    ::= { linkStatsEntry 7 }
+
+linkDroppedReceivedVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total received traffic dropped from the link due to QoS threshold,
+         measured in 1000-octets.
+        "
+    ::= { linkStatsEntry 8 }
+
+linkDroppedSentPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets not sent on the link due to QoS threshold.
+        "
+    ::= { linkStatsEntry 9 }
+
+linkDroppedReceivedPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of received packets dropped from the link
+         due to QoS threshold.
+        "
+    ::= { linkStatsEntry 10 }
+
+
+--
+-- Application statistics table
+--
+
+wsAppStatsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF AppStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of link statistics.
+        "
+    ::= { wsStatusMIBTables 7 }
+
+appStatsEntry OBJECT-TYPE
+    SYNTAX     AppStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Each entry contains the performance statistics for
+         one application on one link.
+        "
+    INDEX { appIndex }
+    ::= { wsAppStatsTable 1 }
+ 
+AppStatsEntry ::= SEQUENCE {
+    appIndex                   INTEGER,
+    appName                    DisplayString,
+    appId                      INTEGER,
+    appParentId                INTEGER,
+    appGroupId                 INTEGER,
+    appSentVolume              Counter64,
+    appReceivedVolume          Counter64,
+    appSentPackets             Counter64,
+    appReceivedPackets         Counter64,
+    appDroppedSentVolume       Counter64,
+    appDroppedReceiveVolume    Counter64,
+    appDroppedSentPackets      Counter64,
+    appDroppedReceivedPackets  Counter64,
+    appSendRate                INTEGER,
+    appReceiveRate             INTEGER
+}
+
+appIndex OBJECT-TYPE
+    SYNTAX     INTEGER(1 .. 2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "This index uniquely identifies one application on a link.
+        "
+    ::= { appStatsEntry 1 }
+
+appName OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Name of the link.
+        "
+    ::= { appStatsEntry 2 }
+
+appId OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Unique ID for application.
+        "
+    ::= { appStatsEntry 3 }
+
+appParentId OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Parent application ID.
+        "
+    ::= { appStatsEntry 4 }
+
+appGroupId OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Bit mask, indicating the group which this application belong to.
+        "
+    ::= { appStatsEntry 5 }
+
+appSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { appStatsEntry 6 }
+
+appReceivedVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { appStatsEntry 7 }
+
+appSentPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { appStatsEntry 8 }
+
+appReceivedPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link,
+         in 1000-octets.
+        "
+    ::= { appStatsEntry 9 }
+
+appDroppedSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total traffic not sent on the link due to QoS threshold,
+         in 1000-octets.
+        "
+    ::= { appStatsEntry 10 }
+
+appDroppedReceiveVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total received traffic dropped from the link due to QoS threshold,
+         in 1000-octets.
+        "
+    ::= { appStatsEntry 11 }
+
+appDroppedSentPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets not sent on the link due to QoS threshold.
+        "
+    ::= { appStatsEntry 12 }
+
+appDroppedReceivedPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of received packets dropped from the link
+         due to QoS threshold.
+        "
+    ::= { appStatsEntry 13 }
+
+appSendRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The last minute send rate of this application.
+        "
+    ::= { appStatsEntry 14 }
+
+appReceiveRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The last minute receive rate of this application.
+        "
+    ::= { appStatsEntry 15 }
+
+
+--
+-- Link level quality of service statistics table
+--
+
+wsQosStatsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF QosStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of QoS traffic class statistics.
+        "
+    ::= { wsStatusMIBTables 8 }
+
+qosStatsEntry OBJECT-TYPE
+    SYNTAX     QosStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Each entry contains the performance statistics for
+         one QoS traffic class.
+        "
+    INDEX { qosIndex }
+    ::= { wsQosStatsTable 1 }
+ 
+QosStatsEntry ::= SEQUENCE {
+    qosIndex                   INTEGER,
+    qosPolicyName              DisplayString,
+    qosLink                    DisplayString,
+    qosSentVolume              Counter64,
+    qosReceiveVolume           Counter64,
+    qosSentPackets             Counter64,
+    qosReceivedPackets         Counter64,
+    qosDroppedSentVolume       Counter64,
+    qosDroppedReceiveVolume    Counter64,
+    qosDroppedSentPackets      Counter64,
+    qosDroppedReceivedPackets  Counter64
+}
+
+qosIndex OBJECT-TYPE
+    SYNTAX     INTEGER(1 .. 2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "This index uniquely identifies a QoS traffic class
+         in the QoS traffic class statistics table.
+        "
+    ::= { qosStatsEntry 1 }
+
+qosPolicyName OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Name of the QoS Policy.
+        "
+    ::= { qosStatsEntry 2 }
+
+qosLink OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Name of the link.
+        "
+    ::= { qosStatsEntry 3 }
+
+qosSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { qosStatsEntry 4 }
+
+qosReceiveVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { qosStatsEntry 5 }
+
+qosSentPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { qosStatsEntry 6 }
+
+qosReceivedPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link,
+         in 1000-octets.
+        "
+    ::= { qosStatsEntry 7 }
+
+qosDroppedSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total traffic not sent on the link due to QoS threshold,
+         in 1000-octets.
+        "
+    ::= { qosStatsEntry 8 }
+
+qosDroppedReceiveVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total received traffic dropped from the link due to QoS threshold,
+         in 1000-octets.
+        "
+    ::= { qosStatsEntry 9 }
+
+qosDroppedSentPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets not sent on the link due to QoS threshold.
+        "
+    ::= { qosStatsEntry 10 }
+
+qosDroppedReceivedPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of received packets dropped from the link
+         due to QoS threshold.
+        "
+    ::= { qosStatsEntry 11 }
+
+
+--
+-- Link level service class statistics table
+--
+
+wsLscStatsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF LscStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of link level service class statistics.
+        "
+    ::= { wsStatusMIBTables 9 }
+
+lscStatsEntry OBJECT-TYPE
+    SYNTAX     LscStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Each entry contains the performance statistics for
+         one link level service class.
+        "
+    INDEX { lscIndex }
+    ::= { wsLscStatsTable 1 }
+ 
+LscStatsEntry ::= SEQUENCE {
+    lscIndex                   INTEGER,
+    lscServiceClassName        DisplayString,
+    lscLink                    DisplayString,
+    lscSentVolume              Counter64,
+    lscReceivedVolume          Counter64,
+    lscSentPackets             Counter64,
+    lscReceivedPackets         Counter64,
+    lscDroppedSentVolume       Counter64,
+    lscDroppedReceiveVolume    Counter64,
+    lscDroppedSentPackets      Counter64,
+    lscDroppedReceivedPackets  Counter64
+}
+
+lscIndex OBJECT-TYPE
+    SYNTAX     INTEGER(1 .. 2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "This index is used to identify the link statistics 
+         within a service class.
+        "
+    ::= { lscStatsEntry 1 }
+
+lscServiceClassName OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Name of the service class, e.g. HTTP, FTP, SMTP, CIFS, etc.
+         The list of service classes monitored is defined in the 
+         GUI Configure Settings: Service Class page.
+        "
+    ::= { lscStatsEntry 2 }
+
+lscLink OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Name of the link.
+        "
+    ::= { lscStatsEntry 3 }
+
+lscSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { lscStatsEntry 4 }
+
+lscReceivedVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { lscStatsEntry 5 }
+
+lscSentPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link, measured
+         in 1000-octets.
+        "
+    ::= { lscStatsEntry 6 }
+
+lscReceivedPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total volume of traffic sent on the link,
+         in 1000-octets.
+        "
+    ::= { lscStatsEntry 7 }
+
+lscDroppedSentVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total traffic not sent on the link due to QoS threshold,
+         in 1000-octets.
+        "
+    ::= { lscStatsEntry 8 }
+
+lscDroppedReceiveVolume OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "K-octets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total received traffic dropped from the link due to QoS threshold,
+         in 1000-octets.
+        "
+    ::= { lscStatsEntry 9 }
+
+lscDroppedSentPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets not sent on the link due to QoS threshold.
+        "
+    ::= { lscStatsEntry 10 }
+
+lscDroppedReceivedPackets OBJECT-TYPE
+    SYNTAX     Counter64
+    UNITS      "Packets"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of received packets dropped from the link
+         due to QoS threshold.
+        "
+    ::= { lscStatsEntry 11 }
+
+
+--
+-- Repeater partner table
+--
+
+wsPartnerTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF PartnerEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of CloudBridge partners
+        "
+    ::= { wsStatusMIBTables 10 }
+
+partnerEntry OBJECT-TYPE
+    SYNTAX     PartnerEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Each row contains information on one partner unit."
+    INDEX { partnerAddrType, partnerAddr }
+    ::= { wsPartnerTable 1 }
+ 
+PartnerEntry ::= SEQUENCE {
+    partnerAddrType            InetAddressType,
+    partnerAddr                InetAddress,
+    partnerConnections         INTEGER,
+    partnerSendRate            INTEGER,
+    partnerReceiveRate         INTEGER,
+    partnerIdleTime            TimeTicks
+}
+
+partnerAddrType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Format of partnerAddr, IPv4 or IPv6.
+         See RFC4001 for InetAddressType and InetAddress usage.
+        "
+    ::= { partnerEntry 1}
+
+partnerAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Partner IP address."
+    ::= { partnerEntry 2}
+
+partnerConnections OBJECT-TYPE
+    SYNTAX     INTEGER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Number of accelerated connections to partner."
+    ::= { partnerEntry 3}
+
+partnerSendRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The last minute send rate to partner."
+    ::= { partnerEntry 4}
+
+partnerReceiveRate OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "bps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The last minute receive rate from partner."
+    ::= { partnerEntry 5}
+
+partnerIdleTime OBJECT-TYPE
+    SYNTAX     TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Time where no traffic flows between this partner."
+    ::= { partnerEntry 6}
+
+
+--
+-- Notifications
+--
+
+wsHAMasterIpAddr OBJECT-TYPE
+    SYNTAX       IpAddress
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The master router's real (primary) IP address. This is
+        the IP address listed as the source in VRRP advertisement
+        last received by this virtual router."
+    ::= { wsStatusMIBObjects 3 }
+
+wsSourceIpAddr OBJECT-TYPE
+    SYNTAX       IpAddress
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        " The IP address of the source of Alert.
+        "
+    ::= { wsStatusMIBObjects 5 }
+
+
+wsStatusMIBAlertTables        OBJECT IDENTIFIER ::= { wsStatusMIBObjects 4 }
+
+wsAlertAction OBJECT-TYPE
+    SYNTAX  INTEGER {
+      oneShot(0),
+      set(1),
+      reset(2),
+      expired(3)
+    }
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Action of the alert."
+    ::= { wsStatusMIBAlertTables 1 }
+
+wsAlertClass OBJECT-TYPE
+    SYNTAX  INTEGER {
+      slowLossRate(0),
+      fastLossRate(1),
+      connectionStalled(2),
+      connectionTimeout(3),
+      connectionInvalid(4),
+      nicHalfDuplex(5),
+      arpTimeout(6),
+      badLicense(7),
+      limitExceeded(8),
+      asymmetric(9),
+      badPackets(10),
+      lowOnCpu(11),
+      lowOnMemory(12),
+      internal(13),
+      restartRequired(14),
+      vridNotSet(15),
+      haConfigurationChanged(16),
+      haNoSecondary(17),
+      haPairCommError(18),
+      haNotCapable(19),
+      haPeerVersion(20),
+      compressionError(21),
+      bwTypeMismatch(22),
+      cpuPegged(23),
+      lowOnVm(24),
+      numSlowRtosExceeded(25),
+      numFastRtosExceeded(26),
+      numBootoutsExceeded(27),
+      numRewindsExceeded(28),
+      diskDriveFailing(29),
+      diskDriveDegraded(30),
+      diskDriveFailed(31),
+      groupModeError(32),
+      nicBypassEvent(33),
+      haMisMatchVmip(34),
+      diskFragmented(35),
+      redirectorModeSyn(36),
+      unreachable(37),
+      dnsLookup(38),
+      redirectorModeFailure(39),
+      applianceInTheMiddle(40),
+      internalCritical(41),
+      internalMajor(42),
+      internalMinor(43),
+      internalWarning(44),
+      wccpMajor(45),
+      wccpMinor(46),
+      wccpWarning(47),
+      driverHung(48),
+      signalingChannelError(49),
+      scpsError(50),
+      plugInNearLimit(51),
+      sslError(52),
+      haDispositionError(53),
+      haVIPNotSet(54),
+      vlanNotSupported(55),
+      tooManyBadTcpChecksum(56),
+      invalidGateway(57),
+      haPeerKeyStoreLocked(58),
+      sslProxyMajor(59),
+      sslProxyMinor(60),
+      sslProxyWarning(61),
+      sslTunnelMajor(62),
+      sslTunnelMinor(63),
+      sslTunnelWarning(64),
+      excessiveIpFragments(65),
+      userAccountLocked(66),
+      smb2AccelerationFailure(67),
+      invalidBridgeConfig(68),
+      invalidHttpCachingConfigFile(69),
+      qosEngineError(70),
+      mapiNtlmError(71),
+      ethernetCrcError(72),
+      qosLinkConfigError(73),
+      maxUnacceleratedConnectionsExceeded(74),
+      badHardware(75)
+    }
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Class of the alert."
+    ::= { wsStatusMIBAlertTables 2 }
+
+wsAlertMsg OBJECT-TYPE
+    SYNTAX       AppAccelerationDescription
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Message of the alert."
+    ::= { wsStatusMIBAlertTables 3 }
+
+wsNotifyStart     NOTIFICATION-TYPE
+    OBJECTS        { wsActiveAlarmSeverity,
+                     wsActiveAlarmSeqNum,
+                     wsActiveAlarmDesc,
+                     wsActiveAlarmServiceAffect,
+                     wsPrimaryIp
+                   }
+    STATUS         current
+    DESCRIPTION
+        "An indication that the agent has started running."
+    ::= { wsStatusMIBNotifications 1 }
+
+wsNotifyShutdown  NOTIFICATION-TYPE
+    OBJECTS        { wsActiveAlarmSeverity,
+                     wsActiveAlarmSeqNum,
+                     wsActiveAlarmDesc,
+                     wsActiveAlarmServiceAffect,
+                     wsPrimaryIp
+                   }
+    STATUS         current
+    DESCRIPTION
+        "An indication that the agent is in the process of being shutdown."
+    ::= { wsStatusMIBNotifications 2 }
+
+wsNotifyRestart   NOTIFICATION-TYPE
+    OBJECTS        { wsActiveAlarmSeverity,
+                     wsActiveAlarmSeqNum,
+                     wsActiveAlarmDesc,
+                     wsActiveAlarmServiceAffect
+                   }
+    STATUS         deprecated
+    DESCRIPTION
+        "An indication that the agent has been restarted."
+    ::= { wsStatusMIBNotifications 3 }
+
+wsHANotifyNewMaster NOTIFICATION-TYPE
+    OBJECTS        { wsActiveAlarmSeverity,
+                     wsActiveAlarmSeqNum,
+                     wsActiveAlarmDesc,
+                     wsActiveAlarmServiceAffect,
+                     wsHAMasterIpAddr,
+                     wsPrimaryIp
+                   }
+    STATUS         current
+    DESCRIPTION
+        "The newMaster trap indicates that the sending agent
+        has transitioned to 'Master' state."
+    ::= { wsStatusMIBNotifications 4 }
+
+
+wsNotifyAvailBWChange NOTIFICATION-TYPE
+    OBJECTS        { wsActiveAlarmSeverity,
+                     wsActiveAlarmSeqNum,
+                     wsActiveAlarmDesc,
+                     wsActiveAlarmServiceAffect
+                   }
+    STATUS         deprecated
+    DESCRIPTION
+        "And indication that available BW Has Changed"
+    ::= { wsStatusMIBNotifications 5 }
+
+wsNotifyUnexpectedRestart   NOTIFICATION-TYPE
+    OBJECTS        { wsActiveAlarmSeverity,
+                     wsActiveAlarmSeqNum,
+                     wsActiveAlarmDesc,
+                     wsActiveAlarmServiceAffect,
+                     wsPrimaryIp
+                   }
+    STATUS         current
+    DESCRIPTION
+        "An indication that the agent has been unexpectedly restarted."
+    ::= { wsStatusMIBNotifications 6 }
+
+wsNotifyPersistentError  NOTIFICATION-TYPE
+    OBJECTS        { wsActiveAlarmSeverity,
+                     wsActiveAlarmSeqNum,
+                     wsActiveAlarmDesc,
+                     wsActiveAlarmServiceAffect,
+                     wsPrimaryIp
+                   }
+    STATUS         current
+    DESCRIPTION
+        "The unit is experiencing a persistent internal error."
+    ::= { wsStatusMIBNotifications 7 }
+
+wsNotifyAlert  NOTIFICATION-TYPE
+    OBJECTS        { wsActiveAlarmSeverity,
+                     wsActiveAlarmSeqNum,
+                     wsActiveAlarmDesc,
+                     wsActiveAlarmServiceAffect,
+                     wsAlertAction,
+                     wsAlertClass,
+                     wsAlertMsg,
+                     wsPrimaryIp
+                   }
+    STATUS         current
+    DESCRIPTION
+        "An alert is generated from the unit."
+    ::= { wsStatusMIBNotifications 8 }
+
+wsNotifyConfigurationChanged  NOTIFICATION-TYPE
+    OBJECTS        { wsActiveAlarmSeverity,
+                     wsActiveAlarmSeqNum,
+                     wsActiveAlarmDesc,
+                     wsActiveAlarmServiceAffect,
+                     wsPrimaryIp
+                   }
+    STATUS         current
+    DESCRIPTION
+        "An indication that the configuration has changed."
+    ::= { wsStatusMIBNotifications 9 }
+
+--
+-- Conformance information 
+--
+
+wsStatusMIBCompliances  OBJECT IDENTIFIER ::= { wsStatusMIBConformance 1 }
+wsStatusMIBGroups       OBJECT IDENTIFIER ::= { wsStatusMIBConformance 2 }
+
+-- Compliance statements 
+
+wsStatusCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION "The compliance statement for agents which
+                 implement appAccelerationStatusMIB.
+                "
+    MODULE
+      MANDATORY-GROUPS {
+                         wsStatusGroup,
+                         wsStatusTrapGroup,
+                         wsStatusNotifyGroup
+                       }
+    ::= { wsStatusMIBCompliances 1 }
+
+--
+-- Units of conformance 
+--
+
+wsStatusGroup OBJECT-GROUP
+    OBJECTS {
+              wsOperStatus,
+              wsLoad1Min,
+              wsLoad5Min,
+              wsLoad15Min,
+              wsBypass,
+              wsLastAlarmSeqNum,
+              wsBoostStatus,
+              wsBandwidthMode,
+              wsBandwidthLimit,
+              wsWanOutOctets,
+              wsWanInOctets,
+              wsLanOutOctets,
+              wsLanInOctets,
+              wsCompressionEffectiveBandwidth,
+              wsSendCompressionRatio,
+              wsReceiveCompressionRatio,
+              wsCompressionStatsCollectionTime,
+              wsAcceleratedConnections,
+              wsNonAcceleratedConnections,
+              wsHaState,
+              wsHaVmIp,
+              wsHaSecondaryIp,
+              wsPrimaryIp,
+              wsCpuUsage,
+              wsConnectedPlugIns,
+              wsMaxPlugIns,
+              wsQosStatsCollectionTime,
+              wsUpTime,
+              wsSerialNumber,
+              wsNonAcceleratedVolume,
+              wsActiveConnections,
+              wsAccelerationStatus,
+              wsTrafficShapingStatus,
+              wsSystemLoad,
+              wsWanSendRate,
+              wsWanReceiveRate,
+              wsLanSendRate,
+              wsLanReceiveRate,
+              wsNonAcceleratedRate,
+              wsModelNumber,
+              wsWccpStatus,
+              wsActiveAlarmIndex,
+              wsActiveAlarmSeqNum,
+              wsActiveAlarmID,
+              wsActiveAlarmSeverity,
+              wsActiveAlarmLogTime,
+              wsActiveAlarmDesc,
+              wsActiveAlarmAcked,
+              wsActiveAlarmServiceAffect,
+              wsServiceClassIndex,
+              wsServiceClassName,
+              wsScsCurrentAcceleratedConnections,
+              wsScsTotalAcceleratedConnections,
+              wsScsTotalAcceleratedOctets,
+              wsScsTotalNonAcceleratedConnections,
+              wsScsTotalNonAcceleratedOctets,
+              wsScsTotalPreCompressionOctets,
+              wsScsCompressSentOctets,
+              wsScsCompressReceivedOctets,
+              wsScsPreCompressSentOctets,
+              wsScsPreCompressReceivedOctets,
+              wsScsSendBWSavings,
+              wsScsRecvBWSavings,
+              wsScsSendRecvBWSavings,
+              wsScsSendCompressionRatio,
+              wsScsRecvCompressionRatio,
+              wsScsSendRecvCompressionRatio,
+              wsQosIndex,
+              wsQosName,
+              wsQosConfiguredSendRatio,
+              wsQosSentVolume,
+              wsQosActualSendRatio,
+              wsIcaIndex,
+              wsIcaServiceName,
+              wsIcaPriority,
+              wsIcaSentVolume,
+              wsIcaSentRatio,
+              wsIcaReceivedVolume,
+              wsIcaReceivedRatio,
+              wsIcaSendRate,
+              wsIcaReceiveRate,
+              wsAdapterIndex,
+              wsAdapterName,
+              wsAdapterEnabled,
+              wsAdapterIp,
+              wsAdapterNetmask,
+              wsAdapterGateway,
+              wsAdapterVirtualIp,
+              wsAdapterVLanEnabled,
+              wsAdapterVLanGroup,
+              linkIndex,
+              linkName,
+              linkSentVolume,
+              linkReceivedVolume,
+              linkSentPackets,
+              linkReceivedPackets,
+              linkDroppedSentVolume,
+              linkDroppedReceivedVolume,
+              linkDroppedSentPackets,
+              linkDroppedReceivedPackets,
+              appIndex,
+              appName,
+              appId,
+              appParentId,
+              appGroupId,
+              appSentVolume,
+              appReceivedVolume,
+              appSentPackets,
+              appReceivedPackets,
+              appDroppedSentVolume,
+              appDroppedReceiveVolume,
+              appDroppedSentPackets,
+              appDroppedReceivedPackets,
+              appSendRate,
+              appReceiveRate,
+              qosIndex,
+              qosPolicyName,
+              qosLink,
+              qosSentVolume,
+              qosReceiveVolume,
+              qosSentPackets,
+              qosReceivedPackets,
+              qosDroppedSentVolume,
+              qosDroppedReceiveVolume,
+              qosDroppedSentPackets,
+              qosDroppedReceivedPackets,
+              lscIndex,
+              lscServiceClassName,
+              lscLink,
+              lscSentVolume,
+              lscReceivedVolume,
+              lscSentPackets,
+              lscReceivedPackets,
+              lscDroppedSentVolume,
+              lscDroppedReceiveVolume,
+              lscDroppedSentPackets,
+              lscDroppedReceivedPackets,
+              partnerAddrType,
+              partnerAddr,
+              partnerConnections,
+              partnerSendRate,
+              partnerReceiveRate,
+              partnerIdleTime
+            }
+    STATUS       current
+    DESCRIPTION "A collection of objects used to retrieve status information
+                "
+    ::= { wsStatusMIBGroups 1 }
+
+wsStatusTrapGroup  OBJECT-GROUP
+    OBJECTS  {
+        wsHAMasterIpAddr, 
+        wsAlertAction, 
+        wsAlertClass, 
+        wsAlertMsg
+        }
+    STATUS current
+    DESCRIPTION
+       "Conformance group for objects contained in VRRP notifications."
+    ::= { wsStatusMIBGroups 2 }
+
+wsStatusNotifyGroup OBJECT-GROUP
+    OBJECTS {
+              wsNotifyStart,
+              wsNotifyShutdown,
+              wsNotifyRestart,
+              wsHANotifyNewMaster,
+              wsNotifyAvailBWChange,
+              wsNotifyUnexpectedRestart,
+              wsNotifyPersistentError,
+              wsNotifyAlert
+            }
+    STATUS       current
+    DESCRIPTION "A collection of the Notifications supported in
+                 the status MIB."
+    ::= { wsStatusMIBGroups 3 }
+
+END

@@ -1,0 +1,470 @@
+ADTRAN-ATLAS-550-MIB  DEFINITIONS ::= BEGIN
+
+-- TITLE:               ATLAS 550 MIB
+-- FILENAME:            at550.MIB
+-- PARTNUMBER:
+-- AUTHOR:              ALEX BURNS
+-- DATE:                06/14/00
+
+-- Adtran ATLAS 550
+
+-- The Adtran JASPER Front Panel Group contains ASN.1 objects that store the
+-- current state of all LEDs on the ATLAS 550 Product.
+
+-- The Adtran JASPER Front Panel Group consists of three sub-groups
+--      System LED Table
+--      Network LED Table
+--      Module LED Table
+
+-- The Adtran products that support this group are:
+--      ATLAS 550
+
+IMPORTS
+    enterprises
+        FROM RFC1155-SMI
+    OBJECT-TYPE
+        FROM RFC-1212;
+--  DisplayString
+--      FROM RFC1213-MIB;
+
+-- OBJECT IDENTIFIERS
+
+adtran          OBJECT IDENTIFIER ::= { enterprises 664 }
+adMgmt          OBJECT IDENTIFIER ::= { adtran 2 }
+adATLAS550mg    OBJECT IDENTIFIER ::= { adMgmt 219 }
+
+adATLAS550Fpnl  OBJECT IDENTIFIER ::= { adATLAS550mg 1 }
+
+-- The LED Groups
+
+
+-- The System LED Table
+
+adATLAS550FpnlSysLeds    OBJECT IDENTIFIER ::= { adATLAS550Fpnl 1 }
+
+-- The Power LED
+
+adATLAS550FpnlPow          OBJECT-TYPE
+    SYNTAX  INTEGER {
+                syson(1),
+                sysoff(2)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates if the unit is powererd on or off.
+
+        The various Power LED states are:
+            Number   State              Status
+              1       ON                GREEN
+              2       OFF               OFF"
+
+    ::= { adATLAS550FpnlSysLeds 1 }
+
+
+-- The System LED
+
+adATLAS550FpnlSys          OBJECT-TYPE
+    SYNTAX  INTEGER {
+                sysok(1),
+                syserr(2),
+                syswarn(3),
+                sysflashupdate(4),
+                sysflasherror(5),
+                sysoff(6),
+                greenslow(7),
+                yellowslow(8),
+                yellowfast(9),
+                redslow(10)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the status of the System LED.  When the
+        System LED changes state, this variable also changes state.
+
+        The various system LED states are:
+            Number  State           Status
+            1       OK              Green
+            2       Error           Red
+            3       Warning         Yellow
+            4       Flash Update    Green Fast
+            5       Flash Error     Red Fast
+            6       Off             Off
+            7       Green Slow      Green Slow    -- Currently not used, but possible in future
+            8       Yellow Slow     Yellow Slow
+            9       Yellow Fast     Yellow Fast
+            10      Red Slow        Red Slow"
+
+    ::= { adATLAS550FpnlSysLeds 2 }
+
+adATLAS550FpnlEth          OBJECT-TYPE
+    SYNTAX  INTEGER  {
+                etheron(1),
+                etheroff(2),
+                etherflashslow(3),
+                etherflashfast(4)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates if the ethernet module is active.  If the
+        unit is not recieving data through a valid ethernet connection,
+        the LED is on.  If data is being recieved the LED will occasionally
+        flash.  If no ethernet connection is established the LED is off.
+
+        The various Ethernet LED states are:
+            Number   State              Status
+              1       ON                GREEN
+              2       OFF               OFF
+              3       Data is passing   Green Slow
+              3       Green Fast        Green Fast"
+
+    ::= { adATLAS550FpnlSysLeds 3 }
+
+adATLAS550FpnlRem          OBJECT-TYPE
+    SYNTAX  INTEGER  {
+                remon(1),
+                remoff(2),
+                remflashslow(3),
+                remflashfast(4)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates if someone is connected to the Atlas 550
+        using a telnet session.
+
+        The various Remote LED states are:
+            Number   State              Status
+              1       ON                YELLOW
+              2       OFF               OFF
+              3       Flash Slow        Yellow Slow
+              4       Flash Fast        Yellow Fast"
+
+    ::= { adATLAS550FpnlSysLeds 4 }
+
+--  The Network Group of LEDs
+
+adATLAS550FpnlNtwkLeds     OBJECT IDENTIFIER  ::= { adATLAS550Fpnl 2 }
+
+-- The Network Led table
+
+adATLAS550FpnlNwTable    OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLAS550FpnlNwEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The Network LED table."
+    ::= { adATLAS550FpnlNtwkLeds 1}
+
+-- The Network Led Entry
+
+adATLAS550FpnlNwEntry      OBJECT-TYPE
+    SYNTAX  AdATLAS550FpnlNwEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the Network Led table."
+    INDEX       { adATLAS550FpnlNwIndex }
+    ::=  { adATLAS550FpnlNwTable 1 }
+
+AdATLAS550FpnlNwEntry  ::=
+    SEQUENCE  {
+        adATLAS550FpnlNwIndex
+                INTEGER,
+        adATLAS550FpnlNwOK
+                INTEGER,
+        adATLAS550FpnlNwTest
+                INTEGER,
+        adATLAS550FpnlNwError
+                INTEGER,
+        adATLAS550FpnlNwAlarm
+                INTEGER
+    }
+
+--  The Network LED table index
+
+adATLAS550FpnlNwIndex      OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates which network slots are active
+        on the ATLAS 550."
+    ::=  { adATLAS550FpnlNwEntry 1 }
+
+--  Network OK led
+
+adATLAS550FpnlNwOK      OBJECT-TYPE
+    SYNTAX  INTEGER  {
+                nwokon(1),
+                nwokflashslow(2),
+                nwokflashfast(3),
+                nwokoff(4)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the status of the network inteface.
+
+        The choices for this variable are
+        Number  State           Status
+        1       OK              Green
+        2       Flash slow      Flash Green Slow
+        3       Flash Fast      Flash green fast
+        4       OFF             OFF"
+
+    ::=  { adATLAS550FpnlNwEntry 2 }
+
+-- Network Test LED
+
+adATLAS550FpnlNwTest      OBJECT-TYPE
+    SYNTAX  INTEGER  {
+                teston(1),
+                testflashslow(2),
+                testflashfast(3),
+                testoff(4)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates if a loopback, test pattern, or
+        self-test is running on the network inteface.
+
+        The choices for this variable are
+        Number  State           Status
+        1       ON              Yellow
+        2       Flash SLOW      Flash yellow slow
+        3       Flash Fast      Flash yellow fast
+        4       OFF             OFF"
+
+    ::=  { adATLAS550FpnlNwEntry 3 }
+
+-- Network Error LED
+
+adATLAS550FpnlNwError      OBJECT-TYPE
+    SYNTAX  INTEGER  {
+                erroron(1),
+                errorflashslow(2),
+                errorflashfast(3),
+                erroroff(4)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates an alarm condition has been
+        detected on the network inteface.
+
+        The choices for this variable are
+        Number  State           Status
+        1       Error           Red
+        2       Flash Slow      Flash Red Slow
+        3       Flash Fast      Flash Red Fast
+        3       No error        OFF"
+
+    ::=  { adATLAS550FpnlNwEntry 4 }
+
+-- Network Alarm LED
+
+adATLAS550FpnlNwAlarm      OBJECT-TYPE
+    SYNTAX  INTEGER  {
+                alarmon(1),
+                alarmflashslow(2),
+                alarmflashfast(3),
+                alarmoff(4)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates an alarm condition has been
+        detected on the network inteface.
+
+        The choices for this variable are
+        Number  State           Status
+        1       Alarm           RED
+        2       Flash Slow      Flash Red Slow
+        3       Flash Fast      Flash Red Fast
+        4       no Alarms       OFF"
+
+    ::=  { adATLAS550FpnlNwEntry 5 }
+
+
+-- The Module LED Group
+
+adATLAS550FpnlModLeds      OBJECT IDENTIFIER ::= { adATLAS550Fpnl 3 }
+
+-- The Number of Modules
+
+adATLAS550FpnlModNumber    OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the number of module slots that are located
+        on the Atlas Product."
+
+    ::= { adATLAS550FpnlModLeds 1 }
+
+-- The Module LED Table
+
+adATLAS550FpnlMLTable     OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLAS550FpnlMLEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The Module LED Table."
+    ::= { adATLAS550FpnlModLeds 2 }
+
+-- The Module LED Entry
+
+adATLAS550FpnlMLEntry     OBJECT-TYPE
+    SYNTAX  AdATLAS550FpnlMLEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the Module LED Table."
+    INDEX       { adATLAS550FpnlMLIndex }
+    ::= { adATLAS550FpnlMLTable 1 }
+
+AdATLAS550FpnlMLEntry ::=
+    SEQUENCE {
+        adATLAS550FpnlMLIndex
+            INTEGER,
+        adATLAS550FpnlMLStatus
+            INTEGER,
+        adATLAS550FpnlMLOnline
+            INTEGER,
+        adATLAS550FpnlMLTest
+            INTEGER
+    }
+
+-- The Index
+adATLAS550FpnlMLIndex    OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the available slots."
+
+     ::= { adATLAS550FpnlMLEntry 1 }
+
+
+-- The Module Status LED
+
+adATLAS550FpnlMLStatus    OBJECT-TYPE
+    SYNTAX  INTEGER {
+                mlstatusok(1),
+                mlstatuswarn(2),
+                mlstatuserr(3),
+                mlstatusflashslowgreen(4),
+                mlstatusflashfastgreen(5),
+                mlstatusflashslowyellow(6),
+                mlstatusflashfastyellow(7),
+                mlstatusflashslowred(8),
+                mlstatusflashfastred(9),
+                mlstatusoff(10)
+                      }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the status of the card located in the slot
+        determined by the MLIndex variable.
+
+        The choices for this variable are
+        Number  State                                           Status
+        1       OK                                              Green
+        2       Warn                                            Yellow
+        3       Error                                           Red
+        4       One module is offline or invalid flash          Flash Slow Green
+        5       Both modules are offline or invalid flah        Flash Fast Green
+        6       Flash Slow Yellow                               Flash Slow Yellow
+        7       Flash Fast Yellow                               Flash Fast Yellow
+        8       One module is not ready                         Flash Slow Red
+        9       One module has not response                     Flash Fast Red
+        10      Off                                             Off"
+
+    ::= { adATLAS550FpnlMLEntry 2 }
+
+-- The Module Online LED
+
+adATLAS550FpnlMLOnline    OBJECT-TYPE
+    SYNTAX  INTEGER {
+                mlonlineon(1),
+                mlonlineflashslow(2),
+                mlonlineflashfast(3),
+                mlonlineoff(4)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates whether the card located in the slot
+        determined by the MLIndex is online or offline.
+
+        The choices for this variable are
+        Number  State                                   Status
+        1       Online                                  Green
+        2       Invalid flash memory                    Flashing Slow Green
+        3       only one module has active connection   Flashing fast Green
+        4       Offline         Off"
+
+    ::= { adATLAS550FpnlMLEntry 3 }
+
+-- The Module Test LED
+
+adATLAS550FpnlMLTest      OBJECT-TYPE
+    SYNTAX  INTEGER {
+                mlteston(1),
+                mltestflash(2),
+                mltestoff(3)
+            }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates whether the card located in the slot
+        determined by the MLIndex is in a test mode or not.
+
+        The choices for this variable are
+        Number  State               Status
+        1       Test in Progress    Yellow
+        2       Flashing            Flashing Yellow
+        3       Off                 Off"
+
+    ::= { adATLAS550FpnlMLEntry 4 }
+
+--______________________________________________________
+-- Atlas 550 Enterprise Specific External Alarm Traps --
+--______________________________________________________
+
+adATLAS550ExtAlarmActive TRAP-TYPE
+        ENTERPRISE     adATLAS550mg
+        DESCRIPTION
+                "This trap indicates that an external alarm has
+                 been activated via the short circuiting of pins on
+                 the RELAY MON connector located on the rear panel
+                 of the Atlas 550."
+        --#TYPE       "Error - External Alarm Active"
+        --#SUMMARY    "ATLAS 21900:  External Alarm Active"
+        --#SEVERITY   MINOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 21900
+
+adATLAS550ExtAlarmInactive TRAP-TYPE
+        ENTERPRISE     adATLAS550mg
+        DESCRIPTION
+                "This trap indicates that an external alarm has
+                 been deactivated via the open circuiting of pins on
+                 the RELAY MON connector located on the rear panel
+                 of the Atlas 550."
+        --#TYPE       "Error - External Alarm Inactive"
+        --#SUMMARY    "ATLAS 21901:  External Alarm Inactive"
+        --#SEVERITY   MINOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 21901
+END

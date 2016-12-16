@@ -1,0 +1,1358 @@
+--
+--                     Sonus Networks CONFIDENTIAL
+--
+--  This listing of source code is proprietary and confidential to
+--  Sonus Networks, Inc.  It may not be copied or made available in
+--  any form (electronic or hard copy) to any person not authorized
+--  by Sonus Networks, Inc. All rights reserved.
+--
+--                Copyright (C) 2009-2014
+--                Sonus Networks, Inc.
+--                4 Technology Park Drive
+--                Westford, MA  01886, U.S.A.
+--
+--
+-- Release: 3.0
+--
+
+UX-OBJECTS-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, IpAddress, enterprises, Counter32, Counter64, Integer32, TimeTicks
+                FROM SNMPv2-SMI
+        TEXTUAL-CONVENTION, DisplayString
+                FROM SNMPv2-TC
+        MODULE-COMPLIANCE, OBJECT-GROUP
+                FROM SNMPv2-CONF
+		InterfaceIndex, InterfaceIndexOrZero, ifIndex
+                FROM IF-MIB
+		PerfCurrentCount, PerfIntervalCount,PerfTotalCount
+				FROM PerfHist-TC-MIB   -- [RFC3593]
+		dsx0ConfigEntry 
+				FROM DS0-MIB;
+--iso            OBJECT IDENTIFIER ::= { 1 }
+--org            OBJECT IDENTIFIER ::= { iso 3 }
+--dod            OBJECT IDENTIFIER ::= { org 6 }
+--internet       OBJECT IDENTIFIER ::= { dod 1 }
+
+--directory      OBJECT IDENTIFIER ::= { internet 1 }
+
+--mgmt           OBJECT IDENTIFIER ::= { internet 2 }
+--mib-2          OBJECT IDENTIFIER ::= { mgmt 1 }
+--transmission   OBJECT IDENTIFIER ::= { mib-2 10 }
+
+--experimental   OBJECT IDENTIFIER ::= { internet 3 }
+
+--private        OBJECT IDENTIFIER ::= { internet 4 }
+--enterprises    OBJECT IDENTIFIER ::= { private 1 }
+
+ux MODULE-IDENTITY
+                LAST-UPDATED "200911041705Z"
+                ORGANIZATION "net.com"
+                CONTACT-INFO
+                        "        TAC
+                         E-mail: tac@net.com"
+                DESCRIPTION
+                        "The MIB module for net.com entities."
+                REVISION      "200911041705Z"
+                DESCRIPTION
+                        "This MIB will describe the entries for the SBC line of products."
+                ::= { enterprises 177 15 }
+                
+net 		  OBJECT IDENTIFIER ::= { enterprises 177 }
+uxObjects     OBJECT IDENTIFIER ::= { ux 1 }
+uxTraps       OBJECT IDENTIFIER ::= { ux 2 }
+
+uxChassis	OBJECT IDENTIFIER ::= {uxObjects 1 }
+
+ipTelephony        OBJECT IDENTIFIER ::= { uxObjects  5 }
+
+chasiDescUX2000	OBJECT-TYPE
+	SYNTAX  DisplayString
+	MAX-ACCESS	read-only
+	STATUS	deprecated
+	DESCRIPTION
+		"The description for the SBC2000 chassis type"
+	::= { uxChassis 1 }
+chasiDescUX1000	OBJECT-TYPE
+	SYNTAX  DisplayString
+	MAX-ACCESS	read-only
+	STATUS	deprecated
+	DESCRIPTION
+		"The description for the SBC1000 chassis type"
+	::= { uxChassis 2 }
+chasiType OBJECT-TYPE
+    SYNTAX  DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+        "The chassis type for the system."
+    ::= { uxChassis 3 }
+
+-- 
+-- 1. uxAlarmCfgTable 
+--    The following is the definition of the alarm/event config table, and
+--    can be used to get a table (or entry) of the configured alarm or event
+--    
+
+
+    uxAlarmCfgTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxAlarmCfgEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                  "This table gives the information about the alarms and events that this device is
+         capable of generating. When a condition satisfying the alarms configured
+         in this table occurs, an alarm is posted in uxActAlarmTable with associated information."
+        ::= {uxObjects 2}
+
+   uxAlarmCfgEntry OBJECT-TYPE
+       SYNTAX   UxAlarmCfgEntry
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the alarm table"
+       INDEX { uxAlarmIndex }
+        ::= {uxAlarmCfgTable 1}
+
+   UxAlarmCfgEntry ::= SEQUENCE {
+			uxAlarmIndex        INTEGER,
+            uxAlarmID           INTEGER,
+	  	  	uxAlarmSubID        INTEGER,
+        	uxAlarmCondition    DisplayString,
+        	uxAlarmSeverity     INTEGER,
+      		uxAlarmCategory     INTEGER,
+        	uxAlarmCancelType   INTEGER,
+			uxAlarmEvtType      INTEGER,
+        	uxAlarmDecodeKey    DisplayString,
+			uxAlarmClrID        INTEGER,
+			uxAlarmClrSubID     INTEGER,
+            uxAlarmDescription  DisplayString
+                }
+   uxAlarmIndex OBJECT-TYPE
+        SYNTAX     INTEGER (1..2147418112)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "Index of this alarm/event in the config table. This will be the combination of uxAlarmID and uxAlarmSubID
+             uxAlarmIndex  =uxAlarmID *65536+ uxAlarmSubID"
+        ::= { uxAlarmCfgEntry 1 }
+
+   uxAlarmID OBJECT-TYPE
+        SYNTAX     INTEGER (1..32767)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "Event ID of this alarm/event."
+        ::= { uxAlarmCfgEntry 2 }
+
+    uxAlarmSubID OBJECT-TYPE
+        SYNTAX     INTEGER (1..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Event SubID of this alarm/event."
+        ::= {  uxAlarmCfgEntry 3 }
+
+   uxAlarmCondition OBJECT-TYPE
+        SYNTAX     DisplayString (SIZE(0..73))
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Alarm/event name."
+        ::= {  uxAlarmCfgEntry 4}
+
+    uxAlarmSeverity OBJECT-TYPE
+        SYNTAX     INTEGER{
+						   none(0),
+                           warning(1),
+                           minor(2),
+                           major(3),
+                           critical(4)
+                          }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Alarm severity level.
+             Eg: none
+				 warning
+                 minor
+                 major
+                 critical"
+        ::= {  uxAlarmCfgEntry 5 }
+
+    uxAlarmCategory OBJECT-TYPE
+        SYNTAX     INTEGER {
+                              communication (1),
+                              equipment (2),
+                              processing (3),
+                              general (4),
+                              environmental (5),
+                              qos (6),
+                              security (7)
+                           }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Alarm/event category number. As per Bell Core Standard GR-1248-CORE"
+        ::= {  uxAlarmCfgEntry 6}  
+
+    uxAlarmCancelType OBJECT-TYPE
+        SYNTAX     INTEGER {
+                              autoCancel (1),
+                              nonAutoCancel (0)
+                           }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "When an alarm is configured as auto-cancel(1), it clears from
+             the SBC active alarm table, when the condition causing it goes away.
+             These alarms do not need explicit user intervention to cancel
+             (clear) them.
+             Non-auto-cancel(0) alarm requires user intervention to clear from
+             the active alarm table. User needs to cancel (clear) it
+             explicitly by setting the corresponding column object in
+             the active alarm table."
+
+        ::= {   uxAlarmCfgEntry 7 }
+ 	uxAlarmEvtType OBJECT-TYPE
+         SYNTAX     INTEGER {
+                              alarm (1),
+                              event (2)
+                           }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Type of the evnt, whether it is an alarm or a normal event"
+        ::= {  uxAlarmCfgEntry 8 } 
+
+    uxAlarmDecodeKey OBJECT-TYPE
+        SYNTAX    DisplayString (SIZE(0..64))
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Decode key that is used to interpret alarm/event instances when the
+             alarms are posted to active alarm Table.
+        
+         The index attribute uxAlarmInstanceID is decoded based on the
+             value of this attribute.
+         Eg: Decode Key - shelf;card;port       
+
+         Possible decode keys are:
+         shelf, shelf;card, shelf;interface;card;port, service,
+         channel, username, IPAddress, etc..
+
+         AFFECTS: uxAlarmInstanceID
+
+         This attribute affects uxAlarmInstanceID as explained in
+         the example above."
+        ::= {  uxAlarmCfgEntry 9 }
+
+    uxAlarmClrID OBJECT-TYPE
+        SYNTAX     INTEGER (1..32767)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "Clearing event Event ID of this alarm. Applicable to the alarms for which the auto clear is set"
+        ::= { uxAlarmCfgEntry 10 }
+
+    uxAlarmClrSubID OBJECT-TYPE
+        SYNTAX     INTEGER (1..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Clearing event Event sub ID of this alarm. Applicable to the alarms for which the auto clear is set."
+        ::= {  uxAlarmCfgEntry 11 }
+
+    uxAlarmDescription OBJECT-TYPE
+        SYNTAX    DisplayString
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Alarm description. Any info user wants to note"
+        ::= { uxAlarmCfgEntry 12 }
+
+  uxActAlarmTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxActAlarmEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                  " Active Alarm table in the system"
+        ::= {uxObjects 3}
+  uxActAlarmEntry OBJECT-TYPE
+       SYNTAX   UxActAlarmEntry
+       MAX-ACCESS   not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the active alarm table"
+       INDEX { uxAlarmActiveIndex }
+        ::= {uxActAlarmTable 1}
+
+  UxActAlarmEntry ::= SEQUENCE {
+			uxAlarmActiveIndex                  INTEGER,
+            uxAlarmConfigIndex	                INTEGER,
+            uxAlarmActiveID                     INTEGER,
+	  	  	uxAlarmActiveSubID                  INTEGER,
+        	uxAlarmActiveCondition              DisplayString,
+        	uxAlarmActiveSeverity               INTEGER,
+      		uxAlarmActiveCategory               INTEGER,
+        	uxAlarmActiveCancelType             INTEGER,
+            uxAlarmActiveFirstOccur             Counter64,
+            uxAlarmActiveLastOccur              Counter64,
+            uxAlarmActiveCount                  INTEGER,
+            uxAlarmActiveDecodeKey              DisplayString,
+            uxAlarmActiveSourceInstance         DisplayString,
+            uxAlarmActiveState                  INTEGER,
+            uxAlarmActiveClrEvtID               INTEGER,
+            uxAlarmActiveClrEvtSubID            INTEGER,
+            uxAlarmActiveDescription            DisplayString,
+            uxAlarmActiveHighestSeverityAlarm   INTEGER,
+            uxAlarmActiveHardWareID             DisplayString
+            }
+ uxAlarmActiveIndex OBJECT-TYPE
+        SYNTAX     INTEGER (1..2147418112)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "Index of Active alarm table"
+        ::= { uxActAlarmEntry 1 }
+
+ uxAlarmConfigIndex OBJECT-TYPE
+        SYNTAX     INTEGER (1..2147418112)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "Index value of Alarm configuration number"
+        ::= { uxActAlarmEntry 2 }
+
+  uxAlarmActiveID OBJECT-TYPE
+        SYNTAX     INTEGER (1..32767)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "EventID of the active alarm"
+        ::= { uxActAlarmEntry 3 }
+
+ uxAlarmActiveSubID   OBJECT-TYPE
+        SYNTAX     INTEGER (1..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "EventID of the active alarm"
+        ::= { uxActAlarmEntry 4 }
+ 
+ uxAlarmActiveCondition OBJECT-TYPE
+        SYNTAX     DisplayString (SIZE(0..73))
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Active alarm/event name."
+        ::= {  uxActAlarmEntry 5}
+ 
+uxAlarmActiveSeverity OBJECT-TYPE
+        SYNTAX     INTEGER{
+						   none(0),
+                           warning(1),
+                           minor(2),
+                           major(3),
+                           critical(4)
+                          }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Alarm severity level.
+             Eg: none
+				 warning
+                 minor
+                 major
+                 critical"
+        ::= {  uxActAlarmEntry 6 }
+
+uxAlarmActiveCategory OBJECT-TYPE
+        SYNTAX     INTEGER {
+                              communication (1),
+                              equipment (2),
+                              processing (3),
+                              general (4),
+                              environmental (5),
+                              qos (6),
+                              security (7)
+                           }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Alarm/event category number. As per Bell Core Standard GR-1248-CORE"
+        ::= {  uxActAlarmEntry 7}  
+
+uxAlarmActiveCancelType OBJECT-TYPE
+        SYNTAX     INTEGER {
+                              autoCancel (1),
+                              nonAutoCancel (0)
+                           }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "When an alarm is configured as auto-cancel(1), it clears from
+             the SBC active alarm table, when the condition causing it goes away.
+             These alarms do not need explicit user intervention to cancel
+             (clear) them.
+             Non-auto-cancel(0) alarm requires user intervention to clear from
+             the active alarm table. User needs to cancel (clear) it
+             explicitly by setting the corresponding column object in
+             the active alarm table."
+
+        ::= {   uxActAlarmEntry 8 }
+
+
+uxAlarmActiveFirstOccur OBJECT-TYPE
+        SYNTAX     Counter64
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Alarm first occurrence Time displayed in milli sec."
+        ::= {  uxActAlarmEntry 9 }
+
+  uxAlarmActiveLastOccur  OBJECT-TYPE
+        SYNTAX     Counter64
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+             "Alarm last occurrence Time displayed in milli sec."
+        ::= {  uxActAlarmEntry  10 }
+
+  uxAlarmActiveCount  OBJECT-TYPE
+        SYNTAX     INTEGER (1..2147483647)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Number of times this alert occurred. This count is relevant only for
+             non-auto-cancelling alerts."
+        ::= {  uxActAlarmEntry 11}
+ 
+uxAlarmActiveDecodeKey OBJECT-TYPE
+        SYNTAX    DisplayString (SIZE(0..64))
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Decode key that is used to interpret alarm/event instances when the
+             alarms are posted to active alarm Table.
+        
+         The index attribute uxAlarmInstanceID is decoded based on the
+             value of this attribute.
+         Eg: Decode Key - shelf;card;port       
+
+         Possible decode keys are:
+         shelf, shelf;card, shelf;interface;card;port, service,
+         channel, username, IPAddress, etc..
+
+         AFFECTS: uxAlarmInstanceID
+
+         This attribute affects uxAlarmInstanceID as explained in
+         the example above."
+        ::= {  uxActAlarmEntry 12 }
+
+
+  uxAlarmActiveSourceInstance OBJECT-TYPE
+        SYNTAX     DisplayString (SIZE(0..128))
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Instance that has generated this alert. This is encoded as
+             illustrated in the following example :
+			 decode key = shelf;card;port
+			 Source instance = 1;1;1 indicates that the alert is generated on shelf 1 card 1 and port 1	 
+
+             DEPENDS ON: uxAlarmDecodeKey
+
+             Management station will use uxAlarmDecodeKey to decode this
+             instance."
+
+        ::= { uxActAlarmEntry  13 }   
+
+    uxAlarmActiveState OBJECT-TYPE
+        SYNTAX     INTEGER{
+                           acklnowledged(1),
+                           unacknowledged(2),
+                           cancel(3)
+                           }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Informs if an active alarm is acknowledged/unacknowledged/cancelled."
+
+        ::= { uxActAlarmEntry  14 }
+
+  uxAlarmActiveClrEvtID OBJECT-TYPE
+        SYNTAX     INTEGER (1..32767)
+        MAX-ACCESS read-only 
+        STATUS     current
+        DESCRIPTION
+           "Clearing event Event ID of this alarm. Applicable to the alarms for which the auto clear is set"
+        ::= { uxActAlarmEntry  15}
+
+    uxAlarmActiveClrEvtSubID  OBJECT-TYPE
+        SYNTAX     INTEGER (1..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Clearing event Event sub ID of this alarm. Applicable to the alarms for which the auto clear is set."
+        ::= {  uxActAlarmEntry  16 }
+
+    uxAlarmActiveDescription OBJECT-TYPE
+        SYNTAX    DisplayString
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Alarm description. Any info user wants to note"
+        ::= { uxActAlarmEntry  17 }
+
+    uxAlarmActiveHighestSeverityAlarm OBJECT-TYPE
+        SYNTAX     INTEGER (0..5)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "Highest Severity Active alarm"
+        ::= { uxActAlarmEntry 18 }
+
+    uxAlarmActiveHardWareID OBJECT-TYPE
+        SYNTAX     DisplayString (SIZE(0..41))
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+           "Hardware ID of the node"
+        ::= { uxActAlarmEntry 19 }
+
+-- 
+-- 6. uxDSPResourceTable  
+--    The following is the definition of the DSP resource- can be used to get a table (or entry) of the DSP resources in SBC
+--  
+
+uxDSPResourceTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxDSPResourceEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                  "This table gives the information about the DSP resources in SBC."
+        ::= {uxObjects 6}
+
+   uxDSPResourceEntry  OBJECT-TYPE
+       SYNTAX   UxDSPResourceEntry
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the DSP resource table"
+       INDEX { uxDSPIndex }
+        ::= {uxDSPResourceTable  1}
+
+   UxDSPResourceEntry ::= SEQUENCE {
+			uxDSPIndex       INTEGER,
+			uxDSPModType     DisplayString,			
+            uxDSPIsPresent    INTEGER,
+            uxDSPCPUUsage        INTEGER,
+            uxDSPChannelsInUse   INTEGER,
+            uxDSPServiceStatus   INTEGER,
+            uxCodecsSupported DisplayString            
+		}	
+
+	uxDSPIndex OBJECT-TYPE
+        SYNTAX     INTEGER (1..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "DSP Resource table index"
+        ::= {  uxDSPResourceEntry 1}	
+	
+	uxDSPModType OBJECT-TYPE
+        SYNTAX     DisplayString
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "DSP module type "
+		::= {  uxDSPResourceEntry 2}	
+		
+	uxDSPIsPresent OBJECT-TYPE
+        SYNTAX     INTEGER {
+							no(0),
+							yes(1)
+							}
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "If the DSP resource is present. This is because we list all the possible DSP resources through this table and this object specifies if the DSP resource is actually installed on SBC."
+		::= {  uxDSPResourceEntry 3}	
+	uxDSPCPUUsage OBJECT-TYPE
+        SYNTAX     INTEGER 
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "DSP Resource usage in % rounded of to the next integer. "
+		::= {  uxDSPResourceEntry 4}	
+		
+	uxDSPChannelsInUse OBJECT-TYPE
+        SYNTAX     INTEGER
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Number of channels in use by this DSP "
+		::= {  uxDSPResourceEntry 5}	
+	uxDSPServiceStatus OBJECT-TYPE
+        SYNTAX     INTEGER {
+							down(0),
+							up(1)
+							}
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Service state of the DSP "
+		::= {  uxDSPResourceEntry 6}
+		
+	uxCodecsSupported OBJECT-TYPE
+        SYNTAX     DisplayString
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Codecs supported by this DSP, displayed as a '|' seperated string "
+		::= {  uxDSPResourceEntry 7}	
+        
+        
+--
+-- 7. uxDSX0ConfigTable 
+--    The following is extension of the standard DS0 MIB (RFC 2494) definition. 
+--
+
+uxDSX0ConfigTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxDSX0ConfigEntry 
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                  "The DS0 Configuration table."
+        ::= {uxObjects 7}
+
+    uxDSX0ConfigEntry  OBJECT-TYPE
+       SYNTAX   UxDSX0ConfigEntry
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the DS0 Configuration table.  There
+               is an entry in this table for each DS0 interface."
+       AUGMENTS { dsx0ConfigEntry  }
+        ::= { uxDSX0ConfigTable  1 }
+
+    UxDSX0ConfigEntry  ::= SEQUENCE {
+        uxDSX0Type                         INTEGER,
+        uxDSX0Speed			   INTEGER,
+	uxDSX0Lastchange		   INTEGER,
+	uxDSX0AdminState 		   INTEGER
+    }
+
+    uxDSX0Type OBJECT-TYPE
+        SYNTAX     INTEGER{
+							e1(0),
+							t1(1)
+							}
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Type of DS0"
+        ::= { uxDSX0ConfigEntry 1 }
+
+    uxDSX0Speed OBJECT-TYPE
+        SYNTAX     INTEGER
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Speed of DS0"
+        ::= { uxDSX0ConfigEntry 2 }
+   
+    uxDSX0Lastchange OBJECT-TYPE
+        SYNTAX     INTEGER
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Last change of status on this DS0 in EPOCH secs"
+        ::= { uxDSX0ConfigEntry 3 }
+
+    uxDSX0AdminState OBJECT-TYPE
+        SYNTAX     INTEGER{
+							down(0),
+							up(1)
+							}
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Admin state of this DS0"
+        ::= { uxDSX0ConfigEntry 4 }
+
+
+--
+-- 8. uxModuleTable
+--      The following is definition of the Module table on SBC. 
+--      The purpose of this table is to provide inventory information of the
+--      installed on SBC platform device                
+--
+    uxModuleTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxModuleEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                "This table gives the information about all the installed
+                Modules in SBC."
+        ::= {uxObjects 8}
+
+    uxModuleEntry  OBJECT-TYPE
+       SYNTAX   UxModuleEntry
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Module table"
+       INDEX { uxModuleIndex }
+        ::= { uxModuleTable  1 }
+
+    UxModuleEntry ::= SEQUENCE {
+        uxModuleIndex		    INTEGER,
+        uxModuleType                INTEGER,
+	uxModulePartNumber          DisplayString,
+	uxModuleVersionNumber       DisplayString,
+	uxModuleSerialNumber        DisplayString,
+	uxModuleMfgWeek             INTEGER,
+	uxModuleMfgYear             INTEGER
+    }
+
+    uxModuleIndex OBJECT-TYPE
+        SYNTAX     INTEGER (1..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Index of the Module.
+             It also represents the physical location of the 
+             card/module on the system. 
+             NOTE: For different SBC Chassis, the index of modules/cards
+                   may differ.
+            "
+        ::= { uxModuleEntry 1 }
+
+    uxModuleType OBJECT-TYPE
+        SYNTAX     INTEGER {
+                            unknown(0),
+                            dS1-2Spans(1),
+                            dS1-4Spans(2),
+                            dS1-8Spans(3),
+                            eX(4),
+                            mSPDC910DSP(5),
+                            mSPDC300DSP(6),
+                            reservedModule1(7),
+                            reservedModule2(8),
+                            reservedModule3(9),
+                            reservedModule4(10),
+                            aSM(11),
+                            mainBoard(12),
+                            chassis(13),
+                            powerSupply(14),
+                            reservedModule5(15),
+                            node(16),
+                            fXS-8PortsLineCard(17),
+                            fXS-16PortsLineCard(18),
+                            fXS-24PortsLineCard(19),
+                            fXS-4PortsLowerBoard(20),
+                            fXS-4PortsUpperBoard(21),
+                            fXO-4PortsLowerBoard(22),
+                            fXO-4PortsUpperBoard(23),
+                            bRI-4PortsBoard(24),
+                            dS1-1SpanBoard(25),
+                            dS1-2SpansBoard(26),
+                            fXS-4PortsNRLowerBoard(27)
+                        }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Module type indicating the physical module type.
+             Integer values 7, 8, 9, 10, 15 - reserved for future modules.
+            "
+        ::= { uxModuleEntry 2 }
+
+    uxModulePartNumber OBJECT-TYPE
+        SYNTAX     DisplayString
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Module part information
+             Example: 404-40001
+            "
+        ::= { uxModuleEntry 3 }
+
+    uxModuleVersionNumber OBJECT-TYPE
+        SYNTAX     DisplayString
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Module version information
+             Example: 001
+            "
+        ::= { uxModuleEntry 4 }
+
+    uxModuleSerialNumber OBJECT-TYPE
+        SYNTAX     DisplayString
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Module serial number information
+             Example: A4000110040059
+            "
+        ::= { uxModuleEntry 5 }
+
+    uxModuleMfgWeek OBJECT-TYPE
+        SYNTAX     INTEGER
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Module manufacturing week number
+                     
+             NOTE: This object is not applicable for uxModuleType of PowerSupply 
+                   type. For PowerSupply Modules, 0 will be returned.
+            "
+        ::= { uxModuleEntry 6 }
+
+    uxModuleMfgYear OBJECT-TYPE
+        SYNTAX     INTEGER
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Module manufacturing year number
+                     
+             NOTE: This object is not applicable for uxModuleType of PowerSupply 
+                   type. For PowerSupply Modules, 0 will be returned.
+            "
+        ::= { uxModuleEntry 7 }
+
+    
+--
+-- 9. uxPSUTable
+--      The following is definition of the Power Supply table on SBC. 
+--      The purpose of this table is to provide power supply health and runtime 
+--      information on SBC device          
+--
+    uxPSUTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxPSUEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                "This table provides health and runtime information on all
+                Power Supplies on SBC. This table returns all applicable power
+                supply slots.
+                     NOTE: THIS MIB IS NOT SUPPORTED FOR SBC1000 MODEL
+                "
+        ::= {uxObjects 9}
+
+    uxPSUEntry  OBJECT-TYPE
+       SYNTAX   UxPSUEntry
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the PSU table"
+       INDEX { uxPSUIndex }
+        ::= { uxPSUTable  1 }
+
+    UxPSUEntry ::= SEQUENCE {
+        uxPSUIndex              INTEGER,
+        uxPSUIsPresent          INTEGER,
+	uxPSUIsInputGood        INTEGER,
+	uxPSUInputType          INTEGER,
+	uxPSUPowerIn            INTEGER,
+	uxPSUPowerOut           INTEGER,
+	uxPSUVoltageIn          INTEGER,
+	uxPSUVoltageOut         INTEGER,
+	uxPSUCurrentIn          INTEGER,
+	uxPSUCurrentOut         INTEGER,
+	uxPSUTemperature        INTEGER,
+	uxPSUFanSpeed1          INTEGER,
+	uxPSUFanSpeed2          INTEGER
+    }
+
+    uxPSUIndex OBJECT-TYPE
+        SYNTAX     INTEGER (1..2)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Index of the Power Supply.
+             NOTE: 
+             SBC2000: 
+                Index 1, is the left PSU
+                Index 2, is the right PSU 
+            "
+        ::= { uxPSUEntry 1 }
+
+    uxPSUIsPresent OBJECT-TYPE
+        SYNTAX     INTEGER {present(1),notpresent(2)}
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides indication if the power supply is present on the device. "
+        ::= { uxPSUEntry 2 }
+        
+    uxPSUIsInputGood OBJECT-TYPE
+        SYNTAX      INTEGER {yes(1), no(2)}
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides status of PSU Input health.
+             This could be used to deduce the health state of the Power Supply
+             as following:
+                 uxPSUIsPresent(1) and yes(1) - Power Supply is Up
+                 no(2)  - Power Supply is Down
+            "
+        ::= { uxPSUEntry 3 }
+        
+    uxPSUInputType OBJECT-TYPE
+        SYNTAX      INTEGER {notapplicable(0), ac(1), dc(2)}
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides the type of PSU Input i.e. AC or DC"
+        ::= { uxPSUEntry 4 }
+        
+    uxPSUPowerIn OBJECT-TYPE
+        SYNTAX      INTEGER (0..500)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides Power (W) coming into the supply"
+        ::= { uxPSUEntry 5 }
+        
+    uxPSUPowerOut OBJECT-TYPE
+        SYNTAX      INTEGER (0..500)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides Power (W) going out from the supply"
+        ::= { uxPSUEntry 6 }
+        
+    uxPSUVoltageIn OBJECT-TYPE
+        SYNTAX      INTEGER (0..300)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides Voltage coming into the supply"
+        ::= { uxPSUEntry 7 }
+        
+    uxPSUVoltageOut OBJECT-TYPE
+        SYNTAX      INTEGER (0..15000)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides Voltage going out from the supply
+             This information is returned in 1000s of the unit value"
+        ::= { uxPSUEntry 8 }
+        
+    uxPSUCurrentIn OBJECT-TYPE
+        SYNTAX      INTEGER (0..10000)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides Current (A) coming into the supply
+             This information is returned in 1000s of the unit value"
+        ::= { uxPSUEntry 9 }
+        
+    uxPSUCurrentOut OBJECT-TYPE
+        SYNTAX      INTEGER (0..10000)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides Current (A) going out from the supply
+             This information is returned in 1000s of the unit value"
+        ::= { uxPSUEntry 10 }
+        
+    uxPSUTemperature OBJECT-TYPE
+        SYNTAX      INTEGER (0..255)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides temperature (C) of the supply"
+        ::= { uxPSUEntry 11 }
+        
+    uxPSUFanSpeed1 OBJECT-TYPE
+        SYNTAX      INTEGER (0..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides speed (RPM) of the Fan 1 of the supply"
+        ::= { uxPSUEntry 12 }
+        
+    uxPSUFanSpeed2 OBJECT-TYPE
+        SYNTAX      INTEGER (0..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides speed (RPM) of the Fan 2 of the supply"
+        ::= { uxPSUEntry 13 }
+        
+
+--
+-- 10. uxFanTable
+--      The following is definition of the Fan table on SBC. 
+--      The purpose of this table is to provide Fan information on SBC device          
+--
+    uxFanTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxFanEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                "This table gives the information about all the installed
+                Fans on SBC.
+                     NOTE: THIS MIB IS NOT SUPPORTED FOR SBC1000 MODEL
+                "
+        ::= {uxObjects 10}
+
+    uxFanEntry  OBJECT-TYPE
+       SYNTAX   UxFanEntry
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Fan table"
+       INDEX { uxFanIndex }
+        ::= { uxFanTable  1 }
+
+    UxFanEntry ::= SEQUENCE {
+        uxFanIndex              INTEGER,
+        uxFanSpeed              INTEGER
+    }
+
+    uxFanIndex OBJECT-TYPE
+        SYNTAX     INTEGER (1..9)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Index of the installed Fan."
+        ::= { uxFanEntry 1 }
+
+    uxFanSpeed OBJECT-TYPE
+        SYNTAX     INTEGER (0..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Speed (RPM) of the Fan
+             Note:
+                Fan can be considered Down if the speed is 0
+            "
+        ::= { uxFanEntry 2 }
+        
+
+--
+-- 11. uxCardTable
+--      The following is definition of the Card table on SBC. 
+--      The purpose of this table is to provide installed Card 
+--      information on SBC device          
+--
+    uxCardTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxCardEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+                "This table gives information about all the installed
+                Cards on SBC.
+                     NOTE: THIS MIB IS NOT SUPPORTED FOR SBC1000 MODEL
+                "
+        ::= {uxObjects 11}
+
+    uxCardEntry  OBJECT-TYPE
+       SYNTAX   UxCardEntry
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the Card table"
+       INDEX { uxCardIndex }
+        ::= { uxCardTable  1 }
+
+    UxCardEntry ::= SEQUENCE {
+        uxCardIndex              INTEGER,
+        uxCardType               INTEGER,
+        uxCardServiceStatus      INTEGER
+    }
+
+    uxCardIndex OBJECT-TYPE
+        SYNTAX     INTEGER (1..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Index of the installed Card."
+        ::= { uxCardEntry 1 }
+
+    uxCardType OBJECT-TYPE
+        SYNTAX     INTEGER {
+                            unknown(0),
+                            dS1-2Spans(1),
+                            dS1-4Spans(2),
+                            dS1-8Spans(3),
+                            eX(4),
+                            fXS-8PortsLineCard(17),
+                            fXS-16PortsLineCard(18),
+                            fXS-24PortsLineCard(19),
+                            fXS-4PortsLowerBoard(20),
+                            fXS-4PortsUpperBoard(21),
+                            fXO-4PortsLowerBoard(22),
+                            fXO-4PortsUpperBoard(23),
+                            bRI-4PortsBoard(24),
+                            dS1-1SpanBoard(25),
+                            dS1-2SpansBoard(26),
+                            fXS-4PortsNRLowerBoard(27)
+                        }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Card type indicating the physical card type.
+             Integer values 5 to 16 do not indicate a physical card type.
+            "
+        ::= { uxCardEntry 2 }
+
+    uxCardServiceStatus OBJECT-TYPE
+        SYNTAX     INTEGER {
+							down(0), 
+							up(1), 
+							notapplicable(2) }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Operational status of the installed card.
+             Note:
+                This attribute is not applicable for cards/modules on SBC1000 hardware.
+            "           
+        ::= { uxCardEntry 3 }
+        
+--        
+-- SBC System Group
+-- A collection of SBC system level information.
+--        
+uxSystem	OBJECT IDENTIFIER ::= {uxObjects 12 }
+      
+uxSystemHighestSeverityAlarm OBJECT-TYPE
+        SYNTAX     INTEGER{
+                           unknown(0),
+                           normal(1),
+                           warning(2),
+                           minor(3),
+                           major(4),
+                           critical(5)
+                          }
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides highest severity of all active alarms in the system."
+        ::= { uxSystem 1 }        
+
+uxSystemCoreSwitchTemp OBJECT-TYPE
+        SYNTAX     INTEGER (1..65535)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides core switch temperature (C)."
+        ::= { uxSystem 2 }      
+
+uxSystemCurrentCPUUsage OBJECT-TYPE
+        SYNTAX     PerfCurrentCount
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides CPU Usage statistics for the
+			current interval."
+        ::= { uxSystem 3 }   
+ 
+uxSystemCurrentMemoryUsage OBJECT-TYPE
+        SYNTAX     PerfCurrentCount
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Provides Memory Usage statistics for the 
+			current interval."
+        ::= { uxSystem 4 }   
+
+uxLicenseCurrentPeakSIPCall OBJECT-TYPE
+        SYNTAX     PerfCurrentCount
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Peak value of used SIP call licenses for
+			the current 1 hour interval."
+        ::= { uxSystem 5 }   	
+		
+uxLicenseCurrentPeakSIPRegistration OBJECT-TYPE
+        SYNTAX     PerfCurrentCount
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            " Peak value of used SIP Registrations
+			licenses for the current interval."
+        ::= { uxSystem 6 }   		  			
+
+uxDSPPeakCurrentUsage OBJECT-TYPE
+        SYNTAX     PerfTotalCount
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            " Peak DSP usage for the current 1 hour interval."
+        ::= { uxSystem 7}   	 		
+
+uxLicenseCurrentPeakTDMChannel OBJECT-TYPE
+        SYNTAX     PerfCurrentCount
+        MAX-ACCESS read-only
+        STATUS     deprecated
+        DESCRIPTION
+            " Peak value of used TDM channel licenses. 'No such object' will be returned if this attribute is requested."
+        ::= { uxSystem 8 }   
+
+uxLicenseCurrentPeakDSP OBJECT-TYPE
+        SYNTAX     PerfCurrentCount
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            " Peak value of used DSP licenses."
+        ::= { uxSystem 9 }   		
+
+uxSystemUsageStatsIntervalTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF UxSystemUsageIntervalEntry 
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The System Usage Interval table contains various 
+		system usage statitics collected over the previous
+		4 hours.The past 4 hours are broken into 240 
+		completed 1 minute intervals.  Each row in this table 
+		represents one such interval ."
+        ::= {ipTelephony 9}
+
+uxSystemUsageIntervalEntry  OBJECT-TYPE
+       SYNTAX   UxSystemUsageIntervalEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the System Usage Interval table"
+       INDEX { uxSystemUsageIntervalNumber }
+        ::= {uxSystemUsageStatsIntervalTable  1}
+
+UxSystemUsageIntervalEntry ::= SEQUENCE {
+			uxSystemUsageIntervalNumber           INTEGER,		
+			uxSystemUsageIntervalCPUUsage         PerfTotalCount,
+			uxSystemUsageIntervalMemoryUsage      PerfTotalCount
+		}	
+		
+uxSystemUsageIntervalNumber OBJECT-TYPE
+	SYNTAX INTEGER (1..240)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"A number between 1 and 240, where 1 is the most
+        recently completed 1 minute interval and 240 is
+        the 1 minute interval completed 239 minutes prior 
+		to interval 1."
+	::= { uxSystemUsageIntervalEntry 1}
+
+uxSystemUsageIntervalCPUUsage OBJECT-TYPE
+	SYNTAX PerfTotalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"CPU Usage statistics for 1 minute interval."
+	::= { uxSystemUsageIntervalEntry 2}
+
+uxSystemUsageIntervalMemoryUsage OBJECT-TYPE
+	SYNTAX PerfTotalCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Memory Usage statistics for 1 minute interval."
+	::= { uxSystemUsageIntervalEntry 3}
+
+	
+uxDSPPeakUsageStatsIntervalTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF UxDSPPeakUsageIntervalEntry 
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The DSP Usage Stats table contains various statistics
+		 being collected by DSP for the previous 24 hours. 
+		 The past 24 hours are broken into 24 completed 
+		 1 hour intervals.  Each row in this table 
+		 represents one such interval."  			   
+        ::= {ipTelephony 14}
+
+uxDSPPeakUsageIntervalEntry  OBJECT-TYPE
+       SYNTAX   UxDSPPeakUsageIntervalEntry 
+       MAX-ACCESS  not-accessible
+       STATUS   current
+       DESCRIPTION
+              "An entry in the System Usage Current table"
+       INDEX { uxDSPPeakUsageIntervalIndex }
+        ::= {uxDSPPeakUsageStatsIntervalTable  1}
+
+UxDSPPeakUsageIntervalEntry ::= SEQUENCE {
+			uxDSPPeakUsageIntervalIndex          INTEGER,		
+			uxDSPPeakIntervalUsage               PerfCurrentCount
+		}	
+		
+uxDSPPeakUsageIntervalIndex OBJECT-TYPE
+	SYNTAX INTEGER (1..24)
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"The Index value which identifies the  interval."
+	::= { uxDSPPeakUsageIntervalEntry 1}
+
+uxDSPPeakIntervalUsage OBJECT-TYPE
+	SYNTAX PerfCurrentCount
+	MAX-ACCESS read-only
+	STATUS current
+	DESCRIPTION
+		"Peak DSP usage."
+	::= { uxDSPPeakUsageIntervalEntry 2}  
+    
+uxUserStatsPeakSessionsCurrentInerval   OBJECT-TYPE
+        SYNTAX INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Provides peak number of user sessions in the current interval."
+        ::= {uxSystem 10}
+
+uxUserStatsIntervalTable    OBJECT-TYPE
+        SYNTAX SEQUENCE OF UxUserStatsIntervalEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Provides peak number of user sessions for the specified interval."
+        ::= {uxSystem 11}
+
+uxUserStatsIntervalEntry    OBJECT-TYPE
+        SYNTAX UxUserStatsIntervalEntry
+        MAX-ACCESS  not-accessible
+        STATUS   current
+        DESCRIPTION
+            "An entry in the user statistics interval table."
+        INDEX {uxUserStatsIntervalNumber}
+        ::= {uxUserStatsIntervalTable 1}
+
+UxUserStatsIntervalEntry    ::= SEQUENCE {
+            uxUserStatsIntervalNumber   INTEGER,
+            uxUserStatsPeakSessions     INTEGER
+        }
+
+uxUserStatsIntervalNumber   OBJECT-TYPE
+        SYNTAX  INTEGER (1..24)
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION
+            "A number between 1 and 24, where 1 is the most
+               recently completed 1 hour interval and 24 is
+               the 1 hour interval completed 23 hours and 45
+               minutes prior to interval 1."
+        ::= {uxUserStatsIntervalEntry 1}
+
+uxUserStatsPeakSessions OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Peak user sessions during the requested interval."
+        ::= {uxUserStatsIntervalEntry 2}
+        
+END
+
+
+

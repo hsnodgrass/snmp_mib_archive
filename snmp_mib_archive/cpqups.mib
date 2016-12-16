@@ -1,0 +1,683 @@
+-- ****************************************************************************
+--
+--                     Uninterruptible Power Supply
+--         Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 1993,2003 Hewlett-Packard Development Company, L.P.
+--
+--      Hewlett-Packard Company shall not be liable for technical or
+--      editorial errors or omissions contained herein. The information in
+--      this document is provided "as is" without warranty of any kind and
+--      is subject to change without notice. The warranties for HP products
+--      are set forth in the express limited warranty statements
+--      accompanying such products. Nothing herein should be construed as
+--      constituting an additional warranty.
+--
+--      Confidential computer software. Valid license from HP required for
+--      possession, use or copying. Consistent with FAR 12.211 and 12.212,
+--      Commercial Computer Software, Computer Software Documentation, and
+--      Technical Data for Commercial Items are licensed to the U.S.
+--      Government under vendor's standard commercial license.
+--
+--      Refer to the READMIB.RDM file for more information about the
+--      organization of the information in the Compaq Enterprise.
+--
+--      The Compaq Enterprise number is 232.
+--      The ASN.1 prefix to, and including the Compaq Enterprise is:
+--           1.3.6.1.4.1.232
+--
+-- ****************************************************************************
+
+CPQUPS-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        compaq                  FROM CPQHOST-MIB
+        enterprises             FROM RFC1155-SMI
+        DisplayString           FROM RFC1213-MIB
+        OBJECT-TYPE             FROM RFC-1212
+        TRAP-TYPE               FROM RFC-1215
+        sysName                 FROM RFC1213-MIB
+        cpqHoTrapFlags          FROM CPQHOST-MIB;
+
+--  compaq                  OBJECT IDENTIFIER ::= { enterprises 232 }
+
+    cpqUps                  OBJECT IDENTIFIER ::= { compaq 12 }
+    cpqUpsMibRev            OBJECT IDENTIFIER ::= { cpqUps 1 }
+    cpqUpsComponent         OBJECT IDENTIFIER ::= { cpqUps 2 }
+
+    cpqUpsInterface         OBJECT IDENTIFIER ::= { cpqUpsComponent 1 }
+    cpqUpsBasic             OBJECT IDENTIFIER ::= { cpqUpsComponent 2 }
+    cpqUpsFamily            OBJECT IDENTIFIER ::= { cpqUpsComponent 3 }
+
+    cpqUpsOsCommon          OBJECT IDENTIFIER ::= { cpqUpsInterface 4 }
+
+-- ****************************************************************************
+--   UPS MIB Revision
+--   ================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqUps Group                   (1.3.6.1.4.1.232.12)
+--       cpqUpsMibRev Group            (1.3.6.1.4.1.232.12.1)
+--
+--
+--      An Insight Agent conforming to this document will return a
+--      cpqUpsMibRevMajor of one (1) and a cpqUpsMibRevMinor of two (2).
+--
+--
+--      Implementation of the cpqUpsMibRev group is mandatory for all agents
+--      supporting the UPS MIB.
+--
+-- ****************************************************************************
+
+    cpqUpsMibRevMajor OBJECT-TYPE
+        SYNTAX  INTEGER (1..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Major Revision level of the MIB.
+
+            A change in the major revision level represents a major change in
+            the architecture of the MIB.  A change in the major revision
+            level may indicate a significant change in the information
+            supported and/or the meaning of the supported information,
+            correct interpretation of data may require a MIB document with
+            the same major revision level."
+        ::= { cpqUpsMibRev 1 }
+
+    cpqUpsMibRevMinor OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Minor Revision level of the MIB.
+
+            A change in the minor revision level may represent some minor
+            additional support, no changes to any pre-existing information
+            has occurred."
+        ::= { cpqUpsMibRev 2 }
+
+    cpqUpsMibCondition OBJECT-TYPE
+        SYNTAX  INTEGER {
+            other(1),
+            ok(2),
+            degraded(3),
+            failed(4)
+            }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The overall condition.
+
+             This object represents the overall status of the UPS system
+             represented by this MIB."
+        ::= { cpqUpsMibRev 3 }
+
+-- ****************************************************************************
+--   UPS OS Common Group
+--  ====================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqUps Group                   (1.3.6.1.4.1.232.12)
+--       cpqUpsComponent Group         (1.3.6.1.4.1.232.12.2)
+--        cpqUpsInterface Group        (1.3.6.1.4.1.232.12.2.1)
+--         cpqUpsOsCommon Group        (1.3.6.1.4.1.232.12.2.1.4)
+--
+--
+--  Implementation of the cpqUpsOsCommon group is mandatory for all
+--  agents that support the UPS MIB.
+--
+-- ****************************************************************************
+
+    cpqUpsOsCommonPollFreq OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The Insight Agent's polling frequency.
+
+            The frequency, in seconds, at which the Insight Agent requests
+            information from the device driver.  A frequency of zero (0)
+            indicates that the Insight Agent retrieves the information upon
+            request of a management station, it does not poll the device
+            driver at a specific interval.
+
+            If the poll frequency is zero (0) all attempts to write to this
+            object will fail.  If the poll frequency is non-zero,
+            setting this value will change the polling frequency of the
+            Insight Agent.  Setting the poll frequency to zero (0) will
+            always fail, an agent may also choose to fail any request to
+            change the poll frequency to a value that would severely impact
+            system performance."
+        ::= { cpqUpsOsCommon 1 }
+
+-- ****************************************************************************
+--   UPS OS Common Module Table
+--  ===========================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqUps Group                   (1.3.6.1.4.1.232.12)
+--       cpqUpsComponent Group         (1.3.6.1.4.1.232.12.2)
+--        cpqUpsInterface Group        (1.3.6.1.4.1.232.12.2.1)
+--         cpqUpsOsCommon Group        (1.3.6.1.4.1.232.12.2.1.4)
+--          cpqUpsOsCommonModuleTable  (1.3.6.1.4.1.232.12.2.1.4.2)
+--
+-- ****************************************************************************
+
+    cpqUpsOsCommonModuleTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF CpqUpsOsCommonModuleEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A table of software modules/ that provide an interface to the
+            device this MIB describes."
+        ::= { cpqUpsOsCommon 2 }
+
+    cpqUpsOsCommonModuleEntry OBJECT-TYPE
+        SYNTAX  CpqUpsOsCommonModuleEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A description of a software module that provides an interface
+            to the device this MIB describes."
+        INDEX   { cpqUpsOsCommonModuleIndex }
+        ::= { cpqUpsOsCommonModuleTable 1 }
+
+        CpqUpsOsCommonModuleEntry ::= SEQUENCE {
+            cpqUpsOsCommonModuleIndex       INTEGER,
+            cpqUpsOsCommonModuleName        DisplayString,
+            cpqUpsOsCommonModuleVersion     DisplayString,
+            cpqUpsOsCommonModuleDate        OCTET STRING,
+            cpqUpsOsCommonModulePurpose     DisplayString
+        }
+
+    cpqUpsOsCommonModuleIndex OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "A unique index for this module description."
+        ::= { cpqUpsOsCommonModuleEntry 1 }
+
+    cpqUpsOsCommonModuleName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The module name."
+        ::= { cpqUpsOsCommonModuleEntry 2 }
+
+    cpqUpsOsCommonModuleVersion OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..5))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The module version in XX.YY format.
+
+            Where XX is the major version number and YY is the minor version
+            number.  This field will be a null (size 0) string if the agent
+            cannot provide the module version."
+        ::= { cpqUpsOsCommonModuleEntry 3 }
+
+    cpqUpsOsCommonModuleDate OBJECT-TYPE
+        SYNTAX  OCTET STRING (SIZE (7))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The module date.
+
+             field  octets  contents                  range
+             =====  ======  =======                  =====
+               1      1-2   year                      0..65536
+               2       3    month                     1..12
+               3       4    day                       1..31
+               4       5    hour                      0..23
+               5       6    minute                    0..59
+               6       7    second                    0..60
+                            (use 60 for leap-second)
+
+
+            This field will be set to year = 0 if the agent cannot provide
+            the module date.  The hour, minute, and second field will be set
+            to zero (0) if they are not relevant.  The year field is set
+            with the most significant octet first."
+        ::= { cpqUpsOsCommonModuleEntry 4 }
+
+    cpqUpsOsCommonModulePurpose OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The purpose of the module described in this entry."
+        ::= { cpqUpsOsCommonModuleEntry 5 }
+
+-- ****************************************************************************
+--   UPS Basic Instrumentation Group
+--  ================================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqUps Group                   (1.3.6.1.4.1.232.12)
+--       cpqUpsComponent Group         (1.3.6.1.4.1.232.12.2)
+--        cpqUpsBasic Group            (1.3.6.1.4.1.232.12.2.2)
+--
+--
+--  The cpqUpsBasic group describes the basic UPS instrumentation.
+--
+--  Implementation of the cpqUpsBasic group is mandatory for all
+--  agents that support the UPS MIB.
+--
+-- ****************************************************************************
+
+
+    cpqUpsLineStatus OBJECT-TYPE
+        SYNTAX  INTEGER {
+            other(1),
+            ok(2),
+            failed(4)
+            }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The status of the AC line input to the UPS."
+        ::= { cpqUpsBasic 1 }
+
+    cpqUpsName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..20))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The UPS name (type)."
+        ::= { cpqUpsBasic 2 }
+
+    cpqUpsEstimatedBatteryLife OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The estimated time, in minutes, of battery power available.
+             The value will be negative one (-1) if the agent is unable to
+             determine this information.  A UPS may not provide this
+             information when AC power is available."
+        ::= { cpqUpsBasic 3 }
+
+    cpqUpsAutoShutdownDelay OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The number of minutes of battery power remaining before the UPS
+            driver will begin a graceful shutdown of the OS.
+
+            A value of -1 indicates that no automatic shutdown will occur."
+
+        ::= { cpqUpsBasic 4 }
+
+--
+-- The following variable is new for Insight 3.20
+--
+    cpqUpsLaunchCommand OBJECT-TYPE
+        SYNTAX  OCTET STRING (SIZE (0..250))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Application to launch for UPS support."
+
+
+        ::= { cpqUpsBasic 5 }
+
+    cpqUpsAlarm OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..250))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "This variable contains the UPS alarm text."
+--
+-- This is the text that is sent with the UPS Generic traps.
+--
+        ::= { cpqUpsBasic 6 }
+
+
+-- ****************************************************************************
+--   UPS Community Table
+--  ====================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqUps Group                   (1.3.6.1.4.1.232.12)
+--       cpqUpsComponent Group         (1.3.6.1.4.1.232.12.2)
+--        cpqUpsFamily Table           (1.3.6.1.4.1.232.12.2.3)
+--
+--
+--  The cpqUpsFamily Table defines the list of servers that rely on
+--  this single UPS.
+--
+--  Implementation of the cpqUpsFamily Table is mandatory for all
+--  agents that support the UPS MIB.
+--
+-- ****************************************************************************
+
+    cpqUpsMemberTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF CpqUpsMemberEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A table of entries that describes the family of rack-mounted
+             servers that a single UPS supports."
+        ::= { cpqUpsFamily 1 }
+
+    cpqUpsMemberEntry OBJECT-TYPE
+        SYNTAX  CpqUpsMemberEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A table of entries that describes the family of rack-mounted
+             servers that a single UPS supports."
+        INDEX   { cpqUpsMemberIndex }
+        ::= { cpqUpsMemberTable 1 }
+
+        CpqUpsMemberEntry ::= SEQUENCE {
+            cpqUpsMemberIndex               INTEGER,
+            cpqUpsMemberName                DisplayString,
+            cpqUpsMemberCommunityStr        DisplayString
+        }
+
+    cpqUpsMemberIndex OBJECT-TYPE
+        SYNTAX  INTEGER (1..255)
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "A unique index for this module description."
+        ::= { cpqUpsMemberEntry 1 }
+
+    cpqUpsMemberName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The name or address of one of the individual servers
+             that is served by the rack-mounted UPS. Set cpqUpsMemberName
+             to 0 to delete this row."
+        ::= { cpqUpsMemberEntry 2 }
+
+    cpqUpsMemberCommunityStr OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The Community string for this individual server."
+        ::= { cpqUpsMemberEntry 3 }
+
+
+
+    cpqUpsAddMemberName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "To add a row to the cpqUpsMemberTable, this variable must
+             be set, followed immediately by the set of the
+             cpqUpsAddMemberCommunityStr.  Sets must occur in this order,
+             or else a new row will not be added to the table. "
+        ::= { cpqUpsFamily 2 }
+
+    cpqUpsAddMemberCommunityStr OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "To add a row to the cpqUpsMemberTable, the cpqUpsAddMemberName
+             must be set, followed immediately by a set of this variable.
+             Sets must occur in this order, or else a new row will not be
+             added to the cpqUpsMemberTable."
+        ::= { cpqUpsFamily 3 }
+
+
+
+
+-- ****************************************************************************
+--  UPS Trap Definitions
+--  ====================
+--
+--  The SNMP trap messages must not be bigger than 484 octets (bytes).
+--
+--  Trap support in an SNMP agent implementation is optional.  An SNMP
+--  agent implementation may support all, some, or none of the traps.
+--  If traps are supported, The user should be provided with the option of
+--  disabling traps.
+--
+-- **************************************************************************
+
+
+    cpqUpsLineFailed TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { cpqUpsEstimatedBatteryLife }
+        DESCRIPTION
+            "AC Line power failure.
+
+             The UPS reports that the AC line power has failed."
+
+              --#TYPE "AC Line Failure"
+              --#SUMMARY "UPS has about %d minutes of power left."
+              --#ARGUMENTS {0}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   DEGRADED
+
+        ::= 12001
+
+    cpqUpsLineOk TRAP-TYPE
+        ENTERPRISE compaq
+        DESCRIPTION
+            "AC line power ok.
+
+             The UPS reports that the AC line power has returned."
+
+              --#TYPE "AC Line Power OK"
+              --#SUMMARY "UPS reports AC line power has returned."
+              --#ARGUMENTS {}
+              --#SEVERITY INFORMATIONAL
+              --#TIMEINDEX 99
+              --#STATE OPERATIONAL
+
+        ::= 12002
+
+    cpqUpsShutdown TRAP-TYPE
+        ENTERPRISE compaq
+        DESCRIPTION
+            "UPS initiating graceful server shutdown.
+
+             The UPS software is initiating a graceful server shutdown.
+             Every attempt to preserve the state of the file system
+             will be made.  The server shutdown will be initiated due to
+             a power anomaly."
+
+              --#TYPE "UPS Shutdown"
+              --#SUMMARY "The UPS has initiated server shutdown."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   NONOPERATIONAL
+
+        ::= 12003
+
+    cpqUpsConfirmation TRAP-TYPE
+        ENTERPRISE compaq
+        DESCRIPTION
+            "Server now operational after power down.
+
+             This server has previously been shutdown due to a power
+             anomaly and has just become operational again."
+
+              --#TYPE "UPS Confirmation"
+              --#SUMMARY "Server now operational after UPS shutdown."
+              --#ARGUMENTS {}
+              --#SEVERITY INFORMATIONAL
+              --#TIMEINDEX 99
+              --#STATE OPERATIONAL
+
+        ::= 12004
+
+    cpqUpsBatteryLow TRAP-TYPE
+        ENTERPRISE compaq
+        DESCRIPTION
+            "UPS Battery Low.  The server will soon lose power."
+
+              --#TYPE "UPS Battery Low"
+              --#SUMMARY "Server will soon lose power."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   DEGRADED
+
+        ::= 12005
+
+
+    cpqUps2LineFailed TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags, cpqUpsEstimatedBatteryLife }
+        DESCRIPTION
+            "AC Line power failure.
+
+             The UPS reports that the AC line power has failed."
+
+              --#TYPE "AC Line Failure"
+              --#SUMMARY "UPS has about %d minutes of power left."
+              --#ARGUMENTS {2}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   DEGRADED
+
+        ::= 12006
+
+    cpqUps2LineOk TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "AC line power ok.
+
+             The UPS reports that the AC line power has returned."
+
+              --#TYPE "AC Line Power OK"
+              --#SUMMARY "UPS reports AC line power has returned."
+              --#ARGUMENTS {}
+              --#SEVERITY INFORMATIONAL
+              --#TIMEINDEX 99
+              --#STATE OPERATIONAL
+
+        ::= 12007
+
+    cpqUps2Shutdown TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "UPS initiating graceful server shutdown.
+
+             The UPS software is initiating a graceful server shutdown.
+             Every attempt to preserve the state of the file system
+             will be made.  The server shutdown will be initiated due to
+             a power anomaly."
+
+              --#TYPE "UPS Shutdown"
+              --#SUMMARY "The UPS has initiated server shutdown."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   NONOPERATIONAL
+
+        ::= 12008
+
+    cpqUps2Confirmation TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "Server now operational after power down.
+
+             This server has previously been shutdown due to a power
+             anomaly and has just become operational again."
+
+              --#TYPE "UPS Confirmation"
+              --#SUMMARY "Server now operational after UPS shutdown."
+              --#ARGUMENTS {}
+              --#SEVERITY INFORMATIONAL
+              --#TIMEINDEX 99
+              --#STATE OPERATIONAL
+
+        ::= 12009
+
+    cpqUps2BatteryLow TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES  { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "UPS Battery Low.  The server will soon lose power."
+
+              --#TYPE "UPS Battery Low"
+              --#SUMMARY "Server will soon lose power."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   DEGRADED
+
+        ::= 12010
+
+    cpqUpsOverload TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "The UPS has entered an overload condition.  A failure
+            may occur unless the overload is corrected."
+
+              --#TYPE "UPS Overload"
+              --#SUMMARY "The UPS has been overloaded."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   DEGRADED
+
+        ::= 12011
+
+    cpqUpsPendingBatteryFailure TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName, cpqHoTrapFlags }
+        DESCRIPTION
+            "The UPS battery is about to fail.  Replace as soon
+             as possible."
+
+              --#TYPE "UPS Pending Battery Failure"
+              --#SUMMARY "The UPS battery is about to fail."
+              --#ARGUMENTS {}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   DEGRADED
+
+        ::= 12012
+
+    cpqUpsGenericCritical TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName, cpqHoTrapFlags, cpqUpsAlarm }
+        DESCRIPTION
+            "Generic UPS critical alarm."
+
+              --#TYPE "UPS Critical Alarm"
+              --#SUMMARY "%s"
+              --#ARGUMENTS {2}
+              --#SEVERITY CRITICAL
+              --#TIMEINDEX 99
+              --#STATE   DEGRADED
+
+        ::= 12013
+
+    cpqUpsGenericInfo TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName, cpqHoTrapFlags, cpqUpsAlarm }
+        DESCRIPTION
+            "Generic UPS informational alarm."
+
+              --#TYPE "UPS Info Alarm"
+              --#SUMMARY "%s"
+              --#ARGUMENTS {2}
+              --#SEVERITY INFORMATIONAL
+              --#TIMEINDEX 99
+              --#STATE   OPERATIONAL
+
+        ::= 12014
+
+END

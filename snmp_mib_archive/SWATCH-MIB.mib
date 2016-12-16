@@ -1,0 +1,862 @@
+--      Copyright (c) 2000, 2001 by Extreme Networks
+--      All rights reserved.
+--      $Id: SWATCH-MIB.txt,v 1.1.1.1 2001/03/07 19:43:36 tflagg Exp $
+--
+-- MIB for ServiceWatch Network Services health and performance monitor
+--
+-- 1.3.6.1.4.1.1931.1.1.2.1.1  
+-- 1 2 3 4 5 6  7   8 9101112
+-- iso(1).org(3).dod(6).internet(1).private(4).enterprises(1).dms(1931).
+--      dmsMib(1).isPerf(1).isTable(3).isEntry(1).isIndex(1)
+--
+-- .iso(1).org(3).dod(6).internet(1).private(4).enterprises(1).dms(1931).
+--      dmsMib(1).isPerf(1).isTable(3).isEntry(1).isStatus(3).X = ...
+--
+-- iso.org.dod.internet.private.enterprises.dms.dmsmib.isperf.istable.isentry.
+--      isresponsetime.X
+--
+-- DMS Trap OID:
+-- 1.3.6.1.4.1.1931.1.2
+
+
+SWATCH-MIB DEFINITIONS ::= BEGIN
+
+          IMPORTS
+                  mgmt, NetworkAddress, IpAddress, Counter, Gauge,
+                          TimeTicks
+                      FROM RFC1155-SMI
+                  OBJECT-TYPE
+                          FROM RFC-1212
+                enterprises
+                        FROM RFC1155-SMI
+                OBJECT-TYPE
+                        FROM RFC-1212
+                DisplayString
+                        FROM RFC1213-MIB
+                TRAP-TYPE
+                        FROM RFC-1215;
+
+          --  This MIB module uses the extended OBJECT-TYPE macro as
+          --  defined in [14];
+
+          --  MIB-II (same prefix as MIB-I)
+
+--          mib-2      OBJECT IDENTIFIER ::= { mgmt 1 }
+
+          -- textual conventions
+
+--        DisplayString ::=
+--            OCTET STRING
+          -- This data type is used to model textual information taken
+          -- from the NVT ASCII character set.  By convention, objects
+          -- with this syntax are declared as having
+
+          --
+          --      SIZE (0..255)
+
+          PhysAddress ::=
+              OCTET STRING
+          -- This data type is used to model media addresses.  For many
+          -- types of media, this will be in a binary representation.
+          -- For example, an ethernet address would be represented as
+          -- a string of 6 octets.
+
+
+             RequestStatus ::= INTEGER {
+                   -- the following two values are states:
+                   -- these values may be read or written
+                   active(1),
+                   inactive(2),
+                   -- the next value is a state.
+                   -- this value may be read, but not written
+                   -- (However it, never occurs in ServiceWatch)
+                   notReady(3),
+                   -- the following three values are
+                   -- actions: these values may be written,
+                   --  but are never read.
+                   -- createAndgo(4) is not used by ServiceWatch.
+                   createAndGo(4),
+                   createAndWait(5),
+                   remove(6)
+               }
+
+          -- groups in MIB-II
+
+--          system       OBJECT IDENTIFIER ::= { mib-2 1 }
+--          interfaces   OBJECT IDENTIFIER ::= { mib-2 2 }
+--          at           OBJECT IDENTIFIER ::= { mib-2 3 }
+--          ip           OBJECT IDENTIFIER ::= { mib-2 4 }
+--          icmp         OBJECT IDENTIFIER ::= { mib-2 5 }
+--          tcp          OBJECT IDENTIFIER ::= { mib-2 6 }
+--          udp          OBJECT IDENTIFIER ::= { mib-2 7 }
+--          egp          OBJECT IDENTIFIER ::= { mib-2 8 }
+
+          -- historical (some say hysterical)
+          -- cmot      OBJECT IDENTIFIER ::= { mib-2 9 }
+
+--          transmission OBJECT IDENTIFIER ::= { mib-2 10 }
+
+--          snmp         OBJECT IDENTIFIER ::= { mib-2 11 }
+
+-- MIB for the ServiceWatch Agent network services monitoring.
+
+        --  This MIB module uses the extended OBJECT-TYPE macro as
+        --  defined in [14];
+
+        --  MIB-II (same prefix as MIB-I)
+
+        dms             OBJECT IDENTIFIER ::= { enterprises 1931 }
+
+        dmsMib          OBJECT IDENTIFIER ::= { dms 1 }
+
+        isPerf          OBJECT IDENTIFIER ::= { dmsMib 1 }
+
+----
+-- Agent identity
+----
+        swatchSnmpAgent      OBJECT IDENTIFIER ::= { dms 250 }
+        hpux9             OBJECT IDENTIFIER ::= { swatchSnmpAgent 1 }
+        hpux10            OBJECT IDENTIFIER ::= { swatchSnmpAgent 6 }
+        sunos4            OBJECT IDENTIFIER ::= { swatchSnmpAgent 2 }
+        solaris           OBJECT IDENTIFIER ::= { swatchSnmpAgent 3 }
+        osf               OBJECT IDENTIFIER ::= { swatchSnmpAgent 4 }
+        ultrix            OBJECT IDENTIFIER ::= { swatchSnmpAgent 5 }
+        netbsd1           OBJECT IDENTIFIER ::= { swatchSnmpAgent 7 }
+        freebsd           OBJECT IDENTIFIER ::= { swatchSnmpAgent 8 }
+        irix              OBJECT IDENTIFIER ::= { swatchSnmpAgent 9 }
+        linux             OBJECT IDENTIFIER ::= { swatchSnmpAgent 10 }
+        bsdi              OBJECT IDENTIFIER ::= { swatchSnmpAgent 11 }
+        openbsd           OBJECT IDENTIFIER ::= { swatchSnmpAgent 12 }
+        win32             OBJECT IDENTIFIER ::= { swatchSnmpAgent 13 }
+        unknown           OBJECT IDENTIFIER ::= { swatchSnmpAgent 255 }
+
+        -- the isPerf group
+
+        isNumber OBJECT-TYPE
+                SYNTAX  INTEGER
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The number of network servers currently
+                        monitored by this agent."
+                ::= { isPerf 1 }
+
+        isNextIndex OBJECT-TYPE
+                SYNTAX  INTEGER
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The next available row index that can be used for
+                        the creation of a new ServiceWatch request.  If there
+                        are no available rows, 0 is returned."
+                ::= { isPerf 2 }
+
+        isTable OBJECT-TYPE
+                SYNTAX  SEQUENCE OF IsEntry
+                ACCESS  not-accessible
+                STATUS  mandatory
+                DESCRIPTION
+                        "The list of network servers and their
+                        status.  The number of entries is given
+                        by the value of isNumber."
+                ::= { isPerf 3 }
+
+        isEntry OBJECT-TYPE
+                SYNTAX  IsEntry
+                ACCESS  not-accessible
+                STATUS  mandatory
+                DESCRIPTION
+                        "An entry for a network server containing
+                        objects describing the health and performance
+                        of the network server."
+                INDEX   { isIndex }
+                ::= { isTable 1 }
+
+        IsEntry ::=
+                SEQUENCE {
+                        isIndex
+                                INTEGER,
+                        isRequestName
+                                DisplayString,
+                        isStatus
+                                RequestStatus,
+                        isURL
+                                DisplayString,
+                        isUsername
+                                DisplayString,
+                        isPassword
+                                DisplayString,
+                        isProxy
+                                DisplayString,
+                        isServiceStatus
+                                INTEGER,
+                        isDescription
+                                DisplayString,
+                        isResponseTime
+                                DisplayString,
+                        isResponseTimeInteger
+                                INTEGER,
+                        isTimeExceeded
+                                INTEGER,
+                        isMaxWait
+                                INTEGER,
+                        isLevel
+                                DisplayString,
+                        isError
+                                INTEGER,
+                        isBytesRead
+                                INTEGER,
+                        isThroughPut
+                                INTEGER,
+                        isPortNumber
+                                INTEGER,
+                        isPortType
+                                INTEGER,
+                        isOptions
+                                INTEGER,
+                        isNRequests
+                                INTEGER,
+                        isInterval
+                                INTEGER,
+                        isRequestNumber
+                                INTEGER,
+                        isEventType
+                                INTEGER,
+                        isEprog
+                                DisplayString,
+                        isEmail
+                                DisplayString,
+                        isEpager
+                                DisplayString,
+                        isResponseType
+                                INTEGER,
+                        isResponseReason
+                                DisplayString,
+                        isLastAttempt
+                                DisplayString,
+                        isNCFails
+                                INTEGER,
+                        isNCFailsAlert
+                                INTEGER,
+                        isFirstFailed
+                                DisplayString,
+                        isFileType
+                                DisplayString,
+                        isIPAddr
+                                IpAddress,
+                        isData
+                                DisplayString
+                }
+
+        isIndex OBJECT-TYPE
+                SYNTAX  INTEGER 
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "A unique value for each URL entry. Its
+                        value ranges between 1 and isNumber.  Row/
+                        index numbers start at row 1.
+                        around to 0, etc."
+                ::= { isEntry 1 }
+
+        isRequestName OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..31))
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The name of the ServiceWatch request."
+                ::= { isEntry 2 }
+
+
+        isStatus OBJECT-TYPE
+                SYNTAX  RequestStatus
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "See 'RequestStatus' definition for possible
+                        values, except the  value of isStatus will
+                        never be notReady(3): if this row exists, it
+                        will ALWAYS be ready.  The notReady(3) value
+                        typically means the row exists, but was missing
+                        information.  In this case, ServiceWatch
+                        automatically fill in defaults for any values
+                        that were missing, so notReady(3) will NEVER
+                        set here."
+                ::= { isEntry 3 }
+
+        isURL OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..255))
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The URL monitored.  You can add new URLs
+                        to be monitored by setting a URL in isURL."
+                ::= { isEntry 4 }
+
+        isUsername OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..31))
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The username to use for access to the network service.
+                        Currently used for web and ftp services only."
+                ::= { isEntry 5 }
+
+        isPassword OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..31))
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "A password to use for access to the network service.
+                        Currently used for web and ftp services only."
+                ::= { isEntry 6 }
+
+        isProxy OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..31))
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The hostname of a web proxy server, if any.
+                        If an isProxy server is set to a web
+                        proxy server name, the request will be sent
+                        to the proxy server, instead of directly
+                        to the hostname specified in the URL."
+                ::= { isEntry 7 }
+
+        isServiceStatus OBJECT-TYPE
+                SYNTAX  INTEGER {
+                        up(1),
+                        down(2),
+                        unknown(3)
+                }
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The current operational state of the server."
+                ::= { isEntry 8 }
+
+        isDescription OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..127))
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "A textual description of the server software."
+                ::= { isEntry 9 }
+        
+        isResponseTime OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..15)) 
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The response time, in seconds, for the server
+                        to complete the request. Note: A string containing a
+                        floating point number: real floating point values
+                        do not exist in the SNMP protocol, so a floating
+                        point string is used.  For the response time as
+                        an integer, refer to 'isResponseTimeInteger.'"
+                ::= { isEntry 10 }
+
+        isResponseTimeInteger OBJECT-TYPE
+                SYNTAX  INTEGER
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The response time, in seconds, for the server
+                        to complete the request.  (An integer.)"
+                ::= { isEntry 11 }
+
+        isTimeExceeded OBJECT-TYPE
+                SYNTAX  INTEGER {
+                        true(1),
+                        false(2),
+                        unknown(3)
+                }
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The time for the server to complete the request
+                        exceeded maximum amount of time allowed. (See
+                        the isMaxWait variable which is related to this
+                        variable.) The request to the server was consequently
+                        aborted  It will be set to unknown(3) if the
+                        request is not active."
+                ::= { isEntry 12 }
+
+        isMaxWait OBJECT-TYPE
+                SYNTAX  INTEGER 
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The maximum amount of time to wait before timing out
+                        during an attempt to perform a query on the server."
+                ::= { isEntry 13 }
+
+        isLevel OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..15)) 
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The error level to set when an event occurs for
+                         this URL.  The type of error level can be determined
+                         by the user: For example 1-10, or 'low', 'medium', 'high',
+                         etc."
+                ::= { isEntry 14 }
+
+        isError OBJECT-TYPE
+                SYNTAX  INTEGER {
+                        none(1),
+                        connection-timed-out(2),
+                        transmission-to-server-failed(3),
+                        receiving-from-server-failed(4),
+                        connect-to-server-failed(5),
+                        transfer-time-exceeded-maximum(6),
+                        web-retrieval-request-error(7),
+                        dns-warning-query-format-error(8),
+                        dns-warning-server-failure(9),
+                        dns-warning-name-error(10),
+                        dns-warning-has-not-implemented-this-kind-of-query(11),
+                        dns-warning-refused-to-perform-query(12),
+                        dns-warning-unknown-server-reply(13),
+                        dns-warning-incorrect-id-returned(14),
+                        dns-warning-response-not-in-correct-format(15),
+                        no-answer-from-server-after-connection(16),
+                        smtp-error-No-answer-after-connection(17),
+                        gopher-error-No-answer-after-request(18),
+                        smtp-error-Unexpected-response-maybe-wrong-port(19),
+                        unused(20),
+                        hostname-in-URL-not-found-via-name-service(21),
+                        bad-protocol-type-in-URL(22),
+                        unknown-monitoring-failure(23),
+                        child-poller-never-received-a-request(24),
+                        child-poller-died-unexpectedly(25),
+                        could-not-create-pipe-for-child(26),
+                        could-not-run-the-ServiceWatch-polling-program(27),
+                        could-not-fork-child-process(28),
+                        client-bootp-or-dhcp-port-used-by-another-process(29),
+                        telnet-error-appeared-to-not-be-a-telnet-server(30),
+                        telnet-error-server-could-not-accept-reply(31),
+                        ping-record-route-option-set-failed(32),
+                        unknown-error(33),
+                        unknown-error(34),
+                        could-not-exec-extensible-program(35),
+                        extensible-directory-missing-or-inaccessible(36),
+                        extensible-monitoring-filename-missing(37),
+                        extensible-file-open-failure(38),
+                        pipe-failure(39),
+                        protocol-specific-error(40),
+                        extend-program-sent-no-results(41),
+                        unknown-protocol-or-API-not-licensed(42),
+                        unknown-error(43),
+                        unknown-error(44),
+                        unknown-error(45),
+                        unknown-error(46),
+                        unknown-error(47),
+                        unknown-error(48),
+                        unknown-error(49),
+                        ssl-feature-not-enabled(50),
+                        ssl-connection-timed-out(51),
+                        ssl-connection-failed(52),
+                        unknown-error(53),
+                        unknown-error(54),
+                        snmp-no-such-objectid(55),
+                        snmp-no-such-name(56),
+                        snmp-error-response(57),
+                        unknown-error(58),
+                        could-not-create-socket(59),
+                        could-not-determine-our-enet-addr(60),
+                        invalid-server-response(61),
+                        unknown-error(62),
+                        unknown-error(63),
+                        unknown-error(64),
+                        unknown-error(65),
+                        unknown-error(66),
+                        unknown-error(67),
+                        unknown-error(68),
+                        unknown-error(69),
+                        unknown-error(70)
+                }
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The type of error that occurred (if any)."
+                ::= { isEntry 15 }
+
+        isBytesRead OBJECT-TYPE
+                SYNTAX  INTEGER
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The number of data bytes read from the server
+                        on the last request."
+                ::= { isEntry 16 }
+
+        isThroughPut OBJECT-TYPE
+                SYNTAX  INTEGER 
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The rate of bytes per second read from the server
+                        on the last request."
+                ::= { isEntry 17 }
+
+        isPortNumber OBJECT-TYPE
+                SYNTAX  INTEGER 
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The TCP/IP or UDP/IP port number used to
+                        contact the network server.  You specify the port
+                        number to use in isURL."
+                ::= { isEntry 18 }
+
+        isPortType OBJECT-TYPE
+                SYNTAX  INTEGER  {
+                        tcp(1),
+                        udp(2)
+                }
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "For DNS, isPortType can be either TCP or UDP.  For
+                        other protocols, it can be only TCP, since the
+                        other protocols speak only TCP."
+                ::= { isEntry 19 }
+
+        isOptions OBJECT-TYPE
+--              SYNTAX  BITSTRING {
+--                      none(1),
+--                      noQuery(2),
+--                      reResolve(4),
+--                      proxyNocache(8),
+--                      logAll(32),
+--                      notifyStateChange(64)
+--                      allEprog(128)
+--                      traceroute(256)
+--                      disableAutoStart(512)
+--                      sslWorkarounds(1024)
+--
+--              }
+                SYNTAX  INTEGER
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "Options (bitstring) on how the server will
+                         be contacted.  You can add these together
+                         to set more than one option:
+                        none(1):
+                                By defaut, a sample query to the server
+                                will be performed.
+                        noQuery(2):
+                                Do not attempt to do a query to the
+                                network server (it will only check
+                                the port to determine if there
+                                IS a server there.
+                        reResolve(4):
+                                Reresolve the hostname into an
+                                IP address immediately before
+                                EACH attempted contacted with the
+                                network server.
+                        proxyNocache(8):
+                                When using a proxy server, inform
+                                the proxy server to not use its
+                                cache.
+                        logAll(32):
+                                Log information from all poll requests
+                                to the log file.  (Otherwise, only
+                                exceptions/traps will be logged.)
+                        notifyStateChange(64):
+                                Notify ONLY on a state change of
+                                a network service.  For example,
+                                notify only if 1) A service has been
+                                down exactly NCFailsAlert times,  OR:
+                                2) A service has been down and then
+                                comes back up.  Note: If
+                                NotifyStateChange is set, then only 1
+                                notification will occur until/unless
+                                the network server comes up again.
+
+                                The KIND of notification done (trap
+                                and/or log to a file and/or run a
+                                program) is determined by the
+                                isEventType variable.
+                        allEprog(128):
+                                Run the program specified in isEprog after EACH
+                                poll attempt to the service (rather than only
+                                when there is an event, etc.).
+                        traceRoute(256):
+                                If an event occurs and email is sent (isEmail
+                                is set), then include a traceroute to the
+                                host that had the failed network service.
+                        disableAutoStart(512):
+                                Do not start this request during 'Start
+                                All Requests' or system reboots.
+                        sslWorkarounds(1024):
+                                Enable SSL bug workarounds."
+                ::= { isEntry 20 }
+
+        isNRequests OBJECT-TYPE
+                SYNTAX  INTEGER
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The number of times to perform the request."
+                ::= { isEntry 21 }
+
+        isInterval OBJECT-TYPE
+                SYNTAX  INTEGER
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The number of seconds to wait, after the
+                        completion of the last request, before
+                        starting the next request."
+                ::= { isEntry 22 }
+
+        isRequestNumber OBJECT-TYPE
+                SYNTAX  INTEGER
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The request number (relates to isNRequests and
+                        isInterval."
+                ::= { isEntry 23 }
+
+        isEventType OBJECT-TYPE
+--              SYNTAX  BITSTRING {
+--                      none(1),
+--                      log(2),
+--                      snmp-trap(4),
+--              }
+                SYNTAX  INTEGER
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The type of notification that will be
+                        performed.  Add all of the options you wish to
+                        use and set isEventType to the total of these
+                        options.  For example, if you want logging to a
+                        file (2) and an snmp-trap to be sent (4), then
+                        set isEventType to 6 (2 + 4).  The default is
+                        snmp-trap(4).  The possible choices are:
+
+                        none(1):
+                                No logging is performed.  If this
+                                bit is set, all other bits are
+                                then cleared in this variable.
+                        log(2):
+                                Logging to a file is performed.
+                        snmp-trap(4):
+                                Sending an SNMP trap is performed."
+                ::= { isEntry 24 }
+
+        isEprog OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..1023))
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The filename of the program to run when
+                        an event occurs (or after every poll attempt if
+                        isOptions has allEprog set)."
+                ::= { isEntry 25 }
+
+        isEmail OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..127))
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The email address to send email when
+                        an event occurs.  If this variable is
+                        not null, then email will be sent to
+                        this email address when an event
+                        occurs."
+                ::= { isEntry 26 }
+
+        isEpager OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..127))
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "The email address of an alphanumeric pager to
+                        send email formatted for a pager when an event occurs.
+                        If this variable is not null, then email formatted for
+                        alphanumeric pagers will be sent to this email
+                        address when an event occurs."
+                ::= { isEntry 27 }
+
+        isNCFails OBJECT-TYPE
+                SYNTAX  INTEGER
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The number of CONSECUTIVE failures when
+                        attempting to complete the request to a
+                        network server."
+                ::= { isEntry 28 }
+                        
+        isNCFailsAlert OBJECT-TYPE
+                SYNTAX  INTEGER
+                ACCESS  read-write
+                STATUS  mandatory
+                DESCRIPTION
+                        "Report a failure when isNCFailsAlert consecutive
+                        failures have occurred.  Failures are reported
+                        as defined by the isEventType variable.
+                        The default for isNCFailsAlert is 1:  After
+                        1 failure, report it."
+                ::= { isEntry 29 }
+
+        isResponseType OBJECT-TYPE
+                SYNTAX  INTEGER 
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The response type as returned from the server.
+                        For example 200-299 means the request succeeded,
+                        400-499 are bad requests, etc."
+                ::= { isEntry 30 }
+        
+        isResponseReason OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..127))
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "A textual description of the server's
+                        response type, as returned from the server.
+                        (This response should contain the string
+                        describing the responseType byte.)"
+                ::= { isEntry 31 }
+        
+        isLastAttempt OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..31))
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The last time that this agent attempted to contact
+                        the network server.  The format returned:
+                                 Thu Oct  3 13:18:50 1996
+                        "
+                ::= { isEntry 32 }
+
+        isFirstFailed OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..31))
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The first time the network service failed this round
+                        of failures.  The format returned:
+                                 Tue Jan  4 23:08:21 2000"
+                ::= { isEntry 33 }
+        
+        isFileType OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..15))
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The retrieved file's type, such as text/html,
+                        image/gif etc. (Applies to web servers only,
+                        currently)."
+                ::= { isEntry 34 }
+        
+        isIPAddr OBJECT-TYPE
+                SYNTAX  IpAddress
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "The IP address to which this entry's monitoring
+                        information pertains."
+                ::= { isEntry 35 }
+        
+        isData OBJECT-TYPE
+                SYNTAX  DisplayString (SIZE (0..516))
+                ACCESS  read-only
+                STATUS  mandatory
+                DESCRIPTION
+                        "Additional information or data returned from the sample request."
+                ::= { isEntry 36 }
+
+--  **********************************************************************
+--  is traps (server up/down)
+--  **********************************************************************
+
+
+        isTraps         OBJECT IDENTIFIER ::= { dmsMib 2 }
+        
+        serverFailed TRAP-TYPE
+                ENTERPRISE isTraps
+                VARIABLES
+                        {
+                                isURL,
+                                isUsername,
+                                isProxy,
+                                isServiceStatus,
+                                isResponseTimeInteger,
+                                isTimeExceeded,
+                                isMaxWait,
+                                isLevel,
+                                isError,
+                                isPortNumber,
+                                isPortType,
+                                isResponseType,
+                                isResponseReason,
+                                isRequestNumber,
+                                isNCFails,
+                                isNCFailsAlert,
+                                isLastAttempt
+                        }
+                DESCRIPTION
+                        "The network server failed to correctly reply
+                        to the request in the time allowed."
+                --#SUMMARY "Received ServiceWatch 'down' event $E, $# args: $*"
+                --#SEVERITY MAJOR
+                ::= 1
+
+        serverUp TRAP-TYPE
+                ENTERPRISE isTraps
+                VARIABLES
+                        {
+                                isURL,
+                                isUsername,
+                                isProxy,
+                                isServiceStatus,
+                                isResponseTimeInteger,
+                                isTimeExceeded,
+                                isMaxWait,
+                                isLevel,
+                                isError,
+                                isPortNumber,
+                                isPortType,
+                                isResponseType,
+                                isResponseReason,
+                                isRequestNumber,
+                                isNCFails,
+                                isNCFailsAlert,
+                                isLastAttempt
+                        }
+                DESCRIPTION
+                        "If notifyStateChange is set in isOptions and
+                        the state of the network service changed from
+                        down to up, then a 'serverUp' trap is sent."
+                --#SUMMARY "Received ServiceWatch 'up' event $E, $# args: $*"
+                --#SEVERITY NORMAL
+                ::= 2
+
+--  **********************************************************************
+--  dms start/stop traps.
+--  **********************************************************************
+
+        dmsTraps                OBJECT IDENTIFIER ::= { dmsMib 3 }
+
+        dmsStart TRAP-TYPE
+                ENTERPRISE dmsTraps
+                DESCRIPTION "This trap is sent when the ServiceWatch agent starts"
+                --#SUMMARY "ServiceWatch SNMP agent started."
+                --#SEVERITY NORMAL
+                ::= 1
+
+        dmsShutdown TRAP-TYPE
+                ENTERPRISE dmsTraps
+                DESCRIPTION "This trap is sent when the ServiceWatch agent terminates"
+                --#SUMMARY "ServiceWatch SNMP agent terminated."
+                --#SEVERITY WARNING
+                ::= 2
+END

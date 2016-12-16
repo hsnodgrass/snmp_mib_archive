@@ -1,0 +1,456 @@
+COMMON-TRAP-MIB
+    --FORCE-INCLUDE <mib.h>
+    --FORCE-INCLUDE <snmpdefs.h>
+    --FORCE-INCLUDE <snmpstat.h>
+
+
+DEFINITIONS ::= BEGIN
+
+--  TITLE:  Common Trap MIB
+--
+--  Author: Madhukeshwar Hegde
+--
+--  This specification has been successfully compiled with the following
+--  MIB compilers:
+--    a) Wind River Systems  Emissary SNMP MIB Compiler, version 7.0
+--
+--  Note:
+--  This document is maintained as a text file.
+
+IMPORTS
+	OBJECT-TYPE, MODULE-IDENTITY, enterprises    FROM SNMPv2-SMI
+	DateAndTime                                  FROM SNMPv2-TC
+	TRAP-TYPE                                    FROM RFC-1215
+	DisplayString                                FROM RFC1213-MIB;
+                                              
+commontrapmib	MODULE-IDENTITY
+	LAST-UPDATED "1002230000Z"    
+	ORGANIZATION "Nortel Networks"
+	CONTACT-INFO
+		"Postal: Nortel Networks
+		250 Sidney Street
+		Belleville ON K8P 3Z3
+		Tel   : +1 613 967 5000"
+	DESCRIPTION
+		"The common SNMP trap MIB for CS 1000 system."
+      
+      REVISION        "1002230000Z"
+      DESCRIPTION
+            "Changed definition of enterprises 562 from nt to nortel to
+             correspond to corporate standards"
+      REVISION      "0901160000Z"
+      DESCRIPTION
+            "Reference to ECM is changed to UCM"
+      REVISION      "0811250000Z"
+      DESCRIPTION
+            "Updated MIB for R6.0 with Linux device OID entry."
+      REVISION      "0610261630Z"
+      DESCRIPTION
+            "Initial version"
+
+	::= { management 50 }
+
+-- LAST-UPDATED field is in UTC Time Format
+--   YYMMDDHHMMZ
+--   where: YY - last two digits of year       MM - month (01 through 12)
+--          DD - day of month (01 through 31)  HH - hours (00 through 23)
+--          MM - minutes (00 through 59)
+--           Z - the character "Z" denotes Greenwich Mean Time (GMT).
+
+-- For example, "0302191600Z" represents 4:00pm GMT on 19 February 2003.
+
+nortel                       OBJECT IDENTIFIER ::= { enterprises 562 }
+--  nortel. The name under which 562 is registered with IANA.
+
+meridian                 OBJECT IDENTIFIER ::= { nortel 3 }
+--  Meridian. The value assigned for Meridian.
+
+management               OBJECT IDENTIFIER ::= { meridian 10 }
+--  management. The value assigned for management.
+
+fm-info                  OBJECT IDENTIFIER ::= { management 10 }
+--  fm-info. The value assigned for management information.
+
+mgmt-traps               OBJECT IDENTIFIER ::= { fm-info 1 }
+--  mgmt-traps. The value assigned for management traps.
+
+mgmt-info                OBJECT IDENTIFIER ::= { fm-info 2 }
+--  mgmt-info. The value assigned for management information.
+
+--  Device definitions
+--  defines OIDs associated with different devices
+
+--  Call Server uses the meridian definition
+
+--  sigserv	OBJECT IDENTIFIER 	::= { meridian 21 }
+--  sigserv The value assigned for Signaling Server
+--  removed from CS1000 Rls 6.0
+
+itg         OBJECT IDENTIFIER ::= { meridian 11 }
+--  itg. The value assigned for ITG.
+
+iplmib      OBJECT IDENTIFIER ::= { itg 5 }
+--  iplmib. The value assigned for VGMC cards
+
+mgc         OBJECT IDENTIFIER ::= { meridian 7 }
+-- mgc. The value assigned for Media Gateway Controller.
+
+nrs         OBJECT IDENTIFIER ::= { meridian 12 }
+-- nrs. The value assigned for NRS (on Linux).
+
+ucm         OBJECT IDENTIFIER ::= { meridian 13 }
+-- ucm. The value assigned for UCM management(on Linux).
+
+linuxplatform OBJECT IDENTIFIER ::= { meridian 14 }
+-- linuxplatform. The value assigned for a combination of applications running on a Linux platform.
+
+--  General definitions
+
+AlarmSeverity           ::= INTEGER {
+                            critical        (1),
+                            major           (2),
+                            minor           (3),
+                            warning         (4),
+                            info            (5),
+				    indeterminate   (6),
+                            cleared         (7)
+                            }
+
+AlarmType               ::= INTEGER {
+                                        communications          (1),
+                                        qualityOfService        (2),
+                                        processing              (3),
+                                        equipment               (4),
+                                        security                (5),
+                                        operator                (6),
+                                        debug                   (7),
+                                        unknown                 (8)
+                                        }
+--  Fault management alarm types
+
+commonMIBAlarmCritical 	TRAP-TYPE
+	ENTERPRISE 	mgmt-traps
+	VARIABLES 	{ 
+		commonMIBSeqNumber, 
+		commonMIBDateAndTime, 
+            commonMIBSeverity,
+		commonMIBComponentID,
+		commonMIBNotificationID, 
+		commonMIBSourceIPAddress, 
+		commonMIBErrCode, 
+		commonMIBAlarmType, 
+		commonMIBProbableCause, 
+		commonMIBAlarmData
+	}
+	DESCRIPTION
+		"This trap is used to provide a real time indication
+		of a critical alarm condition. The variables listed
+		in VARIABLES clause are defined in `mgmt-info'
+		group and are present in all critical alarms."
+	::= 1
+
+commonMIBAlarmMajor 	TRAP-TYPE
+	ENTERPRISE 	mgmt-traps
+	VARIABLES 	{ 
+		commonMIBSeqNumber, 
+		commonMIBDateAndTime, 
+            commonMIBSeverity,
+		commonMIBComponentID,
+		commonMIBNotificationID, 
+		commonMIBSourceIPAddress, 
+		commonMIBErrCode, 
+		commonMIBAlarmType, 
+		commonMIBProbableCause, 
+		commonMIBAlarmData
+	}
+	DESCRIPTION
+		"This trap is used to provide a real time indication
+		of a Major alarm condition. The variables listed
+		in VARIABLES clause are defined in `mgmt-info'
+		group and are present in all major alarms."
+	::= 2
+
+commonMIBAlarmMinor	TRAP-TYPE
+	ENTERPRISE 	mgmt-traps
+	VARIABLES 	{ 
+		commonMIBSeqNumber, 
+		commonMIBDateAndTime, 
+            commonMIBSeverity,
+		commonMIBComponentID,
+		commonMIBNotificationID, 
+		commonMIBSourceIPAddress, 
+		commonMIBErrCode, 
+		commonMIBAlarmType, 
+		commonMIBProbableCause, 
+		commonMIBAlarmData
+	}
+	DESCRIPTION
+		"This trap is used to provide a real time indication
+		of a Minor alarm condition. The variables listed
+		in VARIABLES clause are defined in `mgmt-info'
+		group and are present in all minor alarms."
+	::= 3
+
+commonMIBAlarmWarning 	TRAP-TYPE
+	ENTERPRISE 	mgmt-traps
+	VARIABLES 	{ 
+		commonMIBSeqNumber, 
+		commonMIBDateAndTime, 
+            commonMIBSeverity,
+		commonMIBComponentID,
+		commonMIBNotificationID, 
+		commonMIBSourceIPAddress, 
+		commonMIBErrCode, 
+		commonMIBAlarmType, 
+		commonMIBProbableCause, 
+		commonMIBAlarmData
+	}
+	DESCRIPTION
+		"This trap is used to provide a real time indication
+		of a Warning alarm condition. The variables listed
+		in VARIABLES clause are defined in `mgmt-info'
+		group and are present in all warning alarms."
+	::= 4
+
+commonMIBAlarmInfo 	TRAP-TYPE
+	ENTERPRISE 	mgmt-traps
+	VARIABLES 	{ 
+		commonMIBSeqNumber, 
+		commonMIBDateAndTime, 
+            commonMIBSeverity,
+		commonMIBComponentID,
+		commonMIBNotificationID, 
+		commonMIBSourceIPAddress, 
+		commonMIBErrCode, 
+		commonMIBAlarmType, 
+		commonMIBProbableCause, 
+		commonMIBAlarmData
+	}
+	DESCRIPTION
+		"This trap is used to provide a real time indication
+		of an infomational alarm condition. The variables listed 
+		in VARIABLES clause are defined in `mgmt-info'
+		group and are present in all info alarms."
+	::= 5
+
+commonMIBAlarmIndeterminate 	TRAP-TYPE
+	ENTERPRISE 	mgmt-traps
+	VARIABLES 	{ 
+		commonMIBSeqNumber, 
+		commonMIBDateAndTime, 
+            commonMIBSeverity,
+		commonMIBComponentID,
+		commonMIBNotificationID, 
+		commonMIBSourceIPAddress, 
+		commonMIBErrCode, 
+		commonMIBAlarmType, 
+		commonMIBProbableCause, 
+		commonMIBAlarmData
+	}
+	DESCRIPTION
+		"This trap is used to provide a real time indication
+		of an indeterminate alarm condition. The variables listed
+		in VARIABLES clause are defined in `mgmt-info'
+		group and are present in all indeterminate alarms."
+	::= 6
+
+commonMIBAlarmClear 	TRAP-TYPE
+	ENTERPRISE 	mgmt-traps
+	VARIABLES 	{ 
+		commonMIBSeqNumber, 
+		commonMIBDateAndTime, 
+            commonMIBSeverity,
+		commonMIBComponentID,
+		commonMIBNotificationID, 
+		commonMIBSourceIPAddress, 
+		commonMIBErrCode, 
+		commonMIBAlarmType, 
+		commonMIBProbableCause, 
+		commonMIBAlarmData
+	}
+	DESCRIPTION
+		"This trap is used to provide a real time indication
+		of a clear alarm condition. The variables listed
+		in VARIABLES clause are defined in `mgmt-info'
+		group and are present in all clear alarms."
+ 	::= 7
+
+commonMIBSeqNumber 	OBJECT-TYPE
+		SYNTAX			INTEGER (9999)
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"Sequence number of the alarm; starts at 1 and increments by 1; 
+			must be unique for all alarms emited from commonMIB."
+	::= { mgmt-info 1 }
+
+commonMIBDateAndTime OBJECT-TYPE
+		SYNTAX			DateAndTime
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"Time at which the alarm occurred."
+	::= { mgmt-info 2 }
+
+commonMIBSeverity OBJECT-TYPE
+		SYNTAX			AlarmSeverity
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"The severity of the alarm which should indicate the
+			priority of the event"
+	::= { mgmt-info 3 }
+
+commonMIBComponentID	OBJECT-TYPE
+		SYNTAX			DisplayString (SIZE(264))
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"This variable binding contains colon (:) separated string uniquely 
+			representing the system component that raised this trap. This varbind
+			is in '<systemName>:<siteName>:<componentName>'format. This	is 
+			generated dynamically from traps received from system elements 
+			and for each element it would be unique within system"
+	::= { mgmt-info 4 }
+
+commonMIBNotificationID 	OBJECT-TYPE
+		SYNTAX			INTEGER
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"This variable binding is intended to support clears from system 
+			elements that are capable of providing unique Id for generated 
+			traps and their corresponding clears. If system element does not 
+			provide unique notification id, this value would be set to 0 
+			indicating that system do not support clears. "
+	::= { mgmt-info 5 }
+
+commonMIBSourceIPAddress	OBJECT-TYPE
+		SYNTAX			DisplayString (SIZE(7..23)) -- NetworkAddress
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"The IP address of the element that originated the trap."
+	::= { mgmt-info 6 }
+
+commonMIBErrCode 	OBJECT-TYPE
+		SYNTAX			DisplayString(SIZE(8))
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"Represents specific error code generated by any system element."
+	::= { mgmt-info 7}
+
+commonMIBAlarmType 	OBJECT-TYPE
+		SYNTAX			AlarmType
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"The alarm type field as defined by OSI which is used
+			to indicate a broad category of what is wrong. The
+			first 6 values are OSI-defined; refer to CCITT X.733/ISO
+			10164-4 (for the first 5) and CCITT X.736/ISO 10164-4
+			(for the last) for a more complete description. The
+			value 'operator' is used when an alarm is issued due
+			to an operator command. The values 'debug' and 'unknown'
+			are for compatibility with older switches and are used
+			for debugging alarms and for those which do not fit
+			any of the above, respectively."
+	::= { mgmt-info 8}
+
+commonMIBProbableCause 	OBJECT-TYPE
+		SYNTAX			INTEGER {
+-- Start of OSI-defined values
+-- (see X.733/ ISO 10165-3)
+			lossOfSignal(0),
+			lossOfFrame(1),
+			framingError(2),
+			localTransmissionError(3),
+			remoteTransmissionError(4),
+			callEstablishmentError(5),
+			degradedSignal(6),
+			commSubsystemFailure(7),
+			commProtocolError(8),
+			lanError(9),
+			dteDceInterfaceError(10),
+			responseTimeExcessive(20),
+			queueSizeExceeded(21),
+			bandwidthReduced(22),
+			retransmissionRateReduced(23),
+			thresholdCrossed(24),
+			performanceDegraded(25),
+			congestion(26),
+			atOrNearCapacity(27),
+			storageCapacityProblem(40),
+			versionMismatch(41),
+			corruptData(42),
+			cpuCyclesLimitExceeded(43),
+			softwareError(44),
+			softwareProgramError(45),
+			softwareProgramTermination(46),
+			fileError(47),
+			outOfMemory(48),
+			underlyingResourceUnavail(49),
+			applicationSubsystemFailure(50),
+			configurationError(51),
+			powerProblem(60),
+			timingProblem(61),
+			processorProblem(62),
+			datasetModemError(63),
+			multiplexorProblem(64),
+			receiverFailure(65),
+			transmitterFailure(66),
+			outputDeviceError(67),
+			inputDeviceError(68),
+			ioDeviceError(69),
+			equipmentFailure(70),
+			adapterError(71),
+-- OSI-defined values continued (see X.736)
+			duplicateInfo(80),
+			infoMissing(81),
+			infoModification(82),
+			infoOutOfSequence(83),
+			unexpectedInfo(84),
+			denialOfService(90),
+			outOfService(91),
+			proceduralError(92),
+			otherOperational(93),
+			cableTamper(100),
+			intrusionDetection(101),
+			otherPhysical(102),
+			authenticationFailure(110),
+			breachOfConfidence(111),
+			nonRepudiationFailure(112),
+			unauthorizedMAX-ACCESS(113),
+			otherSecurityService(114),
+			delayedInfo(120),
+			keyExpired(121),
+			outOfHoursActivity(122),
+-- Start of non-OSI defined values
+			operationalCondition(200),
+			debugging(201),
+			unknown(202),
+			inactiveVirtualCircuit(203),
+			networkServerIntervention(204)
+		}
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"The probable cause for the alarm which usually
+			qualifies the Alarm Type field. Most values are
+			OSI-defined; refer to CCITT X.733 and X.736
+			(ISO 10164-4 and 10164-7) for a more complete
+			description."
+	::= { mgmt-info 9 }
+
+commonMIBAlarmData 	OBJECT-TYPE
+		SYNTAX			DisplayString ( SIZE (0..750) )
+		MAX-ACCESS 		read-only
+		STATUS 			current
+		DESCRIPTION
+			"This variable binding represents textual description 
+			of trap."
+	::= { mgmt-info 10}  
+	
+END
+

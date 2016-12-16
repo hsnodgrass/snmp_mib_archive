@@ -1,0 +1,322 @@
+-- ****************************************************************************
+--
+--                           DMI Indications MIB
+--         Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 1999, Compaq Computer Corporation.
+--      All Rights Reserved.
+--
+--      The information in this document is subject to change without notice.
+--
+--      COMPAQ COMPUTER CORPORATION SHALL NOT BE LIABLE FOR TECHNICAL
+--      OR EDITORIAL ERRORS OR OMISSIONS CONATINED HEREIN; NOR FOR INCIDENTAL
+--      OR CONSEQUENTIAL DAMAGES RESULTING FROM THE FURNISHING, PERFORMANCE,
+--      OR USE OF THIS MATERIAL.
+--
+--	It is designed to be used only in conjunction with the 
+--	Compaq DMI Indications NT service and the Compaq XE Insight Manager
+--	to provide trap definitions for DMI Indications events.
+--
+--	This MIB is not supported by any agent and therefore does not contain
+--	any mib variable version information.
+--
+--      The Compaq Enterprise number is 232.
+--      The ASN.1 prefix to, and including the Compaq Enterprise is:
+--           1.3.6.1.4.1.232
+--
+-- ****************************************************************************
+
+
+CPQDMII-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        Counter                 FROM RFC1155-SMI
+        OBJECT-TYPE             FROM RFC-1212
+        DisplayString           FROM RFC1213-MIB
+        TRAP-TYPE               FROM RFC1215
+        sysName                 FROM RFC1213-MIB
+        enterprises             FROM RFC1155-SMI;
+  
+-- ****************************************************************************
+    compaq              OBJECT IDENTIFIER ::= { enterprises 232 }
+    cpqDMII             OBJECT IDENTIFIER ::= { compaq 150 }
+-- ****************************************************************************
+
+    cpqDMIISystemIPAddr OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The System IP Address."
+        ::= { cpqDMII 1 }
+
+
+    cpqDMIIComponentID OBJECT-TYPE
+        SYNTAX  INTEGER (0..100)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Component that generated the indication."
+        ::= { cpqDMII 2 }
+
+
+    cpqDMIIGroupID OBJECT-TYPE
+        SYNTAX  INTEGER (0..100)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Group (within component) that generated the indication."
+        ::= { cpqDMII 3 }
+
+    cpqDMIIClassString OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Class string of the MIF specified class which generated the error."
+        ::= { cpqDMII 4 }
+
+    cpqDMIIComponentIDStr OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The string representation of the component that generated the indication."
+        ::= { cpqDMII 5 }
+
+    cpqDMIIGroupIDStr OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The string representation Group (within component) that generated the indication."
+        ::= { cpqDMII 6 }
+
+    cpqDMIIRawSeverity OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            unknown(1),
+            monitor(2),
+            informational(3),
+            ok(4),
+            noncritical(5),
+            critical(6),
+            nonrecoverable(7)
+        }
+
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The original severity of the indication."
+        ::= { cpqDMII 7 }
+        
+        
+    cpqDMIIIndicationType OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "A string describing the type of error, for example, cpu failure."
+        ::= { cpqDMII 8 }
+
+
+    cpqDMIIKeyInfo OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "A string representation of the key for the table in which the error occured
+            This information allows for keys, which change by table, to be captured in 
+            a human readable format."
+        ::= { cpqDMII 9 }
+
+    cpqDMIIMibRevMajor OBJECT-TYPE
+        SYNTAX  INTEGER (1..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Major Revision level.
+             A change in the major revision level represents a major change
+             in the architecture of the MIB.  A change in the major revision
+             level may indicate a significant change in the information
+             supported and/or the meaning of the supported information,
+             correct interpretation of data may require a MIB document with
+             the same major revision level."
+        ::= { cpqDMII 10 }
+
+    cpqDMIIMibRevMinor OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Minor Revision level.
+             A change in the minor revision level may represent some minor
+             additional support, no changes to any pre-existing information
+             has occurred."
+        ::= { cpqDMII 11 }
+
+    cpqDMIIMibCondition OBJECT-TYPE
+        SYNTAX  INTEGER {
+            other(1),
+            ok(2),
+            degraded(3),
+            failed(4)
+            }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The overall condition (status) of the system represented by
+            this MIB."
+
+        ::= { cpqDMII  12 }
+
+-- ****************************************************************************
+--  DMI MIB Trap Definitions
+--  =========================
+--
+--  The SNMP trap messages must not be bigger than 484 octets (bytes).
+--
+--
+-- **************************************************************************
+
+    cpqDMIIndicationInfo TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName,
+                    cpqDMIISystemIPAddr,
+                    cpqDMIIComponentID,
+                    cpqDMIIGroupID,
+                    cpqDMIIRawSeverity,
+                    cpqDMIIClassString,
+                    cpqDMIIIndicationType,
+                    cpqDMIIKeyInfo
+                    }
+        DESCRIPTION
+            "This trap will be sent whenever a DMI Indication occurs which is Informational.
+
+             User Action: None required."
+
+             --#TYPE "DMI Info trap"
+             --#SUMMARY "DMI Informational Indication occured on %s of type %s for (%d,%d)"
+             --#ARGUMENTS {1, 7, 3, 4}
+             --#SEVERITY INFORMATIONAL
+        ::= 150001
+
+    cpqDMIIndicationMonitor TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName,
+                    cpqDMIISystemIPAddr,
+                    cpqDMIIComponentID,
+                    cpqDMIIGroupID,
+                    cpqDMIIRawSeverity,
+                    cpqDMIIClassString,
+                    cpqDMIIIndicationType,
+                    cpqDMIIKeyInfo
+                    }
+        DESCRIPTION
+            "This trap will be sent whenever a DMI Indication occurs which 
+            is Monitor level.
+
+             User Action: None required."
+
+             --#TYPE "DMI Monitor trap"
+             --#SUMMARY "DMI Monitor Indication occured on %s of type %s for (%d,%d)"
+             --#ARGUMENTS {1, 7, 3, 4}
+             --#SEVERITY INFORMATIONAL
+        ::= 150002
+
+    cpqDMIIndicationOK TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName,
+                    cpqDMIISystemIPAddr,
+                    cpqDMIIComponentID,
+                    cpqDMIIGroupID,
+                    cpqDMIIRawSeverity,
+                    cpqDMIIClassString,
+                    cpqDMIIIndicationType,
+                    cpqDMIIKeyInfo
+                    }
+        DESCRIPTION
+            "This trap will be sent whenever a DMI Indication occurs which 
+            is OK level.
+
+             User Action: None required."
+
+             --#TYPE "DMI OK trap"
+             --#SUMMARY "DMI OK Indication occured on %s of type %s for (%d,%d)"
+             --#ARGUMENTS {1, 7, 3, 4}
+             --#SEVERITY INFORMATIONAL
+        ::= 150003
+
+        
+    cpqDMIIndicationNonCritical TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName,
+                    cpqDMIISystemIPAddr,
+                    cpqDMIIComponentID,
+                    cpqDMIIGroupID,
+                    cpqDMIIRawSeverity,
+                    cpqDMIIClassString,
+                    cpqDMIIIndicationType,
+                    cpqDMIIKeyInfo
+                    }
+        DESCRIPTION
+            "This trap will be sent whenever a DMI Indication occurs which 
+            is Non-Critical level.
+
+             User Action: Examine machine in question."
+
+             --#TYPE "DMI  Non-Critical trap"
+             --#SUMMARY "DMI Non-Critical Indication occured on %s of type %s for (%d,%d)"
+             --#ARGUMENTS {1, 7, 3, 4}
+             --#SEVERITY MINOR
+        ::= 150004
+        
+    cpqDMIIndicationCritical TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName,
+                    cpqDMIISystemIPAddr,
+                    cpqDMIIComponentID,
+                    cpqDMIIGroupID,
+                    cpqDMIIRawSeverity,
+                    cpqDMIIClassString,
+                    cpqDMIIIndicationType,
+                    cpqDMIIKeyInfo
+                    }
+        DESCRIPTION
+            "This trap will be sent whenever a DMI Indication occurs which 
+            is Critical level.
+
+             User Action: Examine machine in question."
+
+             --#TYPE "DMI  Critical trap"
+             --#SUMMARY "DMI Non-Critical Indication occured on %s of type %s for (%d,%d)"
+             --#ARGUMENTS {1, 7, 3, 4}
+             --#SEVERITY CRITICAL
+        ::= 150005
+        
+    cpqDMIIndicationNonNonRecoverable TRAP-TYPE
+        ENTERPRISE compaq
+        VARIABLES { sysName,
+                    cpqDMIISystemIPAddr,
+                    cpqDMIIComponentID,
+                    cpqDMIIGroupID,
+                    cpqDMIIRawSeverity,
+                    cpqDMIIClassString,
+                    cpqDMIIIndicationType,
+                    cpqDMIIKeyInfo
+                    }
+        DESCRIPTION
+            "This trap will be sent whenever a DMI Indication occurs which 
+            is Non-Recoverable level.
+
+             User Action: Examine machine in question."
+
+             --#TYPE "DMI  Non-Recoverable trap"
+             --#SUMMARY "DMI Non-Recoverable Indication occured on %s of type %s for (%d,%d)"
+             --#ARGUMENTS {1, 7, 3, 4}
+             --#SEVERITY MAJOR
+        ::= 150006
+        
+END
+

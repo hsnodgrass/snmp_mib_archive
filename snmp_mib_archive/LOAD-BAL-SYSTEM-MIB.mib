@@ -1,0 +1,3039 @@
+LOAD-BAL-SYSTEM-MIB DEFINITIONS ::= BEGIN
+--================================================================
+--  LOAD-BAL-SYSTEM-MIB
+--    A private enterprise mib for ip load balancing systems.
+--================================================================
+
+IMPORTS
+        enterprises, Counter, IpAddress, TimeTicks
+                FROM RFC1155-SMI
+        OBJECT-TYPE
+                FROM RFC-1212
+        TRAP-TYPE
+                FROM RFC-1215;
+
+-- numerical definitions:
+f5              OBJECT IDENTIFIER ::= { enterprises 3375 }
+f5systems       OBJECT IDENTIFIER ::= { f5 1 }
+loadbal         OBJECT IDENTIFIER ::= { f5systems 1 }
+
+--globals               OBJECT IDENTIFIER ::= { loadbal 1 }
+virtualAddress  OBJECT IDENTIFIER ::= { loadbal 2 }
+virtualServer   OBJECT IDENTIFIER ::= { loadbal 3 }
+snat            OBJECT IDENTIFIER ::= { loadbal 4 }
+interface       OBJECT IDENTIFIER ::= { loadbal 5 }
+ifaddress       OBJECT IDENTIFIER ::= { loadbal 6 }
+pool            OBJECT IDENTIFIER ::= { loadbal 7 }
+poolMember      OBJECT IDENTIFIER ::= { loadbal 8 }
+
+-- Old groups
+vaddress        OBJECT IDENTIFIER ::= { loadbal 100 }
+ndaddr          OBJECT IDENTIFIER ::= { loadbal 101 }
+nat             OBJECT IDENTIFIER ::= { loadbal 102 }
+vport           OBJECT IDENTIFIER ::= { loadbal 103 }
+member          OBJECT IDENTIFIER ::= { loadbal 104 }
+
+loadBalTrap       OBJECT IDENTIFIER ::= { loadbal 110 }
+loadBalTraps      OBJECT IDENTIFIER ::= { loadBalTrap 2 }
+
+DisplayString ::= OCTET STRING 
+
+--================================================================
+-- Interfaces 
+--================================================================
+
+interfaceNumber OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of interfaces on this load balancer."
+        ::= { interface 1 }
+
+interfaceTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF InterfaceEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A table containing information about the load balancer intefaces."
+        ::= { interface 2 }
+
+interfaceEntry OBJECT-TYPE
+        SYNTAX InterfaceEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "Columns in the Interface Table."
+        INDEX { interfaceName }
+        ::= { interfaceTable 1 }
+
+InterfaceEntry ::=
+        SEQUENCE {
+                interfaceName                   DisplayString (SIZE (0..8)),
+                interfaceIpAddresses            DisplayString (SIZE (0..255)),
+                interfaceDestination            INTEGER,
+                interfaceSource                 INTEGER,
+                interfaceTimeout                INTEGER,
+                interfaceArmed                  INTEGER,
+                interfaceVLANSEnabled           INTEGER,
+                interfaceMasqueradeAddress      DisplayString (SIZE (0..255)),
+                interfaceLastTimeChanged        INTEGER,
+                interfaceSpeed                  INTEGER,
+                interfaceFullDuplex             INTEGER
+        }
+
+interfaceName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..8))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The name of the interface."
+        ::= { interfaceEntry 1 }
+
+interfaceIpAddresses OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The list of IP addresses on this interface."
+        ::= { interfaceEntry 2 }
+
+interfaceDestination OBJECT-TYPE
+        SYNTAX  INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "This is a destination interface."
+        ::= { interfaceEntry 3 }
+
+interfaceSource OBJECT-TYPE
+        SYNTAX  INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "This is a source interface."
+        ::= { interfaceEntry 4 }
+
+interfaceTimeout OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The seconds before a failover is triggered in failsafe mode."
+        ::= { interfaceEntry 5 }
+
+interfaceArmed OBJECT-TYPE
+        SYNTAX  INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The interface will be armed if the interface failsafe mode is activated."
+        ::= { interfaceEntry 6 }
+
+interfaceVLANSEnabled OBJECT-TYPE
+        SYNTAX  INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is VLANS enabled for this interface."
+        ::= { interfaceEntry 7 }
+
+interfaceMasqueradeAddress OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "MAC masquerade address of this interface."
+        ::= { interfaceEntry 8 }
+
+interfaceLastTimeChanged OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The last time the interface attributes were modified."
+        ::= { interfaceEntry 9 }
+
+interfaceSpeed OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The speed of this interface."
+        ::= { interfaceEntry 10 }
+
+interfaceFullDuplex OBJECT-TYPE
+        SYNTAX  INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is this interface operating in full duplex mode."
+        ::= { interfaceEntry 11 }
+
+--================================================================
+--  interface ip addresses 
+--================================================================
+
+ifaddressNumber OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of interface ip addresses on this load balancer."
+        ::= { ifaddress 1 }
+
+ifaddressTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IfaddressEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A table containing information about the load balancer interface ip addresses."
+        ::= { ifaddress 2 }
+
+ifaddressEntry OBJECT-TYPE
+        SYNTAX IfaddressEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "Columns in the Interface Table."
+        INDEX { ifaddressIpAddress }
+        ::= { ifaddressTable 1 }
+
+IfaddressEntry ::=
+        SEQUENCE {
+                ifaddressIpAddress              IpAddress,
+                ifaddressInterfaceName          DisplayString (SIZE (0..255)),
+                ifaddressNetmask                IpAddress,
+                ifaddressBroadcast              IpAddress,
+                ifaddressType                   INTEGER,
+                ifaddressUnitId                 INTEGER,
+                ifaddressVLANTag                DisplayString (SIZE (0..5))
+        }
+
+ifaddressIpAddress OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The ip address for this interface ip address."
+        ::= { ifaddressEntry 1 }
+
+ifaddressInterfaceName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The name of the interface for this ip address."
+        ::= { ifaddressEntry 2 }
+
+ifaddressNetmask OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The netmask for this interface ip address."
+        ::= { ifaddressEntry 3 }
+
+ifaddressBroadcast OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The broadcast address for this interface ip address."
+        ::= { ifaddressEntry 4 }
+
+ifaddressType OBJECT-TYPE
+        SYNTAX INTEGER {
+                iptrue(1),
+                ipshared(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The type for this interface ip address."
+        ::= { ifaddressEntry 5 }
+
+ifaddressUnitId OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The unit id for this interface ip address."
+        ::= { ifaddressEntry 6 }
+
+ifaddressVLANTag OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..5))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The VLAN tag for this interface ip address."
+        ::= { ifaddressEntry 7 }
+
+--================================================================
+--  Pools
+--================================================================
+
+poolNumber OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of pools on this load balancer."
+        ::= { pool 1 }
+
+poolTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF PoolEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A table containing information about the load balancer pools."
+        ::= { pool 2 }
+
+poolEntry OBJECT-TYPE
+        SYNTAX PoolEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "Columns in the Pool Table."
+        INDEX { poolName }
+        ::= { poolTable 1 }
+
+PoolEntry ::=
+        SEQUENCE {
+                poolName                DisplayString (SIZE (0..255)),
+                poolLBMode              INTEGER,
+                poolDependent           INTEGER,
+                poolMemberQty           INTEGER,
+                poolBitsin              Counter,
+                poolBitsout             Counter,
+                poolBitsinHi32          Counter,
+                poolBitsoutHi32         Counter,
+                poolPktsin              Counter,
+                poolPktsout             Counter,
+                poolPktsinHi32          Counter,
+                poolPktsoutHi32         Counter,
+                poolMaxConn             INTEGER (0..65535),
+                poolCurrentConn         INTEGER (0..65535),
+                poolTotalConn           Counter
+        }
+
+poolName OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The name of this pool."
+        ::= { poolEntry 1 }
+
+poolLBMode OBJECT-TYPE
+        SYNTAX INTEGER {
+                roundrobin(1),
+                ratio(2),
+                fastest(3),
+                leastConn(4),
+                predictive(5),
+                observed(6),
+                priority(7),
+                ratioNodeAddress(8),
+                priorityNodeAddress(9),
+                leastConnNodeAddress(10),
+                globalDefault(11)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The load balance mode of this pool."
+        ::= { poolEntry 2 }
+
+poolDependent OBJECT-TYPE
+        SYNTAX INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is this pool a dependent pool."
+        ::= { poolEntry 3 }
+
+poolMemberQty OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of members in this pool."
+        ::= { poolEntry 4 }
+
+poolBitsin OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this pool."
+        ::= { poolEntry 5 }
+
+poolBitsout OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this pool."
+        ::= { poolEntry 6 }
+
+poolBitsinHi32 OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this pool."
+        ::= { poolEntry 7 }
+
+poolBitsoutHi32 OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this pool."
+        ::= { poolEntry 8 }
+
+poolPktsin OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this pool."
+        ::= { poolEntry 9 }
+
+poolPktsout OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this pool."
+        ::= { poolEntry 10 }
+
+poolPktsinHi32 OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this pool."
+        ::= { poolEntry 11 }
+
+poolPktsoutHi32 OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this pool."
+        ::= { poolEntry 12 }
+
+poolMaxConn OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections the members of  
+                this pool have had open at any one time."
+        ::= { poolEntry 13 }
+
+poolCurrentConn OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The current number of connections the members of  
+                this pool have open."
+        ::= { poolEntry 14 }
+
+poolTotalConn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections the members of 
+                this pool have served since the pool started."
+        ::= { poolEntry 15 }
+
+--================================================================
+--  Pool Members
+--================================================================
+
+poolMemberNumber OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of pool members on this load balancer."
+        ::= { poolMember 1 }
+
+poolMemberTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF PoolMemberEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A table containing information about the load balancer pool members."
+        ::= { poolMember 2 }
+
+poolMemberEntry OBJECT-TYPE
+        SYNTAX PoolMemberEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "Columns in the Pool Member Table."
+        INDEX { poolMemberPoolName, poolMemberIpAddress, poolMemberPort }
+        ::= { poolMemberTable 1 }
+
+PoolMemberEntry ::=
+        SEQUENCE {
+                poolMemberPoolName              DisplayString (SIZE (0..255)),
+                poolMemberIpAddress             IpAddress,
+                poolMemberPort                  INTEGER,
+                poolMemberMaintenance           INTEGER,
+                poolMemberRatio                 INTEGER,
+                poolMemberPriority              INTEGER,
+                poolMemberWeight                INTEGER,
+                poolMemberRipeness              INTEGER,
+                poolMemberBitsin                Counter,
+                poolMemberBitsout               Counter,
+                poolMemberBitsinHi32            Counter,
+                poolMemberBitsoutHi32           Counter,
+                poolMemberPktsin                Counter,
+                poolMemberPktsout               Counter,
+                poolMemberPktsinHi32            Counter,
+                poolMemberPktsoutHi32           Counter,
+                poolMemberConnLimit             INTEGER (0..65535),
+                poolMemberMaxConn               INTEGER (0..65535),
+                poolMemberCurrentConn           INTEGER (0..65535),
+                poolMemberTotalConn             Counter
+        }
+
+poolMemberPoolName OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The name of the pool which contains this member."
+        ::= { poolMemberEntry 1 }
+
+poolMemberIpAddress OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The ip address of this pool member."
+        ::= { poolMemberEntry 2 }
+
+poolMemberPort OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The port of this pool member."
+        ::= { poolMemberEntry 3 }
+
+poolMemberMaintenance OBJECT-TYPE
+        SYNTAX INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is this pool member in maintenance mode."
+        ::= { poolMemberEntry 4 }
+
+poolMemberRatio OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Load balancing ratio of the member within the pool. 
+                Used by member ratio load balancing mode."
+        ::= { poolMemberEntry 5 }
+
+poolMemberPriority OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Priority level of the member within the pool.
+                Used by priority member load balancing mode."
+        ::= { poolMemberEntry 6 }
+
+poolMemberWeight OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Weight of the member within the pool.
+                Used during dynamically calculated ratio 
+                load balancing."
+        ::= { poolMemberEntry 7 }
+
+poolMemberRipeness OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The current load balancing state in member
+                ratio load balancing mode."
+        ::= { poolMemberEntry 8 }
+
+poolMemberBitsin OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this pool member."
+        ::= { poolMemberEntry 9 }
+
+poolMemberBitsout OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this pool member."
+        ::= { poolMemberEntry 10 }
+
+poolMemberBitsinHi32 OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this pool member."
+        ::= { poolMemberEntry 11 }
+
+poolMemberBitsoutHi32 OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this pool member."
+        ::= { poolMemberEntry 12 }
+
+poolMemberPktsin OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this pool member."
+        ::= { poolMemberEntry 13 }
+
+poolMemberPktsout OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this pool member."
+        ::= { poolMemberEntry 14 }
+
+poolMemberPktsinHi32 OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this pool member."
+        ::= { poolMemberEntry 15 }
+
+poolMemberPktsoutHi32 OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this pool member."
+        ::= { poolMemberEntry 16 }
+
+poolMemberConnLimit OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections this pool
+                member can have open at any one time."
+        ::= { poolMemberEntry 17 }
+
+poolMemberMaxConn OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections this pool
+                member has had open at any one time."
+        ::= { poolMemberEntry 18 }
+
+poolMemberCurrentConn OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The current number of connections this pool
+                member has open."
+        ::= { poolMemberEntry 19 }
+
+poolMemberTotalConn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this pool
+                 member have served since the pool member started."
+        ::= { poolMemberEntry 20 }
+
+
+--================================================================
+-- Virtual Addresses
+--================================================================
+
+virtualAddressNumber OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of virtual addresses on this load balancer."
+        ::= { virtualAddress 1 }
+
+virtualAddressTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF VirtualAddressEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A table containing information about the load balancer
+                Virtual Server addresses."
+        ::= { virtualAddress 2 }
+
+virtualAddressEntry OBJECT-TYPE
+        SYNTAX VirtualAddressEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "Columns in the Virtual Address Table."
+        INDEX { virtualAddressIpAddress }
+        ::= { virtualAddressTable 1 }
+
+VirtualAddressEntry ::=
+        SEQUENCE {
+                virtualAddressIpAddress         IpAddress,
+                virtualAddressStatus            INTEGER,
+                virtualAddressConnLimit         INTEGER (0..65535),
+                virtualAddressNetmask           IpAddress,
+                virtualAddressBroadcast         IpAddress,
+                virtualAddressInterface         DisplayString (SIZE (0..8)),
+                virtualAddressFailoverFlags     INTEGER,
+                virtualAddressOctetsIn          Counter,
+                virtualAddressOctetsOut         Counter,
+                virtualAddressPacketsIn         Counter,
+                virtualAddressPacketsOut        Counter,
+                virtualAddressCurrentConn       INTEGER (0..65535),
+                virtualAddressMaxConn           INTEGER (0..65535),
+                virtualAddressTotalConn         Counter,
+                virtualAddressOctetsInHi32      Counter,
+                virtualAddressOctetsOutHi32     Counter,
+                virtualAddressPacketsInHi32     Counter,
+                virtualAddressPacketsOutHi32    Counter,
+                virtualAddressUnitId            INTEGER
+        }
+
+virtualAddressIpAddress OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The ip address for this virtual server."
+        ::= { virtualAddressEntry 1 }
+
+virtualAddressStatus OBJECT-TYPE
+        SYNTAX INTEGER {
+                ready(1),
+                maintainance(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is this server in maintainance mode?"
+        ::= { virtualAddressEntry 2 }
+
+virtualAddressConnLimit OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this virtual address
+                can support at one time."
+        ::= { virtualAddressEntry 3 }
+
+virtualAddressNetmask OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The netmask for this virtual address."
+        ::= { virtualAddressEntry 4 }
+
+virtualAddressBroadcast OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The broadcast address for this virtual address."
+        ::= { virtualAddressEntry 5 }
+
+virtualAddressInterface OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..8))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The name of the network interface that this address
+                is attached to."
+        ::= { virtualAddressEntry 6 }
+
+virtualAddressFailoverFlags OBJECT-TYPE
+        SYNTAX INTEGER {
+                mirrorconnections(1),
+                mirrorpersistence(2),
+                mirrorconnectionspersistence(3),
+                nomirroring(4)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The failover flags for the this virtual address.
+                The virtualAddressFailoverFlag is no longer relevant. Mirroring
+                is controlled through the virtualServerFailoverFlag."
+        ::= { virtualAddressEntry 7 }
+
+virtualAddressOctetsIn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of octets received from the network from
+                this virtual server."
+        ::= { virtualAddressEntry 8 }
+
+virtualAddressOctetsOut OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of octets sent to the network from this
+                virtual server."
+        ::= { virtualAddressEntry 9 }
+
+virtualAddressPacketsIn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of packets received from the network from
+                this virtual server."
+        ::= { virtualAddressEntry 10 }
+
+virtualAddressPacketsOut OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of packets sent to the network from this
+                virtual server."
+        ::= { virtualAddressEntry 11 }
+
+virtualAddressCurrentConn OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of connections currently open on this
+                virtual server."
+        ::= { virtualAddressEntry 12 }
+
+virtualAddressMaxConn OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections this virtual server
+                has had open at any one time."
+        ::= { virtualAddressEntry 13 }
+
+virtualAddressTotalConn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this virtual server
+                has served since the server started."
+        ::= { virtualAddressEntry 14 }
+
+virtualAddressOctetsInHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of octets received from the network from
+                this virtual server."
+        ::= { virtualAddressEntry 15 }
+
+virtualAddressOctetsOutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of octets sent to the network from this
+                virtual server."
+        ::= { virtualAddressEntry 16 }
+
+virtualAddressPacketsInHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of packets received from the network from
+                this virtual server."
+        ::= { virtualAddressEntry 17 }
+
+virtualAddressPacketsOutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of packets sent to the network from this
+                virtual server."
+        ::= { virtualAddressEntry 18 }
+
+virtualAddressUnitId OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The unit id of this virtual server."
+        ::= { virtualAddressEntry 19 }
+
+--================================================================
+--Virtual Servers
+--================================================================
+
+virtualServerNumber OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of virtual servers on this load balancer."
+        ::= { virtualServer 1 }
+
+virtualServerTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF VirtualServerEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A table containing load balancer Virtual server information."
+        ::= { virtualServer 2 }
+
+virtualServerEntry OBJECT-TYPE
+        SYNTAX VirtualServerEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "Columns in the Virtual Server table."
+        INDEX { virtualServerIpAddress,virtualServerPort }
+        ::= { virtualServerTable 1 }
+
+VirtualServerEntry ::=
+        SEQUENCE {
+                virtualServerIpAddress          IpAddress,
+                virtualServerPort               INTEGER (0..65535),
+                virtualServerStatus             INTEGER,
+                virtualServerConnLimit          INTEGER (0..65535),
+                virtualServerAppProtocol        INTEGER,
+                virtualServerAppProtocolTimeout INTEGER (0..65535),
+                virtualServerAppProtocolReaper  INTEGER (0..65535),
+                virtualServerPersistTimeout     INTEGER,
+                virtualServerPersistMask        IpAddress,
+                virtualServerSticky             INTEGER,
+                virtualServerStickyMask         IpAddress,
+                virtualServerFailoverFlags      INTEGER,
+                virtualServerOctetsIn           Counter,
+                virtualServerOctetsOut          Counter,
+                virtualServerPacketsIn          Counter,
+                virtualServerPacketsOut         Counter,
+                virtualServerCurrentConn        INTEGER (0..65535),
+                virtualServerMaxConn            INTEGER (0..65535),
+                virtualServerTotalConn          Counter,
+                virtualServerSslNew             Counter,
+                virtualServerSslHits            Counter,
+                virtualServerSslTimeouts        Counter,
+                virtualServerSslMisses          Counter,
+                virtualServerOctetsInHi32       Counter,
+                virtualServerOctetsOutHi32      Counter,
+                virtualServerPacketsInHi32      Counter,
+                virtualServerPacketsOutHi32     Counter,
+                virtualServerCookieMethod       INTEGER,
+                virtualServerRule               DisplayString (SIZE (0..255)),
+                virtualServerPool               DisplayString (SIZE (0..255))
+        }
+
+virtualServerIpAddress OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The ip address for this virtual server."
+        ::= { virtualServerEntry 1}
+
+virtualServerPort OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The port for this virtual server."
+        ::= { virtualServerEntry 2 }
+
+virtualServerStatus OBJECT-TYPE
+        SYNTAX INTEGER {
+                ready(1),
+                maintainance(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is this server in maintainance mode?"
+        ::= { virtualServerEntry 3 }
+
+virtualServerConnLimit OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this virtual server can
+                support at one time."
+        ::= { virtualServerEntry 4 }
+
+virtualServerAppProtocol OBJECT-TYPE
+        SYNTAX INTEGER {
+                none (1),
+                ssl (2),
+                http-cookie(3)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The application tunnelling protocol this virtual server
+                uses."
+        ::= { virtualServerEntry 5 }
+
+virtualServerAppProtocolTimeout OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The timeout for persistence timeout for this this
+                application protocol session."
+        ::= { virtualServerEntry 6 }
+
+virtualServerAppProtocolReaper OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The amount of idle time before we reap an application 
+                protocol session."
+        ::= { virtualServerEntry 7 }
+
+virtualServerPersistTimeout OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The timeout for persistence on this connection."
+        ::= { virtualServerEntry 8 }
+
+virtualServerPersistMask OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The IP addresses matching this mask will have persistent
+                connections. Those not covered by this mask will not."
+        ::= { virtualServerEntry 9 }
+
+virtualServerSticky OBJECT-TYPE
+        SYNTAX INTEGER {
+                true (1),
+        false (2) }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is Destination Address Affinity turned on for this
+                connection?" 
+        ::= { virtualServerEntry 10 }
+
+virtualServerStickyMask OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The addresses matching this mask will have Destination
+                Address Affinity if virtualServerSticky is true."
+        ::= { virtualServerEntry 11 }
+
+virtualServerFailoverFlags OBJECT-TYPE
+        SYNTAX INTEGER {
+                mirrorconnections(1),
+                mirrorpersistence(2),
+                mirrorconnectionspersistence(3),
+                nomirroring(4)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The failover flags for the this virtual server."
+        ::= { virtualServerEntry 12 }
+
+virtualServerOctetsIn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of octets received from the network from this
+                virtual server."
+        ::= { virtualServerEntry 13 }
+
+virtualServerOctetsOut OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of octets sent to the network from this virtual
+                server."
+        ::= { virtualServerEntry 14 }
+
+virtualServerPacketsIn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of packets received from the network from this
+                virtual server."
+        ::= { virtualServerEntry 15 }
+
+virtualServerPacketsOut OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of packets sent to the network from this virtual
+                server."
+        ::= { virtualServerEntry 16 }
+
+virtualServerCurrentConn OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of connections currently open on this virtual
+                server."
+        ::= { virtualServerEntry 17 }
+
+virtualServerMaxConn OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections this virtual server has had 
+                open at any one time."
+        ::= { virtualServerEntry 18 }
+
+virtualServerTotalConn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this virtual server has
+                served since the server started."
+        ::= { virtualServerEntry 19 }
+
+virtualServerSslNew OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of new SSL sessions on this virtual server."
+        ::= { virtualServerEntry 20 }
+
+virtualServerSslHits OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of lookup successes in the SSL session id
+                cache for valid session ids."
+        ::= { virtualServerEntry 21 }
+
+virtualServerSslTimeouts OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of lookup successes in the SSL session id
+                cache for session ids that have already been reaped."
+        ::= { virtualServerEntry 22 }
+
+virtualServerSslMisses OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of lookup failures in the SSL session id
+                cache."
+        ::= { virtualServerEntry 23 }
+
+virtualServerOctetsInHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of octets received from the network from this
+                virtual server."
+        ::= { virtualServerEntry 24 }
+
+virtualServerOctetsOutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of octets sent to the network from this virtual
+                server."
+        ::= { virtualServerEntry 25 }
+
+virtualServerPacketsInHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of packets received from the network from this
+                virtual server."
+        ::= { virtualServerEntry 26 }
+
+virtualServerPacketsOutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of packets sent to the network from this virtual
+                server."
+        ::= { virtualServerEntry 27 }
+
+virtualServerCookieMethod OBJECT-TYPE
+        SYNTAX INTEGER {
+                insert(1),
+                rewrite(2),
+                passive(3)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The cookie persistence method for this virtual server."
+        ::= { virtualServerEntry 28 }
+
+virtualServerRule OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The load balancing rule used by this virtual server."
+        ::= { virtualServerEntry 29 }
+
+virtualServerPool OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The load balancing pool used by this virtual server
+                if a load balancing rule is not defined."
+        ::= { virtualServerEntry 30 }
+
+--================================================================
+-- SNAT Translation Address Table
+--================================================================
+
+snatTransTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF SnatTransEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A table of all the secure NATS entries."
+        ::= { snat 1 }
+
+snatTransEntry OBJECT-TYPE
+        SYNTAX SnatTransEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION "Columns in the table of secure NATS entries."
+        INDEX { snatTransAddr }
+        ::= { snatTransTable 1 }
+
+SnatTransEntry ::= SEQUENCE {
+        snatTransEnabled                INTEGER,
+        snatTransAddr                   IpAddress,
+        snatTransIface                  DisplayString,
+        snatTransNetmask                IpAddress,
+        snatTransBroadcast              IpAddress,
+        snatTransSecsCollectingStats    Counter,
+        snatTransBitsIn                 Counter,
+        snatTransBitsOut                Counter,
+        snatTransPktsIn                 Counter,
+        snatTransPktsOut                Counter,
+        snatTransCurrConns              INTEGER,
+        snatTransMaxConns               INTEGER,
+        snatTransTotalConns             Counter,
+        snatTransBitsInHi32             Counter,
+        snatTransBitsOutHi32            Counter,
+        snatTransPktsInHi32             Counter,
+        snatTransPktsOutHi32            Counter,
+        snatTransLastTransPort          INTEGER,
+        snatTransUnitId                 INTEGER
+}
+        
+snatTransEnabled OBJECT-TYPE
+        SYNTAX  INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is this TransAddress enabled for SNAT?"
+        ::= { snatTransEntry 1 }
+
+snatTransAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The ipaddress to the outside world for this SNAT."
+        ::= { snatTransEntry 2 }
+        
+snatTransIface OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..10))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The name of the interface that this trans address
+                 exists on."
+        ::= { snatTransEntry 3 }
+
+snatTransNetmask OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The network mask for the snatTransAddr."
+        ::= { snatTransEntry 4 }
+
+snatTransBroadcast OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The broadcast address for the snatTransAddr."
+        ::= { snatTransEntry 5 }
+
+snatTransSecsCollectingStats OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of seconds we have been collecting
+                 statistics for this port."
+        ::= { snatTransEntry 6 }
+
+snatTransBitsIn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The total bits in for this SNAT."
+        ::= { snatTransEntry 7 }
+
+snatTransBitsOut OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The total bits out for this SNAT."
+        ::= { snatTransEntry 8 }
+
+snatTransPktsIn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The total packets in for this SNAT."
+        ::= { snatTransEntry 9 }
+
+snatTransPktsOut OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The total packets out for this SNAT."
+        ::= { snatTransEntry 10 }
+
+snatTransCurrConns OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The number of connections currently open for
+                this SNAT."
+        ::= { snatTransEntry 11 }
+
+snatTransMaxConns OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The maximum number of connections this SNAT
+                has had open at any one time."
+        ::= { snatTransEntry 12 }
+
+snatTransTotalConns OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The total number of connections this SNAT
+                has had since the SNAT started."
+        ::= { snatTransEntry 13 }
+
+snatTransBitsInHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The upper 32 bits of the total number of bits in for this SNAT."
+        ::= { snatTransEntry 14 }
+
+snatTransBitsOutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The upper 32 bits of the total number of bits out for this SNAT."
+        ::= { snatTransEntry 15 }
+
+snatTransPktsInHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The upper 32 bits of the total number of packets in for this SNAT."
+        ::= { snatTransEntry 16 }
+
+snatTransPktsOutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The upper 32 bits of the total number of packets out for this SNAT."
+        ::= { snatTransEntry 17 }
+
+snatTransLastTransPort OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Last translated port accessed using the SNAT."
+        ::= { snatTransEntry 18 }
+
+snatTransUnitId OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Unit number of the load balancer to which 
+                the SNAT translation address is assigned."
+        ::= { snatTransEntry 19 }
+
+--================================================================
+-- SNAT Original Address Table
+--================================================================
+
+snatOrigTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF SnatOrigEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A table of all the secure NATS entries."
+        ::= { snat 2 }
+
+snatOrigEntry OBJECT-TYPE
+        SYNTAX SnatOrigEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION "Columns in the table of secure NATS entries."
+        INDEX { snatOrigAddr }
+        ::= { snatOrigTable 1 }
+
+SnatOrigEntry ::= SEQUENCE {
+        snatOrigEnabled                 INTEGER,
+        snatOrigAddr                    IpAddress,
+        snatOrigConnLimit               INTEGER,
+        snatOrigTransAddr               IpAddress,
+        snatOrigTcpIdleTimeout          Counter,
+        snatOrigUdpIdleTimeout          Counter,
+        snatOrigStatsZeroTime           Counter,
+        snatOrigSecsCollectingStats     Counter,
+        snatOrigBitsIn                  Counter,
+        snatOrigBitsOut                 Counter,
+        snatOrigPktsIn                  Counter,
+        snatOrigPktsOut                 Counter,
+        snatOrigCurrConns               INTEGER,
+        snatOrigMaxConns                INTEGER,
+        snatOrigTotalConns              Counter,
+        snatOrigBitsInHi32              Counter,
+        snatOrigBitsOutHi32             Counter,
+        snatOrigPktsInHi32              Counter,
+        snatOrigPktsOutHi32             Counter,
+        snatOrigLastTransPort           INTEGER
+}
+        
+snatOrigEnabled OBJECT-TYPE
+        SYNTAX  INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is this OrigAddress enabled for SNAT?"
+        ::= { snatOrigEntry 1 }
+
+snatOrigAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The ipaddress to the outside world for this SNAT."
+        ::= { snatOrigEntry 2 }
+
+snatOrigConnLimit OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections through this snat."
+        ::= { snatOrigEntry 3 }
+
+snatOrigTransAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The translation address corresponding to this
+                original address."
+        ::= { snatOrigEntry 4 }
+
+snatOrigTcpIdleTimeout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The idle timeout for TCP connections though this snat."
+        ::= { snatOrigEntry 5 }
+
+snatOrigUdpIdleTimeout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The idle timeout for TCP connections though this snat."
+        ::= { snatOrigEntry 6 }
+
+snatOrigStatsZeroTime OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The time we started collecting
+                 statistics for this port."
+        ::= { snatOrigEntry 7 }
+
+snatOrigSecsCollectingStats OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of seconds we have been collecting
+                 statistics for this port."
+        ::= { snatOrigEntry 8 }
+
+snatOrigBitsIn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Total bits in for this SNAT."
+        ::= { snatOrigEntry 9 }
+
+snatOrigBitsOut OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Total bits out for this SNAT."
+        ::= { snatOrigEntry 10 }
+
+snatOrigPktsIn OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Total packets in for this SNAT."
+        ::= { snatOrigEntry 11 }
+
+snatOrigPktsOut OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Total packets out for this SNAT."
+        ::= { snatOrigEntry 12 }
+
+snatOrigCurrConns OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The current number of connections for this SNAT."
+        ::= { snatOrigEntry 13 }
+
+snatOrigMaxConns OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The maximum number of connections this SNAT has
+                had at any one time."
+        ::= { snatOrigEntry 14 }
+
+snatOrigTotalConns OBJECT-TYPE
+        SYNTAX Counter 
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The total number of connections this SNAT has
+                had since the SNAT started."
+
+        ::= { snatOrigEntry 15 }
+
+snatOrigBitsInHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The upper 32 bits of the total number of bits in for this SNAT."
+        ::= { snatOrigEntry 16 }
+
+snatOrigBitsOutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The upper 32 bits of the total number of bits out for this SNAT."
+        ::= { snatOrigEntry 17 }
+
+snatOrigPktsInHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The upper 32 bits of the total number of packets in for this SNAT."
+        ::= { snatOrigEntry 18 }
+
+snatOrigPktsOutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "The upper 32 bits of the total number of packets out for this SNAT."
+        ::= { snatOrigEntry 19 }
+
+snatOrigLastTransPort OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Last translated port accessed using the SNAT."
+        ::= { snatOrigEntry 20 }
+
+--================================================================
+-- General Load Balancer Scalars
+--================================================================
+uptime OBJECT-TYPE
+        SYNTAX TimeTicks
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The uptime of this device -- not the uptime of the SNMP
+                agent."
+        ::= { loadbal 50 }
+
+contot OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this balancer has
+                serviced."
+        ::= { loadbal 51 }
+
+concur OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of current connections."
+        ::= { loadbal 52 }
+
+conmax OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections that this balancer
+                has serviced at one time."
+        ::= { loadbal 53 }
+
+pktsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total count of all packets read off the network."
+        ::= { loadbal 54 }
+
+pktsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total count of all packets written to the network."
+        ::= { loadbal 55 }
+
+bitsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of bits read off the network."
+        ::= { loadbal 56 }
+
+bitsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total count of all bits written to the network."
+        ::= { loadbal 57 }
+
+portdeny OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of port denies that has occuried."
+        ::= { loadbal 58 }
+
+droppedin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of inbound packets that have been dropped."
+        ::= { loadbal 59 }
+
+droppedout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of outbound packets that have been dropped."
+        ::= { loadbal 60 }
+
+active OBJECT-TYPE
+        SYNTAX INTEGER {
+                standby (1),
+                active (2) }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "If this balancer in active or standby mode?"
+        ::= { loadbal 61 }
+
+mirrorenabled OBJECT-TYPE
+        SYNTAX INTEGER {
+                disabled (1),
+                enabled (2) }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is mirroring enabled on this load balancer?"
+        ::= { loadbal 62 }
+
+resetcounters OBJECT-TYPE
+        SYNTAX INTEGER {
+                unreset(2),
+                reset (1)
+        }
+        ACCESS read-write
+        STATUS mandatory
+        DESCRIPTION
+                "Reset all load balancer counters."
+        ::= { loadbal 63 }
+
+pktsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total count of all packets read off the network."
+        ::= { loadbal 64 }
+
+pktsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total count of all packets written to the network."
+        ::= { loadbal 65 }
+
+bitsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of bits read off the network."
+        ::= { loadbal 66 }
+
+bitsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total count of all bits written to the network."
+        ::= { loadbal 67 }
+
+nodePing OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Node ping interval in seconds."
+        ::= { loadbal 68 }
+
+nodeTimeout OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Node timeout interval in seconds."
+        ::= { loadbal 69 }
+
+loadbalMode OBJECT-TYPE
+        SYNTAX INTEGER {
+                roundrobin(1),
+                ratio(2),
+                fastest(3),
+                leastConn(4),
+                predictive(5),
+                observed(6),
+                priority(7),
+                ratioNodeAddress(8),
+                priorityNodeAddress(9),
+                leastConnNodeAddress(10)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The global load balance mode."
+        ::= { loadbal 70 }
+
+watchDogArmed OBJECT-TYPE
+        SYNTAX INTEGER {
+                armed(1), disarmed(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Watch dog card state."
+        ::= { loadbal 71 }
+
+snatConnLimit OBJECT-TYPE
+        SYNTAX INTEGER 
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Number of simultaneous connections allowed through a SNAT."
+        ::= { loadbal 72 }
+
+snatTCPIdleTimeout OBJECT-TYPE
+        SYNTAX INTEGER 
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Default connection timeout for SNAT TCP connections."
+        ::= { loadbal 73 }
+
+snatUDPIdleTimeout OBJECT-TYPE
+        SYNTAX INTEGER 
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Default timeout for SNAT UDP connections."
+        ::= { loadbal 74 }
+
+gatewayFailsafe OBJECT-TYPE
+        SYNTAX INTEGER {
+                enabled(1),
+                disabled(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is gateway failsafe pinging enabled."
+        ::= { loadbal 75 }
+
+unitId OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Unit id(s) for this load balancer."
+        ::= { loadbal 76 }
+
+memoryUsed OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Memory used by the load balancer kernal."
+        ::= { loadbal 77 }
+ 
+memoryTotal OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Total memory available to the load balancer kernal."
+        ::= { loadbal 78 }
+
+--================================================================
+-- VADDRESS (Virtual Address) information
+--================================================================
+vaddressNumber OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of virtual address's present on this system."
+        ::= { vaddress 1 }
+
+vaddressTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF VaddressEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A list of virtual address's entries. The number of
+                entries is given by the value of vaddressNumber."
+        ::= { vaddress 2 }
+
+vaddressEntry OBJECT-TYPE
+        SYNTAX VaddressEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A vaddress entry containing vaddress information."
+        INDEX { vaddressIndex }
+        ::= { vaddressTable 1 }
+
+VaddressEntry ::=
+        SEQUENCE {
+                vaddressIndex           INTEGER (0..65535),
+                vaddressDescr           DisplayString (SIZE (0..255)),
+                vaddressIpAddr          IpAddress,
+                vaddressPktsin          Counter,
+                vaddressPktsout         Counter,
+                vaddressBitsin          Counter,
+                vaddressBitsout         Counter,
+                vaddressConcur          INTEGER,
+                vaddressConmax          INTEGER,
+                vaddressConlimit        INTEGER,
+                vaddressContot          Counter,
+                vaddressStatus          INTEGER,
+                vaddressPktsinHi32      Counter,
+                vaddressPktsoutHi32     Counter,
+                vaddressBitsinHi32      Counter,
+                vaddressBitsoutHi32     Counter
+        }
+
+vaddressIndex OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "A unique value for each virtual address defined."
+        ::= { vaddressEntry 1 }
+
+vaddressDescr OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "A textual string describing the virtual address."
+        ::= { vaddressEntry 2 }
+
+vaddressIpAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The IP address for this virtual address."
+        ::= { vaddressEntry 3 }
+
+vaddressPktsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this virtual address."
+        ::= { vaddressEntry 4 }
+
+vaddressPktsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out of this virtual address."
+        ::= { vaddressEntry 5 }
+
+vaddressBitsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this virtual address."
+        ::= { vaddressEntry 6 }
+
+vaddressBitsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out of this virtual address."
+        ::= { vaddressEntry 7 }
+
+vaddressConcur OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The current number of connections on this virtual
+                address."
+        ::= { vaddressEntry 8 }
+
+vaddressConmax OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections this virtual server
+                has had open at any one time."
+        ::= { vaddressEntry 9 }
+
+vaddressConlimit OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this virtual address
+        can support at one time."
+        ::= { vaddressEntry 10 }
+
+vaddressContot OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this virtual server
+                has served since the server started."
+        ::= { vaddressEntry 11 }
+
+vaddressStatus OBJECT-TYPE
+        SYNTAX INTEGER {
+                ready(1),
+                maintainance(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Status of this virtual address."
+        ::= { vaddressEntry 12 }
+
+vaddressPktsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this virtual address."
+        ::= { vaddressEntry 13 }
+
+vaddressPktsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out of this virtual address."
+        ::= { vaddressEntry 14 }
+
+vaddressBitsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this virtual address."
+        ::= { vaddressEntry 15 }
+
+vaddressBitsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out of this virtual address."
+        ::= { vaddressEntry 16 }
+
+--================================================================
+-- NDADDR information
+--================================================================
+ndaddrNumber OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of ndaddrs present on this system."
+        ::= { ndaddr 1 }
+
+ndaddrTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF NdaddrEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A list of ndaddr entries. The number of entries is
+                given by the value of ndaddrNumber."
+        ::= { ndaddr 2 }
+
+ndaddrEntry OBJECT-TYPE
+        SYNTAX NdaddrEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A ndaddr entry containing ndaddr statitics."
+        INDEX { ndaddrIndex }
+        ::= { ndaddrTable 1 }
+
+NdaddrEntry ::=
+        SEQUENCE {
+                ndaddrIndex     INTEGER (0..65535),
+                ndaddrDescr     DisplayString (SIZE (0..255)),
+                ndaddrIpAddr    IpAddress,
+                ndaddrPktsin    Counter,
+                ndaddrPktsout   Counter,
+                ndaddrBitsin    Counter,
+                ndaddrBitsout   Counter,
+                ndaddrConcur    INTEGER,
+                ndaddrConmax    INTEGER,
+                ndaddrConlimit  INTEGER,
+                ndaddrContot    Counter,
+                ndaddrStatus    INTEGER,
+                ndaddrPktsinHi32        Counter,
+                ndaddrPktsoutHi32       Counter,
+                ndaddrBitsinHi32        Counter,
+                ndaddrBitsoutHi32       Counter,
+                ndaddrMaintenance       INTEGER
+        }
+
+ndaddrIndex OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "A unique value for each ndaddr defined."
+        ::= { ndaddrEntry 1 }
+
+ndaddrDescr OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "A textual string describing the node address."
+        ::= { ndaddrEntry 2 }
+
+ndaddrIpAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The Node address (IP Address)."
+        ::= { ndaddrEntry 3 }
+
+ndaddrPktsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this node address."
+        ::= { ndaddrEntry 4 }
+
+ndaddrPktsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this node address."
+        ::= { ndaddrEntry 5 }
+
+ndaddrBitsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this node address."
+        ::= { ndaddrEntry 6 }
+
+ndaddrBitsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this node address."
+        ::= { ndaddrEntry 7 }
+
+ndaddrConcur OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of current connections for this node
+                address."
+        ::= { ndaddrEntry 8 }
+
+ndaddrConmax OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections this node address
+                has had oppen at one time."
+        ::= { ndaddrEntry 9 }
+
+ndaddrConlimit OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections this node address
+                is allowed to have open at one time."
+        ::= { ndaddrEntry 10 }
+
+ndaddrContot OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total connections that this node address had
+                had."
+        ::= { ndaddrEntry 11 }
+
+ndaddrStatus OBJECT-TYPE
+        SYNTAX INTEGER {
+                up(1),
+                down(2),
+                invalid(3),
+                valid(4),
+                unchecked(6),
+                unknown(7)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The status of this node address."
+        ::= { ndaddrEntry 12 }
+
+ndaddrPktsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this node address."
+        ::= { ndaddrEntry 13 }
+
+ndaddrPktsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this node address."
+        ::= { ndaddrEntry 14 }
+
+ndaddrBitsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this node address."
+        ::= { ndaddrEntry 15 }
+
+ndaddrBitsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this node address."
+        ::= { ndaddrEntry 16 }
+
+ndaddrMaintenance OBJECT-TYPE
+        SYNTAX INTEGER {
+                true(1),
+                false(2)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Is this node address in maintenance mode."
+        ::= { ndaddrEntry 17 }
+
+
+--================================================================
+-- NAT (Network Address Translation) information
+--================================================================
+natNumber OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of NATS present on this system."
+        ::= { nat 1 }
+
+natTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF NatEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A list of NAT entries. The number of
+                entries is given by the value of natNumber."
+        ::= { nat 2 }
+
+natEntry OBJECT-TYPE
+        SYNTAX NatEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A NAT entry containing information by nat."
+        INDEX { natIndex }
+        ::= { natTable 1 }
+
+NatEntry ::=
+        SEQUENCE {
+                natIndex        INTEGER (0..65535),
+                natDescr        DisplayString (SIZE (0..255)),
+                natIpAddrFR     IpAddress,
+                natIpAddrTO     IpAddress,
+                natPktsin       Counter,
+                natPktsout      Counter,
+                natBitsin       Counter,
+                natBitsout      Counter,
+                natPktsinHi32   Counter,
+                natPktsoutHi32  Counter,
+                natBitsinHi32   Counter,
+                natBitsoutHi32  Counter,
+                natOutsideNetmask IpAddress,
+                natOutsideBroadcast IpAddress,
+                natInterface    DisplayString (SIZE (0..255)),
+                natUnitId       INTEGER
+        }
+
+natIndex OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "A unique value for each NAT defined."
+        ::= { natEntry 1 }
+
+natDescr OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "A textual string describing the NAT."
+        ::= { natEntry 2 }
+
+natIpAddrFR OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The NAT's from IP Address."
+        ::= { natEntry 3 }
+
+natIpAddrTO OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The NAT's TO IP Address."
+        ::= { natEntry 4 }
+
+natPktsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this NAT."
+        ::= { natEntry 5 }
+
+natPktsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this NAT."
+        ::= { natEntry 6 }
+
+natBitsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this NAT."
+        ::= { natEntry 7 }
+
+natBitsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this NAT."
+        ::= { natEntry 8 }
+
+natPktsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this NAT."
+        ::= { natEntry 9 }
+
+natPktsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this NAT."
+        ::= { natEntry 10 }
+
+natBitsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this NAT."
+        ::= { natEntry 11 }
+
+natBitsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this NAT."
+        ::= { natEntry 12 }
+
+natOutsideNetmask OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The outside netmask for this NAT."
+        ::= { natEntry 13 }
+
+natOutsideBroadcast OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The outside broadcast address for this NAT."
+        ::= { natEntry 14 }
+
+natInterface OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The interface name for this NAT."
+        ::= { natEntry 15 }
+
+natUnitId OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The unit id associated with this NAT."
+        ::= { natEntry 16 }
+
+--================================================================
+-- VPORT information
+--================================================================
+vportNumber OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of vports present on this system."
+        ::= { vport 1 }
+
+vportTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF VportEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A list of vport entries. The number of
+entries is given by the value of vportNumber."
+        ::= { vport 2 }
+
+vportEntry OBJECT-TYPE
+        SYNTAX VportEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A vport entry containing vport statitics."
+        INDEX { vportIndex }
+        ::= { vportTable 1 }
+
+VportEntry ::=
+        SEQUENCE {
+                vportIndex      INTEGER (0..65535),
+                vportPort       INTEGER,
+                vportDescr      DisplayString (SIZE (0..255)),
+                vportPktsin     Counter,
+                vportPktsout    Counter,
+                vportBitsin     Counter,
+                vportBitsout    Counter,
+                vportConcur     INTEGER,
+                vportConmax     INTEGER,
+                vportConlimit   INTEGER,
+                vportContot     Counter,
+                vportReaped     Counter,
+                vportPktsinHi32 Counter,
+                vportPktsoutHi32        Counter,
+                vportBitsinHi32 Counter,
+                vportBitsoutHi32        Counter,
+                vportAllowed    INTEGER,
+                vportTCPpersistance     INTEGER,
+                vportUDPpersistance     INTEGER
+        }
+
+vportIndex OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "A unique value for each virtual port defined."
+        ::= { vportEntry 1 }
+
+vportPort OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The Virutal port's port Number."
+        ::= { vportEntry 2 }
+
+vportDescr OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "A textual string describing the virtual port."
+        ::= { vportEntry 3 }
+
+vportPktsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this virtual port."
+        ::= { vportEntry 4 }
+
+vportPktsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this virtual port."
+        ::= { vportEntry 5 }
+
+vportBitsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this virtual port."
+        ::= { vportEntry 6 }
+
+vportBitsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this virtual port."
+        ::= { vportEntry 7 }
+
+vportConcur OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of current connections for this virtual
+                port"
+        ::= { vportEntry 8 }
+
+vportConmax OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections this virtual port
+                has had open at any one time."
+        ::= { vportEntry 9 }
+
+vportConlimit OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The connection limit for this virtual port."
+        ::= { vportEntry 10 }
+
+vportContot OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this virtual port
+                has had open since the server started."
+        ::= { vportEntry 11 }
+
+vportReaped OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total connections reaped on this virtual port."
+        ::= { vportEntry 12 }
+
+vportPktsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets in for this virtual port."
+        ::= { vportEntry 13 }
+
+vportPktsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total packets out for this virtual port."
+        ::= { vportEntry 14 }
+
+vportBitsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits in for this virtual port."
+        ::= { vportEntry 15 }
+
+vportBitsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total bits out for this virtual port."
+        ::= { vportEntry 16 }
+
+vportAllowed OBJECT-TYPE
+        SYNTAX INTEGER { allowed(1), disallowed(2) }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Is this port allowed."
+        ::= { vportEntry 17 }
+
+vportTCPpersistance OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Number of seconds before TCP persistence
+                expires for this virtual port."
+        ::= { vportEntry 18 }
+
+vportUDPpersistance OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION "Number of seconds before UDP persistence
+                expires for this virtual port."
+        ::= { vportEntry 19 }
+
+--================================================================
+-- MEMBER information
+-- member information is indexed by Virtual Path and Ordinal Number
+--================================================================
+
+memberTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF MemberEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "A table containing balancer member information."
+        ::= { member 2 }
+
+memberEntry OBJECT-TYPE
+        SYNTAX MemberEntry
+        ACCESS not-accessible
+        STATUS mandatory
+        DESCRIPTION
+                "Information Specific to Members."
+        INDEX { memberVirtualAddress, memberVirtualAddressPort, 
+                memberOrdinal }
+        ::= { memberTable 1 }
+
+MemberEntry ::=
+        SEQUENCE {
+                memberVirtualAddress            IpAddress,
+                memberVirtualAddressPort        INTEGER (0..65535),
+                memberOrdinal                   INTEGER (0..65535),
+                memberAddress                   IpAddress,
+                memberPort                      INTEGER,
+                memberStatus                    INTEGER,
+                memberPktsin                    Counter,
+                memberPktsout                   Counter,
+                memberBitsin                    Counter,
+                memberBitsout                   Counter,
+                memberConcur                    INTEGER,
+                memberConmax                    INTEGER,
+                memberConlimit                  INTEGER,
+                memberContot                    Counter,
+                memberPktsinHi32                        Counter,
+                memberPktsoutHi32                       Counter,
+                memberBitsinHi32                        Counter,
+                memberBitsoutHi32                       Counter
+        }
+
+memberVirtualAddress OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The virtual IP address."
+        ::= { memberEntry 1 }
+
+memberVirtualAddressPort OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The virtual IP address port."
+        ::= { memberEntry 2 }
+
+memberOrdinal OBJECT-TYPE
+        SYNTAX INTEGER (0..65535)
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The virtual IP address member ordinal number."
+        ::= { memberEntry 3 }
+
+memberAddress OBJECT-TYPE
+        SYNTAX IpAddress
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The node ip address for this member."
+        ::= { memberEntry 4 }
+
+memberPort OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The node port for this member."
+        ::= { memberEntry 5 }
+
+memberStatus OBJECT-TYPE
+        SYNTAX INTEGER {
+                up(1),
+                down(2),
+                invalid(3),
+                maintainance(4),
+                unchecked(5),
+                unknown(6)
+        }
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The status of this member."
+        ::= { memberEntry 6 }
+
+memberPktsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of packets read off the network for
+                this member."
+        ::= { memberEntry 7 }
+
+memberPktsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of packets written to the network for
+                this member."
+        ::= { memberEntry 8 }
+
+memberBitsin OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of bits read off the network for this
+                member."
+        ::= { memberEntry 9 }
+
+memberBitsout OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of bits written to the network for
+                this member."
+        ::= { memberEntry 10 }
+
+memberConcur OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of connections currently open for this
+                member."
+        ::= { memberEntry 11 }
+
+memberConmax OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The maximum number of connections this member has had
+                open at any one time."
+        ::= { memberEntry 12 }
+
+memberConlimit OBJECT-TYPE
+        SYNTAX INTEGER
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this member can
+                support at one time."
+        ::= { memberEntry 13 }
+
+memberContot OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The total number of connections this member has
+                served since the server started."
+        ::= { memberEntry 14 }
+
+memberPktsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of packets read off the network for
+                this member."
+        ::= { memberEntry 15 }
+
+memberPktsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of packets written to the network for
+                this member."
+        ::= { memberEntry 16 }
+
+memberBitsinHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of bits read off the network for this
+                member."
+        ::= { memberEntry 17 }
+
+memberBitsoutHi32 OBJECT-TYPE
+        SYNTAX Counter
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The count of bits written to the network for
+                this member."
+        ::= { memberEntry 18 }
+
+--================================================================
+-- TRAP Information
+--================================================================
+loadBalTrapMisc TRAP-TYPE
+        ENTERPRISE loadBalTraps
+        DESCRIPTION
+                "Uncatagorized trap."
+        ::= 1
+loadBalTrapServiceDown TRAP-TYPE
+        ENTERPRISE loadBalTraps
+        DESCRIPTION
+                "Service Came Down."
+        ::= 2
+loadBalTrapServiceUP TRAP-TYPE
+        ENTERPRISE loadBalTraps
+        DESCRIPTION
+                "Service Came Up."
+        ::= 3
+loadBalTrapReset TRAP-TYPE
+        ENTERPRISE loadBalTraps
+        DESCRIPTION
+                "System Reset."
+        ::= 4
+loadBalTrapDenial TRAP-TYPE
+        ENTERPRISE loadBalTraps
+        DESCRIPTION
+                "REQUEST DENIAL"
+        ::= 5
+loadBalTrapLogin TRAP-TYPE
+        ENTERPRISE loadBalTraps
+        DESCRIPTION
+                "Root Login."
+        ::= 6
+loadBalTrapRemoveUnit TRAP-TYPE
+        ENTERPRISE loadBalTraps
+        DESCRIPTION
+                "Removing unit. Potential failover of this load balancer."
+        ::= 7 
+loadBalTrapAddUnit TRAP-TYPE
+        ENTERPRISE loadBalTraps
+        DESCRIPTION
+                "Adding unit. This load balancer has taken responsibility for a new unit id."
+        ::= 8 
+
+END
+
+-- ################################################################################
+
+--/* 
+-- * $RCSfile: WAN-TRAP-MIB.mib,v $ - Wan blades enterprise MIB
+-- *
+-- * Copyright (c) 2000 by Optranet Networks Inc.
+-- * 
+-- * Revision control history
+-- * ------------------------
+-- * $Id: WAN-TRAP-MIB.mib,v 1.3 2005/09/22 22:19:49 scotth Exp $ $ProjectRevision: 1.85 $
+-- *
+-- * Extreme Networks modification history
+-- * -------------------------------------
+-- * $Log: WAN-TRAP-MIB.mib,v $
+-- * Revision 1.3  2005/09/22 22:19:49  scotth
+-- * Reviewer      : Self
+-- * Regression    : None
+-- * PD none : cvs update -d -jv1140b1 -jv1140b1-br-mckinley-2 exos (v1140b2)
+-- * Merge to trunk
+-- *
+-- * Revision 1.2.32.1  2005/09/15 04:10:33  scotth
+-- * Reviewer      : Self
+-- * Regression    : None
+-- * PD none : cvs update -d -jv1130b11-br-rushmore7-6 -jv1130b11-br-rushmore7-7 exos
+-- * Merge to branch-mckinley_v1140b1
+-- *
+-- * Revision 1.2.14.1  2005/09/09 00:58:31  ykhan
+-- * Reviewer      : Balaji
+-- * Regression    : none
+-- * PD3-42847181  : DOS to unix conversion, Removed 11111111 from BITS default value, Fixes the TRAP mib to compile on HPOV
+-- *
+-- * Revision 1.2  2005/07/14 17:51:38  scotth
+-- * Reviewer      : Self
+-- * Regression    : None
+-- * PD none : cvs update -d -jv1130b4-br-rushmore6-3 -jv1130b4-br-rushmore6-4 exos (v1130b8)
+-- *
+-- * Revision 1.1.2.1  2005/07/14 04:39:39  ykhan
+-- * Reviewer      : Abhay
+-- * Regression    : SC_050713_140715
+-- * PD3-39730771: This file has been implemented by EW but not Exos. To keep mib in sync this file has to present in exos tree.
+-- *
+-- * Revision 1.1  2005/01/25 02:03:49  bsrinivasan
+-- * Added the MIBs from the Titan tree
+-- *
+-- * Revision 1.1  2003/06/07 01:14:43  rnagarajan
+-- * - Added new wantrap.mib from Extremeware 7.1
+-- *
+-- * Revision 1.3  2003/02/06 22:56:36  rtp-build
+-- * PD none: merge 802.1x and SNMPv3 feature into trunk (v710b9)
+-- *
+-- * Revision 1.2.10.3  2003/02/04 17:41:10  dcarson
+-- * PD none: never use dash-dash in an SNMP commit comment
+-- *
+-- * Revision 1.2.10.2  2003/02/04 16:20:13  dcarson
+-- * PD none: promotion of branch-802-1x-snmpv3_v710b6 to _v710b8 (phase one; has compile errors)
+-- *
+-- * Revision 1.1.6.1  2003/01/15 03:53:44  rsharma
+-- * PD2-116204701 : promote 802.1x ,netlogin & snmpv3 merge from v710b0 -> v710b6
+-- *
+-- * Revision 1.1.2.1  2002/12/03 16:46:56  agidwani
+-- * PD2-109134118: SNMPv3 merge
+-- *
+-- * Revision 1.2  2002/03/21 20:59:13  dcarson
+-- * PD 1-C8KSX: merge ABU_v700b4 into trunk
+-- *
+-- * Revision 1.1.6.1  2002/03/12 06:25:59  dcarson
+-- * PD 1-BGKRG: merge branch-ABU_v700b3 to branch-ABU_v700b4
+-- *
+-- * Revision 1.1.4.1  2002/03/11 20:29:42  dwade
+-- * conflict resolution for branch-ABU_v700b3
+-- *
+-- * Revision 1.1.2.2  2002/03/08 22:11:08  vtseng
+-- * Lilac merge
+-- *
+-- * Revision 1.1.2.1  2002/02/21 16:45:46  dwade
+-- * ABU files added for branch branch-ABU-v700
+-- *
+-- * Revision 1.1.3.1  2001/12/14 02:08:17  dwade
+-- * Tree v618b1060_abu
+-- *
+-- * Revision 1.1.3.1  2001/06/05 19:48:53  rrose
+-- * Tree optra
+-- *
+-- * Revision 1.1.1.1  2001/03/13 00:04:55  bmonsen
+-- * Imported from MKS
+-- *
+-- * Revision 1.3  2000/10/26 20:27:30Z  victort
+-- * Added NoMasterClockLost trap
+-- * Revision 1.1  2000/09/10 08:30:00  victort
+-- * Initial revision
+-- *
+-- */
+
+--
+-- WAN Traps
+--
+

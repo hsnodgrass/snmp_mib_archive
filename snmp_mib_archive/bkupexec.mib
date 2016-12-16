@@ -1,0 +1,391 @@
+     --
+     -- (c) 1996 Seagate Software, Inc.  All rights reserved.
+     --
+     -- SNMP Console support for Backup Exec for NT and NetWare
+     --
+     -- $Revision: 6049 $
+     -- $Date: 2003-06-11 04:58:24 +0530 (Wed, 11 Jun 2003) $
+     --
+
+     Backup-Exec-MIB DEFINITIONS ::= BEGIN
+
+     IMPORTS
+          enterprises, Counter, Gauge, TimeTicks
+               FROM RFC1155-SMI
+          OBJECT-TYPE
+               FROM RFC-1212
+          TRAP-TYPE
+               FROM RFC-1215
+          DisplayString
+               FROM RFC1213-MIB;
+     
+     --
+     -- 1302 - seagatesoftware
+     --        .1 - benw
+     --        .2 - instprods
+     --        .3 - products
+     --             .1 - backupexec
+     --                  .1 - beconfig
+     --                  .2 - bejobs
+     --                  .3 - becatalog
+     --                  .4 - bemodules
+     --                       .1 - labs
+     --                       .2 - disasterrecovery
+     --             .2 - devices
+     --                  .1 - deviceconfig
+     --                  .2 - pvr
+     --                  .3 - pvl
+     --                  .4 - loader
+     --                  .5 - tape
+     --             .3 - trapvars
+     --
+     
+     seagatesoftware     OBJECT IDENTIFIER ::= { enterprises 1302 }
+     benw                OBJECT IDENTIFIER ::= { seagatesoftware 1 }
+     instprods           OBJECT IDENTIFIER ::= { seagatesoftware 2 }
+     products            OBJECT IDENTIFIER ::= { seagatesoftware 3 }
+     backupexec          OBJECT IDENTIFIER ::= { products 1 }
+     devices             OBJECT IDENTIFIER ::= { products 2 }
+     trapvars            OBJECT IDENTIFIER ::= { products 3 }
+     beconfig            OBJECT IDENTIFIER ::= { backupexec 1 }
+     bejobs              OBJECT IDENTIFIER ::= { backupexec 2 }
+     becatalog           OBJECT IDENTIFIER ::= { backupexec 3 }
+     bemodules           OBJECT IDENTIFIER ::= { backupexec 4 }
+     deviceconfig        OBJECT IDENTIFIER ::= { devices 1 }
+     pvr                 OBJECT IDENTIFIER ::= { devices 2 }
+     pvl                 OBJECT IDENTIFIER ::= { devices 3 }
+     loader              OBJECT IDENTIFIER ::= { devices 4 }
+     tape                OBJECT IDENTIFIER ::= { devices 5 }
+     labs                OBJECT IDENTIFIER ::= { bemodules 1 }
+     disasterrecovery    OBJECT IDENTIFIER ::= { bemodules 2 }
+
+--
+--   Trap Variables Section
+--
+
+     serverName     OBJECT-TYPE
+          SYNTAX    DisplayString
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "Server on which this product is running."
+          ::= { trapvars 1 }
+     
+     appInfo        OBJECT-TYPE
+          SYNTAX    DisplayString
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "Product name and version information."
+          ::= { trapvars 2 }
+     
+     jobName        OBJECT-TYPE
+          SYNTAX    DisplayString
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "The name of the job."
+          ::= { trapvars 3 }
+     
+     operatorName   OBJECT-TYPE
+          SYNTAX    DisplayString
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "User account which caused the event."
+          ::= { trapvars 4 }
+     
+     messageText    OBJECT-TYPE
+          SYNTAX    DisplayString
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "Description of the event."
+          ::= { trapvars 5 }
+     
+     additionalText OBJECT-TYPE
+          SYNTAX    DisplayString
+          ACCESS    read-only
+          STATUS    mandatory
+          DESCRIPTION
+               "Additional information about the event, if available." 
+          ::= { trapvars 6 }
+     
+
+--
+--  Backup Exec Section
+--
+
+--   Configuration Group
+     
+     cgtraps   OBJECT IDENTIFIER ::= { beconfig 9 }
+
+     cgStartTrap    TRAP-TYPE
+          ENTERPRISE     cgtraps
+          VARIABLES { messageText, serverName, appInfo }
+          DESCRIPTION
+               "The application has started."
+          --#TYPE      "No action required"
+          --#SUMMARY   "%s"
+          --#ARGUMENTS {0}
+          --#SEVERITY  INFORMATIONAL
+          --#TIMEINDEX 1        
+          --#STATE     OPERATIONAL
+          ::= 1
+
+     cgStopTrap     TRAP-TYPE
+          ENTERPRISE     cgtraps
+          VARIABLES { messageText, serverName, appInfo }
+          DESCRIPTION
+               "The application has stopped."
+          --#TYPE      "User is advised to take action"
+          --#SUMMARY   "%s"
+          --#ARGUMENTS {0}
+          --#SEVERITY  MINOR
+          --#TIMEINDEX 1        
+          --#STATE     DEGRADED
+          ::= 2
+     
+
+--   Jobs Group
+
+     cjtraps   OBJECT IDENTIFIER ::= { bejobs 8 }
+
+     cjFailureTrap            TRAP-TYPE
+          ENTERPRISE     cjtraps
+          VARIABLES { messageText, serverName, jobName, additionalText }
+          DESCRIPTION
+               "The Job failed."
+          --#TYPE      "User advised to take action"
+          --#SUMMARY   "%s Job:%s %s"
+          --#ARGUMENTS {0,2,3}
+          --#SEVERITY  MINOR
+          --#TIMEINDEX 1        
+          --#STATE     OPERATIONAL
+          ::= 1
+
+     cjAbortTrap              TRAP-TYPE
+          ENTERPRISE     cjtraps
+          VARIABLES { messageText, serverName, jobName, operatorName }
+          DESCRIPTION
+               "The Job was aborted."
+          --#TYPE      "User advised of event"
+          --#SUMMARY   "%s Job:%s Aborted by:%s"
+          --#ARGUMENTS {0,2,3}
+          --#SEVERITY  MINOR
+          --#TIMEINDEX 1        
+          --#STATE     OPERATIONAL
+          ::= 2
+
+
+--
+--  Modules Section
+--
+
+--   LABS Group
+
+     lbtraps        OBJECT IDENTIFIER ::= { labs 1 }
+
+     lbmultitapeTrap     TRAP-TYPE
+          ENTERPRISE     lbtraps
+          VARIABLES { messageText, serverName, jobName, additionalText }
+          DESCRIPTION
+               "Media for Low Administration Backup jobs will need to be
+                replaced more frequently."
+          --#TYPE      "User advised of event"
+          --#SUMMARY   "%s Job:%s %s"
+          --#ARGUMENTS {0,2,3}
+          --#SEVERITY  INFORMATIONAL
+          --#TIMEINDEX 1        
+          --#STATE     OPERATIONAL
+          ::= 1
+
+     lbretryTrap         TRAP-TYPE
+          ENTERPRISE     lbtraps
+          VARIABLES { messageText, serverName, jobName, additionalText }
+          DESCRIPTION
+               "The failed Low Administration Backup job has caused an
+                additional medium to be used.  The Low Administration media
+                group will need to be replaced sooner than scheduled."
+          --#TYPE      "User advised of event"
+          --#SUMMARY   "%s Job:%s %s"
+          --#ARGUMENTS {0,2,3}
+          --#SEVERITY  MINOR
+          --#TIMEINDEX 1        
+          --#STATE     OPERATIONAL
+          ::= 2
+
+
+--   Disaster Recovery Group
+
+     drtraps        OBJECT IDENTIFIER ::= { disasterrecovery 1 }
+
+     draltcopyerrTrap    TRAP-TYPE
+          ENTERPRISE     drtraps
+          VARIABLES { messageText, serverName, jobName, additionalText }
+          DESCRIPTION
+               "Disaster Recovery is not complete.  Update the Disaster
+                Recovery diskettes or manually copy Disaster Recovery file,
+                (servername).dr, found in the Disaster Recovery directory,
+                to the alternate path."
+          --#TYPE      "Take action immediately"
+          --#SUMMARY   "%s Job:%s %s"
+          --#ARGUMENTS {0,2,3}
+          --#SEVERITY  MAJOR
+          --#TIMEINDEX 1        
+          --#STATE     OPERATIONAL
+          ::= 1
+
+     drfullbkupTrap      TRAP-TYPE
+          ENTERPRISE     drtraps
+          VARIABLES { messageText, serverName, jobName, additionalText }
+          DESCRIPTION
+               "Disaster Recovery has completed a full backup.  It is necessary
+                now to update the disaster recovery disks in order to keep them
+                current."
+          --#TYPE      "User advised to take action"
+          --#SUMMARY   "%s Job:%s %s"
+          --#ARGUMENTS {0,2,3}
+          --#SEVERITY  INFORMATIONAL
+          --#TIMEINDEX 1        
+          --#STATE     OPERATIONAL
+          ::= 2
+
+
+--
+--  Devices Section
+--
+
+--   Loader Group
+
+     ldtraps   OBJECT IDENTIFIER ::= { loader 3 }
+     
+     ldHumanTrap    TRAP-TYPE
+          ENTERPRISE     ldtraps
+          VARIABLES { messageText, serverName, jobName, additionalText }
+          DESCRIPTION
+               "Loader needs human intervention."
+          --#TYPE      "Take action immediately"
+          --#SUMMARY   "%s Job:%s %s"
+          --#ARGUMENTS {0,2,3}
+          --#SEVERITY  MAJOR
+          --#TIMEINDEX 1        
+          --#STATE     DEGRADED
+          ::= 3
+
+--   Tape Drive Group
+
+     tdtraps   OBJECT IDENTIFIER ::= { tape 3 }
+     
+     tdHumanTrap    TRAP-TYPE
+          ENTERPRISE     tdtraps
+          VARIABLES { messageText, serverName, jobName, additionalText }
+          DESCRIPTION
+               "Tape drive needs human intervention."
+          --#TYPE      "Take action immediately"
+          --#SUMMARY   "%s Job:%s %s"
+          --#ARGUMENTS {0,2,3}
+          --#SEVERITY  MAJOR
+          --#TIMEINDEX 1        
+          --#STATE     DEGRADED
+          ::= 3
+
+
+--   Backup Exec for NetWare section
+
+message-object           OBJECT-TYPE
+                         SYNTAX DisplayString (SIZE (0..128))
+                         ACCESS read-only
+                         STATUS mandatory
+                         DESCRIPTION
+                                "Buffer for text that the traps send to
+                                 explain why the trap occurred."
+                         ::= { benw 1 }
+
+
+blocking-error-msg       TRAP-TYPE
+                         ENTERPRISE     benw
+                         VARIABLES
+                         {
+                              message-object
+                         }
+                         DESCRIPTION
+                              "An error occurred that prevents 1 or more
+                               sessions from processing jobs."
+                         --#TYPE      "Take action immediately"
+                         --#SUMMARY   "Backup Exec - %s"
+                         --#ARGUMENTS {0}
+                         --#SEVERITY  MAJOR
+                         --#TIMEINDEX 1        
+                         --#STATE     DEGRADED
+                         ::= 1
+
+error-message            TRAP-TYPE
+                         ENTERPRISE     benw
+                         VARIABLES
+                         {
+                              message-object
+                         }
+                         DESCRIPTION
+                              "An error occurred, but the session can
+                               continue to process jobs."
+                         --#TYPE      "User advised of event"
+                         --#SUMMARY   "Backup Exec - %s"
+                         --#ARGUMENTS {0}
+                         --#SEVERITY  MINOR
+                         --#TIMEINDEX 1        
+                         --#STATE     OPERATIONAL     
+                         ::= 2
+
+blocking-message         TRAP-TYPE
+                         ENTERPRISE     benw
+                         VARIABLES
+                         {
+                              message-object
+                         }
+                         DESCRIPTION
+                              "An event occurred that prevents 1 or more
+                               sessions from processing jobs."
+                         --#TYPE      "Take action immediately"
+                         --#SUMMARY   "Backup Exec - %s"
+                         --#ARGUMENTS {0}
+                         --#SEVERITY  MAJOR
+                         --#TIMEINDEX 1        
+                         --#STATE     DEGRADED     
+                         ::= 3
+
+warning-message          TRAP-TYPE
+                         ENTERPRISE     benw
+                         VARIABLES
+                         {
+                              message-object
+                         }
+                         DESCRIPTION
+                              "An event occurred that prevents a particular
+                               job from running, but does not prevent the
+                               session from processing jobs."
+                         --#TYPE      "User advised of event"
+                         --#SUMMARY   "Backup Exec - %s"
+                         --#ARGUMENTS {0}
+                         --#SEVERITY  MINOR
+                         --#TIMEINDEX 1        
+                         --#STATE     OPERATIONAL  
+                         ::= 4
+
+information-message      TRAP-TYPE
+                         ENTERPRISE     benw
+                         VARIABLES
+                         {
+                              message-object
+                         }
+                         DESCRIPTION
+                              "Information on normal events."
+                         --#TYPE      "No action required"
+                         --#SUMMARY   "Backup Exec - %s"
+                         --#ARGUMENTS {0}
+                         --#SEVERITY  INFORMATIONAL
+                         --#TIMEINDEX 1        
+                         --#STATE     OPERATIONAL  
+                         ::= 5
+END
+

@@ -1,0 +1,1533 @@
+--  Intelnic.mib version 09-23-1998
+--  Version 3.00.00
+
+INTEL-NIC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	enterprises
+		FROM RFC1155-SMI
+	OBJECT-TYPE
+		FROM RFC-1212
+	Counter,Gauge,
+	DisplayString
+		FROM RFC1213-MIB
+	Dmi_Date,Dmi_Integer64,
+	dmiEventDateTime,dmiCompId,dmiEventSeverity,
+	dmiEventStateKey,dmiEventAssociatedGroup,
+	dmiEventSystem,dmiEventSubSystem
+		FROM DMTF-DMI;
+
+DmiCounter			::= Counter
+DmiCounter64		::= Counter64
+DmiGauge			::= Gauge
+DmiInteger			::= INTEGER
+DmiOctetstring		::= OCTET STRING
+DmiDisplaystring	::= DisplayString
+DmiCompId	::= INTEGER
+DmiGroupId	::= INTEGER
+
+dmtf                	OBJECT IDENTIFIER ::= { enterprises 412 }
+dmtfStdMifs         	OBJECT IDENTIFIER ::= { dmtf 2 }
+dmtfDynOids         	OBJECT IDENTIFIER ::= { dmtf 3 }
+
+intelnic        OBJECT IDENTIFIER ::= { nic-products    1 }
+
+
+SintelComponentID ::= SEQUENCE {
+	manufacturerAtt1	DmiDisplaystring,
+	productAtt2	DmiDisplaystring,
+	versionAtt3	DmiDisplaystring,
+	serialNumberAtt4	DmiDisplaystring,
+	installationAtt5	DmiDate,
+	verifyAtt6	DmiInteger
+}
+
+intelComponentIDTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelComponentID
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines the attributes common to all components.
+This groupis required."
+	::= {  intelnic 3 }
+
+intelComponentIDEntry OBJECT-TYPE
+	SYNTAX		SintelComponentID
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines the attributes common to all components.
+This groupis required."
+	INDEX		{ DmiCompId,DmiGroupId }
+	::= { intelComponentIDTable 1 }
+
+
+manufacturerAtt1 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Manufacturer of this system."
+	REFERENCE "'Intel|ComponentID|001' 1"
+	::= { intelComponentIDEntry 1 }
+
+productAtt2 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Product name for this system."
+	REFERENCE "'Intel|ComponentID|001' 2"
+	::= { intelComponentIDEntry 2 }
+
+versionAtt3 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Version number of this system."
+	REFERENCE "'Intel|ComponentID|001' 3"
+	::= { intelComponentIDEntry 3 }
+
+serialNumberAtt4 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Serial number for this system."
+	REFERENCE "'Intel|ComponentID|001' 4"
+	::= { intelComponentIDEntry 4 }
+
+installationAtt5 OBJECT-TYPE
+	SYNTAX		DmiDate
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The time and date when this component was installed."
+	REFERENCE "'Intel|ComponentID|001' 5"
+	::= { intelComponentIDEntry 5 }
+
+verifyAtt6 OBJECT-TYPE
+	SYNTAX		INTEGER {
+		anErrorOccurredCheckStatusCode(0),
+		thisComponentDoesNotExist(1),
+		verificationIsNotSupported(2),
+		reserved(3),
+		thisComponentExistsButTheFunctionalityIsUntested(4),
+		thisComponentExistsButTheFunctionalityIsUnknown(5),
+		thisComponentExistsAndIsNotFunctioningCorrectly(6),
+		thisComponentExistsAndIsFunctioningCorrectly(7)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A code that provides a level of verification that the component is still installed and working."
+	REFERENCE "'Intel|ComponentID|001' 6"
+	::= { intelComponentIDEntry 6 }
+
+SintelNetworkAdapterDriver ::= SEQUENCE {
+	intelNetworkAdapterDriverState INTEGER,
+	driverIndexAtt1	DmiInteger,
+	driverSoftwareNameAtt2	DmiDisplaystring,
+	driverSoftwareVersionAtt3	DmiDisplaystring,
+	driverSoftwareDescriptionAtt4	DmiDisplaystring,
+	driverSizeAtt5	DmiInteger,
+	driverInterfaceTypeAtt6	DmiInteger,
+	driverInterfaceVersionAtt7	DmiDisplaystring,
+	driverInterfaceDescriptionAtt8	DmiDisplaystring
+}
+
+intelNetworkAdapterDriverTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelNetworkAdapterDriver
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	::= { intelnic  4 }
+
+intelNetworkAdapterDriverEntry OBJECT-TYPE
+	SYNTAX		SintelNetworkAdapterDriver
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	INDEX		{ DmiCompId,DmiGroupId, driverIndexAtt1 }
+	::= { intelNetworkAdapterDriverTable 1 }
+
+
+intelNetworkAdapterDriverState OBJECT-TYPE
+	SYNTAX		INTEGER {
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|Network Adapter Driver|001' 0"
+	::= { intelNetworkAdapterDriverEntry 0 }
+
+driverIndexAtt1 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|Network Adapter Driver|001' 1"
+	::= { intelNetworkAdapterDriverEntry 1 }
+
+driverSoftwareNameAtt2 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|Network Adapter Driver|001' 2"
+	::= { intelNetworkAdapterDriverEntry 2 }
+
+driverSoftwareVersionAtt3 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|Network Adapter Driver|001' 3"
+	::= { intelNetworkAdapterDriverEntry 3 }
+
+driverSoftwareDescriptionAtt4 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|Network Adapter Driver|001' 4"
+	::= { intelNetworkAdapterDriverEntry 4 }
+
+driverSizeAtt5 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|Network Adapter Driver|001' 5"
+	::= { intelNetworkAdapterDriverEntry 5 }
+
+driverInterfaceTypeAtt6 OBJECT-TYPE
+	SYNTAX		INTEGER {
+		other(1),
+		ipx(2),
+		odi(3),
+		ndis(4),
+		packetDriver(5),
+		lantastic(6),
+		unix(7),
+		appletalk(8),
+		ibmLanSupportProgram(9),
+		llc(10),
+		netbios(11),
+		pathworksDLL(12)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Driver interface type."
+	REFERENCE "'Intel|Network Adapter Driver|001' 6"
+	::= { intelNetworkAdapterDriverEntry 6 }
+
+driverInterfaceVersionAtt7 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Driver interface version."
+	REFERENCE "'Intel|Network Adapter Driver|001' 7"
+	::= { intelNetworkAdapterDriverEntry 7 }
+
+driverInterfaceDescriptionAtt8 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Description of the driver interface."
+	REFERENCE "'Intel|Network Adapter Driver|001' 8"
+	::= { intelNetworkAdapterDriverEntry 8 }
+
+SintelNetworkAdapter802Port ::= SEQUENCE {
+	intelNetworkAdapter802PortState INTEGER,
+	portIndexAtt1	DmiInteger,
+	permanentNetworkAddressAtt2	DmiDisplaystring,
+	currentNetworkAddressAtt3	DmiDisplaystring,
+	connectorTypeAtt4	DmiInteger,
+	dataRateAtt5	DmiInteger,
+	totalPacketsTransmittedAtt6	DmiCounter64,
+	totalBytesTransmittedAtt7	DmiCounter64,
+	totalPacketsReceivedAtt8	DmiCounter64,
+	totalBytesReceivedAtt9	DmiCounter64,
+	totalTransmitErrorsAtt10	DmiCounter64,
+	totalReceiveErrorsAtt11	DmiCounter64,
+	totalHostErrorsAtt12	DmiCounter64,
+	totalWireErrorsAtt13	DmiCounter64
+}
+
+intelNetworkAdapter802PortTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelNetworkAdapter802Port
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	::= { intelnic  5 }
+
+intelNetworkAdapter802PortEntry OBJECT-TYPE
+	SYNTAX		SintelNetworkAdapter802Port
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	INDEX		{ DmiCompId,DmiGroupId, portIndexAtt1 }
+	::= { intelNetworkAdapter802PortTable 1 }
+
+
+intelNetworkAdapter802PortState OBJECT-TYPE
+	SYNTAX		INTEGER {
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 0"
+	::= { intelNetworkAdapter802PortEntry 0 }
+
+portIndexAtt1 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	" An index value that uniquely identifies the
+           interface to an ethernet-like medium."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 1"
+	::= { intelNetworkAdapter802PortEntry 1 }
+
+permanentNetworkAddressAtt2 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Permanent network address."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 2"
+	::= { intelNetworkAdapter802PortEntry 2 }
+
+currentNetworkAddressAtt3 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Current network address."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 3"
+	::= { intelNetworkAdapter802PortEntry 3 }
+
+connectorTypeAtt4 OBJECT-TYPE
+	SYNTAX		INTEGER {
+		unknown(1),
+		aUI(2),
+		uTPCategory3(3),
+		uTPCategory4(4),
+		uTPCategory5(5),
+		bNC(6),
+		sTPRJ45(7),
+		sTPDB9(8),
+		fiberMIC(9),
+		appleAUI(10)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Connector type."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 4"
+	::= { intelNetworkAdapter802PortEntry 4 }
+
+dataRateAtt5 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Data rate."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 5"
+	::= { intelNetworkAdapter802PortEntry 5 }
+
+totalPacketsTransmittedAtt6 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Total packets transmitted successfully."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 6"
+	::= { intelNetworkAdapter802PortEntry 6 }
+
+totalBytesTransmittedAtt7 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Total bytes transmitted successfully."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 7"
+	::= { intelNetworkAdapter802PortEntry 7 }
+
+totalPacketsReceivedAtt8 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Total packets received without errors."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 8"
+	::= { intelNetworkAdapter802PortEntry 8 }
+
+totalBytesReceivedAtt9 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Total bytes received without errors."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 9"
+	::= { intelNetworkAdapter802PortEntry 9 }
+
+totalTransmitErrorsAtt10 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Count of transmit errors."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 10"
+	::= { intelNetworkAdapter802PortEntry 10 }
+
+totalReceiveErrorsAtt11 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Count of receive errors."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 11"
+	::= { intelNetworkAdapter802PortEntry 11 }
+
+totalHostErrorsAtt12 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Count of host-side errors."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 12"
+	::= { intelNetworkAdapter802PortEntry 12 }
+
+totalWireErrorsAtt13 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Count of network-side errors."
+	REFERENCE "'Intel|Network Adapter 802 Port|001' 13"
+	::= { intelNetworkAdapter802PortEntry 13 }
+
+SintelNetworkAdapterInstrumentation ::= SEQUENCE {
+	mIFIdAtt1	DmiInteger,
+	versionAtt2	DmiDisplaystring
+}
+
+intelNetworkAdapterInstrumentationTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelNetworkAdapterInstrumentation
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	::= { intelnic  6 }
+
+intelNetworkAdapterInstrumentationEntry OBJECT-TYPE
+	SYNTAX		SintelNetworkAdapterInstrumentation
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	INDEX		{ DmiCompId,DmiGroupId }
+	::= { intelNetworkAdapterInstrumentationTable 1 }
+
+
+mIFIdAtt1 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|Network Adapter Instrumentation|001' 1"
+	::= { intelNetworkAdapterInstrumentationEntry 1 }
+
+versionAtt2 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|Network Adapter Instrumentation|001' 2"
+	::= { intelNetworkAdapterInstrumentationEntry 2 }
+
+SintelDriverExtensionsGroup ::= SEQUENCE {
+	intelDriverExtensionsGroupState INTEGER,
+	driverIndexAtt1	DmiInteger,
+	driverFilePathAtt1	DmiDisplaystring,
+	driverFileDateAtt2	DmiDisplaystring
+}
+
+intelDriverExtensionsGroupTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelDriverExtensionsGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	::= { intelnic 7 }
+
+intelDriverExtensionsGroupEntry OBJECT-TYPE
+	SYNTAX		SintelDriverExtensionsGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	INDEX		{ DmiCompId,DmiGroupId, driverIndexAtt1 }
+	::= { intelDriverExtensionsGroupTable 1 }
+
+
+intelDriverExtensionsGroupState OBJECT-TYPE
+	SYNTAX		INTEGER {
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|Network Adapter Driver Extensions Group|001' 0"
+	::= { intelDriverExtensionsGroupEntry 0 }
+
+driverIndexAtt1 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	" An index value that uniquely identifies the
+           interface to an ethernet-like medium."
+	REFERENCE "'Intel|Network Adapter Driver Extensions Group|001' 1"
+
+	::= { intelDriverExtensionsGroupEntry 1 }
+
+driverFilePathAtt1 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The file path of the adapter driver."
+	REFERENCE "'Intel|Network Adapter Driver Extensions Group|001' 2"
+	::= { intelDriverExtensionsGroupEntry 2 }
+
+driverFileDateAtt2 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Adapter driver file date."
+	REFERENCE "'Intel|Network Adapter Driver Extensions Group|001' 3"
+	::= { intelDriverExtensionsGroupEntry 3 }
+
+SintelEtherLike ::= SEQUENCE {
+	intelEtherLikeState INTEGER,
+	indexAtt1	DmiInteger,
+	alignmentErrorsAtt2	DmiCounter64,
+	fcsErrorsAtt3	DmiCounter64,
+	singleCollisionFramesAtt4	DmiCounter64,
+	multipleCollisionFramesAtt5	DmiCounter64,
+	sqeTestErrorsAtt6	DmiCounter64,
+	deferredTransmissionsAtt7	DmiCounter64,
+	lateCollisionsAtt8	DmiCounter64,
+	excessiveCollisionsAtt9	DmiCounter64,
+	internalMacTransmitErrorsAtt10	DmiCounter64,
+	carrierSenseErrorsAtt11	DmiCounter64,
+	frameTooLongAtt12	DmiCounter64,
+	internalMacReceiveErrorsAtt13	DmiCounter64,
+	etherChipSetAtt14	DmiDisplaystring
+}
+
+intelEtherLikeTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelEtherLike
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	::= { intelnic  8 }
+
+intelEtherLikeEntry OBJECT-TYPE
+	SYNTAX		SintelEtherLike
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	INDEX		{ DmiCompId,DmiGroupId, indexAtt1 }
+	::= { intelEtherLikeTable 1 }
+
+
+intelEtherLikeState OBJECT-TYPE
+	SYNTAX		INTEGER {
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|Ether-like|001' 0"
+	::= { intelEtherLikeEntry 0 }
+
+indexAtt1 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"An index value that uniquely identifies the
+           interface to an ethernet-like medium."
+	REFERENCE "'Intel|Ether-like|001' 1"
+	::= { intelEtherLikeEntry 1 }
+
+alignmentErrorsAtt2 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of frames received on a particular 
+               interface that are not an integral number of
+               octets in length and do not pass the FCS check."
+	REFERENCE "'Intel|Ether-like|001' 2"
+	::= { intelEtherLikeEntry 2 }
+
+fcsErrorsAtt3 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of frames received on a particular
+         interface that are an integral number of octets
+         in length but do not pass the FCS check."
+	REFERENCE "'Intel|Ether-like|001' 3"
+	::= { intelEtherLikeEntry 3 }
+
+
+singleCollisionFramesAtt4 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of successfully transmitted frames on
+         a particular interface for which transmission
+         is inhibited by exactly one collision."
+	REFERENCE "'Intel|Ether-like|001' 4"
+	::= { intelEtherLikeEntry 4 }
+
+multipleCollisionFramesAtt5 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of successfully transmitted frames on
+         a particular interface for which transmission
+         is inhibited by more than one collision."
+	REFERENCE "'Intel|Ether-like|001' 5"
+	::= { intelEtherLikeEntry 5 }
+
+sqeTestErrorsAtt6 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of times that the SQE TEST ERROR
+	   message is generated by the PLS sublayer for a
+         particular interface. The SQE TEST ERROR
+         message is defined in section 7.2.2.2.4 of
+         ANSI/IEEE 802.3-1985 and its generation is
+         described in section 7.2.4.6 of the same
+         document."
+	REFERENCE "'Intel|Ether-like|001' 6"
+	::= { intelEtherLikeEntry 6 }
+
+deferredTransmissionsAtt7 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of frames for which the first
+         transmission attempt on a particular interface
+         is delayed because the medium is busy."
+	REFERENCE "'Intel|Ether-like|001' 7"
+	::= { intelEtherLikeEntry 7 }
+
+lateCollisionsAtt8 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The number of times that a collision is
+         detected on a particular interface later than
+         512 bit-times into the transmission of a
+         packet."
+	REFERENCE "'Intel|Ether-like|001' 8"
+	::= { intelEtherLikeEntry 8 }
+
+excessiveCollisionsAtt9 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of frames for which transmission on a
+         particular interface fails due to excessive
+         collisions."
+	REFERENCE "'Intel|Ether-like|001' 9"
+	::= { intelEtherLikeEntry 9 }
+
+internalMacTransmitErrorsAtt10 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of frames for which transmission on a
+         particular interface fails due to an internal
+         MAC sublayer transmit error."
+	REFERENCE "'Intel|Ether-like|001' 10"
+	::= { intelEtherLikeEntry 10 }
+
+carrierSenseErrorsAtt11 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The number of times that the carrier sense
+         condition was lost or never asserted when
+         attempting to transmit a frame on a particular
+         interface."
+	REFERENCE "'Intel|Ether-like|001' 11"
+	::= { intelEtherLikeEntry 11 }
+
+frameTooLongAtt12 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of frames received on a particular
+         interface that exceed the maximum permitted
+         frame size."
+	REFERENCE "'Intel|Ether-like|001' 12"
+	::= { intelEtherLikeEntry 12 }
+
+internalMacReceiveErrorsAtt13 OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A count of frames for which reception on a
+         particular interface fails due to an internal
+         MAC sublayer receive error."
+	REFERENCE "'Intel|Ether-like|001' 13"
+	::= { intelEtherLikeEntry 13 }
+
+etherChipSetAtt14 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"This object contains a description 
+         Of the chipset used to realize the interface."
+	REFERENCE "'Intel|Ether-like|001' 14"
+	::= { intelEtherLikeEntry 14 }
+
+
+SintelVLANGroup ::= SEQUENCE { 
+	intelVLANGroupState INTEGER,
+	vLANIdAtt1	DmiInteger,
+	vLANNameAtt2	DmiDisplaystring,
+	typeOfVLANAtt3	DmiInteger
+}
+
+intelVLANGroupTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelVLANGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	::= { intelnic 9 }
+
+intelVLANGroupEntry OBJECT-TYPE
+	SYNTAX		SintelVLANGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	INDEX		{ DmiCompId,DmiGroupId, vLANIdAtt1 }
+	::= { intelVLANGroupTable 1 }
+
+
+intelVLANGroupState OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|VLAN Group|001' 0"
+	::= { intelVLANGroupEntry 0 }
+
+vLANIdAtt1 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|VLAN Group|001' 1"
+	::= { intelVLANGroupEntry 1 }
+
+vLANNameAtt2 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|VLAN Group|001' 2"
+	::= { intelVLANGroupEntry 2 }
+
+typeOfVLANAtt3 OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		iSLStandard(1),
+		iEEEStandard(2)
+		
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|VLAN Group|001' 3"
+	::= { intelVLANGroupEntry 3 }
+
+SintelNICHEALTH ::= SEQUENCE { 
+	intelNICHEALTHState INTEGER,
+	eventTypeAtt1	DmiInteger,
+	deviceNumberAtt2	DmiInteger,
+	eventSolutionAtt3	DmiInteger,
+	deviceInstanceAtt4	DmiDisplaystring
+}
+
+intelNICHEALTHTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelNICHEALTH
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines various attributes for the NIC Generated
+Events."
+	::= { intelnic 10 }
+
+intelNICHEALTHEntry OBJECT-TYPE
+	SYNTAX		SintelNICHEALTH
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines various attributes for the NIC Generated
+Events."
+	INDEX		{ DmiCompId,DmiGroupId, eventTypeAtt1 }
+	::= { intelNICHEALTHTable 1 }
+
+
+intelNICHEALTHState OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|NIC_HEALTH|001' 0"
+	::= { intelNICHEALTHEntry 0 }
+
+eventTypeAtt1 OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		unknown(0),
+		lanControllerHardwareFailure(1),
+		cableUnpluggedNoLANActivity(2),
+		sWError(4),
+		linkDown(8),
+		adapterInitializationFailure(16),
+		lineUp(32),
+		lineDown(64)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The type of event that has occurred."
+	REFERENCE "'Intel|NIC_HEALTH|001' 1"
+	::= { intelNICHEALTHEntry 1 }
+
+deviceNumberAtt2 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	""
+	REFERENCE "'Intel|NIC_HEALTH|001' 2"
+	::= { intelNICHEALTHEntry 2 }
+
+eventSolutionAtt3 OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		unknown(0),
+		noActionIsRequiredAtThisTime(1),
+		reboot(2),
+		reloadTheDriver(4),
+		plugInTheCable(8),
+		checkAdapterHardware(16)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"A solution to the problem that caused the event."
+	REFERENCE "'Intel|NIC_HEALTH|001' 3"
+	::= { intelNICHEALTHEntry 3 }
+
+deviceInstanceAtt4 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Name of the instance of the Device"
+	REFERENCE "'Intel|NIC_HEALTH|001' 4"
+	::= { intelNICHEALTHEntry 4 }
+
+SintelTeamingEventsGroup ::= SEQUENCE { 
+	intelTeamingEventsGroupState INTEGER,
+	teamIDAtt1	DmiInteger,
+	eventTypeAtt2	DmiInteger,
+	teamModeAtt3	DmiInteger,
+	teamSizeAtt4	DmiInteger
+}
+
+intelTeamingEventsGroupTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelTeamingEventsGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines various attributes for the Teaming Generated
+Events."
+	::= { intelnic 11 }
+
+intelTeamingEventsGroupEntry OBJECT-TYPE
+	SYNTAX		SintelTeamingEventsGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines various attributes for the Teaming Generated
+Events."
+	INDEX		{ DmiCompId,DmiGroupId, teamIDAtt1 }
+	::= { intelTeamingEventsGroupTable 1 }
+
+
+intelTeamingEventsGroupState OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|Teaming Events Group|001' 0"
+	::= { intelTeamingEventsGroupEntry 0 }
+
+teamIDAtt1 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The ID of the Team where event occurs.Secondary adapters"
+	REFERENCE "'Intel|Teaming Events Group|001' 1"
+	::= { intelTeamingEventsGroupEntry 1 }
+
+eventTypeAtt2 OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		unknown(0),
+		primaryAdapterSwitchingOverAndSecondaryTookOver(1),
+		primaryAdapterBecameActive(2),
+		secondaryAdapterDeactivatedFromTheTeam(4),
+		lastAdapterLostLinkAndNetworkConnectionLost(8),
+		preferredPrimaryDetected(16),
+		teamOnlyHasOneActiveAdapter(32),
+		secondaryAdapterRejoinedTheTeam(64),
+		preferredPrimaryAdapterHasTakenOver(128),
+		networkConnectionRestored(256)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The type of event that has occurred."
+	REFERENCE "'Intel|Teaming Events Group|001' 2"
+	::= { intelTeamingEventsGroupEntry 2 }
+
+teamModeAtt3 OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		faultToleranceOnlyAFT(1),
+		loadBalancingALB(2),
+		fastEtherChannnelTMFEC(3)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The configuration mode of the team"
+	REFERENCE "'Intel|Teaming Events Group|001' 3"
+	::= { intelTeamingEventsGroupEntry 3 }
+
+teamSizeAtt4 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Total number of adapters in the team"
+	REFERENCE "'Intel|Teaming Events Group|001' 4"
+	::= { intelTeamingEventsGroupEntry 4 }
+
+SintelTeamingGroup ::= SEQUENCE { 
+	intelTeamingGroupState INTEGER,
+	teamIDAtt1	DmiInteger,
+	teamModeAtt2	DmiInteger,
+	teamSizeAtt3	DmiInteger,
+	currentPrimaryAdapterAtt4	DmiInteger,
+	originalPrimaryAdapterAtt5	DmiInteger,
+	preferredPrimaryAdapterAtt6	DmiInteger
+}
+
+intelTeamingGroupTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelTeamingGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines various attributes for an AFT/ALB/FEC
+Team."
+	::= { intelnic 12 }
+
+intelTeamingGroupEntry OBJECT-TYPE
+	SYNTAX		SintelTeamingGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines various attributes for an AFT/ALB/FEC
+Team."
+	INDEX		{ DmiCompId,DmiGroupId, teamIDAtt1 }
+	::= { intelTeamingGroupTable 1 }
+
+
+intelTeamingGroupState OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|Teaming Group|001' 0"
+	::= { intelTeamingGroupEntry 0 }
+
+teamIDAtt1 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The ID of the team."
+	REFERENCE "'Intel|Teaming Group|001' 1"
+	::= { intelTeamingGroupEntry 1 }
+
+teamModeAtt2 OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		faultToleranceOnly(0),
+		loadBalancing(1),
+		fastEtherChannnel(2)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The configuration mode of the team"
+	REFERENCE "'Intel|Teaming Group|001' 2"
+	::= { intelTeamingGroupEntry 2 }
+
+teamSizeAtt3 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Total number of adapters in the team"
+	REFERENCE "'Intel|Teaming Group|001' 3"
+	::= { intelTeamingGroupEntry 3 }
+
+currentPrimaryAdapterAtt4 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"ID of the current Primary member of the Team"
+	REFERENCE "'Intel|Teaming Group|001' 4"
+	::= { intelTeamingGroupEntry 4 }
+
+originalPrimaryAdapterAtt5 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"ID of the original Primary member of the Team since last
+reset."
+	REFERENCE "'Intel|Teaming Group|001' 5"
+	::= { intelTeamingGroupEntry 5 }
+
+preferredPrimaryAdapterAtt6 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-write
+	STATUS		mandatory
+	DESCRIPTION	"ID of the current designated Preferred Primary adapter in
+the team.This may be NULL if not set."
+	REFERENCE "'Intel|Teaming Group|001' 6"
+	::= { intelTeamingGroupEntry 6 }
+
+SintelTeamingMemberGroup ::= SEQUENCE { 
+	intelTeamingMemberGroupState INTEGER,
+	boardTypeAtt1	DmiDisplaystring,
+	adapterStatusAtt2	DmiInteger,
+	adapterFunctionAtt3	DmiInteger,
+	adapterIDAtt4	DmiInteger,
+	permanentMACAddressAtt5	DmiDisplaystring,
+	currentMACAddressAtt6	DmiDisplaystring
+}
+
+intelTeamingMemberGroupTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelTeamingMemberGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines various attributes for each AFT/ALB/FEC
+member."
+	::= { intelnic 13 }
+
+intelTeamingMemberGroupEntry OBJECT-TYPE
+	SYNTAX		SintelTeamingMemberGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"This group defines various attributes for each AFT/ALB/FEC
+member."
+	INDEX		{ DmiCompId,DmiGroupId, boardTypeAtt1 }
+	::= { intelTeamingMemberGroupTable 1 }
+
+
+intelTeamingMemberGroupState OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|Teaming Member Group|001' 0"
+	::= { intelTeamingMemberGroupEntry 0 }
+
+boardTypeAtt1 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The board type of this adapter."
+	REFERENCE "'Intel|Teaming Member Group|001' 1"
+	::= { intelTeamingMemberGroupEntry 1 }
+
+adapterStatusAtt2 OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		active(0),
+		inactive(1)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The current status of the adapter."
+	REFERENCE "'Intel|Teaming Member Group|001' 2"
+	::= { intelTeamingMemberGroupEntry 2 }
+
+adapterFunctionAtt3 OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		standby(0),
+		primary(1)
+	}
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The current role played by the adapter in the team."
+	REFERENCE "'Intel|Teaming Member Group|001' 3"
+	::= { intelTeamingMemberGroupEntry 3 }
+
+adapterIDAtt4 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"ID of the adapter."
+	REFERENCE "'Intel|Teaming Member Group|001' 4"
+	::= { intelTeamingMemberGroupEntry 4 }
+
+permanentMACAddressAtt5 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The permanent MAC address as stored in the EEPROM."
+	REFERENCE "'Intel|Teaming Member Group|001' 5"
+	::= { intelTeamingMemberGroupEntry 5 }
+
+currentMACAddressAtt6 OBJECT-TYPE
+	SYNTAX		DmiDisplaystring
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"The current MAC address utilized by the Team Member.  This
+canchange etc."
+	REFERENCE "'Intel|Teaming Member Group|001' 6"
+	::= { intelTeamingMemberGroupEntry 6 }
+
+SintelFCTCOGroup ::= SEQUENCE {
+	intelFCTCOGroupState INTEGER,
+	indexAtt1	DmiInteger,
+	flowControlTxPauseAtt2	DmiCounter64,
+	flowControlRxPauseAtt3	DmiCounter64,
+	flowControlRxUnsupportedAtt4	DmiCounter64,
+	transmitTCOFramesAtt5	DmiCounter64,
+	receiveTCOFramesAtt6	DmiCounter64
+}
+
+intelFCTCOGroupTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF SintelFCTCOGroup
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	::= { intelnic  14 }
+
+intelFCTCOGroupEntry OBJECT-TYPE
+	SYNTAX		SintelFCTCOGroup 
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	""
+	INDEX		{ DmiCompId,DmiGroupId, indexAtt1 }
+	::= { intelFCTCOGroupTable 1 }
+
+
+intelFCTCOGroupState OBJECT-TYPE
+	SYNTAX		INTEGER {
+		active(1),
+		notInService(2),
+		notReady(3),
+		createAndGo(4),
+		createAndWait(5),
+		destroy(6)
+	}
+	ACCESS		read-write
+	STATUS		mandatory
+	REFERENCE "'Intel|FlowControl and TCO Group|001' 0"
+	::= { intelFCTCOGroupEntry 0 }
+
+indexAtt1 OBJECT-TYPE
+	SYNTAX		DmiInteger
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"An index value that uniquely identifies the
+           interface to an ethernet-like medium."
+	REFERENCE "'Intel|FlowControl and TCO Group|001' 1"
+	::= { intelFCTCOGroupEntry 1 }
+
+flowControlTxPauseAtt2	OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Number of Flow Control frames transmitted by the device."
+	REFERENCE "'Intel|FlowControl and TCO Group|001' 2"
+	::= { intelFCTCOGroupEntry 2 }
+
+flowControlRxPauseAtt3	OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Number of Flow Control frames received by the device."
+	REFERENCE "'Intel|FlowControl and TCO Group|001' 3"
+	::= { intelFCTCOGroupEntry 3 }
+
+
+flowControlRxUnsupportedAtt4	OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Number of MAC Control frames received by the device that are not Flow Control Pause frames."
+	REFERENCE "'Intel|FlowControl and TCO Group|001' 4"
+	::= { intelFCTCOGroupEntry 4 }
+
+transmitTCOFramesAtt5	OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Number of TCO frames transmitted."
+	REFERENCE "'Intel|FlowControl and TCO Group|001' 5"
+	::= { intelFCTCOGroupEntry 5 }
+
+receiveTCOFramesAtt6	OBJECT-TYPE
+	SYNTAX		DmiCounter64
+	ACCESS		read-only
+	STATUS		mandatory
+	DESCRIPTION	"Number of TCO frames received."
+	REFERENCE "'Intel|FlowControl and TCO Group|001' 6"
+	::= { intelFCTCOGroupEntry 6 }
+
+
+
+intelNICHEALTHEvSys OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		unknown(0),
+		adapter(1)
+	}
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"The major functional aspect of the product causing the fault."
+	::= { intelNICHEALTHTable 6 }
+
+intelNICHEALTHEvSub OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		unknown(0),
+		driver(1),
+		oS(2)
+	}
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"The minor functional aspect of the product causing the fault."
+	::= { intelNICHEALTHTable 7 }
+
+intelNICHEALTHEvt0 TRAP-TYPE
+	ENTERPRISE intelNICHEALTHTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelNICHEALTHEvSys,
+		intelNICHEALTHEvSub
+		}
+	DESCRIPTION "unknown"
+	REFERENCE "'Intel|NIC_HEALTH|001' 0"
+	::= 0
+
+intelNICHEALTHEvt1 TRAP-TYPE
+	ENTERPRISE intelNICHEALTHTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelNICHEALTHEvSys,
+		intelNICHEALTHEvSub
+		}
+	DESCRIPTION "lanControllerHardwareFailure"
+	REFERENCE "'Intel|NIC_HEALTH|001' 1"
+	::= 1
+
+intelNICHEALTHEvt2 TRAP-TYPE
+	ENTERPRISE intelNICHEALTHTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelNICHEALTHEvSys,
+		intelNICHEALTHEvSub
+		}
+	DESCRIPTION "cableUnpluggedNoLANActivity"
+	REFERENCE "'Intel|NIC_HEALTH|001' 2"
+	::= 2
+
+intelNICHEALTHEvt4 TRAP-TYPE
+	ENTERPRISE intelNICHEALTHTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelNICHEALTHEvSys,
+		intelNICHEALTHEvSub
+		}
+	DESCRIPTION "sWError"
+	REFERENCE "'Intel|NIC_HEALTH|001' 4"
+	::= 4
+
+intelNICHEALTHEvt8 TRAP-TYPE
+	ENTERPRISE intelNICHEALTHTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelNICHEALTHEvSys,
+		intelNICHEALTHEvSub
+		}
+	DESCRIPTION "linkDown"
+	REFERENCE "'Intel|NIC_HEALTH|001' 8"
+	::= 8
+
+intelNICHEALTHEvt16 TRAP-TYPE
+	ENTERPRISE intelNICHEALTHTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelNICHEALTHEvSys,
+		intelNICHEALTHEvSub
+		}
+	DESCRIPTION "adapterInitializationFailure"
+	REFERENCE "'Intel|NIC_HEALTH|001' 16"
+	::= 16
+
+intelNICHEALTHEvt32 TRAP-TYPE
+	ENTERPRISE intelNICHEALTHTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelNICHEALTHEvSys,
+		intelNICHEALTHEvSub
+		}
+	DESCRIPTION "lineUp"
+	REFERENCE "'Intel|NIC_HEALTH|001' 32"
+	::= 32
+
+intelNICHEALTHEvt64 TRAP-TYPE
+	ENTERPRISE intelNICHEALTHTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelNICHEALTHEvSys,
+		intelNICHEALTHEvSub
+		}
+	DESCRIPTION "lineDown"
+	REFERENCE "'Intel|NIC_HEALTH|001' 64"
+	::= 64
+
+intelTeamingEventsGroupEvSys OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		unknown(0),
+		adapter(1)
+	}
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"The major functional aspect of the product causing the fault."
+	::= { intelTeamingEventsGroupTable 6 }
+
+intelTeamingEventsGroupEvSub OBJECT-TYPE
+	SYNTAX		INTEGER { 
+		unknown(0),
+		driver(1),
+		oS(2)
+	}
+	ACCESS		not-accessible
+	STATUS		mandatory
+	DESCRIPTION	"The minor functional aspect of the product causing the fault."
+	::= { intelTeamingEventsGroupTable 7 }
+
+intelTeamingEventsGroupEvt0 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "unknown"
+	REFERENCE "'Intel|Teaming Events Group|001' 0"
+	::= 0
+
+intelTeamingEventsGroupEvt1 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "primaryAdapterSwitchingOverAndSecondaryTookOver"
+	REFERENCE "'Intel|Teaming Events Group|001' 1"
+	::= 1
+
+intelTeamingEventsGroupEvt2 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "primaryAdapterBecameActive"
+	REFERENCE "'Intel|Teaming Events Group|001' 2"
+	::= 2
+
+intelTeamingEventsGroupEvt4 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "secondaryAdapterDeactivatedFromTheTeam"
+	REFERENCE "'Intel|Teaming Events Group|001' 4"
+	::= 4
+
+intelTeamingEventsGroupEvt8 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "lastAdapterLostLinkAndNetworkConnectionLost"
+	REFERENCE "'Intel|Teaming Events Group|001' 8"
+	::= 8
+
+intelTeamingEventsGroupEvt16 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "preferredPrimaryDetected"
+	REFERENCE "'Intel|Teaming Events Group|001' 16"
+	::= 16
+
+intelTeamingEventsGroupEvt32 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "teamOnlyHasOneActiveAdapter"
+	REFERENCE "'Intel|Teaming Events Group|001' 32"
+	::= 32
+
+intelTeamingEventsGroupEvt64 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "secondaryAdapterRejoinedTheTeam"
+	REFERENCE "'Intel|Teaming Events Group|001' 64"
+	::= 64
+
+intelTeamingEventsGroupEvt128 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "preferredPrimaryAdapterHasTakenOver"
+	REFERENCE "'Intel|Teaming Events Group|001' 128"
+	::= 128
+
+intelTeamingEventsGroupEvt256 TRAP-TYPE
+	ENTERPRISE intelTeamingEventsGroupTable
+	VARIABLES { 
+		dmiEventDateTime,
+		dmiCompId,
+		dmiEventSeverity,
+		dmiEventStateKey,
+		dmiEventAssociatedGroup,
+		intelTeamingEventsGroupEvSys,
+		intelTeamingEventsGroupEvSub
+		}
+	DESCRIPTION "networkConnectionRestored"
+	REFERENCE "'Intel|Teaming Events Group|001' 256"
+	::= 256
+
+END

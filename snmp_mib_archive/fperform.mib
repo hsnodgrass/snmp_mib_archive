@@ -1,0 +1,1949 @@
+ADTRAN-FRPerform-MIB   DEFINITIONS ::= BEGIN
+
+-- TITLE:       ADTRAN FRPerform MIB
+-- VERSION:     3.0
+-- DATE:        98/09/22
+
+IMPORTS
+	 enterprises, Counter, IpAddress, Gauge
+	FROM RFC1155-SMI
+	 OBJECT-TYPE
+	FROM RFC-1212
+	 DisplayString, ifIndex
+	FROM RFC1213-MIB
+	 TRAP-TYPE
+	FROM RFC-1215
+	 adProdPhysAddress, adProducts, adMgmt, adtran
+	FROM ADTRAN-MIB;
+
+-- OBJECT IDENTIFIERS
+
+
+adPerform			OBJECT IDENTIFIER ::= { adtran 4 }
+adFRPerformmg                   OBJECT IDENTIFIER ::= { adPerform 1 }
+adFRPerformHistoryControl      	OBJECT IDENTIFIER ::= { adFRPerformmg 1 }
+adFRPerformCurrentPvcStatus	OBJECT IDENTIFIER ::= { adFRPerformmg 2 }
+adFRPerformIntPvcStatus         OBJECT IDENTIFIER ::= { adFRPerformmg 3 }
+adFRPerformIntPortStatus  	OBJECT IDENTIFIER ::= { adFRPerformmg 4 }
+adFRPerformIntPortError         OBJECT IDENTIFIER ::= { adFRPerformmg 5 }
+adFRPerformIntHistoryTime       OBJECT IDENTIFIER ::= { adFRPerformmg 6 }
+adFRPerformDayPvcStatus         OBJECT IDENTIFIER ::= { adFRPerformmg 7 }
+adFRPerformDayPortStatus        OBJECT IDENTIFIER ::= { adFRPerformmg 8 }
+adFRPerformDayPortError         OBJECT IDENTIFIER ::= { adFRPerformmg 9 }
+adFRPerformDayHistoryTime       OBJECT IDENTIFIER ::= { adFRPerformmg 10 }
+
+--
+--The FRPerform history control
+--
+
+adFRPerformHistoryIntLength    OBJECT-TYPE
+	 SYNTAX      INTEGER {
+		min5(1),
+		min10(2),
+		min15(3),
+		min20(4),
+		min30(5)
+	}
+	 ACCESS      read-write
+	 STATUS      mandatory
+	 DESCRIPTION
+	"This value selects the sampling interval period for data collected in the interval tables."
+	 ::= { adFRPerformHistoryControl 1 }
+
+adFRPerformCurrentIntTimeRemaining    OBJECT-TYPE
+	 SYNTAX      INTEGER (0..1800)
+	 ACCESS      read-only
+	 STATUS      mandatory
+	 DESCRIPTION
+	"Seconds remaining in current Interval."
+	 ::= { adFRPerformHistoryControl 2 }
+
+adFRPerformCompletedInts    OBJECT-TYPE
+	 SYNTAX      INTEGER
+	 ACCESS      read-only
+	 STATUS      mandatory
+	 DESCRIPTION
+	"Number of completed intervals in interval tables."
+	 ::= { adFRPerformHistoryControl 3 }
+
+adFRPerformCompletedDays    OBJECT-TYPE
+	 SYNTAX      INTEGER
+	 ACCESS      read-only
+	 STATUS      mandatory
+	 DESCRIPTION
+	"Number of completed days in day table."
+	 ::= { adFRPerformHistoryControl 4 }
+
+--
+--The FRPerform current PVC status table
+--
+
+adFRPerformCurrentPvcStatusTable OBJECT-TYPE
+	 SYNTAX      SEQUENCE OF AdFRPerformCurrentPvcStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformCurrentPvcStatus 1 }
+
+adFRPerformCurrentPvcStatusEntry OBJECT-TYPE
+	 SYNTAX      AdFRPerformCurrentPvcStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a"
+	 INDEX { adFRPerformCurrentPvcIfIndex, adFRPerformCurrentPvcStatusIndex }
+	 ::= { adFRPerformCurrentPvcStatusTable 1 }
+
+
+AdFRPerformCurrentPvcStatusEntry ::=
+	SEQUENCE {
+	adFRPerformCurrentPvcIfIndex
+	INTEGER,
+	adFRPerformCurrentPvcStatusIndex
+	INTEGER,
+	adFRPerformCurrentPvcState
+	INTEGER,
+	adFRPerformCurrentPvcStatistics
+	INTEGER
+	}
+
+adFRPerformCurrentPvcIfIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformCurrentPvcStatusEntry 1 }
+
+adFRPerformCurrentPvcStatusIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformCurrentPvcStatusEntry 2 }
+
+
+adFRPerformCurrentPvcState OBJECT-TYPE
+	 SYNTAX  INTEGER {
+	 active(1),
+	 inactive(2),
+	 unknown(3)
+	 }
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "Current state for this PVC."
+	 ::= { adFRPerformCurrentPvcStatusEntry 3 }
+
+adFRPerformCurrentPvcStatistics OBJECT-TYPE
+	 SYNTAX  INTEGER {
+	 available(1),
+	 not-available(2)
+	 }
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "Indicates whether this PVC is managed and has statistics available or is not managed."
+	 ::= { adFRPerformCurrentPvcStatusEntry 4 }
+
+
+--
+--The FRPerform interval PVC status table
+--
+
+adFRPerformIntPvcStatusTable OBJECT-TYPE
+	 SYNTAX      SEQUENCE OF AdFRPerformIntPvcStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+        "n/a."
+	 ::= { adFRPerformIntPvcStatus 1 }
+
+adFRPerformIntPvcStatusEntry OBJECT-TYPE
+	 SYNTAX      AdFRPerformIntPvcStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+        "n/a"
+	 INDEX { adFRPerformIntPvcIfIndex, adFRPerformIntPvcIndex, adFRPerformIntPvcSlotIndex }
+	 ::= { adFRPerformIntPvcStatusTable 1 }
+
+
+AdFRPerformIntPvcStatusEntry ::=
+	 SEQUENCE {
+	adFRPerformIntPvcIfIndex
+	INTEGER,
+	adFRPerformIntPvcIndex
+	INTEGER,
+	adFRPerformIntPvcSlotIndex
+	INTEGER,
+	adFRPerformIntPVCStateChange
+	Counter,
+	adFRPerformIntPVCInactiveTime
+	Counter,
+	adFRPerformIntPVCFramesRx
+	Counter,
+	adFRPerformIntPVCFramesTx
+	Counter,
+	adFRPerformIntPVCBytesRx
+	Counter,
+	adFRPerformIntPVCBytesTx
+	Counter,
+	adFRPerformIntPVCAvgThruputTx
+	Gauge,
+	adFRPerformIntPVCAvgThruputRx
+	Gauge,
+	adFRPerformIntPVCMaxThruputTx
+	Counter,
+	adFRPerformIntPVCMaxThruputRx
+	Counter,
+	adFRPerformIntPVCAvgUtilizationTx
+	Gauge,
+	adFRPerformIntPVCAvgUtilizationRx
+	Gauge,
+	adFRPerformIntPVCMaxUtilizationTx
+	Counter,
+	adFRPerformIntPVCMaxUtilizationRx
+	Counter,
+	adFRPerformIntPVCBurstTx
+	Counter,
+	adFRPerformIntPVCBurstRx
+	Counter,
+	adFRPerformIntPVCFecnRx
+	Counter,
+	adFRPerformIntPVCFecnTx
+	Counter,
+	adFRPerformIntPVCBecnRx
+	Counter,
+	adFRPerformIntPVCBecnTx
+	Counter,
+	adFRPerformIntPVCDeRx
+	Counter,
+	adFRPerformIntPVCDeTx
+	Counter,
+	adFRPerformIntPVCCrRx
+	Counter,
+	adFRPerformIntPVCCrTx
+	Counter,
+	adFRPerformIntPVCMinFrameSizeRx
+	Counter,
+	adFRPerformIntPVCMinFrameSizeTx
+	Counter,
+	adFRPerformIntPVCMaxFrameSizeRx
+	Counter,
+	adFRPerformIntPVCMaxFrameSizeTx
+	Counter,
+	adFRPerformIntPVCAvgFrameSizeRx
+	Gauge,
+	adFRPerformIntPVCAvgFrameSizeTx
+	Gauge,
+	adFRPerformIntPVCLostFrames
+	Counter,
+	adFRPerformIntPVCRemoteLostFrames
+	Counter,
+	adFRPerformIntPVCMaxDelay
+	Gauge,
+	adFRPerformIntPVCMinDelay
+	Gauge,
+	adFRPerformIntPVCAvgDelay
+	Gauge,
+	adFRPerformIntPVCTimeInDBU
+	Counter
+	}
+
+adFRPerformIntPvcIfIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "n/a."
+    	::= { adFRPerformIntPvcStatusEntry 1 }
+
+adFRPerformIntPvcIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "n/a."
+    	::= { adFRPerformIntPvcStatusEntry 2 }
+
+adFRPerformIntPvcSlotIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformIntPvcStatusEntry 3 }
+
+
+adFRPerformIntPVCStateChange OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of state changes for this PVC for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 4 }
+
+adFRPerformIntPVCInactiveTime OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+   	"Time in seconds the PVC has been in the inactive state for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 5 }
+
+adFRPerformIntPVCFramesRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	"The number of Frames the PVC has received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 6 }
+
+adFRPerformIntPVCFramesTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of Frames the PVC has transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 7 }
+
+adFRPerformIntPVCBytesRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of bytes the PVC has received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 8 }
+
+adFRPerformIntPVCBytesTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of bytes the PVC has transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 9 }
+
+adFRPerformIntPVCAvgThruputTx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Average Throughput the PVC has transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 10 }
+
+adFRPerformIntPVCAvgThruputRx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Average throughput the PVC has received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 11 }
+
+adFRPerformIntPVCMaxThruputTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Throughput the PVC has transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 12 }
+
+adFRPerformIntPVCMaxThruputRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Throughput the PVC has received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 13 }
+
+adFRPerformIntPVCAvgUtilizationTx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Average Utilization the PVC has transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 14 }
+
+adFRPerformIntPVCAvgUtilizationRx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Average Utilization the PVC has received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 15 }
+
+adFRPerformIntPVCMaxUtilizationTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The Maximum Utilization the PVC has transmitted for the interval."
+    ::= { adFRPerformIntPvcStatusEntry 16 }
+
+adFRPerformIntPVCMaxUtilizationRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Utilization the PVC has received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 17 }
+
+adFRPerformIntPVCBurstTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Amount of time (in seconds that throughput in the transmit 
+	    direction is greater than CIR."
+    	::= { adFRPerformIntPvcStatusEntry 18 }
+
+adFRPerformIntPVCBurstRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Amount of time (in seconds that throughput in the receive 
+	    direction is greater than CIR."
+    	::= { adFRPerformIntPvcStatusEntry 19 }
+
+adFRPerformIntPVCFecnRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of FECNs the PVC has received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 20 }
+
+adFRPerformIntPVCFecnTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of FECNs the PVC has transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 21 }
+
+adFRPerformIntPVCBecnRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of BECNs the PVC has received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 22 }
+
+adFRPerformIntPVCBecnTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+   	STATUS  mandatory
+    	DESCRIPTION
+        "The number of BECNs the PVC has transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 23 }
+
+adFRPerformIntPVCDeRx OBJECT-TYPE
+	SYNTAX  Counter
+   	ACCESS  read-only
+   	STATUS  mandatory
+    	DESCRIPTION
+        "The number of DEs the PVC has received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 24 }
+
+adFRPerformIntPVCDeTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of DEs the PVC has transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 25 }
+
+adFRPerformIntPVCCrRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of CRs the PVC has received for the interval."
+	::= { adFRPerformIntPvcStatusEntry 26 }
+
+adFRPerformIntPVCCrTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of CRs the PVC has transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 27 }
+
+adFRPerformIntPVCMinFrameSizeRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Minimum Frame Size the PVC received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 28 }
+
+adFRPerformIntPVCMinFrameSizeTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Minimum Frame Size the PVC transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 29 }
+
+adFRPerformIntPVCMaxFrameSizeRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Frame Size the PVC received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 30 }
+
+adFRPerformIntPVCMaxFrameSizeTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Frame Size the PVC transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 31 }
+
+adFRPerformIntPVCAvgFrameSizeRx OBJECT-TYPE
+        SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The Average Frame Size the PVC received for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 32 }
+
+adFRPerformIntPVCAvgFrameSizeTx OBJECT-TYPE
+        SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The Average Frame Size the PVC transmitted for the interval."
+    	::= { adFRPerformIntPvcStatusEntry 33 }
+
+adFRPerformIntPVCLostFrames OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of Lost Frames on the PVC for the interval. 
+	    Applies only if Sequence Numbering is Enabled on the PVC."
+    	::= { adFRPerformIntPvcStatusEntry 34 }
+
+adFRPerformIntPVCRemoteLostFrames OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of Remote Lost Frames on the PVC for the interval. 
+	    Applies only if Sequence Numbering is Enabled on the PVC."
+    	::= { adFRPerformIntPvcStatusEntry 35 }
+
+adFRPerformIntPVCMaxDelay OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Delay in milliseconds on the PVC for the interval.
+	    Applies only if Delay Measurement is Enabled for the PVC or PVC 
+	    Diagnostics are being performed."
+    	::= { adFRPerformIntPvcStatusEntry 36 }
+
+adFRPerformIntPVCMinDelay OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Minimum Delay in milliseconds on the PVC for the interval.
+	    Applies only if Delay Measurement is Enabled for the PVC or PVC 
+	    Diagnostics are being performed."
+    	::= { adFRPerformIntPvcStatusEntry 37 }
+
+adFRPerformIntPVCAvgDelay OBJECT-TYPE
+	SYNTAX  Gauge
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+	   "The Average Delay in milliseconds on the PVC for the interval.
+	 Applies only if Delay Measurement is Enabled for the PVC or PVC
+	 Diagnostics are being performed."
+	::= { adFRPerformIntPvcStatusEntry 38 }
+
+adFRPerformIntPVCTimeInDBU OBJECT-TYPE
+	SYNTAX  Counter
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+	   "Time in seconds the PVC is in the DBU state."
+	::= { adFRPerformIntPvcStatusEntry 39 }
+
+--
+--The FRPerform interval Port status table
+--
+
+adFRPerformIntPortStatusTable OBJECT-TYPE
+	 SYNTAX      SEQUENCE OF AdFRPerformIntPortStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformIntPortStatus 1 }
+
+adFRPerformIntPortStatusEntry OBJECT-TYPE
+	 SYNTAX      AdFRPerformIntPortStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a"
+	 INDEX { adFRPerformIntIfIndex, adFRPerformIntPortSlotIndex }
+	 ::= { adFRPerformIntPortStatusTable 1 }
+
+
+AdFRPerformIntPortStatusEntry ::=
+	SEQUENCE {
+	adFRPerformIntIfIndex
+	INTEGER,
+	adFRPerformIntPortSlotIndex
+	INTEGER,
+	adFRPerformIntPortFramesRx
+	Counter,
+	adFRPerformIntPortFramesTx
+	Counter,
+	adFRPerformIntPortBytesRx
+	Counter,
+	adFRPerformIntPortBytesTx
+	Counter,
+	adFRPerformIntPortAvgThruputTx
+	Gauge,
+	adFRPerformIntPortAvgThruputRx
+	Gauge,
+	adFRPerformIntPortMaxThruputTx
+	Counter,
+	adFRPerformIntPortMaxThruputRx
+	Counter,
+	adFRPerformIntPortAvgUtilizationTx
+	Gauge,
+	adFRPerformIntPortAvgUtilizationRx
+	Gauge,
+	adFRPerformIntPortMaxUtilizationTx
+	Counter,
+	adFRPerformIntPortMaxUtilizationRx
+	Counter,
+	adFRPerformIntPortFullStatusRX
+	Counter,
+	adFRPerformIntPortFullStatusTx
+	Counter,
+	adFRPerformIntPortLIOnlyRX
+	Counter,
+	adFRPerformIntPortLIOnlyTx
+	Counter,
+	adFRPerformIntPortAsyncStatusFrame
+	Counter
+	}
+
+adFRPerformIntIfIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	    ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformIntPortStatusEntry 1 }
+
+adFRPerformIntPortSlotIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	    ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformIntPortStatusEntry 2 }
+
+adFRPerformIntPortFramesRx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The number of Frames the Port received for the interval."
+    ::= { adFRPerformIntPortStatusEntry 3 }
+
+adFRPerformIntPortFramesTx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The number of Frames the Port transmitted for the interval."
+    ::= { adFRPerformIntPortStatusEntry 4 }
+
+adFRPerformIntPortBytesRx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The number of Bytes the Port received for the interrval."
+    ::= { adFRPerformIntPortStatusEntry 5 }
+
+adFRPerformIntPortBytesTx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The number of Bytes the Port transmitted for the interrval."
+    ::= { adFRPerformIntPortStatusEntry 6 }
+
+adFRPerformIntPortAvgThruputTx OBJECT-TYPE
+	SYNTAX  Gauge
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The Average Throughput the Port transmitted for the interval."
+    ::= { adFRPerformIntPortStatusEntry 7 }
+
+adFRPerformIntPortAvgThruputRx OBJECT-TYPE
+	SYNTAX  Gauge
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The Average Throughput the Port received for the interval."
+    ::= { adFRPerformIntPortStatusEntry 8 }
+
+adFRPerformIntPortMaxThruputTx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The Maximum Throughput the Port transmitted for the interval."
+    ::= { adFRPerformIntPortStatusEntry 9 }
+
+adFRPerformIntPortMaxThruputRx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The Maximum Throughput the Port received for the interval."
+    ::= { adFRPerformIntPortStatusEntry 10 }
+
+adFRPerformIntPortAvgUtilizationTx OBJECT-TYPE
+	SYNTAX  Gauge
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The Average Utilization the Port transmitted for the interval."
+    ::= { adFRPerformIntPortStatusEntry 11 }
+
+adFRPerformIntPortAvgUtilizationRx OBJECT-TYPE
+	SYNTAX  Gauge
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The Average Utilization the Port received for the interval."
+    ::= { adFRPerformIntPortStatusEntry 12 }
+
+adFRPerformIntPortMaxUtilizationTx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The Maximum Utilization the Port transmitted for the interval."
+    ::= { adFRPerformIntPortStatusEntry 13 }
+
+adFRPerformIntPortMaxUtilizationRx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "The Maximum Utilization the Port received for the interval."
+    ::= { adFRPerformIntPortStatusEntry 14 }
+
+adFRPerformIntPortFullStatusRX OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "Number of PVC signaling full status frames received."
+    ::= { adFRPerformIntPortStatusEntry 15 }
+
+adFRPerformIntPortFullStatusTx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "Number of PVC signaling full status frames transmitted."
+    ::= { adFRPerformIntPortStatusEntry 16 }
+
+adFRPerformIntPortLIOnlyRX OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "Number of PVC signaling link integrity only frames received."
+    ::= { adFRPerformIntPortStatusEntry 17 }
+
+adFRPerformIntPortLIOnlyTx OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "Number of PVC signaling link integrity only frames transmitted."
+    ::= { adFRPerformIntPortStatusEntry 18 }
+
+adFRPerformIntPortAsyncStatusFrame OBJECT-TYPE
+	SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+	   "Number of single PVC status frames received."
+    ::= { adFRPerformIntPortStatusEntry 19 }
+
+--
+--The FRPerform interval port error table
+--
+
+adFRPerformIntPortErrorTable OBJECT-TYPE
+	 SYNTAX      SEQUENCE OF AdFRPerformIntPortErrorEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformIntPortError 1 }
+
+adFRPerformIntPortErrorEntry OBJECT-TYPE
+	 SYNTAX      AdFRPerformIntPortErrorEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+        "n/a"
+	 INDEX { adFRPerformIntPortIndex, adFRPerformIntPortErrorSlotIndex }
+	 ::= { adFRPerformIntPortErrorTable 1 }
+
+
+AdFRPerformIntPortErrorEntry ::=
+	 SEQUENCE {
+	adFRPerformIntPortIndex
+	INTEGER,
+	adFRPerformIntPortErrorSlotIndex
+	INTEGER,
+	adFRPerformIntPortUnavailableTime
+	Counter,
+	adFRPerformIntCrcErrors
+	Counter,
+	adFRPerformIntAbortFrames
+	Counter,
+	adFRPerformIntOctectViolations
+	Counter,
+	adFRPerformIntDiscardFrames
+	Counter,
+	adFRPerformIntLengthErrors
+	Counter,
+	adFRPerformIntEAViolations
+	Counter,
+	adFRPerformIntEncapsulationErrors
+	Counter,
+	adFRPerformIntInactiveDLCI
+	Counter,
+	adFRPerformIntInvalidDLCI
+	Counter,
+	adFRPerformIntUnroutable
+	Counter,
+	adFRPerformIntSignalDownTime
+	Counter,
+	adFRPerformIntSignalErrors
+	Counter,
+	adFRPerformIntSignalTimeOut
+	Counter,
+	adFRPerformIntSignalStateChange
+	Counter
+	}
+
+adFRPerformIntPortIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformIntPortErrorEntry 1 }
+
+adFRPerformIntPortErrorSlotIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformIntPortErrorEntry 2 }
+
+adFRPerformIntPortUnavailableTime OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Time in seconds the port is unavailable due to a physical or frame relay outage."
+    	::= { adFRPerformIntPortErrorEntry 3 }
+
+adFRPerformIntCrcErrors OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received with CRC errors."
+    	::= { adFRPerformIntPortErrorEntry 4 }
+
+adFRPerformIntAbortFrames OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received without proper flag termination."
+    	::= { adFRPerformIntPortErrorEntry 5 }
+
+adFRPerformIntOctectViolations OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received with a bit count not divisible by eigth."
+    	::= { adFRPerformIntPortErrorEntry 6 }
+
+adFRPerformIntDiscardFrames OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames discarded by the IQ unit"
+    	::= { adFRPerformIntPortErrorEntry 7 }
+
+adFRPerformIntLengthErrors OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received that is less than 5 bytes or greater than 4500 bytes."
+    	::= { adFRPerformIntPortErrorEntry 8 }
+
+adFRPerformIntEAViolations OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received with errors in the EA field of the frame relay header."
+    	::= { adFRPerformIntPortErrorEntry 9 }
+
+adFRPerformIntEncapsulationErrors OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames destined for the IQ IP stack with that does not meet
+	   the FRF.3 IA."
+    	::= { adFRPerformIntPortErrorEntry 10 }
+
+adFRPerformIntInactiveDLCI OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received while the PVC is in the inactive state."
+    	::= { adFRPerformIntPortErrorEntry 11 }
+
+adFRPerformIntInvalidDLCI OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received with a DLCI value less than 16 or greater than 1007 not including
+	   PVC signaling frames."
+    	::= { adFRPerformIntPortErrorEntry 12 }
+
+adFRPerformIntUnroutable OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received on a management DLCI destined for the IQ unit
+	   and have the wrong IP address."
+    	::= { adFRPerformIntPortErrorEntry 13 }
+
+adFRPerformIntSignalDownTime OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Time in seconds the signaling state has been down."
+    	::= { adFRPerformIntPortErrorEntry 14 }
+
+adFRPerformIntSignalErrors OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of PVC signaling frames received with protocol violations."
+    	::= { adFRPerformIntPortErrorEntry 15 }
+
+adFRPerformIntSignalTimeOut OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of PVC signal timeouts.  Either T391 seconds elapsed without receiving
+	   a response to a poll or T392 elapsed seconds with receiving a poll."
+    	::= { adFRPerformIntPortErrorEntry 16 }
+
+adFRPerformIntSignalStateChange OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of state changes for the PVC signaling protocol.  This includes transitions
+	   from down state to up state and vice versa."
+    	::= { adFRPerformIntPortErrorEntry 17 }
+
+
+
+--
+--The FRPerform interval time stamp table
+--
+
+adFRPerformIntHistoryTimeTable OBJECT-TYPE
+	 SYNTAX      SEQUENCE OF AdFRPerformIntHistoryTimeEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformIntHistoryTime 1 }
+
+adFRPerformIntHistoryTimeEntry OBJECT-TYPE
+	 SYNTAX      AdFRPerformIntHistoryTimeEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a"
+	 INDEX { adFRPerformIntHistoryTimeSlotIndex }
+	 ::= { adFRPerformIntHistoryTimeTable 1 }
+
+AdFRPerformIntHistoryTimeEntry ::=
+	SEQUENCE {
+	adFRPerformIntHistoryTimeSlotIndex
+	INTEGER,
+	adFRPerformIntHistorySlotTotalTime
+	INTEGER,
+	adFRPerformIntHistoryTimeStamp
+	DisplayString
+	}
+
+adFRPerformIntHistoryTimeSlotIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformIntHistoryTimeEntry 1 }
+
+adFRPerformIntHistorySlotTotalTime OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "Total time in seconds this interval slot represents."
+	 ::= { adFRPerformIntHistoryTimeEntry 2 }
+
+adFRPerformIntHistoryTimeStamp OBJECT-TYPE
+	 SYNTAX  DisplayString
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "Time interval started. Format H:M if not midnight else M-D"
+	 ::= { adFRPerformIntHistoryTimeEntry 3 }
+
+--
+--The FRPerform day PVC status table
+--
+
+adFRPerformDayPvcStatusTable OBJECT-TYPE
+	 SYNTAX      SEQUENCE OF AdFRPerformDayPvcStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+        "n/a."
+	 ::= { adFRPerformDayPvcStatus 1 }
+
+adFRPerformDayPvcStatusEntry OBJECT-TYPE
+	 SYNTAX      AdFRPerformDayPvcStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+        "n/a"
+	 INDEX { adFRPerformDayPvcIfIndex, adFRPerformDayPvcIndex, adFRPerformDayPvcSlotIndex }
+	 ::={ adFRPerformDayPvcStatusTable 1 }
+
+
+AdFRPerformDayPvcStatusEntry ::=
+	 SEQUENCE {
+	adFRPerformDayPvcIfIndex
+	INTEGER,
+	adFRPerformDayPvcIndex
+	INTEGER,
+	adFRPerformDayPvcSlotIndex
+	INTEGER,
+	adFRPerformDayPVCStateChange
+	Counter,
+	adFRPerformDayPVCInactiveTime
+	Counter,
+	adFRPerformDayPVCFramesRx
+	Counter,
+	adFRPerformDayPVCFramesTx
+	Counter,
+	adFRPerformDayPVCBytesRx
+	Counter,
+	adFRPerformDayPVCBytesTx
+	Counter,
+	adFRPerformDayPVCAvgThruputTx
+	Gauge,
+	adFRPerformDayPVCAvgThruputRx
+	Gauge,
+	adFRPerformDayPVCMaxThruputTx
+	Counter,
+	adFRPerformDayPVCMaxThruputRx
+	Counter,
+	adFRPerformDayPVCAvgUtilizationTx
+	Gauge,
+	adFRPerformDayPVCAvgUtilizationRx
+	Gauge,
+	adFRPerformDayPVCMaxUtilizationTx
+	Counter,
+	adFRPerformDayPVCMaxUtilizationRx
+	Counter,
+	adFRPerformDayPVCBurstTx
+	Counter,
+	adFRPerformDayPVCBurstRx
+	Counter,
+	adFRPerformDayPVCFecnRx
+	Counter,
+	adFRPerformDayPVCFecnTx
+	Counter,
+	adFRPerformDayPVCBecnRx
+	Counter,
+	adFRPerformDayPVCBecnTx
+	Counter,
+	adFRPerformDayPVCDeRx
+	Counter,
+	adFRPerformDayPVCDeTx
+	Counter,
+	adFRPerformDayPVCCrRx
+	Counter,
+	adFRPerformDayPVCCrTx
+	Counter,
+	adFRPerformDayPVCMinFrameSizeRx
+	Counter,
+	adFRPerformDayPVCMinFrameSizeTx
+	Counter,
+	adFRPerformDayPVCMaxFrameSizeRx
+	Counter,
+	adFRPerformDayPVCMaxFrameSizeTx
+	Counter,
+	adFRPerformDayPVCAvgFrameSizeRx
+	Gauge,
+	adFRPerformDayPVCAvgFrameSizeTx
+	Gauge,
+	adFRPerformDayPVCLostFrames
+	Counter,
+	adFRPerformDayPVCRemoteLostFrames
+	Counter,
+	adFRPerformDayPVCMaxDelay
+	Gauge,
+	adFRPerformDayPVCMinDelay
+	Gauge,
+	adFRPerformDayPVCAvgDelay
+	Gauge,
+	adFRPerformDayPVCTimeInDBU
+	Counter
+	}
+adFRPerformDayPvcIfIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "n/a."
+    	::= { adFRPerformDayPvcStatusEntry 1 }
+
+
+adFRPerformDayPvcIndex OBJECT-TYPE
+	SYNTAX  INTEGER
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "n/a."
+    	::= { adFRPerformDayPvcStatusEntry 2 }
+
+adFRPerformDayPvcSlotIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformDayPvcStatusEntry 3 }
+
+adFRPerformDayPVCStateChange OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of State Changes on the PVC for the day."
+    	::= { adFRPerformDayPvcStatusEntry 4 }
+
+adFRPerformDayPVCInactiveTime OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Time in seconds the PVC has been in the inactive state."
+    	::= { adFRPerformDayPvcStatusEntry 5 }
+
+adFRPerformDayPVCFramesRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of Frames the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 6 }
+
+adFRPerformDayPVCFramesTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of Frames the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 7 }
+
+adFRPerformDayPVCBytesRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of Bytes the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 8 }
+
+adFRPerformDayPVCBytesTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of Bytes the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 9 }
+
+adFRPerformDayPVCAvgThruputTx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+   	DESCRIPTION
+	   "The Average Throughput the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 10 }
+
+adFRPerformDayPVCAvgThruputRx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Average Throughput the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 11 }
+
+adFRPerformDayPVCMaxThruputTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Throughput the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 12 }
+
+adFRPerformDayPVCMaxThruputRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Throughput the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 13 }
+
+adFRPerformDayPVCAvgUtilizationTx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Average Utilization the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 14 }
+
+adFRPerformDayPVCAvgUtilizationRx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+   	DESCRIPTION
+	   "The Average Utilization the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 15 }
+
+adFRPerformDayPVCMaxUtilizationTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Utilization the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 16 }
+
+adFRPerformDayPVCMaxUtilizationRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Utilization the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 17 }
+
+adFRPerformDayPVCBurstTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "n/a"
+    	::= { adFRPerformDayPvcStatusEntry 18 }
+
+adFRPerformDayPVCBurstRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "n/a"
+    	::= { adFRPerformDayPvcStatusEntry 19 }
+
+adFRPerformDayPVCFecnRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of FECNs the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 20 }
+
+adFRPerformDayPVCFecnTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of FECNs the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 21 }
+
+adFRPerformDayPVCBecnRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of BECNs the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 22 }
+
+adFRPerformDayPVCBecnTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of BECNs the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 23 }
+
+adFRPerformDayPVCDeRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of DEs the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 24 }
+
+adFRPerformDayPVCDeTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of DEs the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 25 }
+
+adFRPerformDayPVCCrRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of CRs the PVC received for the day."
+	::= { adFRPerformDayPvcStatusEntry 26 }
+
+adFRPerformDayPVCCrTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The number of CRs the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 27 }
+
+adFRPerformDayPVCMinFrameSizeRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Minimum Frame Size the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 28 }
+
+adFRPerformDayPVCMinFrameSizeTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Minimum Frame Size the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 29 }
+
+adFRPerformDayPVCMaxFrameSizeRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Frame Size the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 30 }
+
+adFRPerformDayPVCMaxFrameSizeTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Frame Size the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 31 }
+
+adFRPerformDayPVCAvgFrameSizeRx OBJECT-TYPE
+        SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The Average Frame Size the PVC received for the day."
+    	::= { adFRPerformDayPvcStatusEntry 32 }
+
+adFRPerformDayPVCAvgFrameSizeTx OBJECT-TYPE
+        SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+        "The Average Frame Size the PVC transmitted for the day."
+    	::= { adFRPerformDayPvcStatusEntry 33 }
+
+adFRPerformDayPVCLostFrames OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of Lost Frames on the PVC for the day. 
+            Applies only if Sequence Numbering is Enabled for the PVC."
+    	::= { adFRPerformDayPvcStatusEntry 34 }
+
+adFRPerformDayPVCRemoteLostFrames OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of Remote Lost Frames on the PVC for the day. 
+            Applies only if Sequence Numbering is Enabled for the PVC."
+    	::= { adFRPerformDayPvcStatusEntry 35 }
+
+adFRPerformDayPVCMaxDelay OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Delay on the PVC for the day. Applies only if
+            Delay Measurement or PVC Diagnostics are Enabled for the PVC."
+    	::= { adFRPerformDayPvcStatusEntry 36 }
+
+adFRPerformDayPVCMinDelay OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Minimum Delay on the PVC for the day. Applies only if
+            Delay Measurement or PVC Diagnostics are Enabled for the PVC."
+    	::= { adFRPerformDayPvcStatusEntry 37 }
+
+adFRPerformDayPVCAvgDelay OBJECT-TYPE
+	SYNTAX  Gauge
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+	   "The Average Delay on the PVC for the day. Applies only if
+	    Delay Measurement or PVC Diagnostics are Enabled for the PVC."
+	::= { adFRPerformDayPvcStatusEntry 38 }
+
+adFRPerformDayPVCTimeInDBU OBJECT-TYPE
+	SYNTAX  Counter
+	ACCESS  read-only
+	STATUS  mandatory
+	DESCRIPTION
+	   "Time in seconds the PVC is in the DBU state."
+	::= { adFRPerformDayPvcStatusEntry 39 }
+
+--
+--The FRPerform day port status table
+--
+
+adFRPerformDayPortStatusTable OBJECT-TYPE
+	 SYNTAX      SEQUENCE OF AdFRPerformDayPortStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformDayPortStatus 1 }
+
+adFRPerformDayPortStatusEntry OBJECT-TYPE
+	 SYNTAX      AdFRPerformDayPortStatusEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a"
+	 INDEX { adFRPerformDayIfIndex, adFRPerformDayPortSlotIndex }
+	 ::= { adFRPerformDayPortStatusTable 1 }
+
+
+AdFRPerformDayPortStatusEntry ::=
+	SEQUENCE {
+	adFRPerformDayIfIndex
+	INTEGER,
+	adFRPerformDayPortSlotIndex
+	INTEGER,
+	adFRPerformDayPortFramesRx
+	Counter,
+	adFRPerformDayPortFramesTx
+	Counter,
+	adFRPerformDayPortBytesRx
+	Counter,
+	adFRPerformDayPortBytesTx
+	Counter,
+	adFRPerformDayPortAvgThruputTx
+	Gauge,
+	adFRPerformDayPortAvgThruputRx
+	Gauge,
+	adFRPerformDayPortMaxThruputTx
+	Counter,
+	adFRPerformDayPortMaxThruputRx
+	Counter,
+	adFRPerformDayPortAvgUtilizationTx
+	Gauge,
+	adFRPerformDayPortAvgUtilizationRx
+	Gauge,
+	adFRPerformDayPortMaxUtilizationTx
+	Counter,
+	adFRPerformDayPortMaxUtilizationRx
+	Counter,
+	adFRPerformDayPortFullStatusRX
+	Counter,
+	adFRPerformDayPortFullStatusTx
+	Counter,
+	adFRPerformDayPortLIOnlyRX
+	Counter,
+	adFRPerformDayPortLIOnlyTx
+	Counter,
+	adFRPerformDayPortAsyncStatusFrame
+	Counter
+	}
+
+adFRPerformDayIfIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformDayPortStatusEntry 1 }
+
+
+adFRPerformDayPortSlotIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformDayPortStatusEntry 2 }
+
+adFRPerformDayPortFramesRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of Frames the Port received for the day."
+    	::= { adFRPerformDayPortStatusEntry 3 }
+
+adFRPerformDayPortFramesTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of Frames the Port transmitted for the day."
+    	::= { adFRPerformDayPortStatusEntry 4 }
+
+adFRPerformDayPortBytesRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The number of Bytes the Port received for the day."
+    	::= { adFRPerformDayPortStatusEntry 5 }
+
+adFRPerformDayPortBytesTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "he number of Bytes the Port transmitted for the day."
+    	::= { adFRPerformDayPortStatusEntry 6 }
+
+adFRPerformDayPortAvgThruputTx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Average Throughput the Port transmitted for the day."
+    	::= { adFRPerformDayPortStatusEntry 7 }
+
+adFRPerformDayPortAvgThruputRx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Average Throughput the Port received for the day."
+    	::= { adFRPerformDayPortStatusEntry 8 }
+
+adFRPerformDayPortMaxThruputTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Throughput the Port transmitted for the day."
+    	::= { adFRPerformDayPortStatusEntry 9 }
+
+adFRPerformDayPortMaxThruputRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Throughput the Port received for the day."
+    	::= { adFRPerformDayPortStatusEntry 10 }
+
+adFRPerformDayPortAvgUtilizationTx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Average Utilization the Port transmitted for the day."
+    	::= { adFRPerformDayPortStatusEntry 11 }
+
+adFRPerformDayPortAvgUtilizationRx OBJECT-TYPE
+	SYNTAX  Gauge
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Average Utilization the Port received for the day."
+    	::= { adFRPerformDayPortStatusEntry 12 }
+
+adFRPerformDayPortMaxUtilizationTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Utilization the Port transmitted for the day."
+    	::= { adFRPerformDayPortStatusEntry 13 }
+
+adFRPerformDayPortMaxUtilizationRx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "The Maximum Utilization the Port received for the day."
+    	::= { adFRPerformDayPortStatusEntry 14 }
+
+adFRPerformDayPortFullStatusRX OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of PVC signaling full status frames received."
+    	::= { adFRPerformDayPortStatusEntry 15 }
+
+adFRPerformDayPortFullStatusTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of PVC signaling full status frames transmitted."
+    	::= { adFRPerformDayPortStatusEntry 16 }
+
+adFRPerformDayPortLIOnlyRX OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of PVC signaling link integrity only frames received."
+    	::= { adFRPerformDayPortStatusEntry 17 }
+
+adFRPerformDayPortLIOnlyTx OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of PVC signaling link integrity only frames transmitted."
+    	::= { adFRPerformDayPortStatusEntry 18 }
+
+adFRPerformDayPortAsyncStatusFrame OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of single PVC status frames received."
+    	::= { adFRPerformDayPortStatusEntry 19 }
+
+--
+--The FRPerform day port error table
+--
+
+adFRPerformDayPortErrorTable OBJECT-TYPE
+	 SYNTAX      SEQUENCE OF AdFRPerformDayPortErrorEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformDayPortError 1 }
+
+adFRPerformDayPortErrorEntry OBJECT-TYPE
+	 SYNTAX      AdFRPerformDayPortErrorEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+        "n/a"
+	 INDEX { adFRPerformDayPortIndex, adFRPerformDayPortErrorSlotIndex }
+	 ::= { adFRPerformDayPortErrorTable 1 }
+
+
+AdFRPerformDayPortErrorEntry ::=
+	 SEQUENCE {
+	adFRPerformDayPortIndex
+	INTEGER,
+	adFRPerformDayPortErrorSlotIndex
+	INTEGER,
+	adFRPerformDayPortUnavailableTime
+	Counter,
+	adFRPerformDayCrcErrors
+	Counter,
+	adFRPerformDayAbortFrames
+	Counter,
+	adFRPerformDayOctectViolations
+	Counter,
+	adFRPerformDayDiscardFrames
+	Counter,
+	adFRPerformDayLengthErrors
+	Counter,
+	adFRPerformDayEAViolations
+	Counter,
+	adFRPerformDayEncapsulationErrors
+	Counter,
+	adFRPerformDayInactiveDLCI
+	Counter,
+	adFRPerformDayInvalidDLCI
+	Counter,
+	adFRPerformDayUnroutable
+	Counter,
+	adFRPerformDaySignalDownTime
+	Counter,
+	adFRPerformDaySignalErrors
+	Counter,
+	adFRPerformDaySignalTimeOut
+	Counter,
+	adFRPerformDaySignalStateChange
+	Counter
+	}
+
+adFRPerformDayPortIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformDayPortErrorEntry 1 }
+
+adFRPerformDayPortErrorSlotIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformDayPortErrorEntry 2 }
+
+adFRPerformDayPortUnavailableTime OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Time in seconds the port is unavailable due to a physical or frame relay outage."
+    	::= { adFRPerformDayPortErrorEntry 3 }
+
+adFRPerformDayCrcErrors OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received with CRC errors."
+    	::= { adFRPerformDayPortErrorEntry 4 }
+
+adFRPerformDayAbortFrames OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received without proper flag termination."
+    	::= { adFRPerformDayPortErrorEntry 5 }
+
+adFRPerformDayOctectViolations OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received with a bit count not divisible by eigth."
+    	::= { adFRPerformDayPortErrorEntry 6 }
+
+adFRPerformDayDiscardFrames OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames discarded by the IQ unit"
+    	::= { adFRPerformDayPortErrorEntry 7 }
+
+adFRPerformDayLengthErrors OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received that is less than 5 bytes or greater than 4500 bytes."
+    	::= { adFRPerformDayPortErrorEntry 8 }
+
+adFRPerformDayEAViolations OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received with errors in the EA field of the frame relay header."
+    	::= { adFRPerformDayPortErrorEntry 9 }
+
+adFRPerformDayEncapsulationErrors OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames destined for the IQ IP stack with that does not meet
+	   the FRF.3 IA."
+    	::= { adFRPerformDayPortErrorEntry 10 }
+
+adFRPerformDayInactiveDLCI OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received while the PVC is in the inactive state."
+    	::= { adFRPerformDayPortErrorEntry 11 }
+
+adFRPerformDayInvalidDLCI OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received with a DLCI value less than 16 or greater than 1007 not including
+	   PVC signaling frames."
+    	::= { adFRPerformDayPortErrorEntry 12 }
+
+adFRPerformDayUnroutable OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of frames received on a management DLCI destined for the IQ unit
+	   and have the wrong IP address."
+    	::= { adFRPerformDayPortErrorEntry 13 }
+
+adFRPerformDaySignalDownTime OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Time in seconds the signaling state has been down."
+    	::= { adFRPerformDayPortErrorEntry 14 }
+
+adFRPerformDaySignalErrors OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+   	DESCRIPTION
+	   "Number of PVC signaling frames received with protocol violations."
+    	::= { adFRPerformDayPortErrorEntry 15 }
+
+adFRPerformDaySignalTimeOut OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of PVC signal timeouts.  Either T391 seconds elapsed without receiving
+	   a response to a poll or T392 elapsed seconds with receiving a poll."
+    	::= { adFRPerformDayPortErrorEntry 16 }
+
+adFRPerformDaySignalStateChange OBJECT-TYPE
+	SYNTAX  Counter
+    	ACCESS  read-only
+    	STATUS  mandatory
+    	DESCRIPTION
+	   "Number of state changes for the PVC signaling protocol.  This includes transitions
+	   from down state to up state and vice versa."
+    	::= { adFRPerformDayPortErrorEntry 17 }
+
+
+
+--
+--The FRPerform day time stamp table
+--
+
+adFRPerformDayHistoryTimeTable OBJECT-TYPE
+	 SYNTAX      SEQUENCE OF AdFRPerformDayHistoryTimeEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformDayHistoryTime 1 }
+
+adFRPerformDayHistoryTimeEntry OBJECT-TYPE
+	 SYNTAX      AdFRPerformDayHistoryTimeEntry
+	 ACCESS      not-accessible
+	 STATUS      mandatory
+	 DESCRIPTION
+	   "n/a"
+	 INDEX { adFRPerformDayHistoryTimeSlotIndex }
+	 ::= { adFRPerformDayHistoryTimeTable 1 }
+
+AdFRPerformDayHistoryTimeEntry ::=
+	SEQUENCE {
+	adFRPerformDayHistoryTimeSlotIndex
+	INTEGER,
+	adFRPerformDayHistorySlotTotalTime
+	INTEGER,
+	adFRPerformDayHistoryTimeStamp
+	DisplayString
+	}
+
+adFRPerformDayHistoryTimeSlotIndex OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "n/a."
+	 ::= { adFRPerformDayHistoryTimeEntry 1 }
+
+adFRPerformDayHistorySlotTotalTime OBJECT-TYPE
+	 SYNTAX  INTEGER
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "Time in seconds this day slot represents."
+	 ::= { adFRPerformDayHistoryTimeEntry 2 }
+
+adFRPerformDayHistoryTimeStamp OBJECT-TYPE
+	 SYNTAX  DisplayString
+	 ACCESS  read-only
+	 STATUS  mandatory
+	 DESCRIPTION
+	   "Date the day slot started.  Format M-D"
+	 ::= { adFRPerformDayHistoryTimeEntry 3 }
+
+END

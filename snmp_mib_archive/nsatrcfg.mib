@@ -1,0 +1,225 @@
+-- ****************************************************************************
+-- HP NSA Trap Configuration Information MIB
+-- August 1, 1995
+--
+-- Copyright Hewlett-Packard Company 1994-1995
+-- All rights reserved.
+--
+-- The information in this document is subject to change without notice.
+--
+-- The HP enterprise number is 11. The ASN.1 prefix to, and including,
+-- the HP enterprise ID is 1.3.6.1.4.1.11.
+--
+-- ****************************************************************************
+-- Summary of objects in the HP NSA Trap Config Information MIB
+-- ****************************************************************************
+-- hp                                           (1.3.6.1.4.1.11)
+--    nm                                        (hp.2)
+--       hpnsa                                  (nm.23)
+--          hpnsaTrapCfg Group                  (hpnsa.13)
+--             hpnsaTrapCfgMibRev Group         (hpnsa.13.1)
+--                hpnsaTrapCfgMibRevMajor       (hpnsa.13.1.1)
+--                hpnsaTrapCfgMibRevMinor       (hpnsa.13.1.2)
+--             hpnsaTrapCfgAgent Group          (hpnsa.13.2)
+--                hpnsaTrapCfgAgentTable        (hpnsa.13.2.1)
+--                   hpnsaTrapCfgAgentEntry     (hpnsa.13.2.1.1)
+--                      hpnsaTrapCfgAgentIndex  (hpnsa.13.2.1.1.1)
+--                      hpnsaTrapCfgAgentName   (hpnsa.13.2.1.1.2)
+--                      hpnsaTrapCfgAgentVersion(hpnsa.13.2.1.1.3)
+--                      hpnsaTrapCfgAgentDate   (hpnsa.13.2.1.1.4)
+--             hpnsaTrapTargetCfg Group         (hpnsa.13.3)
+--                hpnsaRemoveTrapTarget         (hpnsa.13.3.1) 
+--                hpnsaAddTrapTarget            (hpnsa.13.3.2)
+--                hpnsaRestartSNMP              (hpnsa.13.3.3)
+--
+--
+-- ****************************************************************************
+
+HPNSATRAPCFG-MIB DEFINITIONS ::= BEGIN
+   IMPORTS
+      enterprises    FROM RFC1155-SMI
+      DisplayString  FROM RFC1213-MIB
+      OBJECT-TYPE    FROM RFC-1212;
+
+   hp                  OBJECT IDENTIFIER ::= { enterprises 11 }
+   nm                  OBJECT IDENTIFIER ::= { hp 2 }
+   hpnsa               OBJECT IDENTIFIER ::= { nm 23 }
+   hpnsaTrapCfg        OBJECT IDENTIFIER ::= { hpnsa 13 }
+   hpnsaTrapCfgMibRev  OBJECT IDENTIFIER ::= { hpnsaTrapCfg 1 }
+   hpnsaTrapCfgAgent   OBJECT IDENTIFIER ::= { hpnsaTrapCfg 2 }
+   hpnsaTrapTargetCfg  OBJECT IDENTIFIER ::= { hpnsaTrapCfg 3 }
+
+-- ****************************************************************************
+-- HP NSA Trap Configuration Information MIB Revision
+-- ===================================
+--
+-- hp                                           (1.3.6.1.4.1.11)
+--    nm                                        (hp.2)
+--       hpnsa                                  (nm.23)
+--          hpnsaTrapCfg Group                  (hpnsa.13)
+--             hpnsaTrapCfgMibRev Group         (hpnsa.13.1)
+--                hpnsaTrapCfgMibRevMajor           (hpnsa.13.1.1)
+--                hpnsaTrapCfgMibRevMinor           (hpnsa.13.1.2)
+--
+-- Implementation of the MibRev group is mandatory for all HPNSA Agents
+-- supporting the HP Trap Configuration Information MIB.
+--
+-- An HPNSA Agent conforming to this document will return a
+-- hpnsaTrapCfgMibRevMajor of 1 and a hpnsaTrapCfgMibRevMinor of 0.
+--
+-- ****************************************************************************
+
+   hpnsaTrapCfgMibRevMajor OBJECT-TYPE
+      SYNTAX INTEGER (1..65535)
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+	 "The major revision level of the MIB."
+   ::= { hpnsaTrapCfgMibRev 1 }
+
+   hpnsaTrapCfgMibRevMinor OBJECT-TYPE
+      SYNTAX INTEGER (0..65535)
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+	 "The minor revision level of the MIB."
+   ::= { hpnsaTrapCfgMibRev 2 }
+
+-- ****************************************************************************
+-- HP NSA Trap Config Info MIB Agent Information
+-- =====================================
+--
+-- hp                                           (1.3.6.1.4.1.11)
+--    nm                                        (hp.2)
+--       hpnsa                                  (nm.23)
+--          hpnsaTrapCfg Group                  (hpnsa.13)
+--             hpnsaTrapCfgAgent Group          (hpnsa.13.2)
+--                hpnsaTrapCfgAgentTable        (hpnsa.13.2.1)
+--                   hpnsaTrapCfgAgentEntry     (hpnsa.13.2.1.1)
+--                      hpnsaTrapCfgAgentIndex  (hpnsa.13.2.1.1.1)
+--                      hpnsaTrapCfgAgentName   (hpnsa.13.2.1.1.2)
+--                      hpnsaTrapCfgAgentVersion(hpnsa.13.2.1.1.3)
+--                      hpnsaTrapCfgAgentDate   (hpnsa.13.2.1.1.4)
+--
+-- Implementation of the Trap Config Info Agent group is mandatory for all 
+-- HPNSA Agents supporting the HP Trap Config Information MIB.
+--
+-- ****************************************************************************
+
+   hpnsaTrapCfgAgentTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF HPnsaTrapCfgAgentEntry
+      ACCESS not-accessible
+      STATUS mandatory
+      DESCRIPTION
+	 "A table of SNMP agents that satisfy requests for this MIB."
+   ::= { hpnsaTrapCfgAgent 1 }
+
+   hpnsaTrapCfgAgentEntry OBJECT-TYPE
+      SYNTAX HPnsaTrapCfgAgentEntry
+      ACCESS not-accessible
+      STATUS mandatory
+      DESCRIPTION
+	 "A description of the agent/agents that access Trap Config. information."
+      INDEX { hpnsaTrapCfgAgentIndex }
+   ::= { hpnsaTrapCfgAgentTable 1 }
+
+   HPnsaTrapCfgAgentEntry ::= SEQUENCE {
+      hpnsaTrapCfgAgentIndex       INTEGER,
+      hpnsaTrapCfgAgentName        DisplayString,
+      hpnsaTrapCfgAgentVersion     DisplayString,
+      hpnsaTrapCfgAgentDate        OCTET STRING
+   }
+
+   hpnsaTrapCfgAgentIndex OBJECT-TYPE
+      SYNTAX INTEGER (0..255)
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+	 "A unique index for this agent."
+   ::= { hpnsaTrapCfgAgentEntry 1 }
+
+   hpnsaTrapCfgAgentName OBJECT-TYPE
+      SYNTAX DisplayString (SIZE (0..255))
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+	 "Name of the agent/agents satisfying SNMP requests for this MIB."
+   ::= { hpnsaTrapCfgAgentEntry 2 }
+
+   hpnsaTrapCfgAgentVersion OBJECT-TYPE
+      SYNTAX DisplayString (SIZE (0..10))
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+	 "Version number of the agent/agents satisfying SNMP requests for
+	 this MIB."
+   ::= { hpnsaTrapCfgAgentEntry 3 }
+
+   hpnsaTrapCfgAgentDate OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (7))
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+	 "The date on which this agent was created.
+
+	 field  octets  contents                  range
+	 _________________________________________________
+	    1       1    years since 1900          0..255
+	    2       2    month                     1..12
+	    3       3    day                       1..31
+	    4       4    hour                      0..23
+	    5       5    minute                    0..59
+	    6       6    second                    0..59"
+   ::= { hpnsaTrapCfgAgentEntry 4 }
+
+
+-- ****************************************************************************
+-- HP NSA Trap Target Configuration Information
+-- ===================================
+--
+-- hp                                           (1.3.6.1.4.1.11)
+--    nm                                        (hp.2)
+--       hpnsa                                  (nm.23)
+--          hpnsaTrapCfg Group                  (hpnsa.13)
+--             hpnsaTrapTargetCfg Group         (hpnsa.13.3)
+--                hpnsaRemoveTrapTarget         (hpnsa.13.3.1) 
+--                hpnsaAddTrapTarget            (hpnsa.13.3.2)
+--                                hpnsaRestartSNMP                              (hpnsa.13.3.3)  
+--
+-- Implementation of this group is mandatory for all HPNSA Agents
+-- supporting the HP Trap Configuration Information MIB.
+--
+-- ****************************************************************************
+
+   hpnsaRemoveTrapTarget OBJECT-TYPE
+      SYNTAX DisplayString (SIZE (0..50))
+      ACCESS read-write
+      STATUS mandatory
+      DESCRIPTION
+	 "An SNMP Set request on this object will cause the agent to remove 
+	  the specified network address from server's SNMP trap destinations list"
+   ::= { hpnsaTrapTargetCfg 1 }
+
+   hpnsaAddTrapTarget OBJECT-TYPE
+      SYNTAX DisplayString (SIZE (0..50))
+      ACCESS read-write
+      STATUS mandatory
+      DESCRIPTION
+	 "An SNMP Set request on this object will cause the agent to add 
+	  the specified network address to server's SNMP trap destination list"
+   ::= { hpnsaTrapTargetCfg 2 }
+
+
+   hpnsaRestartSNMP OBJECT-TYPE
+      SYNTAX INTEGER {
+	    noActionNeeded(1),
+	    restartSNMP(2)
+      }
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+	 "Returns whether or not the SNMP service needs to be restarted in order
+		  for changes to SNMP trap destination list to take effect"
+   ::= { hpnsaTrapTargetCfg 3 }
+
+END

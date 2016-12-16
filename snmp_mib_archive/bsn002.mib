@@ -1,0 +1,84 @@
+BAY-STACK-NOTIFICATIONS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY,
+    NOTIFICATION-TYPE,
+    OBJECT-TYPE
+        FROM SNMPv2-SMI
+    MacAddress
+        FROM SNMPv2-TC
+    bayStackMibs
+        FROM SYNOPTICS-ROOT-MIB
+    dot1xAuthPaeState,
+    dot1xAuthBackendAuthState
+        FROM IEEE8021-PAE-MIB
+	ifIndex
+		FROM RFC1213-MIB;
+
+bayStackNotificationsMib    MODULE-IDENTITY
+   LAST-UPDATED "200303160000Z"
+   ORGANIZATION "Nortel Networks"
+   CONTACT-INFO ""
+   DESCRIPTION
+       "Miscellaneous NOTIFICATION definitions for BayStack products."
+   REVISION "200303160000Z" -- 16 March 2003
+   DESCRIPTION
+       "v000:  The Initial Revision"
+   ::= { bayStackMibs 2 }
+
+bsnObjects        OBJECT IDENTIFIER ::= { bayStackNotificationsMib 1 }
+bsnNotifications  OBJECT IDENTIFIER ::= { bayStackNotificationsMib 2 }
+bsnNotifications0 OBJECT IDENTIFIER ::= { bsnNotifications 0 }
+
+--
+-- Notification objects
+--
+
+bsnEapAccessViolationMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The MAC address which caused an EAP access violation."
+    ::= { bsnObjects 1 }
+
+--
+-- Notification types
+--
+
+bsnConfigurationSavedToNvram NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "This notification is generated whenever the device saves
+         its configuration to non-volatile storage.  The system should
+         limit the frequency with which this notification is generated,
+         as frequent configuration changes could potentially generate
+         too many of these notifications.  How the frequency is limitted
+         is an implementation details, but it is suggested that no more
+         than one notification be generated per minute."
+    ::= { bsnNotifications0 1 }
+
+bsnEapAccessViolation NOTIFICATION-TYPE
+    OBJECTS {
+        dot1xAuthPaeState,
+        dot1xAuthBackendAuthState,
+        bsnEapAccessViolationMacAddress
+    }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated whenever an EAP access violation
+         occurs."
+    ::= { bsnNotifications0 2 }
+
+bsnPortSpeedDuplexMismatch NOTIFICATION-TYPE
+    OBJECTS {
+        ifIndex
+    }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when a speed or duplex mismatch 
+		is detected. Once notification has been sent, further notifications
+		may be sent, but it is suggested these be at least 5 minutes apart."
+    ::= { bsnNotifications0 3 }
+
+END

@@ -1,0 +1,441 @@
+-- ****************************************************************************
+--
+--                        HP ECC Memory
+--      Management Information Base for SNMP Network Management
+--
+--      Version Q.01.00 (8/1/94)
+-- 
+--      Copyright 1994 Hewlett-Packard Company.
+--      All Rights Reserved.
+--
+--      The information in this document is subject to change without notice.
+--
+--      The HP Enterprise number is 11.
+--      The ASN.1 prefix to, and including the HP Enterprise is:
+--      1.3.6.1.4.1.11
+--
+-- ****************************************************************************
+-- Summary of HP ECC Memory Information MIB
+-- ****************************************************************************
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpnsaECC Group                        (hpnsa.6)
+--             hpnsaEccMibRev Group               (hpnsa.6.1)             
+--                hpnsaEccMibRevMajor             (hpnsa.6.1.1)  
+--                hpnsaEccMibRevMinor             (hpnsa.6.1.2)
+--
+--             hpnsaEccAgent Group                (hpnsa.6.2)
+--                hpnsaEccAgentTable              (hpnsa.6.2.1)
+--                   hpnsaEccAgentEntry           (hpnsa.6.2.1.1)
+--                      hpnsaEccAgentIndex        (hpnsa.6.2.1.1.1)
+--                      hpnsaEccAgentName         (hpnsa.6.2.1.1.2)
+--                      hpnsaEccAgentVersion      (hpnsa.6.2.1.1.3)
+--                      hpnsaEccAgentDate         (hpnsa.6.2.1.1.4)
+--
+--             hpnsaEccLog                        (hpnsa.6.3)
+--                hpnsaEccStatus                  (hpnsa.6.3.1)
+--                hpnsaEccEraseLog                (hpnsa.6.3.2)
+--                hpnsaEccTotalErrCorrected       (hpnsa.6.3.3)
+--                hpnsaEccTrapEnable              (hpnsa.6.3.4)
+--                hpnsaEccTrapDelay               (hpnsa.6.3.5)
+--                hpnsaEccPollTime                (hpnsa.6.3.6)
+--                hpnsaEccMemErrTable             (hpnsa.6.3.7)
+--                   hpnsaEccMemErrEntry          (hpnsa.6.3.7.1)
+--                      hpnsaEccMemErrIndex       (hpnsa.6.3.7.1.1)
+--                      hpnsaEccMemErrTime        (hpnsa.6.3.7.1.2)
+--                      hpnsaEccMemErrDesc        (hpnsa.6.3.7.1.3)
+--
+-- ******************************************************************************
+
+HPNSAECC-MIB DEFINITIONS ::= BEGIN
+   IMPORTS
+      enterprises    FROM RFC1155-SMI
+      DisplayString  FROM RFC1213-MIB
+      OBJECT-TYPE    FROM RFC-1212
+      TRAP-TYPE      FROM RFC-1215;
+
+   hp              OBJECT IDENTIFIER ::= { enterprises 11 }
+   nm              OBJECT IDENTIFIER ::= { hp 2 }
+   hpnsa           OBJECT IDENTIFIER ::= { nm 23 }  
+   hpnsaECC        OBJECT IDENTIFIER ::= { hpnsa 6 }
+   hpnsaEccMibRev  OBJECT IDENTIFIER ::= { hpnsaECC 1 }
+   hpnsaEccAgent   OBJECT IDENTIFIER ::= { hpnsaECC 2 }
+   hpnsaEccLog     OBJECT IDENTIFIER ::= { hpnsaECC 3 }
+
+-- ****************************************************************************
+--   HP ECC Memory MIB 
+-- ======================================
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpnsaECC Group  (hpnsa.6)
+--             hpnsaEccMibRev Group  (hpnsa.6.1)             
+--                hpnsaEccMibRevMajor  (hpnsa.6.1.1)  
+--                hpnsaEccMibRevMinor  (hpnsa.6.1.2)
+--
+--    Implementation of the MibRev group is mandatory for all HPNSA Agents
+--    supporting the HP ECC Memory MIB.
+--
+--    An HPNSA Agent conforming to this document will return a
+--    hpnsaEccMibRevMajor of 1 and a hpnsaEccMibRevMinor of 0. 
+--
+-- ****************************************************************************
+
+    hpnsaEccMibRevMajor OBJECT-TYPE
+        SYNTAX  INTEGER (1..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The major revision level of the MIB."
+        ::= { hpnsaEccMibRev 1 }
+
+    hpnsaEccMibRevMinor OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The minor revision level of the MIB."
+        ::= { hpnsaEccMibRev 2 }
+
+-- ****************************************************************************
+--   HP ECC Memory MIB Agent Information
+-- =========================================
+--
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpnsaECC Group  (hpnsa.6)
+--             hpnsaEccAgent Group  (hpnsa.6.2)
+--
+--                hpnsaEccAgentTable          (hpnsa.6.2.1)
+--                   hpnsaEccAgentEntry       (hpnsa.6.2.1.1)
+--                      hpnsaEccAgentIndex    (hpnsa.6.2.1.1.1)
+--                      hpnsaEccAgentName     (hpnsa.6.2.1.1.2)
+--                      hpnsaEccAgentVersion  (hpnsa.6.2.1.1.3)
+--                      hpnsaEccAgentDate     (hpnsa.6.2.1.1.4)
+--
+--  Implementation of the hpnsaEccAgent group is mandatory for all
+--  HPNSA Agents that support the ECC Memory MIB.
+--
+-- ****************************************************************************
+--   HP ECC Memory Agent Module Table
+-- =========================================
+
+   hpnsaEccAgentTable OBJECT-TYPE
+      SYNTAX  SEQUENCE OF HPnsaEccAgentEntry
+      ACCESS  not-accessible
+      STATUS  mandatory
+      DESCRIPTION
+         "A table of SNMP Agents that satisfy requests for this MIB."
+      ::= { hpnsaEccAgent 1 }
+
+   hpnsaEccAgentEntry OBJECT-TYPE
+      SYNTAX  HPnsaEccAgentEntry
+      ACCESS  not-accessible
+      STATUS  mandatory
+      DESCRIPTION
+        "A description of the agents that access ECC Memory
+         related information."
+      INDEX   { hpnsaEccAgentIndex }
+      ::= { hpnsaEccAgentTable 1 }
+        
+      HPnsaEccAgentEntry ::= SEQUENCE {
+         hpnsaEccAgentIndex       INTEGER,
+         hpnsaEccAgentName        DisplayString,
+         hpnsaEccAgentVersion     DisplayString,
+         hpnsaEccAgentDate        OCTET STRING
+      }
+
+   hpnsaEccAgentIndex OBJECT-TYPE
+      SYNTAX  INTEGER (0..255)
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+          "A unique index for this module description."
+      ::= { hpnsaEccAgentEntry 1 }
+
+   hpnsaEccAgentName OBJECT-TYPE
+      SYNTAX  DisplayString (SIZE (0..255))
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+         "Name of the Agent/Agents satisfying SNMP requests for this MIB."
+      ::= { hpnsaEccAgentEntry 2 }
+
+   hpnsaEccAgentVersion OBJECT-TYPE
+      SYNTAX  DisplayString (SIZE (0..5))
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+         "Version number of the Agent/Agents satisfying SNMP requests for
+         this MIB."
+      ::= { hpnsaEccAgentEntry 3 }
+
+   hpnsaEccAgentDate OBJECT-TYPE
+      SYNTAX  OCTET STRING (SIZE (6))
+      ACCESS  read-only
+      STATUS  mandatory
+      DESCRIPTION
+         "The date on which this Agent was created.
+
+         field  octets  contents                  range
+         _________________________________________________
+           1       1    years since 1900          0..255
+           2       2    month                     1..12
+           3       3    day                       1..31
+           4       4    hour                      0..23
+           5       5    minute                    0..59  
+           6       6    second                    0..59
+                   "
+      ::= { hpnsaEccAgentEntry 4 }
+
+
+-- *************************************************************************************
+-- hp  (1.3.6.1.4.1.11)
+--    nm  (1.3.6.1.4.1.11.2)
+--       hpnsa  (1.3.6.1.4.1.11.2.23)
+--          hpnsaECC Group  (hpnsa.6)
+--             hpnsaEccLog Group  (hpnsa.6.3)
+--                hpnsaEccStatus                  (hpnsa.6.3.1)
+--                hpnsaEccEraseLog                (hpnsa.6.3.2)
+--                hpnsaEccTotalErrCorrected       (hpnsa.6.3.3)
+--                hpnsaEccTrapEnable              (hpnsa.6.3.4)
+--                hpnsaEccTrapDelay               (hpnsa.6.3.5)
+--                hpnsaEccPollTime                (hpnsa.6.3.6)
+--                hpnsaEccMemErrTable             (hpnsa.6.3.7)
+--                   hpnsaEccMemErrEntry          (hpnsa.6.3.7.1)
+--                      hpnsaEccMemErrIndex       (hpnsa.6.3.7.1.1)
+--                      hpnsaEccMemErrTime        (hpnsa.6.3.7.1.2)
+--                      hpnsaEccMemErrDesc        (hpnsa.6.3.7.1.3)
+--
+-- ****************************************************************************************
+--   HP ECC Memory Error Log Record Table
+-- ****************************************************************************
+
+   hpnsaEccStatus OBJECT-TYPE
+      SYNTAX INTEGER {
+                 notSupported(1),
+                        disabled(2),
+                    enabled(3)
+      }
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "ECC memory system tracking status:
+             1 - ECC memory is not supported in this machine
+             2 - ECC memory logging is disabled due to some errors
+                 (example, too many single or multiple bits error
+                  occurred in a short period of time)
+             3 - ECC memory logging is enabled and functioning."
+      ::= { hpnsaEccLog 1 }
+
+   hpnsaEccEraseLog OBJECT-TYPE
+      SYNTAX INTEGER
+      ACCESS read-write
+      STATUS mandatory
+      DESCRIPTION
+         "Set this variable to integer value 1234 and without 
+          changing it again before hpnsaEccPollTime expired, 
+          will erase the system's Log area."
+      ::= { hpnsaEccLog 2 }
+
+   hpnsaEccTotalErrCorrected OBJECT-TYPE
+      SYNTAX INTEGER
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "Total number of ECC memory error had occurred 
+          and been corrected."
+      ::= { hpnsaEccLog 3 }
+ 
+   hpnsaEccTrapEnable OBJECT-TYPE
+      SYNTAX INTEGER {
+                  trapOn(1),
+         trapOff(0)
+      }
+      ACCESS read-write
+      STATUS mandatory
+      DESCRIPTION
+         "Set this variable to 1, the ECC memory errors are
+          forwarded as SNMP traps.  No trap are generated if
+          this variable is set to 0."
+      ::= { hpnsaEccLog 4 }
+
+   hpnsaEccTrapDelay OBJECT-TYPE
+      SYNTAX INTEGER (100..5000)
+      ACCESS read-write
+      STATUS mandatory
+      DESCRIPTION
+         "Delay in milliseconds between the sending of ECC traps."
+      ::= { hpnsaEccLog 5 }
+
+   hpnsaEccPollTime OBJECT-TYPE
+      SYNTAX INTEGER (60..2592000)
+      ACCESS read-write
+      STATUS mandatory
+      DESCRIPTION
+         "Seconds between checking of ECC memory error."
+      ::= { hpnsaEccLog 6 }
+
+   hpnsaEccMemErrTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF HpnsaEccMemErrEntry
+      ACCESS not-accessible
+      STATUS mandatory
+      DESCRIPTION
+         "A table of ECC memory error descriptions."
+      ::= { hpnsaEccLog 7 }
+
+   hpnsaEccMemErrEntry OBJECT-TYPE
+      SYNTAX HpnsaEccMemErrEntry
+      ACCESS not-accessible
+      STATUS mandatory
+      DESCRIPTION
+         "ECC memory error description."
+      INDEX { hpnsaEccMemErrIndex }
+      ::= { hpnsaEccMemErrTable 1 }
+
+      HpnsaEccMemErrEntry ::= SEQUENCE {
+         hpnsaEccMemErrIndex       INTEGER,
+         hpnsaEccMemErrTime        DisplayString,
+         hpnsaEccMemErrDesc        DisplayString
+      }
+  
+   hpnsaEccMemErrIndex OBJECT-TYPE
+      SYNTAX INTEGER
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "A unique index for the ECC memory error log."
+      ::= { hpnsaEccMemErrEntry 1 }
+
+   hpnsaEccMemErrTime OBJECT-TYPE
+      SYNTAX DisplayString
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "The Server local time when the ECC memory error occurred."
+      ::= { hpnsaEccMemErrEntry 2 }
+
+   hpnsaEccMemErrDesc OBJECT-TYPE
+      SYNTAX DisplayString
+      ACCESS read-only
+      STATUS mandatory
+      DESCRIPTION
+         "A string indicating the SIMM location when ECC memory
+          error occurred."
+      ::= { hpnsaEccMemErrEntry 3 }
+
+-- *************************************************************************
+-- traps
+-- **************************************************************************
+
+hPECCMemory1	TRAP-TYPE
+   ENTERPRISE hpnsaECC
+     DESCRIPTION 
+            "An ECC single-bit error has been corrected in one of the memory 
+               modules"
+        
+        --#TYPE         "ECC memory error corrected"
+    --#SUMMARY      "%s"
+    --#ARGUMENTS    {1}
+     --#SEVERITY     MINOR
+   --#TIMEINDEX    100
+     --#HELP         "nsa.hlp"
+       --#HELPTAG      2059
+    --#STATE        OPERATIONAL
+     
+        -- FIXED STRING  : NOT PRESENT
+  -- CUSTOM STRING : PRESENT
+      -- SEVERITY      : WARNING
+
+      ::= 4353
+
+hPECCMemory4	TRAP-TYPE
+   ENTERPRISE hpnsaECC
+     DESCRIPTION 
+            "Error logging for ECC single-bit errors has been disabled due to too
+           many SBE's detected in a short time period"
+     
+        --#TYPE         "ECC single-bit overflow; logging disabled"
+     --#SUMMARY      "%s"
+    --#ARGUMENTS    {1}
+     --#SEVERITY     MAJOR
+   --#TIMEINDEX    100
+     --#HELP         "nsa.hlp"
+       --#HELPTAG      2061
+    --#STATE        DEGRADED
+        
+        -- FIXED STRING  : NOT PRESENT
+  -- CUSTOM STRING : PRESENT
+      -- SEVERITY          : MAJOR
+
+    ::= 4354
+
+hPECCMemory5	TRAP-TYPE
+  ENTERPRISE hpnsaECC
+     DESCRIPTION 
+            "ECC Memory size has been adjusted during the Power-On-Self-Test
+                during the last boot due to a failed memory module"
+     
+        --#TYPE         "ECC memory resize error"
+       --#SUMMARY      "%s"
+    --#ARGUMENTS    {1}
+     --#SEVERITY     MINOR
+   --#TIMEINDEX    100
+     --#HELP         "nsa.hlp"
+       --#HELPTAG      2058
+    --#STATE        DEGRADED
+        
+        -- FIXED STRING  : NOT PRESENT
+  -- CUSTOM STRING : PRESENT
+      -- SEVERITY          : WARNING
+
+  ::= 4355
+
+
+hPECCMemory6	TRAP-TYPE
+ ENTERPRISE hpnsaECC
+     DESCRIPTION 
+            "An ECC double-bit error has occurred in one of the memory modules"
+     
+        --#TYPE         "ECC multiple bit error" 
+       --#SUMMARY      "%s"
+    --#ARGUMENTS    {1}
+     --#SEVERITY     MAJOR
+   --#TIMEINDEX    100
+     --#HELP         "nsa.hlp"
+       --#HELPTAG      2060
+    --#STATE        DEGRADED
+        
+        -- FIXED STRING  : NOT PRESENT
+  -- CUSTOM STRING : PRESENT
+      -- SEVERITY          : MAJOR
+
+    ::= 4357
+
+
+hPECCMemory8	TRAP-TYPE
+ ENTERPRISE hpnsaECC
+     DESCRIPTION 
+            "Error logging for ECC multiple-bit errors has been disabled due to too
+         many MBE's detected in a short time period"
+     
+        --#TYPE         "ECC multi-bit overflow; logging disabled"
+      --#SUMMARY      "%s"
+    --#ARGUMENTS    {1}
+     --#SEVERITY     MAJOR
+   --#TIMEINDEX    100
+     --#HELP         "nsa.hlp"
+       --#HELPTAG      2062
+    --#STATE        OPERATIONAL
+     
+        -- FIXED STRING  : NOT PRESENT
+  -- CUSTOM STRING : PRESENT
+      -- SEVERITY          : MAJOR
+
+    ::= 4358
+
+END

@@ -1,0 +1,2880 @@
+LIEBERT-GP-PDU-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    DisplayString
+        FROM SNMPv2-TC
+    MODULE-IDENTITY,
+    OBJECT-IDENTITY,
+    OBJECT-TYPE,
+    Integer32,
+    Unsigned32
+        FROM SNMPv2-SMI
+    lgpPdu,
+    liebertPduModuleReg
+        FROM LIEBERT-GP-REGISTRATION-MIB
+    ;
+
+-- =============================================================================
+-- Module Identification and Registration
+-- =============================================================================
+
+liebertGlobalProductsPduModule MODULE-IDENTITY
+  LAST-UPDATED "200807020000Z"
+  ORGANIZATION "Emerson Network Power/Liebert Corporation"
+  CONTACT-INFO
+      "Contact:   Technical Support
+
+      Postal:
+      Liebert Corporation
+      1050 Dearborn Drive
+      P.O. Box 29186
+      Columbus OH, 43229
+      US
+
+      Tel: +1 (800) 222-5877
+
+      E-mail: liebert.monitoring@emerson.com
+      Web:    www.liebert.com
+
+      Author:  Keith Sarbaugh"
+
+   DESCRIPTION
+      "The MIB module used to register Liebert POWER related SNMP OIDs.
+
+      Copyright 2008-2008 Liebert Corporation. All rights reserved.
+      Reproduction of this document is authorized on the condition
+      that the forgoing copyright notice is included.
+
+      This Specification is supplied 'AS IS' and Liebert Corporation
+      makes no warranty, either express or implied, as to the use,
+      operation, condition, or performance of the Specification."
+
+   REVISION "200807020000Z"
+   DESCRIPTION
+    "Initial Version"
+
+   ::= { liebertPduModuleReg 1 }
+
+-- =============================================================================
+--  lgpPdu - Liebert Power Distribution Registrations
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+
+-- PDU Group Information
+
+-- -----------------------------------------------------------------------------
+
+lgpPduCluster OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "This sub-tree contains information about PDU clusters.  Clusters are
+         groups of PDU's under a single monitoring or control domain."
+    REFERENCE
+        "The registrations for the objects in this sub-tree are
+         defined below."
+    ::= { lgpPdu 10 }
+
+lgpPduGrpSysStatus OBJECT-TYPE
+SYNTAX      Unsigned32
+MAX-ACCESS  read-only
+STATUS      current
+DESCRIPTION
+    "This value represents a bit-field of the various operational 
+     states of the PDUs that are part of the cluster of PDUs 
+     being monitored by this agent.   
+
+     This value is the bit-wise logical OR of all of the 
+     'lgpPduEntrySysStatus' columns in the 'lgpPduTable' 
+     which represents the combined statuses of all PDUs for this agent.
+
+     Note the bit-position is given parenthetically next to the operational 
+     state in the description below.  The bit position is big-endian 
+     (least significant digit is the right-most digit).  The state is 
+     present in the PDU when the bit is on (value = 1). 
+
+     The value is a logical OR of all of the following potential states of 
+     each PDU in the cluster.
+
+         normalOperation(1)
+             One or more PDUs in the cluster are operating normally with no 
+             active warnings or alarms.
+         startUp(2)
+             One or more PDUs are in the startup state (initializing).  Control
+             and monitoring operations may be inhibited or unavailable
+             while the PDU is in this state.  This state will clear 
+             automatically when the PDU(s) are fully initialized and ready to
+             accept control and monitoring commands.
+         unknownNoSupport(4)
+             The state of one or more PDUs are not known at this time or 
+             there is no support for this piece of information from 1 or more 
+             PDUs in the cluster/group.     
+         normalWithWarning(8)
+             One or more PDUs are operating normally with one or more active 
+             warnings.  Appropriate personnel should investigate the 
+             warning(s) as soon as possible and take appropriate action. 
+         normalWithAlarm(16)
+             One or more PDUs are operating normally with one or more active 
+             alarms.  Appropriate personnel should investigate the alarm(s)
+             as soon as possible and take appropriate action. 
+         abnormalOperation(32)
+            One ore more PDUs are operating abnormally.  There is a 
+            failure within the system that is unexpected under normal 
+            operating conditions.  Appropriate personnel should investigate
+            the cause as soon as possible.  The normal functioning of
+            the system is likely inhibited.  
+         unknownCommFailure(64)
+            The state of one or more PDUs are not known due to a communications
+            failure between the PDU hardware and the communications
+            module.  This state is usually indicative of a hardware 
+            problem.
+     "
+::= { lgpPduCluster 5 }
+
+-- -----------------------------------------------------------------------------
+
+-- Power Distribution (PDU) Table.
+
+-- -----------------------------------------------------------------------------
+
+lgpPduTableCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "Count"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of PDUs being monitored by this agent.  This is the 
+         number of entries in the lgpPduTable."
+    ::= { lgpPdu 19 }
+
+lgpPduTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LgpPduEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains a list of PDU entries.
+         The table contains zero, one, or many rows, depending upon the number
+         of PDUs being monitored.  The Network Management System (NMS)
+         cannot create or delete rows in the table. The rows are created by 
+         the agent based upon the number of PDUs being managed.  
+         Each row in the table represents a PDU in the system."
+    ::= { lgpPdu 20 }
+
+    lgpPduEntry OBJECT-TYPE
+        SYNTAX      LgpPduEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This entry defines the columns to be populated in the
+             'lgpPduTable'.  Each column represents an attribute of a PDU.
+             This table is indexed by the PDU identifier that is unique 
+             within the agent. 
+            "
+        INDEX
+        { 
+            lgpPduEntryIndex 
+        }
+        ::= { lgpPduTable 1 }
+
+    LgpPduEntry ::= SEQUENCE 
+    {
+            lgpPduEntryIndex               Unsigned32,
+            lgpPduEntryId                  Unsigned32,
+            lgpPduEntryUsrLabel            DisplayString,
+            lgpPduEntrySysAssignLabel      DisplayString,
+            lgpPduEntryPositionRelative    Unsigned32,
+            lgpPduEntrySysStatus           Unsigned32,
+            lgpPduEntryUsrTag1             DisplayString,
+            lgpPduEntryUsrTag2             DisplayString,
+            lgpPduEntrySerialNumber        DisplayString,
+            lgpPduEntryRbCount             Unsigned32
+    }
+
+    lgpPduEntryIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This is the index that indicates the row of the 'lgpPduTable'."
+        ::= { lgpPduEntry 1 }
+
+    lgpPduEntryId OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is an internal index representing a unique identifier for
+             each PDU represented by this agent.  The value is assigned
+             by the agent."
+        ::= { lgpPduEntry 5 }
+
+    lgpPduEntryUsrLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "This is a user assigned label representing the PDU."
+        ::= { lgpPduEntry 10 }
+
+    lgpPduEntrySysAssignLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "System assigned identifier representing the PDU. The value
+             is independent of any user assigned label or tag. The exact format
+             of this label is system dependent and is subject to change,
+             therefore, it should not be referenced for programmatic use."
+        ::= { lgpPduEntry 15 }
+
+    lgpPduEntryPositionRelative OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Count"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a one-based value that indicates the PDU's relative 
+             position within a rack or other enclosing entity."
+        ::= { lgpPduEntry 20 }
+
+    lgpPduEntrySysStatus OBJECT-TYPE
+        SYNTAX      Unsigned32 
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This value represents a bit-field of the various operational 
+             states of the PDU. The value is a logical OR of all of the
+             following potential states of the PDU.  Note the bit-position 
+             is given parenthetically next to the operational state in the 
+             description below.  The bit position is assumed to be a big-endian 
+             format (least significant digit is the right-most digit).  The 
+             state is present in the PDU when the bit is on (value = 1).
+
+             normalOperation(1)
+                 The PDU is operating normally with no active warnings or alarms.
+             startUp(2)
+                 The PDU is in the startup state (initializing).  Control
+                 and monitoring operations maybe inhibited or unavailable
+                 while the PDU is in this state.  This state will clear 
+                 automatically when the PDU(s) are fully initialized and 
+                 ready to accept control and monitoring commands.
+             normalWithWarning(8)
+                 The PDU is operating normally with one or more active 
+                 warnings.  Appropriate personnel should investigate the 
+                 warning(s) as soon as possible and take appropriate action. 
+             normalWithAlarm(16)
+                 The PDU is operating normally with one or more active 
+                 alarms.  Appropriate personnel should investigate the alarm(s)
+                 as soon as possible and take appropriate action. 
+             abnormalOperation(32)
+                The PDU is operating abnormally.  That is there is some 
+                failure within the system that is unexpected under normal 
+                operating conditions.  Appropriate personnel should investigate
+                the cause as soon as possible.  The normal functioning of
+                the system is likely inhibited.  
+             "
+        ::= { lgpPduEntry 25 }
+
+    lgpPduEntryUsrTag1 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "This is a user assigned Tag for the PDU.  This value may be
+             useful for end-user grouping or asset tracking purposes.
+             The value for this tag does not need to be unique for this
+             unit or across other units."
+        ::= { lgpPduEntry 35 }
+
+    lgpPduEntryUsrTag2 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "This is a user assigned Tag for the PDU.  This value may be
+             useful for end-user grouping or asset tracking purposes.
+             The value for this tag does not need to be unique for this
+             unit or across other units."
+        ::= { lgpPduEntry 40 }
+
+    lgpPduEntrySerialNumber OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "System assigned serial number for this PDU.  This number is
+             assigned at time of manufacture, is globally unique with respect
+             to all PDU units."
+        ::= { lgpPduEntry 45 }
+
+    lgpPduEntryRbCount OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Count"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of receptacle branches (Rb) within this PDU."
+        ::= { lgpPduEntry 50 }
+
+-- -----------------------------------------------------------------------------
+-- PDU Power Source.
+-- -----------------------------------------------------------------------------
+
+lgpPduPowerSource OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "This sub-tree contains information about PDU power sources."
+    REFERENCE
+        "The registrations for the objects in this sub-tree are
+         defined below."
+    ::= { lgpPdu 30 }
+
+lgpPduPsTableCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "Count"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of power sources in the lgpPduPsTable."
+    ::= { lgpPduPowerSource 19 }
+
+lgpPduPsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LgpPduPsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains a list of the PDU's power source(s).
+         The table contains zero, one, or more rows, depending
+         upon the number of PDUs being monitored and the number of
+         power sources installed for each PDU.
+         The NMS cannot create or delete rows in the table. The rows are
+         created by the agent based upon the capabilities of the PDUs
+         being monitored.  Each row in the table represents a PDU's 
+         Power Source."
+    ::= { lgpPduPowerSource 20 }
+
+    lgpPduPsEntry OBJECT-TYPE
+        SYNTAX      LgpPduPsEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This entry defines the attributes to be populated in the
+             various columns of the 'lgpPduPsTable' (Power Source Table).
+             This table is indexed by both the 'lgpPduEntryIndex' which is 
+             the sole index into the 'lgpPduTable' and the 'lgpPduPsEntryIndex'
+             which is a unique identifier for the Power Source within a 
+             given PDU.  Taken together these two indexes uniquely identify
+             a Power Source within this agent.
+            "
+        INDEX       
+        { 
+            lgpPduEntryIndex,
+            lgpPduPsEntryIndex
+        }
+        ::= { lgpPduPsTable 1 }
+
+    LgpPduPsEntry ::= SEQUENCE 
+    {
+        lgpPduPsEntryIndex                        Unsigned32,
+        lgpPduPsEntryId                           Unsigned32,
+        lgpPduPsEntrySysAssignLabel               DisplayString,
+        lgpPduPsEntryModel                        DisplayString,
+        lgpPduPsEntryWiringType                   INTEGER,
+        lgpPduPsEntryEpInputRated                 Unsigned32,
+        lgpPduPsEntryEcInputRated                 Unsigned32,
+        lgpPduPsEntryFreqRated                    Unsigned32,
+        lgpPduPsEntryEnergyAccum                  Unsigned32,
+        lgpPduPsEntrySerialNum                    DisplayString,
+        lgpPduPsEntryFirmwareVersion              DisplayString,
+        lgpPduPsEntryPwrTotal                     Unsigned32,
+        lgpPduPsEntryEcNeutral                    Unsigned32,
+        lgpPduPsEntryEcNeutralThrshldOvrWarn      Unsigned32,
+        lgpPduPsEntryEcNeutralThrshldOvrAlarm     Unsigned32
+    }
+
+    lgpPduPsEntryIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This is a unique identifier for the Power Source within a 
+             given PDU. This is one of two indexes used to indicate the row of
+             the 'lgpPduTable'."
+        ::= { lgpPduPsEntry 5 }
+
+    lgpPduPsEntryId OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a unique entry id representing a given PDU power source 
+             for the PDU."
+        ::= { lgpPduPsEntry 10 }
+
+    lgpPduPsEntrySysAssignLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "System assigned identifier for this power source.  The value
+             is independent of any user assigned label or tag. The exact format
+             of this label is system dependent and is subject to change,
+             therefore, it should not be referenced for programmatic use."
+        ::= { lgpPduPsEntry 15 }
+
+    lgpPduPsEntryModel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the model name (identifier) of the power supply."
+        ::= { lgpPduPsEntry 20 }
+
+    lgpPduPsEntryWiringType OBJECT-TYPE
+        SYNTAX      INTEGER 
+        {
+            not-specified(0),
+            single-phase-3-wire-L1-N-PE(1),
+            two-phase-3-wire-L1-L2-PE(2),
+            three-phase-4-wire-L1-L2-L3-PE(3),
+            three-phase-5-wire-L1-L2-L3-N-PE(4),
+            two-phase-4-wire-L1-L2-N-PE(5)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The PDU's power supply physical wiring type.
+                not-specified
+                    The type has not been specified/configured.  The end_user
+                    must configure this object to specify the physical wiring
+                    type.
+                single-phase-3-wire-L1-N-PE
+                    Single Phase input with 3 wires (Line 1, Neutral and
+                    Protective Earth).
+                two-phase-3-wire-L1-L2-PE
+                    Two Phase input with 3 wires (Line 1, Line 2, and
+                    Protective Earth).
+                three-phase-4-wire-L1-L2-L3-PE
+                    Three Phase input with 4 wires (Line 1, Line 2, Line 3,
+                    and Protective Earth).
+                three-phase-5-wire-L1-L2-L3-N-PE
+                    Three Phase input with 5 wires (Line 1, Line 2, Line 3,
+                    Neutral and Protective Earth).
+                two-phase-4-wire-L1-L2-N-PE
+                    Two Phase input with 4 wires (Line 1, Line 2, Neutral,
+                    and Protective Earth)."
+        ::= { lgpPduPsEntry 25 }
+
+    lgpPduPsEntryEpInputRated OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "VoltRMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Rated Input Line Voltage for the power source (i.e. this is the 
+             nominal line input voltage; it is NOT a measured voltage).
+
+             The value is defined to be the rated line voltage 
+             (either line-to-neutral or line-to-line depending upon the 
+             power source's type)."
+        ::= { lgpPduPsEntry 30 }
+
+    lgpPduPsEntryEcInputRated OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Amp-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the rated input line current for the module  
+             (it is NOT the measured current)."
+        ::= { lgpPduPsEntry 35 }
+
+    lgpPduPsEntryFreqRated OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Hertz"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Rated input line frequency for this power source 
+             (i.e. This is the expected line frequency; it is NOT a 
+             measured frequency; it is typically 50 Hz or 60 Hz)."
+        ::= { lgpPduPsEntry 40 }
+
+    lgpPduPsEntryEnergyAccum OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Kilowatt-Hour"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Total accumulated energy, measured at the power source input, since 
+             the last energy reset. Writing a value of 0 (zero) to this 
+             causes the accumulated energy to be reset. Writing a non-zero 
+             value is invalid and shall result in a write error and the 
+             total energy value remains unchanged.
+
+             If the energy has not been reset and has not wrapped, 
+             then this is the total energy since installation.
+
+             This value persists across boot events."
+        ::= { lgpPduPsEntry 50 }
+
+    lgpPduPsEntrySerialNum OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a unique serial number of the power supply.  This number
+             is assigned to the power supply at the time of manufacture."
+        ::= { lgpPduPsEntry 55 }
+
+    lgpPduPsEntryFirmwareVersion OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the version of the firmware installed on the PDU's 
+             power supply."
+        ::= { lgpPduPsEntry 60 }
+
+    lgpPduPsEntryPwrTotal OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Watt"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Total input power for this power supply.  This is the sum of the
+             power for all phases"
+        ::= { lgpPduPsEntry 65 }
+
+    lgpPduPsEntryEcNeutral OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Amp-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The neutral current measured at the PDU's power source."
+        ::= { lgpPduPsEntry 70 }
+
+    lgpPduPsEntryEcNeutralThrshldOvrWarn OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an over current warning is activated. If the
+             measured neutral current (lgpPduPsEntryEcNeutral) is above this 
+             percentage of the full scale rated value 
+             (lgpPduPsEntryEcInputRated), an over neutral current warning 
+             (lgpConditionSource1NeutralOverCurrent) is activated."
+        ::= { lgpPduPsEntry 75 }
+
+    lgpPduPsEntryEcNeutralThrshldOvrAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an over current alarm is activated. If the
+             measured neutral current (lgpPduPsEntryEcNeutral) is above this 
+             percentage of the full scale rated value 
+             (lgpPduPsEntryEcInputRated), an over neutral current alarm 
+             (lgpConditionSource1NeutralOverCurrent) is activated."
+        ::= { lgpPduPsEntry 80 }
+
+-- -----------------------------------------------------------------------------
+
+-- PDU - Power Source Line/Phase Table.
+
+-- -----------------------------------------------------------------------------
+
+lgpPduPsLineTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LgpPduPsLineEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains a list of PDU's power source line/phase 
+         measurements. The table contains zero, one, or many rows, depending 
+         upon the number of PDU's Power Sources being monitored. 
+         The NMS cannot create or delete rows in the table.
+         The rows are created by the agent based upon the capabilities of the
+         managed PDU's power supply(s).  Each row in the table represents a 
+         particular phase/line measurement of a power supply for a 
+         given PDU."
+    ::= { lgpPduPowerSource 40 }
+
+    lgpPduPsLineEntry OBJECT-TYPE
+        SYNTAX      LgpPduPsLineEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This entry defines the attributes to be populated in the
+             various columns of the 'lgpPduPsLineTable'.
+             The table is index by three indexes which taken together 
+             uniquely identify line/phase information for a given power source 
+             within a PDU.  The 'lgpPduEntryIndex' is an index into the
+             'lgpPduTable'.  This identifies the PDU that the power source
+             is on.  The 'lgpPduPsEntryIndex' is an index that together with
+             the 'lgpPduEntryIndex' uniquely identifies the power source 
+             within the PDU that the row in this table represents.  The final
+             index 'lgpPduPsLineEntryIndex' identifies the particular 
+             line/phase that the measurement applies to within the identified
+             power source."
+        INDEX       
+        { 
+            lgpPduEntryIndex,
+            lgpPduPsEntryIndex,
+            lgpPduPsLineEntryIndex
+        }
+        ::= { lgpPduPsLineTable 1 }
+
+    LgpPduPsLineEntry ::= SEQUENCE 
+    {
+            lgpPduPsLineEntryIndex                Unsigned32,
+            lgpPduPsLineEntryId                   Unsigned32,
+            lgpPduPsLineEntryLine                 INTEGER,
+            lgpPduPsLineEntryEpLNTenths           Unsigned32,
+            lgpPduPsLineEntryEpLN                 Unsigned32,
+            lgpPduPsLineEntryEc                   Unsigned32,
+            lgpPduPsLineEntryEcHundredths         Unsigned32,
+
+            lgpPduPsLineEntryEcThrshldUndrAlarm                         Unsigned32,
+            lgpPduPsLineEntryEcThrshldOvrWarn                           Unsigned32,
+            lgpPduPsLineEntryEcThrshldOvrAlarm                          Unsigned32,
+            lgpPduPsLineEntryEcAvailBeforeAlarm                         Unsigned32,
+            lgpPduPsLineEntryEcUsedBeforeAlarm                          Unsigned32,
+            lgpPduPsLineEntryEpLL                                       Unsigned32,
+            lgpPduPsLineEntryEpLLTenths                                 Unsigned32,
+            lgpPduPsLineEntryEcAvailBeforeAlarmHundredths               Unsigned32
+
+    }
+
+    lgpPduPsLineEntryIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This is the index that indicates the line/phase of the measurements
+             in the given row of the 'lgpPduPsLineTable'."
+        ::= { lgpPduPsLineEntry 5 }
+
+    lgpPduPsLineEntryId OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Unique identifier (within a PDU) for the PDU's power source.
+             The object may not be available in non-modular systems."
+        ::= { lgpPduPsLineEntry 10 }
+
+    lgpPduPsLineEntryLine OBJECT-TYPE
+        SYNTAX      INTEGER
+        {
+            phase1(1),
+            phase2(2),
+            phase3(3)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The line number (phase) that the measurement represents for all
+             measurements in a given row of the table.  Note that this always
+             matches the lgpPduPsLineEntryIndex of the same row in the table. 
+             The line/phases are as follows:
+
+              Line#  Description
+              -----  ---------------------------------------------------
+                 1   Line 1-N (A) for Line-to-Neutral measurements
+                 2   Line 2-N (B) for Line-to-Neutral measurements
+                 3   Line 3-N (C) for Line-to-Neutral measurements
+
+                 1   Line 1-2 (A-B) for Line-to-Line measurements
+                 2   Line 2-3 (B-C) for Line-to-Line measurements
+                 3   Line 3-1 (C-A) for Line-to-Line measurements
+             "
+        ::= { lgpPduPsLineEntry 15 }
+
+    lgpPduPsLineEntryEpLNTenths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Volts-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Alternating Current RMS Line to Neutral Electrical Potential 
+             measurement.  
+             The line/phase being measured is indicated by the corresponding 
+             lgpPduPsLineEntryLine value of this row in the table."
+        ::= { lgpPduPsLineEntry 19 }
+
+    lgpPduPsLineEntryEpLN OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Volts-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Alternating Current RMS Line to Neutral Electrical Potential 
+             measurement.  
+             The line/phase being measured is indicated by the corresponding 
+             lgpPduPsLineEntryLine value of this row in the table."
+        ::= { lgpPduPsLineEntry 20 }
+
+    lgpPduPsLineEntryEc OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Amps-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Total input line-to-neutral electrical current.
+             The line/phase being measured is indicated by the corresponding 
+             lgpPduPsLineEntryLine value of this row in the table."
+        ::= { lgpPduPsLineEntry 21 }
+
+    lgpPduPsLineEntryEcHundredths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.01 Amps-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Total input line-to-neutral electrical current.
+             The line/phase being measured is indicated by the corresponding 
+             lgpPduPsLineEntryLine value of this row in the table."
+        ::= { lgpPduPsLineEntry 22 }
+
+    lgpPduPsLineEntryEcThrshldUndrAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an under current alarm is activated.  If
+             the measured current (lgpPduPsLineEntryEc) is equal to or below
+             this percentage of the full scale rated value 
+             (lgpPduPsEntryEcInputRated), an under current alarm 
+             is activated."
+        ::= { lgpPduPsLineEntry 35 }
+
+    lgpPduPsLineEntryEcThrshldOvrWarn OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an over current warning is activated.  If
+             the measured current (lgpPduPsLineEntryEc) is equal to or over
+             this percentage of the full scale rated value 
+             (lgpPduPsEntryEcInputRated), an over current warning 
+             is activated."
+        ::= { lgpPduPsLineEntry 36 }
+
+    lgpPduPsLineEntryEcThrshldOvrAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an over current alarm is activated.  If
+             the measured current (lgpPduPsLineEntryEc) is equal to or over
+             this percentage of the full scale rated value 
+             (lgpPduPsEntryEcInputRated), an over current alarm 
+             is activated."
+        ::= { lgpPduPsLineEntry 37 }
+
+    lgpPduPsLineEntryEcAvailBeforeAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Amps-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The amount that the current/amperage may increase from its present
+             value before an over current alarm occurs."
+        ::= { lgpPduPsLineEntry 38 }
+
+    lgpPduPsLineEntryEcUsedBeforeAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Percent"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The percent of current utilization relative to the over current
+             alarm threshold."
+        ::= { lgpPduPsLineEntry 39 }
+
+    lgpPduPsLineEntryEpLL OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Volts-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Line to Line Electrical Potential.
+             The line/phase being measured is indicated by the corresponding 
+             lgpPduPsLineEntryLine value of this row in the table."
+        ::= { lgpPduPsLineEntry 60 }
+
+    lgpPduPsLineEntryEpLLTenths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Volts-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Line to Line Electrical Potential.
+             The line/phase being measured is indicated by the corresponding 
+             lgpPduPsLineEntryLine value of this row in the table."
+        ::= { lgpPduPsLineEntry 61 }
+
+    lgpPduPsLineEntryEcAvailBeforeAlarmHundredths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.01 Amps-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The amount that the current/amperage may increase from its present
+             value before an over current alarm occurs."
+        ::= { lgpPduPsLineEntry 62 }
+
+-- -----------------------------------------------------------------------------
+
+-- PDU Receptacle Branch
+
+-- -----------------------------------------------------------------------------
+
+lgpPduReceptacleBranch OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "This sub-tree contains information about PDU receptacle branches."
+    REFERENCE
+        "The registrations for the objects in this sub-tree are
+         defined below."
+    ::= { lgpPdu 40 }
+
+lgpPduRbTableCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "Count"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of receptacle branches in the lgpPduRbTable."
+    ::= { lgpPduReceptacleBranch 19 }
+
+lgpPduRbTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LgpPduRbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains a list of PDU Receptacle branches.
+         The table contains zero, one, or many rows, depending
+         upon the number of PDUs being managed and how many 
+         receptacle branches each PDU has installed.
+         The NMS cannot create or delete rows in the table. The rows are
+         created by the agent based upon the capabilities of the PDUs
+         being managed.  Each row in the table represents a receptacle branch
+         for a given PDU.  The PDU that a branch is installed
+         on is indicated by the column lgpPduEntryIndex.  The branch
+         within the lgpPduEntryIndex PDU is indicated by the column 
+         lgpPduRbEntryIndex."
+    ::= { lgpPduReceptacleBranch 20 }
+
+    lgpPduRbEntry OBJECT-TYPE
+        SYNTAX      LgpPduRbEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This entry defines the attributes to be populated in the
+             various columns of the 'lgpPduRbTable'.  The table is indexed 
+             by both the 'lgpPduEntryIndex' and 'lgpPduRbEntryIndex'.  The
+             lgpPduEntryIndex specifies the PDU, defined in the lgpPduTable
+             that the branch is on.  The lgpPduRbEntryIndex uniquely identifies
+             the branch within that PDU.  Taken together the two indexes
+             uniquely identify a branch being monitored by this agent. 
+            "
+        INDEX
+        {
+            lgpPduEntryIndex,
+            lgpPduRbEntryIndex
+        }
+        ::= { lgpPduRbTable 1 }
+
+    LgpPduRbEntry ::= SEQUENCE
+    {
+        lgpPduRbEntryIndex                           Unsigned32,
+        lgpPduRbEntryId                              Unsigned32,
+        lgpPduRbEntryUsrLabel                        DisplayString,
+        lgpPduRbEntrySysAssignLabel                  DisplayString,
+        lgpPduRbEntryPositionRelative                Unsigned32,
+        lgpPduRbEntrySerialNum                       DisplayString,
+        lgpPduRbEntryModel                           DisplayString,
+        lgpPduRbEntryFirmwareVersion                 DisplayString,
+        lgpPduRbEntryUsrTag1                         DisplayString,
+        lgpPduRbEntryUsrTag2                         DisplayString,
+        lgpPduRbEntryReceptacleType                  INTEGER,
+        lgpPduRbEntryCapabilities                    INTEGER,
+        lgpPduRbEntryLineSource                      INTEGER,
+        lgpPduRbEntryRcpCount                        Unsigned32,
+        lgpPduRbEntryEpRated                         Unsigned32,
+        lgpPduRbEntryEcRated                         Unsigned32,
+        lgpPduRbEntryFreqRated                       Unsigned32,
+        lgpPduRbEntryEnergyAccum                     Unsigned32,
+        lgpPduRbEntryEpLNTenths                      Unsigned32,
+        lgpPduRbEntryPwr                             Unsigned32,
+        lgpPduRbEntryAp                              Unsigned32,
+        lgpPduRbEntryPf                              Integer32,
+        lgpPduRbEntryEcHundredths                    Unsigned32,
+        lgpPduRbEntryEcThrshldUndrAlm                Unsigned32,
+        lgpPduRbEntryEcThrshldOvrWarn                Unsigned32,
+        lgpPduRbEntryEcThrshldOvrAlm                 Unsigned32,
+        lgpPduRbEntryEcAvailBeforeAlarmHundredths    Unsigned32,
+        lgpPduRbEntryEcUsedBeforeAlarm               Unsigned32,
+        lgpPduRbEntryEpLLTenths                      Unsigned32
+    }
+
+    lgpPduRbEntryIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This is the index that indicates the row of the
+             'lgpPduRbTable'"
+        ::= { lgpPduRbEntry 1 }
+
+    lgpPduRbEntryId OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "A unique id representing the receptacle branch within the 
+             collection of branches being monitored by this agent.  The 
+             uniqueness of this id is within the PDUs being managed by 
+             a single agent."
+        ::= { lgpPduRbEntry 5 }
+
+    lgpPduRbEntryUsrLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A user assigned label representing the receptacle branch."
+        ::= { lgpPduRbEntry 8 }
+
+    lgpPduRbEntrySysAssignLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "System assigned identifier for this receptacle branch.  The value
+             is independent of any user assigned label or tag. The exact format
+             of this label is system dependent and is subject to change,
+             therefore, it should not be referenced for programmatic use."
+        ::= { lgpPduRbEntry 20 }
+
+    lgpPduRbEntryPositionRelative OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Count"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a one-based value that indicates the relative 
+             position of the branch within the PDU."
+        ::= { lgpPduRbEntry 25 }
+
+    lgpPduRbEntrySerialNum OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "A globally unique serial number for this branch.  This number 
+             is assigned to the branch at the time of manufacture and can not 
+             be modified.  NOTE: Generally only PDUs with replaceable 
+             receptacle branches will have serial numbers."
+        ::= { lgpPduRbEntry 30 }
+
+    lgpPduRbEntryModel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the model designation for this receptacle branch."
+        ::= { lgpPduRbEntry 35 }
+
+    lgpPduRbEntryFirmwareVersion OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the firmware version number of the control software
+             running on the receptacle branch.  Only PDUs with 
+             replaceable receptacle branches will typically support this 
+             object."
+        ::= { lgpPduRbEntry 40 }
+
+    lgpPduRbEntryUsrTag1 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "This is a user assigned Tag for the receptacle branch.  This 
+             value may be useful for end-user grouping or asset tracking 
+             purposes.  The value for this tag does not need to be unique 
+             for this unit or across other units."
+        ::= { lgpPduRbEntry 41 }
+
+    lgpPduRbEntryUsrTag2 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "This is a user assigned Tag for the receptacle branch.  This 
+             value may be useful for end-user grouping or asset tracking 
+             purposes.  The value for this tag does not need to be unique 
+             for this unit or across other units."
+        ::= { lgpPduRbEntry 42 }
+
+    lgpPduRbEntryReceptacleType OBJECT-TYPE
+        SYNTAX      INTEGER 
+        { 
+            not-specified(0),
+            nema-5-20R-20-Amp(1),
+            iec-C13-sheet-F-10-Amp(2),
+            iec-C19-sheet-J-16-Amp(3),
+            iec-C13-sheet-F-10-Amp-and-iec-C19-sheet-J-16-Amp(4),
+            nema-5-20R-20-Amp-and-iec-C13-sheet-F-10-Amp(5),
+            nema-5-20R-20-Amp-and-iec-C19-sheet-J-16-Amp(6),
+            cee-7-type-E-schuko(7)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This enumeration represents the type of receptacles installed 
+             on this receptacle branch.  All receptacles on this branch are 
+             of this type/style.
+
+             not-specified
+                 If this value is returned, either the receptacle type has 
+                 not been specified/configured or the agent monitoring this
+                 PDU does not have a SNMP enumeration defined to the type.
+            "
+        ::= { lgpPduRbEntry 45 }
+
+    lgpPduRbEntryCapabilities OBJECT-TYPE
+        SYNTAX      INTEGER 
+        { 
+            not-specified(0),
+            no-optional-capabilities(1),
+            measurement-only(2),
+            measurement-and-control(3),
+            control-only(4),
+            current-measurement-only(5),
+            current-measurement-and-control(6)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Receptacle branch capabilities describes what an individual branch 
+             is capable of.
+
+             no-optional-capabilities
+                 The branch is unable to report measurements and lacks 
+                 control capabilities.
+             measurement-only
+                 The branch is capable of reporting multiple measurements.
+             measurement-and-control
+                 The branch is capable of reporting multiple measurements
+                 and controlling the state.
+             control-only
+                 The branch is capable of controlling the state.
+             current-measurement-only
+                 The branch is capable of reporting the current/amperage only.
+             current-measurement-and-control
+                 The branch is capable of reporting the current/amperage and
+                 has the ability to control the state."
+        ::= { lgpPduRbEntry 50 }
+
+    lgpPduRbEntryLineSource OBJECT-TYPE
+        SYNTAX      INTEGER 
+        { 
+            not-specified(0),
+            line-1-neutral(1),
+            line-2-neutral(2),
+            line-3-neutral(3),
+            line-1-line-2(4),
+            line-2-line-3(5),
+            line-3-line-1(6),
+            line-1-line-2-and-line-1-neutral(7),
+            line-2-line-3-and-line-2-neutral(8),
+            line-3-line-1-and-line-3-neutral(9),
+            unknown-line-neutral(10),
+            unknown-line-line(11)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This represents the line source that is supplying power to this
+            receptacle branch.
+                not-specified
+                    The line source supplying power to the load for this
+                    receptacle branch has not been specified/configured. 
+                line-1-N
+                    The load for this receptacle branch is supplied by
+                    a line-to-neutral configuration. (line 1 to neutral). 
+                line-2-N
+                    The load for this receptacle branch is supplied by
+                    a line-to-neutral configuration. (line 2 to neutral). 
+                line-3-N
+                    The load for this receptacle branch is supplied by
+                    a line-to-neutral configuration. (line 3 to neutral). 
+                line-1-line-2
+                    The load for this receptacle branch is supplied by
+                    a line-to-line configuration (line 1 to line 2).
+                line-2-line-3
+                    The load for this receptacle branch is supplied by
+                    a line-to-line configuration (line 2 to line 3).
+                line-3-line-1
+                    The load for this receptacle branch is supplied by
+                    a line-to-line configuration (line 3 to line 1).
+                line-1-line-2-and-line-1-neutral
+                    The load for this mixed receptacle branch is supplied by
+                    a line-to-line and line-to-neutral configuration
+                    (line 1 to line 2 and line 1 to neutral).
+                line-2-line-3-and-line-2-neutral
+                    The load for this mixed receptacle branch is supplied by
+                    a line-to-line and line-to-neutral configuration
+                    (line 2 to line 3 and line 2 to neutral).
+                line-3-line-1-and-line-3-neutral
+                    The load for this mixed receptacle branch is supplied by
+                    a line-to-line and line-to-neutral configuration
+                    (line 3 to line 1 and line 3 to neutral).
+                unknown-line-neutral
+                    The load for this branch is supplied by
+                    a line-to-neutral configuration. The system is unable to
+                    determine which lines are supporting the load.
+                unknown-line-line
+                    The load for this branch is supplied by
+                    a line-to-line configuration. The system is unable to
+                    determine which lines are supporting the load.
+            "
+        ::= { lgpPduRbEntry 55 }
+
+    lgpPduRbEntryRcpCount OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Count"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of receptacles on this receptacle branch."
+        ::= { lgpPduRbEntry 60 }
+
+    lgpPduRbEntryEpRated OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "VoltRMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Rated Line Voltage for the receptacle branch and its associated 
+             receptacles (i.e. This is the nominal line voltage that is 
+             available to the connected load; it is NOT a measured voltage.)"
+        ::= { lgpPduRbEntry 70 }
+
+    lgpPduRbEntryEcRated OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Amp-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the rated input line current for the module  
+            (it is NOT the measured current)."
+        ::= { lgpPduRbEntry 75 }
+
+    lgpPduRbEntryFreqRated OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Hertz"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the rated electrical frequency for the receptacle branch
+             and its associated receptacles"
+        ::= { lgpPduRbEntry 80 }
+
+    lgpPduRbEntryEnergyAccum OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Kilowatt-Hour"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Total accumulated energy, measured at the receptacle branch input, 
+             since the last energy reset. Writing a value of 0 (zero) to this 
+             causes the accumulated energy to be reset. Writing a non-zero 
+             value is invalid and shall result in a write error and the 
+             total energy value remains unchanged.
+
+             If the energy has not been reset and has not wrapped, then this 
+             is the total energy since installation.
+
+             This value persists across boot events.
+
+             NOTE: Resetting this value does not reset the values for the 
+             individual receptacles."
+        ::= { lgpPduRbEntry 85 }
+
+    lgpPduRbEntryEpLNTenths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 VoltRMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The line-to-neutral measurement of the Electrical Potential 
+             measured in Volts RMS (Root Mean Squared)."
+        ::= { lgpPduRbEntry 100 }
+
+    lgpPduRbEntryPwr OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Watt"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The line-to-neutral measurement of the Real Power (Wattage)"
+        ::= { lgpPduRbEntry 115 }
+
+    lgpPduRbEntryAp OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "VoltAmp"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The line-to-neutral measurement of the Apparent Power (VA)"
+        ::= { lgpPduRbEntry 120 }
+
+    lgpPduRbEntryPf OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.01 Power Factor"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The line-to-neutral measurement of the Power Factor of the
+             receptacle branches' input."
+        ::= { lgpPduRbEntry 125 }
+
+    lgpPduRbEntryEcHundredths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.01 Amp-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The line-to-neutral measurement of the Electrical Current 
+             measured in Amperes RMS (Root Mean Squared)."
+        ::= { lgpPduRbEntry 130 }
+
+    lgpPduRbEntryEcThrshldUndrAlm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an under current alarm is activated.  If
+             the measured current (lgpPduRbEntryEc) is equal to or below
+             this percentage of the full scale rated value 
+             (lgpPduRbEntryEcRated), an under current alarm 
+             is activated"
+        ::= { lgpPduRbEntry 135 }
+
+    lgpPduRbEntryEcThrshldOvrWarn OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an over current warning is activated.  If
+             the measured current (lgpPduRbEntryEc) is equal to or over
+             this percentage of the full scale rated value 
+             (lgpPduRbEntryEcRated), an over current warning 
+             is activated"
+        ::= { lgpPduRbEntry 140 }
+
+    lgpPduRbEntryEcThrshldOvrAlm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an over current alarm is activated.  If
+             the measured current (lgpPduRbEntryEcLN) is equal to or over
+             this percentage of the full scale rated value 
+             (lgpPduRbEntryEcRated), an over current alarm 
+             is activated"
+        ::= { lgpPduRbEntry 145 }
+
+    lgpPduRbEntryEcAvailBeforeAlarmHundredths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.01 Amps-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The amount that the current/amperage may increase from its present
+             value before an over current alarm occurs."
+        ::= { lgpPduRbEntry 150 }
+
+    lgpPduRbEntryEcUsedBeforeAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Percent"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The percent of current utilization relative to the over current
+             alarm threshold."
+        ::= { lgpPduRbEntry 160 }
+
+    lgpPduRbEntryEpLLTenths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 VoltRMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The line-to-line measurement of the Electrical Potential 
+             measured in Volts RMS (Root Mean Squared)."
+        ::= { lgpPduRbEntry 170 }
+
+-- -----------------------------------------------------------------------------
+
+-- PDU Receptacle Branch - Line/Phase Measurements.
+
+-- -----------------------------------------------------------------------------
+
+lgpPduRbLineTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LgpPduRbLineEntry
+    MAX-ACCESS  not-accessible
+    STATUS      deprecated
+    DESCRIPTION
+        "This table contains a list of PDU receptacle branch line/phase
+         measurements. The table contains zero, one, or many rows, depending 
+         upon the number of PDUs and the number of receptacle branches
+         on each PDU that are being monitored. 
+
+         The NMS cannot create or delete rows in the table.
+         The rows are created by the agent based upon the capabilities of the
+         PDU(s) being monitored.  Each row in the table represents a 
+         particular phase/line measurement of a PDU Receptacle 
+         Branch.
+
+         Rows in the table are uniquely identified by three indexes representing
+         respectively the PDU (lgpPduEntryIndex), the receptacle 
+         branch (lgpPduRbEntryIndex) and the line/phase being 
+         measured (lgpPduRbLineEntryIndex).
+         "
+    ::= { lgpPduReceptacleBranch 40 }
+
+    lgpPduRbLineEntry OBJECT-TYPE
+        SYNTAX      LgpPduRbLineEntry
+        MAX-ACCESS  not-accessible
+        STATUS      deprecated
+        DESCRIPTION
+            "This entry defines the attributes to be populated in the
+             various columns of the 'lgpPduRbLineTable'.  The table is
+             indexed by three indexes.  The 'lgpPduEntryIndex' references 
+             a PDU in the 'lgpPduTable' to which this receptacle branch 
+             line/phase measurement belongs.  The 'lgpPduRbEntryIndex' together
+             with the 'lgpPduEntryIndex' references the receptacle branch 
+             in the 'lgpPduRbTable'.  The 'lgpPduRbLineEntryIndex' represents
+             the line/phase of the measurements in the row of this table.
+             Together these three indexes uniquely identify a phase/line
+             measurement on a receptacle branch within a PDU being monitored
+             by this agent. 
+            "
+        INDEX       
+        { 
+            lgpPduEntryIndex,
+            lgpPduRbEntryIndex,
+            lgpPduRbLineEntryIndex
+        }
+        ::= { lgpPduRbLineTable 1 }
+
+    LgpPduRbLineEntry ::= SEQUENCE 
+    {
+        lgpPduRbLineEntryIndex                           Unsigned32,
+        lgpPduRbLineEntryId                              Unsigned32,
+        lgpPduRbLineEntryLine                            INTEGER,
+        lgpPduRbLineEntryEpLNTenths                      Unsigned32,
+        lgpPduRbLineEntryEpLN                            Unsigned32,
+        lgpPduRbLineEntryEc                              Unsigned32,
+        lgpPduRbLineEntryPwr                             Unsigned32,
+        lgpPduRbLineEntryAp                              Unsigned32,
+        lgpPduRbLineEntryPf                              Integer32,
+        lgpPduRbLineEntryEcHundredths                    Unsigned32,
+        lgpPduRbLineEntryEcThrshldUndrAlm                Unsigned32,
+        lgpPduRbLineEntryEcThrshldOvrWarn                Unsigned32,
+        lgpPduRbLineEntryEcThrshldOvrAlm                 Unsigned32,
+        lgpPduRbLineEntryEcAvailBeforeAlarmHundredths    Unsigned32,
+        lgpPduRbLineEntryEcAvailBeforeAlarm              Unsigned32,
+        lgpPduRbLineEntryEcUsedBeforeAlarm               Unsigned32,
+        lgpPduRbLineEntryEpLL                            Unsigned32,
+        lgpPduRbLineEntryEpLLTenths                      Unsigned32
+    }
+
+    lgpPduRbLineEntryIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      deprecated
+        DESCRIPTION
+            "This is the index that indicates the row of the
+             'lgpPduRbLineTable'"
+        ::= { lgpPduRbLineEntry 1 }
+
+    lgpPduRbLineEntryId OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Runtime assigned branch identifier."
+        ::= { lgpPduRbLineEntry 5 }
+
+    lgpPduRbLineEntryLine OBJECT-TYPE
+        SYNTAX      INTEGER
+        {
+            phase1(1),
+            phase2(2),
+            phase3(3)
+        }
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line number or phase that the measurement for this
+             receptacle branch represents for each measurement in this row of 
+             the table.  The phases are as follows:
+              Line#  Description
+              -----  ---------------------------------------------------
+                 1   Line 1-N (A) for Line-to-Neutral measurements
+                 2   Line 2-N (B) for Line-to-Neutral measurements
+                 3   Line 3-N (C) for Line-to-Neutral measurements
+
+                 1   Line 1-2 (A-B) for Line-to-Line measurements
+                 2   Line 2-3 (B-C) for Line-to-Line measurements
+                 3   Line 3-1 (C-A) for Line-to-Line measurements
+             "
+        ::= { lgpPduRbLineEntry 10 }
+
+    lgpPduRbLineEntryEpLNTenths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 VoltRMS"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line-to-neutral measurement of the Electrical Potential 
+             measured in Volts RMS (Root Mean Squared)."
+        ::= { lgpPduRbLineEntry 19 }
+
+    lgpPduRbLineEntryEpLN OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "VoltRMS"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line-to-neutral measurement of the Electrical Potential 
+             measured in Volts RMS (Root Mean Squared)."
+        ::= { lgpPduRbLineEntry 20 }
+
+    lgpPduRbLineEntryEc OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Amp-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line-to-neutral measurement of the Electrical Current 
+             measured in Amperes RMS (Root Mean Squared)."
+        ::= { lgpPduRbLineEntry 21 }
+
+    lgpPduRbLineEntryPwr OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Watt"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line-to-neutral measurement of the Real Power (Wattage)"
+        ::= { lgpPduRbLineEntry 22 }
+
+    lgpPduRbLineEntryAp OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "VoltAmp"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line-to-neutral measurement of the Apparent Power (VA)"
+        ::= { lgpPduRbLineEntry 23 }
+
+    lgpPduRbLineEntryPf OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.01 Power Factor"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line-to-neutral measurement of the Power Factor of the
+             receptacle branches' input."
+        ::= { lgpPduRbLineEntry 24 }
+
+    lgpPduRbLineEntryEcHundredths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.01 Amp-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line-to-neutral measurement of the Electrical Current 
+             measured in Amperes RMS (Root Mean Squared)."
+        ::= { lgpPduRbLineEntry 25 }
+
+    lgpPduRbLineEntryEcThrshldUndrAlm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "The threshold at which an under current alarm is activated.  If
+             the measured current (lgpPduRbLineEntryEc) is equal to or below
+             this percentage of the full scale rated value 
+             (lgpPduRbEntryEcRated), an under current alarm 
+             is activated"
+        ::= { lgpPduRbLineEntry 35 }
+
+    lgpPduRbLineEntryEcThrshldOvrWarn OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "The threshold at which an over current warning is activated.  If
+             the measured current (lgpPduRbLineEntryEc) is equal to or over
+             this percentage of the full scale rated value 
+             (lgpPduRbEntryEcRated), an over current warning 
+             is activated"
+        ::= { lgpPduRbLineEntry 36 }
+
+    lgpPduRbLineEntryEcThrshldOvrAlm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "The threshold at which an over current alarm is activated.  If
+             the measured current (lgpPduRbLineEntryEcLN) is equal to or over
+             this percentage of the full scale rated value 
+             (lgpPduRbEntryEcRated), an over current alarm 
+             is activated"
+        ::= { lgpPduRbLineEntry 37 }
+
+    lgpPduRbLineEntryEcAvailBeforeAlarmHundredths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.01 Amps-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The amount that the current/amperage may increase from its present
+             value before an over current alarm occurs."
+        ::= { lgpPduRbLineEntry 39 }
+
+    lgpPduRbLineEntryEcAvailBeforeAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Amps-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The amount that the current/amperage may increase from its present
+             value before an over current alarm occurs."
+        ::= { lgpPduRbLineEntry 40 }
+
+    lgpPduRbLineEntryEcUsedBeforeAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Percent"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The percent of current utilization relative to the over current
+             alarm threshold."
+        ::= { lgpPduRbLineEntry 41 }
+
+    lgpPduRbLineEntryEpLL OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "VoltRMS"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line-to-line measurement of the Electrical Potential 
+             measured in Volts RMS (Root Mean Squared)."
+        ::= { lgpPduRbLineEntry 60 }
+
+    lgpPduRbLineEntryEpLLTenths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 VoltRMS"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The line-to-line measurement of the Electrical Potential 
+             measured in Volts RMS (Root Mean Squared)."
+        ::= { lgpPduRbLineEntry 61 }
+
+-- -----------------------------------------------------------------------------
+
+-- PDU Receptacle (RCP) - Table
+
+-- -----------------------------------------------------------------------------
+
+lgpPduReceptacle OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "This sub-tree contains information about PDU receptacles."
+    REFERENCE
+        "The registrations for the objects in this sub-tree are
+         defined below."
+    ::= { lgpPdu 50 }
+
+lgpPduRcpTableCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "Count"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of receptacles in the lgpPduRcpTable."
+    ::= { lgpPduReceptacle 19 }
+
+lgpPduRcpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LgpPduRcpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains a list of PDU receptacle entries. 
+         The table contains numerous rows representing an individual
+         receptacle, depending upon the number and configuration of
+         the PDU(s) being monitored by the agent.
+
+         The NMS cannot create or delete rows in the table. The rows are
+         created by the agent based upon the capabilities of the managed
+         PDU(s).  Each row in the table represents a receptacle in
+         the system.
+         "
+    ::= { lgpPduReceptacle 20 }
+
+    lgpPduRcpEntry OBJECT-TYPE
+        SYNTAX      LgpPduRcpEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This entry defines the attributes to be populated in the
+             various columns of the 'lgpPduRcpTable'.  This table is indexed
+             by three indexes. The 'lgpPduEntryIndex' references a PDU in
+             the 'lgpPduTable' that a given row in this table represents.
+             The 'lgpPduRbEntryIndex' together with the 'lgpPduEntryIndex'
+             specifies a row in the 'lgpPduRbTable' that the receptacle
+             belongs.  The 'lgpPduRcpEntryIndex' identifies the particular
+             receptacle within the branch. 
+            "
+
+        INDEX       
+        { 
+            lgpPduEntryIndex,
+            lgpPduRbEntryIndex,
+            lgpPduRcpEntryIndex
+        }
+        ::= { lgpPduRcpTable 1 }
+
+    LgpPduRcpEntry ::= SEQUENCE 
+    {
+            lgpPduRcpEntryIndex                            Unsigned32,
+            lgpPduRcpEntryId                               Unsigned32,
+            lgpPduRcpEntryUsrLabel                         DisplayString,
+            lgpPduRcpEntryUsrTag1                          DisplayString,
+            lgpPduRcpEntryUsrTag2                          DisplayString,
+            lgpPduRcpEntrySysAssignLabel                   DisplayString,
+            lgpPduRcpEntryPosition                         Unsigned32,
+            lgpPduRcpEntryType                             INTEGER,
+            lgpPduRcpEntryLineSource                       INTEGER,
+            lgpPduRcpEntryCapabilities                     INTEGER,
+            lgpPduRcpEntryEp                               Unsigned32,
+            lgpPduRcpEntryEpTenths                         Unsigned32,
+            lgpPduRcpEntryEc                               Unsigned32,
+            lgpPduRcpEntryEcHundredths                     Unsigned32,
+            lgpPduRcpEntryPwrOut                           Unsigned32,
+            lgpPduRcpEntryApOut                            Unsigned32,
+            lgpPduRcpEntryPf                               Unsigned32,
+            lgpPduRcpEntryFreq                             Unsigned32,
+            lgpPduRcpEntryEnergyAccum                      Unsigned32,
+            lgpPduRcpEntryPwrOnDelay                       Unsigned32,
+            lgpPduRcpEntryPwrState                         INTEGER,
+            lgpPduRcpEntryControl                          INTEGER,
+            lgpPduRcpEntryControlLock                      INTEGER,
+            lgpPduRcpEntryEcThrshldUnderAlarm              Unsigned32,
+            lgpPduRcpEntryEcThrshldOverWarn                Unsigned32,
+            lgpPduRcpEntryEcThrshldOverAlarm               Unsigned32,
+            lgpPduRcpEntryEcAvailBeforeAlarmHundredths     Unsigned32,
+            lgpPduRcpEntryEcAvailBeforeAlarm               Unsigned32,
+            lgpPduRcpEntryEcUsedBeforeAlarm                Unsigned32,
+            lgpPduRcpEntryEcCrestFactor                    Unsigned32,
+            lgpPduRcpEntryBlinkLED                         INTEGER
+    }
+
+    lgpPduRcpEntryIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This is the index that indicates the receptacle position on the 
+             receptacle branch.  This along with the other two indexes on the
+             lgpPduRcpTable uniquely identify the receptacle in this table."
+        ::= { lgpPduRcpEntry 1 }
+
+    lgpPduRcpEntryId OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "A runtime assigned receptacle identification number."
+        ::= { lgpPduRcpEntry 5 }
+
+    lgpPduRcpEntryUsrLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "User assigned label for this receptacle."
+        ::= { lgpPduRcpEntry 10 }
+
+    lgpPduRcpEntryUsrTag1 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "User assigned Tag to assist in identifying or grouping this 
+             receptacle within the end-users domain."
+        ::= { lgpPduRcpEntry 15 }
+
+    lgpPduRcpEntryUsrTag2 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "User assigned Tag to assist in identifying or grouping this 
+             receptacle within the end-users domain."
+        ::= { lgpPduRcpEntry 20 }
+
+    lgpPduRcpEntrySysAssignLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "System assigned identifier representing the receptacle. The value
+             is independent of any user assigned label or tag. The exact format
+             of this label is system dependent and is subject to change,
+             therefore, it should not be referenced for programmatic use."
+        ::= { lgpPduRcpEntry 25 }
+
+    lgpPduRcpEntryPosition OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "A number representing the position of the receptacle within the 
+             receptacle branch."
+        ::= { lgpPduRcpEntry 30 }
+
+    lgpPduRcpEntryType OBJECT-TYPE
+        SYNTAX      INTEGER 
+        { 
+            not-specified(0),
+            nema-5-20R-20-Amp(1),
+            iec-C13-sheet-F-10-Amp(2),
+            iec-C19-sheet-J-16-Amp(3),
+            cee-7-type-E-schuko(7)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The type or form of receptacle.  The enumerations are specified
+             in well-known industry standard terms and abbreviations."
+        ::= { lgpPduRcpEntry 40 }
+
+    lgpPduRcpEntryLineSource OBJECT-TYPE
+        SYNTAX      INTEGER
+        {
+            not-specified(0),
+            line-1-N(1),
+            line-2-N(2),
+            line-3-N(3),
+            line-1-line-2(4),
+            line-2-line-3(5),
+            line-3-line-1(6),
+            unknown-line-neutral(7),
+            unknown-line-line(8)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This represents the line source that is supplying power to this
+             receptacle.
+                not-specified
+                    The line source supplying power to the load for this
+                    receptacle has not been specified/configured. 
+                line-1-N
+                    The load for this receptacle is supplied by
+                    a line-to-neutral configuration. (line 1 to neutral). 
+                line-2-N
+                    The load for this receptacle is supplied by
+                    a line-to-neutral configuration. (line 2 to neutral). 
+                line-3-N
+                    The load for this receptacle is supplied by
+                    a line-to-neutral configuration. (line 3 to neutral). 
+                line-1-line-2
+                    The load for this receptacle is supplied by
+                    a line-to-line configuration (line 1 to line 2).
+                line-2-line-3
+                    The load for this receptacle is supplied by
+                    a line-to-line configuration (line 2 to line 3).
+                line-3-line-1
+                    The load for this receptacle is supplied by
+                    a line-to-line configuration (line 3 to line 1).
+                unknown-line-neutral
+                    The load for this receptacle is supplied by
+                    a line-to-neutral configuration. The system is unable to
+                    determine which lines are supporting the load.
+                unknown-line-line
+                    The load for this receptacle is supplied by
+                    a line-to-line configuration. The system is unable to
+                    determine which lines are supporting the load.
+            "
+        ::= { lgpPduRcpEntry 45 }
+
+    lgpPduRcpEntryCapabilities OBJECT-TYPE
+        SYNTAX      INTEGER 
+        { 
+            not-specified(0),
+            no-optional-capabilities(1),
+            measurement-only(2),
+            measurement-and-control(3),
+            control-only(4),
+            current-measurement-only(5),
+            current-measurement-and-control(6)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Receptacle capabilities describes what an individual receptacle is
+             capable of.
+
+             no-optional-capabilities
+                 The receptacle is unable to report measurements and lacks 
+                 control capabilities.
+             measurement-only
+                 The receptacle is capable of reporting multiple measurements.
+             measurement-and-control
+                 The receptacle is capable of reporting multiple measurements
+                 and controlling the state.
+             control-only
+                 The receptacle is capable of controlling the state. 
+             current-measurement-only
+                 The receptacle is capable of reporting the current/amperage
+                 only.
+             current-measurement-and-control
+                 The receptacle is capable of reporting the current/amperage and
+                 has the ability to control the state."
+        ::= { lgpPduRcpEntry 50 }
+
+    lgpPduRcpEntryEp OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Volts-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Voltage being delivered to the load attached to the receptacle.
+             Alternating Current RMS Electrical Potential measurement."
+        ::= { lgpPduRcpEntry 55 }
+
+    lgpPduRcpEntryEpTenths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Volts-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Voltage being delivered to the load attached to the receptacle.
+             Alternating Current RMS Electrical Potential measurement."
+        ::= { lgpPduRcpEntry 56 }
+
+    lgpPduRcpEntryEc OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Amp-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current (amperage) being delivered to the load attached to
+             the receptacle. Electrical Current is measured in 
+             Amperes RMS (Root Mean Squared)."
+        ::= { lgpPduRcpEntry 60 }
+
+    lgpPduRcpEntryEcHundredths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.01 Amp-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current (amperage) being delivered to the load attached to
+             the receptacle. Electrical Current is measured in 
+             Amperes RMS (Root Mean Squared)."
+        ::= { lgpPduRcpEntry 61 }
+
+    lgpPduRcpEntryPwrOut OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Watt"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Real Power (watts) being delivered to the load attached to 
+             the receptacle."
+        ::= { lgpPduRcpEntry 65 }
+
+    lgpPduRcpEntryApOut OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Volt-Amp-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Apparent Power (volt-amps) being delivered to the load 
+             attached to the receptacle."
+        ::= { lgpPduRcpEntry 70 }
+
+    lgpPduRcpEntryPf OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       ".01 Power Factor"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Receptacle Power Factor, which is the ratio of real power 
+             to apparent power (i.e. ratio of watts to volts-amps)."
+        ::= { lgpPduRcpEntry 75 }
+
+    lgpPduRcpEntryFreq OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Hertz"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The measured line frequency being delivered to the load 
+             attached to the receptacle."
+        ::= { lgpPduRcpEntry 80 }
+
+    lgpPduRcpEntryEnergyAccum OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Kilowatt-Hour"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Total accumulated energy, measured at the module input, since 
+             the last energy reset. Writing a value of 0 (zero) to this 
+             causes the accumulated energy to be reset. Writing a non-zero 
+             value is invalid and shall result in a write error and the 
+             total energy value remains unchanged.
+
+             If the energy has not been reset and has not wrapped, 
+             then this is the total energy since installation.
+
+             This value persists across boot events."
+        ::= { lgpPduRcpEntry 85 }
+
+    lgpPduRcpEntryPwrOnDelay OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The amount of time to wait before power is applied to the
+            receptacle after a power strip is turned on or rebooted.
+            This can be used to stagger the powering of multiple 
+            receptacles in order to prevent a large initial current
+            draw."
+        ::= { lgpPduRcpEntry 90 }
+
+    lgpPduRcpEntryPwrState OBJECT-TYPE
+        SYNTAX      INTEGER
+        {
+            unknown(0),
+            off(1),
+            on(2),
+            off-pending-on-delay(3)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "unknown
+                The current power state is unknown.
+             off
+                The current power state of the receptacle is OFF.
+             on
+                The current power state of the receptacle is ON.
+             off-pending-on-delay
+                The current power state of the receptacle is OFF.  The power
+                will be ON at the expiration of the ON delay of this
+                receptacle."
+        ::= { lgpPduRcpEntry 95 }
+
+    lgpPduRcpEntryControl OBJECT-TYPE
+        SYNTAX      INTEGER 
+        {
+            off(0),
+            on(1),
+            cycle-power(2)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "This object represents the current and persistent (configured)
+             power state of the receptacle.  The receptacle can also be
+             controlled by writing to this object.
+             off
+                 The current and persisted (configured) power state of the
+                 receptacle is 'off'.  When writing 'off' to this object the
+                 receptacle, if ON, will be turned OFF and its persistent
+                 (configured) power state will be set to 'off'.
+             on
+                 The current and persisted (configured) power state of the
+                 receptacle is 'on'.  When writing 'on' to this object the
+                 receptacle, if 'off', will be turned 'on' and its persistent
+                 (configured) power state will be set to 'on'.
+             cycle-power
+                 The receptacle is currently in a power-cycle state. The
+                 power to the receptacle is being turned off momentarily and
+                 will then revert to being 'on'.
+                 When writing 'cycle-power' to this OBJECT if the receptacle is 
+                 'on' it will be momentarily turned 'off' and then revert to the
+                 'on' state.  The receptacle's persistent (configured) power 
+                 state will be left unchanged ('on').
+
+                 If the receptacle is OFF writing cycle-power has no
+                 affect on the receptacle.
+            "
+        ::= { lgpPduRcpEntry 100 }
+
+    lgpPduRcpEntryControlLock OBJECT-TYPE
+        SYNTAX      INTEGER
+        {
+            unknown(0),
+            unlocked(1),
+            locked(2)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "This object represents the locked state of the receptacle.  
+
+             unknown
+                 The lock state of the receptacle is not known at this time.
+             locked
+                 If the receptacle is 'locked' then its current persisted 
+                 (configured) state can not be changed.  
+             unlocked
+                 If the receptacle is 'unlocked', then a user with proper 
+                 permissions may change the receptacles state."
+        ::= { lgpPduRcpEntry 105 }
+
+    lgpPduRcpEntryEcThrshldUnderAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an under current alarm is activated.  If
+             the measured current (lgpPduRbLineEntryEcLL) is equal to or below
+             this percentage of the full scale rated value 
+             (lgpPduRbEntryEcRated), an under current alarm 
+             is activated"
+        ::= { lgpPduRcpEntry 150 }
+
+    lgpPduRcpEntryEcThrshldOverWarn OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an over current warning is activated.  If
+             the measured current (lgpPduRbLineEntryEcLL) is equal to or over
+             this percentage of the full scale rated value 
+             (lgpPduRbEntryEcRated), an over current warning 
+             is activated"
+        ::= { lgpPduRcpEntry 151 }
+
+    lgpPduRcpEntryEcThrshldOverAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "Percent"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The threshold at which an over current alarm is activated.  If
+             the measured current (lgpPduRbLineEntryEcLL) is equal to or over
+             this percentage of the full scale rated value 
+             (lgpPduRbEntryEcRated), an over current alarm 
+             is activated"
+        ::= { lgpPduRcpEntry 152 }
+
+    lgpPduRcpEntryEcAvailBeforeAlarmHundredths OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.01 Amps-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The amount that the current/amperage may increase from its present
+             value before an over current alarm occurs."
+        ::= { lgpPduRcpEntry 159 }
+
+    lgpPduRcpEntryEcAvailBeforeAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Amps-AC-RMS"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The amount that the current/amperage may increase from its present
+             value before an over current alarm occurs."
+        ::= { lgpPduRcpEntry 160 }
+
+    lgpPduRcpEntryEcUsedBeforeAlarm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 Percent"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The percent of current utilization relative to the over current
+             alarm threshold."
+        ::= { lgpPduRcpEntry 161 }
+
+    lgpPduRcpEntryEcCrestFactor OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.01"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Receptacle current crest factor, which is the peak amplitude of the 
+             current waveform divided by the RMS value of the waveform."
+        ::= { lgpPduRcpEntry 162 }
+
+    lgpPduRcpEntryBlinkLED OBJECT-TYPE
+        SYNTAX      INTEGER 
+        { 
+            noAction(1), 
+            blinkLED(2) 
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Blink the receptacle LED. Writing blinkLED(2) will cause the LED
+             to blink for a predefined duration of time. Reading this object
+             will always return noAction(1)."
+        ::= { lgpPduRcpEntry 200 }
+
+-- -----------------------------------------------------------------------------
+-- PDU Auxiliary Sensors
+-- -----------------------------------------------------------------------------
+
+lgpPduAuxiliarySensors OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "This sub-tree contains information about PDU Auxiliary Sensors."
+    REFERENCE
+        "The registrations for the objects in this sub-tree are
+        defined below."
+    ::= { lgpPdu 60 }
+
+lgpPduAuxSensorCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "Count"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of auxiliary sensors in the lgpPduAuxSensorTable."
+    ::= { lgpPduAuxiliarySensors 5 }
+
+lgpPduAuxSensorTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LgpPduAuxSensorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      deprecated
+    DESCRIPTION
+        "This table contains a list of the PDU's Auxiliary Sensors.
+         The table contains zero, one, or more rows, depending
+         upon the number of PDUs being monitored and the number of
+         auxiliary sensors installed for each PDU.
+         The NMS cannot create or delete rows in the table. The rows are
+         created by the agent based upon the capabilities of the PDUs
+         being monitored.  Each row in the table represents an auxiliary
+         sensor in a PDU."
+    ::= { lgpPduAuxiliarySensors 10 }
+
+    lgpPduAuxSensorEntry OBJECT-TYPE
+        SYNTAX      LgpPduAuxSensorEntry
+        MAX-ACCESS  not-accessible
+        STATUS      deprecated
+        DESCRIPTION
+            "This entry defines the attributes to be populated in the
+             various columns of the 'lgpPduAuxSensorTable'.
+             This table is indexed by both the 'lgpPduEntryIndex' which is 
+             the sole index into the 'lgpPduTable' and the 
+             'lgpPduAuxSensorIndex'which is a unique identifier for the 
+             auxiliary sensor attached to the given PDU.  Taken together these
+             two indexes uniquely identify an Auxiliary Sensor within this
+             agent."
+        INDEX       
+        { 
+            lgpPduEntryIndex,
+            lgpPduAuxSensorIndex
+        }
+        ::= { lgpPduAuxSensorTable 1 }
+
+    LgpPduAuxSensorEntry ::= SEQUENCE 
+    {
+        lgpPduAuxSensorIndex                   Unsigned32,
+        lgpPduAuxSensorMeasType                INTEGER,
+        lgpPduAuxSensorId                      Unsigned32,
+        lgpPduAuxSensorSysAssignLabel          DisplayString,            
+        lgpPduAuxSensorPositionRelative        Unsigned32,
+        lgpPduAuxSensorUsrLabel                DisplayString,
+        lgpPduAuxSensorUsrTag1                 DisplayString,
+        lgpPduAuxSensorUsrTag2                 DisplayString,
+        lgpPduAuxSensorTempSerialNum           DisplayString,
+        lgpPduAuxSensorHumSerialNum            DisplayString,
+        lgpPduAuxSensorTempMeasurementDegF     Integer32,
+        lgpPduAuxSensorTempThrshldUndrAlmDegF  Integer32,
+        lgpPduAuxSensorTempThrshldOvrAlmDegF   Integer32,
+        lgpPduAuxSensorTempThrshldUndrWarnDegF Integer32,
+        lgpPduAuxSensorTempThrshldOvrWarnDegF  Integer32,
+        lgpPduAuxSensorTempMeasurementDegC     Integer32,
+        lgpPduAuxSensorTempThrshldUndrAlmDegC  Integer32,
+        lgpPduAuxSensorTempThrshldOvrAlmDegC   Integer32,
+        lgpPduAuxSensorTempThrshldUndrWarnDegC Integer32,
+        lgpPduAuxSensorTempThrshldOvrWarnDegC  Integer32,
+        lgpPduAuxSensorHumMeasurement          Unsigned32,
+        lgpPduAuxSensorHumThrshldUndrAlm       Unsigned32,
+        lgpPduAuxSensorHumThrshldOvrAlm        Unsigned32,
+        lgpPduAuxSensorHumThrshldUndrWarn      Unsigned32,
+        lgpPduAuxSensorHumThrshldOvrWarn       Unsigned32
+    }
+
+    lgpPduAuxSensorIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      deprecated
+        DESCRIPTION
+            "This is the index indicating the nth element of the table."
+        ::= { lgpPduAuxSensorEntry 1 }
+
+    lgpPduAuxSensorMeasType OBJECT-TYPE
+        SYNTAX      INTEGER
+        {
+            not-specified(0),
+            temperature(1),
+            humidity(2),
+            temperature-and-humidity(3)
+        }
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "not-specified
+                The type of sensor is unknown.
+             temperature
+                The sensor in this row of the table measures temperature.
+             humidity
+                The sensor in this row of the table measures relative humidity.
+             temperature-and-humidity
+                The sensor in this row of the table measures both temperature
+                and relative humidity."
+        ::= { lgpPduAuxSensorEntry 5 }
+
+    lgpPduAuxSensorId OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "System assigned auxiliary sensor identification number. The value
+             assigned is product specific."
+        ::= { lgpPduAuxSensorEntry 10 }
+
+    lgpPduAuxSensorSysAssignLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Label assigned to the auxiliary sensor at runtime by the system.
+             The value is independent of any user assigned label or asset tag."
+        ::= { lgpPduAuxSensorEntry 15 }
+
+    lgpPduAuxSensorPositionRelative OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Auxiliary sensor relative position.  This is a one-based value
+             that indicates the sensor's position relative to the sensor string
+             connector."
+        ::= { lgpPduAuxSensorEntry 20 }
+
+    lgpPduAuxSensorUsrLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "User assigned auxiliary sensor label."
+        ::= { lgpPduAuxSensorEntry 25 }
+
+    lgpPduAuxSensorUsrTag1 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "User assigned Tag to assist in identifying or grouping this 
+             auxiliary sensor within the end-users domain."
+        ::= { lgpPduAuxSensorEntry 30 }
+
+    lgpPduAuxSensorUsrTag2 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "User assigned Tag to assist in identifying or grouping this 
+             auxiliary sensor within the end-users domain."
+        ::= { lgpPduAuxSensorEntry 35 }
+
+    lgpPduAuxSensorTempSerialNum OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The temperature sensor's globally unique serial number assigned at
+             the time of manufacture."
+        ::= { lgpPduAuxSensorEntry 40 }
+
+    lgpPduAuxSensorHumSerialNum OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "The humidity sensor's globally unique serial number assigned at
+             the time of manufacture."
+        ::= { lgpPduAuxSensorEntry 45 }
+
+    lgpPduAuxSensorTempMeasurementDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Temperature measured at the temperature sensor reported in
+             degrees Fahrenheit."
+        ::= { lgpPduAuxSensorEntry 50 }
+
+    lgpPduAuxSensorTempThrshldUndrAlmDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Under temperature alarm threshold.  An alarm is activated if the
+             temperature is equal to or below this value."
+        ::= { lgpPduAuxSensorEntry 55 }
+
+    lgpPduAuxSensorTempThrshldOvrAlmDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Over temperature alarm threshold.  An alarm is activated if the
+             temperature is equal to or above this value."
+        ::= { lgpPduAuxSensorEntry 60 }
+
+    lgpPduAuxSensorTempThrshldUndrWarnDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Under temperature warning threshold.  A warning is activated if
+             the temperature is equal to or below this value."
+        ::= { lgpPduAuxSensorEntry 65 }
+
+    lgpPduAuxSensorTempThrshldOvrWarnDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Over temperature warning threshold.  A warning is activated if the
+             temperature is equal to or above this value."
+        ::= { lgpPduAuxSensorEntry 70 }
+
+    lgpPduAuxSensorTempMeasurementDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Temperature measured at the temperature sensor reported in
+             degrees Celsius."
+        ::= { lgpPduAuxSensorEntry 75 }
+
+    lgpPduAuxSensorTempThrshldUndrAlmDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Under temperature alarm threshold.  An alarm is activated if the
+             temperature is equal to or below this value."
+        ::= { lgpPduAuxSensorEntry 80 }
+
+    lgpPduAuxSensorTempThrshldOvrAlmDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Over temperature alarm threshold.  An alarm is activated if the
+             temperature is equal to or above this value."
+        ::= { lgpPduAuxSensorEntry 85 }
+
+    lgpPduAuxSensorTempThrshldUndrWarnDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Under temperature warning threshold.  A warning is activated if
+             the temperature is equal to or below this value."
+        ::= { lgpPduAuxSensorEntry 90 }
+
+    lgpPduAuxSensorTempThrshldOvrWarnDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Over temperature warning threshold.  A warning is activated if the
+             temperature is equal to or above this value."
+        ::= { lgpPduAuxSensorEntry 95 }
+
+    lgpPduAuxSensorHumMeasurement OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Relative Humidity measured at the humidity sensor."
+        ::= { lgpPduAuxSensorEntry 100 }
+
+    lgpPduAuxSensorHumThrshldUndrAlm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Under relative humidity alarm threshold.  An alarm is activated
+             if the relative humidity is equal to or below this value."
+        ::= { lgpPduAuxSensorEntry 105 }
+
+    lgpPduAuxSensorHumThrshldOvrAlm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Over relative humidity alarm threshold.  An alarm is activated
+             if the relative humidity is equal to or above this value."
+        ::= { lgpPduAuxSensorEntry 110 }
+
+    lgpPduAuxSensorHumThrshldUndrWarn OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Under relative humidity warning threshold.  A warning is activated
+             if the relative humidity is equal to or below this value."
+        ::= { lgpPduAuxSensorEntry 115 }
+
+    lgpPduAuxSensorHumThrshldOvrWarn OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-write
+        STATUS      deprecated
+        DESCRIPTION
+            "Over relative humidity warning threshold.  A warning is activated
+             if the relative humidity is equal to or above this value."
+        ::= { lgpPduAuxSensorEntry 120 }
+
+lgpPduAuxMeasTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF LgpPduAuxMeasEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains a list of the PDU's Auxiliary Sensor Measurements.
+         The table contains zero, one, or more rows, depending
+         upon the number of PDUs being monitored, the number of auxiliary 
+         sensors installed for each PDU, and the number of measurements within 
+         each sensor. The NMS cannot create or delete rows in the table. The 
+         rows are created by the agent based upon the capabilities of the PDUs
+         being monitored.  Each row in the table represents an auxiliary
+         sensor measurement in a PDU."
+    ::= { lgpPduAuxiliarySensors 15 }
+
+    lgpPduAuxMeasEntry OBJECT-TYPE
+        SYNTAX      LgpPduAuxMeasEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This entry defines the attributes to be populated in the
+             various columns of the 'lgpPduAuxMeasTable'.
+             This table is indexed by 'lgpPduEntryIndex' which is 
+             the sole index into the 'lgpPduTable', 'lgpPduAuxSensorIndex' which 
+             is a unique identifier for the auxiliary sensor attached to the 
+             given PDU, and 'lgpPduAuxMeasSensorMeasurementIndex' which is the 
+             measurement's index identified on the sensor. Taken together these
+             three indexes uniquely identify an Auxiliary Sensor Measurement
+             within this agent."
+        INDEX       
+        { 
+            lgpPduEntryIndex,
+            lgpPduAuxMeasSensorIndex,
+            lgpPduAuxMeasSensorMeasurementIndex
+        }
+        ::= { lgpPduAuxMeasTable 1 }
+
+    LgpPduAuxMeasEntry ::= SEQUENCE
+    {
+        lgpPduAuxMeasSensorIndex               Unsigned32,
+        lgpPduAuxMeasSensorMeasurementIndex    Unsigned32,
+        lgpPduAuxMeasType                      INTEGER,
+        lgpPduAuxMeasSensorSysAssignLabel      DisplayString,
+        lgpPduAuxMeasUsrLabel                  DisplayString,
+        lgpPduAuxMeasUsrTag1                   DisplayString,
+        lgpPduAuxMeasUsrTag2                   DisplayString,
+        lgpPduAuxMeasSensorSerialNum           DisplayString,
+        lgpPduAuxMeasTempDegF                  Integer32,
+        lgpPduAuxMeasTempThrshldUndrAlmDegF    Integer32,
+        lgpPduAuxMeasTempThrshldOvrAlmDegF     Integer32,
+        lgpPduAuxMeasTempThrshldUndrWarnDegF   Integer32,
+        lgpPduAuxMeasTempThrshldOvrWarnDegF    Integer32,
+        lgpPduAuxMeasTempDegC                  Integer32,
+        lgpPduAuxMeasTempThrshldUndrAlmDegC    Integer32,
+        lgpPduAuxMeasTempThrshldOvrAlmDegC     Integer32,
+        lgpPduAuxMeasTempThrshldUndrWarnDegC   Integer32,
+        lgpPduAuxMeasTempThrshldOvrWarnDegC    Integer32,
+        lgpPduAuxMeasHum                       Unsigned32,
+        lgpPduAuxMeasHumThrshldUndrAlm         Unsigned32,
+        lgpPduAuxMeasHumThrshldOvrAlm          Unsigned32,
+        lgpPduAuxMeasHumThrshldUndrWarn        Unsigned32,
+        lgpPduAuxMeasHumThrshldOvrWarn         Unsigned32,
+        lgpPduAuxMeasDrClosureState            INTEGER,
+        lgpPduAuxMeasDrClosureConfig           INTEGER,
+        lgpPduAuxMeasCntctClosureState         INTEGER,
+        lgpPduAuxMeasCntctClosureConfig        INTEGER
+    }
+
+    lgpPduAuxMeasSensorIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This is the index indicating the sensor the measurement is accessed
+             from."
+        ::= { lgpPduAuxMeasEntry 1 }
+
+    lgpPduAuxMeasSensorMeasurementIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This is the measurement's index identified on the sensor."
+        ::= { lgpPduAuxMeasEntry 5 }
+
+    lgpPduAuxMeasType OBJECT-TYPE
+        SYNTAX      INTEGER
+        {
+            not-specified(0),
+            temperature(1),
+            humidity(2),
+            door-closure(3),
+            contact-closure(4)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "not-specified
+                The type of measurement is unknown.
+             temperature
+                The measurement in this row of the table measures temperature.
+             humidity
+                The measurement in this row of the table measures relative 
+                humidity.
+             door-closure
+                The measurement in this row of the table measures the state of a 
+                door.
+             contact-closure
+                The measurement in this row of the table measures the state of a 
+                contact closure."
+        ::= { lgpPduAuxMeasEntry 10 }
+
+    lgpPduAuxMeasSensorSysAssignLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Label assigned to the auxiliary sensor at runtime by the system.
+             The value is independent of any user assigned label or asset tag."
+        ::= { lgpPduAuxMeasEntry 15 }
+
+    lgpPduAuxMeasUsrLabel OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "User assigned auxiliary sensor measurement label."
+        ::= { lgpPduAuxMeasEntry 20 }
+
+    lgpPduAuxMeasUsrTag1 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "User assigned Tag to assist in identifying or grouping this 
+             auxiliary sensor measurement within the end-users domain."
+        ::= { lgpPduAuxMeasEntry 25 }
+
+    lgpPduAuxMeasUsrTag2 OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "User assigned Tag to assist in identifying or grouping this 
+             auxiliary sensor measurement within the end-users domain."
+        ::= { lgpPduAuxMeasEntry 30 }
+
+    lgpPduAuxMeasSensorSerialNum OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The sensor's globally unique serial number assigned at
+             the time of manufacture."
+        ::= { lgpPduAuxMeasEntry 35 }
+
+    lgpPduAuxMeasTempDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Temperature measured at the temperature sensor reported in
+             degrees Fahrenheit."
+        ::= { lgpPduAuxMeasEntry 40 }
+
+    lgpPduAuxMeasTempThrshldUndrAlmDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Under temperature alarm threshold.  An alarm is activated if the
+             temperature is equal to or below this value."
+        ::= { lgpPduAuxMeasEntry 50 }
+
+    lgpPduAuxMeasTempThrshldOvrAlmDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Over temperature alarm threshold.  An alarm is activated if the
+             temperature is equal to or above this value."
+        ::= { lgpPduAuxMeasEntry 55 }
+
+    lgpPduAuxMeasTempThrshldUndrWarnDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Under temperature warning threshold.  A warning is activated if
+             the temperature is equal to or below this value."
+        ::= { lgpPduAuxMeasEntry 60 }
+
+    lgpPduAuxMeasTempThrshldOvrWarnDegF OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Fahrenheit"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Over temperature warning threshold.  A warning is activated if the
+             temperature is equal to or above this value."
+        ::= { lgpPduAuxMeasEntry 65 }
+
+    lgpPduAuxMeasTempDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Temperature measured at the temperature sensor reported in
+             degrees Celsius."
+        ::= { lgpPduAuxMeasEntry 70 }
+
+    lgpPduAuxMeasTempThrshldUndrAlmDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Under temperature alarm threshold.  An alarm is activated if the
+             temperature is equal to or below this value."
+        ::= { lgpPduAuxMeasEntry 75 }
+
+    lgpPduAuxMeasTempThrshldOvrAlmDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Over temperature alarm threshold.  An alarm is activated if the
+             temperature is equal to or above this value."
+        ::= { lgpPduAuxMeasEntry 80 }
+
+    lgpPduAuxMeasTempThrshldUndrWarnDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Under temperature warning threshold.  A warning is activated if
+             the temperature is equal to or below this value."
+        ::= { lgpPduAuxMeasEntry 85 }
+
+    lgpPduAuxMeasTempThrshldOvrWarnDegC OBJECT-TYPE
+        SYNTAX      Integer32
+        UNITS       "0.1 degrees Celsius"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Over temperature warning threshold.  A warning is activated if the
+             temperature is equal to or above this value."
+        ::= { lgpPduAuxMeasEntry 90 }
+
+    lgpPduAuxMeasHum OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Relative Humidity measured at the humidity sensor."
+        ::= { lgpPduAuxMeasEntry 95 }
+
+    lgpPduAuxMeasHumThrshldUndrAlm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Under relative humidity alarm threshold.  An alarm is activated
+             if the relative humidity is equal to or below this value."
+        ::= { lgpPduAuxMeasEntry 100 }
+
+    lgpPduAuxMeasHumThrshldOvrAlm OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Over relative humidity alarm threshold.  An alarm is activated
+             if the relative humidity is equal to or above this value."
+        ::= { lgpPduAuxMeasEntry 105 }
+
+    lgpPduAuxMeasHumThrshldUndrWarn OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Under relative humidity warning threshold.  A warning is activated
+             if the relative humidity is equal to or below this value."
+        ::= { lgpPduAuxMeasEntry 110 }
+
+    lgpPduAuxMeasHumThrshldOvrWarn OBJECT-TYPE
+        SYNTAX      Unsigned32
+        UNITS       "0.1 percent Relative Humidity"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Over relative humidity warning threshold.  A warning is activated
+             if the relative humidity is equal to or above this value."
+        ::= { lgpPduAuxMeasEntry 115 }
+
+    lgpPduAuxMeasDrClosureState OBJECT-TYPE
+        SYNTAX      INTEGER 
+        {
+            not-specified(0),
+            open(1),
+            closed(2)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The state of a door sensor measurement.
+                not-specified
+                    The door state is unknown.
+                open
+                    The door is in the open state.
+                closed
+                    The door is in the closed state."
+        ::= { lgpPduAuxMeasEntry 120 }
+
+    lgpPduAuxMeasDrClosureConfig OBJECT-TYPE
+        SYNTAX      INTEGER 
+        {
+            disabled(0),
+            alarm-when-open(1)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Configure door state alarms. This object provides the ability to 
+             select when a door closure measurement should cause an alarm.
+                disabled
+                    The door state will never result in alarm.
+                alarm-when-open
+                    Activate an alarm when the door state becomes open."
+        ::= { lgpPduAuxMeasEntry 125 }
+
+    lgpPduAuxMeasCntctClosureState OBJECT-TYPE
+        SYNTAX      INTEGER 
+        {
+            not-specified(0),
+            open(1),
+            closed(2)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The state of a contact closure sensor measurement.
+                not-specified
+                    The contact closure state is unknown.
+                open
+                    The contact closure is in the open state.
+                closed
+                    The contact closure is in the closed state."
+        ::= { lgpPduAuxMeasEntry 130 }
+
+    lgpPduAuxMeasCntctClosureConfig OBJECT-TYPE
+        SYNTAX      INTEGER 
+        {
+            disabled(0),
+            alarm-when-open(1),
+            alarm-when-closed(2)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Configure contact closure state alarms. This object provides the 
+             ability to select when a contact closure measurement should 
+             activate an alarm.
+                disabled
+                    The contact closure state will never result in alarm.
+                alarm-when-open
+                    Activate an alarm when the contact closure state becomes 
+                    open.
+                alarm-when-closed
+                    Activate an alarm when the contact closure state becomes 
+                    closed."
+        ::= { lgpPduAuxMeasEntry 135 }
+	
+END
+

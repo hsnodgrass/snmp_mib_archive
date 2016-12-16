@@ -1,0 +1,312 @@
+-- $Id: OLD-CISCO-FLASH.MIB 1.1 2005/03/14 16:34:11Z aminchew Exp $
+-- $Source: v:/mksroot/rcs/OLD-CISCO-FLASH.MIB $
+-- *****************************************************************
+-- OLD-CISCO-FLASH-MIB.my:  Old Cisco Flash MIB file
+--
+-- Copyright (c) 1994,1997,1998 by cisco Systems, Inc.
+-- All rights reserved.
+--
+-- NOTE WELL
+-- Starting with IOS 12.0, all objects defined in this mib have been
+-- deprecated. They have been replaced with objects defined in the 
+-- CISCO-FLASH-MIB document.  Management applications should no longer
+-- be examining the objects defined in this document
+-- NOTE WELL
+-- 
+-- *****************************************************************
+-- $Log: OLD-CISCO-FLASH.MIB $
+-- Revision 1.1  2005/03/14 16:34:11Z  aminchew
+-- Initial revision
+-- Revision 1.1.2.1  2005/02/08 01:45:11  bruceg
+-- CGESM_12_2_25
+--
+-- Revision 3.3.30.1  1996/06/11  19:39:02  snyder
+-- CSCdi60118:  MIB doc spellink errors
+-- Branch: California_branch
+--
+-- Revision 3.3  1996/01/09  22:49:59  jjohnson
+-- CSCdi46623:  old flash mib discrepancies
+-- Make the mib consistent with the 10.0 monolithic version
+--
+-- Revision 3.2  1995/11/17  08:35:58  hampton
+-- Remove old entries from the RCS header logs.
+--
+-- Revision 3.1  1995/11/09  10:51:29  shaker
+-- Bump version numbers from 2.x to 3.x.
+--
+-- Revision 2.1  1995/06/07  20:02:08  hampton
+-- Bump version numbers from 1.x to 2.x.
+--
+-- *****************************************************************
+-- $Endlog$
+--
+
+               OLD-CISCO-FLASH-MIB DEFINITIONS ::= BEGIN
+
+               IMPORTS
+                    TimeTicks
+			FROM RFC1155-SMI
+		    OBJECT-TYPE
+			FROM RFC-1212
+                    DisplayString
+			FROM RFC1213-MIB
+		    local
+			FROM CISCO-SMI;
+          
+               lflash              OBJECT IDENTIFIER ::= { local 10 }
+
+               -- Local cisco Flash Group
+
+          -- This group is present in all products which contain flash"
+
+               flashSize OBJECT-TYPE
+                   SYNTAX  INTEGER
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Total Size in Octets of Flash memory"
+                   ::= { lflash 1 }
+
+               flashFree OBJECT-TYPE
+                   SYNTAX  INTEGER
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Unused Size in Octets of Flash memory"
+                   ::= { lflash 2 }
+
+               flashController OBJECT-TYPE
+                   SYNTAX  DisplayString
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Provides the type of Flash controller 
+                           (either CCTL or CCTL2) installed in the 
+                           router."
+                   ::= { lflash 3 }
+
+               flashCard OBJECT-TYPE
+                   SYNTAX  DisplayString
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Provides the type of Flash Card installed
+                           in the router. For example, the type of 
+                           Flash Card could be either CSC-MS or 
+                           CSC-MC+."
+                   ::= { lflash 4 }
+
+               flashVPP OBJECT-TYPE
+                   SYNTAX  INTEGER {
+                        installed(1),
+                        missing(2)
+                   }
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "State of the VPP DIP jumper on the Flash
+                           memory card. Files can be written to the
+                           Flash memory card only if the VPP DIP
+                           jumper is turned on."
+                   ::= { lflash 5 }
+
+               flashErase OBJECT-TYPE
+                   SYNTAX  INTEGER
+                   ACCESS  write-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Request to erase flash memory"
+                   ::= { lflash 6 }
+
+               flashEraseTime OBJECT-TYPE
+                   SYNTAX  TimeTicks
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Indicates the value of sysUptime the last
+                           time Flash memory was erased. If the flash
+                           had not been erased after powerup it has a
+                           value of 0 days 00:00:00."
+                   ::= { lflash 7 }
+
+               flashEraseStatus OBJECT-TYPE
+                   SYNTAX  INTEGER {
+                        flashOpInProgress(1),
+                        flashOpSuccess(2),
+                        flashOpFailure(3),
+                        flashReadOnly(4),
+                        flashOpenFailure(5),
+                        bufferAllocationFailure(6),
+                        noOpAfterPowerOn(7)
+                   }
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Status of current or last flash erasing"
+                   ::= { lflash 8 }
+
+               flashToNet OBJECT-TYPE
+                   SYNTAX  DisplayString
+                   ACCESS  write-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Write flash entry to tftp server. Value
+                           should be the name of the flash entry to
+                           send. Instance is the IP address of the tftp
+                           host."
+                   ::= { lflash 9 }
+
+               flashToNetTime OBJECT-TYPE
+                   SYNTAX  TimeTicks
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Indicates the value of sysUpTime the last
+                            time a file was transfered from Flash memory
+                            on the router to a TFTP host. Returns
+                            0 days 00:00:00 if there had been no transfer
+                            since powerup."
+                   ::= { lflash 10 }
+
+               flashToNetStatus OBJECT-TYPE
+                   SYNTAX  INTEGER {
+                        flashOpInProgress(1),
+                        flashOpSuccess(2),
+                        flashOpFailure(3),
+                        flashReadOnly(4),
+                        flashOpenFailure(5),
+                        bufferAllocationFailure(6),
+                        noOpAfterPowerOn(7)
+                   }
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Status of current or last flash to net
+                           transfer"
+                   ::= { lflash 11 }
+
+               netToFlash OBJECT-TYPE
+                   SYNTAX  DisplayString
+                   ACCESS  write-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Write flash entry from tftp server. Value
+                           should be the name of the flash entry to
+                           write. Instance is the IP address of the tftp
+                           host."
+                   ::= { lflash 12 }
+
+               netToFlashTime OBJECT-TYPE
+                   SYNTAX  TimeTicks
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Indicates the value of sysUpTime the last
+                           time file was copied from a Trivial File
+                           Transfer Protocol(TFTP) server to the Flash
+                           memory on the router. Returns 0 days 00:00:00
+                           if there had been no transfers since powerup."
+                   ::= { lflash 13 }
+
+               netToFlashStatus OBJECT-TYPE
+                   SYNTAX  INTEGER {
+                        flashOpInProgress(1),
+                        flashOpSuccess(2),
+                        flashOpFailure(3),
+                        flashReadOnly(4),
+                        flashOpenFailure(5),
+                        bufferAllocationFailure(6),
+                        noOpAfterPowerOn(7)
+                   }
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Status of current or last net to flash
+                           transfer"
+                   ::= { lflash 14 }
+
+               flashStatus OBJECT-TYPE
+                   SYNTAX  INTEGER {
+                        busy(1),
+                        available(2)
+                   }
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Status of the availability of flash"
+                   ::= { lflash 15 }
+
+               flashEntries OBJECT-TYPE
+                   SYNTAX  INTEGER
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Number of entries in the flash directory"
+                   ::= { lflash 16 }
+
+
+               -- Local Flash file Table
+
+          -- This group contains information on a per file basis
+
+               lflashFileDirTable OBJECT-TYPE
+                   SYNTAX  SEQUENCE OF LflashFileDirEntry
+                   ACCESS  not-accessible
+                   STATUS  deprecated
+                   DESCRIPTION
+                            " A list of flash file entries."
+                   ::= { lflash 17 }
+
+               lflashFileDirEntry OBJECT-TYPE
+                   SYNTAX LflashFileDirEntry
+                   ACCESS  not-accessible
+                   STATUS  deprecated
+                   DESCRIPTION
+                            "A collection of flash eprom objects"
+                   INDEX { flashEntries }
+               ::= { lflashFileDirTable 1 }
+
+               LflashFileDirEntry ::=
+                   SEQUENCE {
+                       flashDirName
+                           DisplayString,
+                       flashDirSize
+                           INTEGER,
+                       flashDirStatus
+                           INTEGER
+                   }
+
+          -- The following section describes the components of the
+          -- table.
+
+               flashDirName OBJECT-TYPE
+                   SYNTAX  DisplayString
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Name associated with the flash entry"
+                   ::= { lflashFileDirEntry 1 }
+
+               flashDirSize OBJECT-TYPE
+                   SYNTAX  INTEGER
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Size in Octets of a flash entry"
+                   ::= { lflashFileDirEntry 2 }
+
+               flashDirStatus OBJECT-TYPE
+                   SYNTAX  INTEGER {
+                        valid(1),
+                        deleted(2)
+                   }
+                   ACCESS  read-only
+                   STATUS  deprecated
+                   DESCRIPTION
+                           "Indicates the status of the entry"
+                   ::= { lflashFileDirEntry 3 }
+
+               -- End of table
+
+
+END

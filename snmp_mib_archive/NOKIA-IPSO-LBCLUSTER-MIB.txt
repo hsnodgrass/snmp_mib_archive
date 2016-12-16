@@ -1,0 +1,569 @@
+--*******************************************************
+--Nokia IPSO Load Balancing Cluster MIB
+--May 14 2001, Kripa Karlekar
+--
+--*******************************************************
+
+NOKIA-IPSO-LBCLUSTER-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+  ipsoProducts FROM NOKIA-IPSO-REGISTRATION-MIB
+  MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, IpAddress
+    FROM SNMPv2-SMI
+  InterfaceIndex
+    FROM IF-MIB
+  TimeStamp, MacAddress
+    FROM SNMPv2-TC;
+
+ipsoLBClusterMIB MODULE-IDENTITY
+  LAST-UPDATED "0105140000Z"
+  ORGANIZATION "Nokia"
+  CONTACT-INFO
+        "EMail: tac.support@nokia.com
+         Postal: 313 Fairchild Drive
+                 Mountain View,
+                 California, 94043"
+
+  DESCRIPTION
+  "The MIB Module for the management of Load Balancing IPSO systems.
+   A load balancing IPSO cluster comprises a number of nodes with
+   a single master node and multiple member nodes.
+   A master or member can be a part of single cluster or multiple 
+   clusters. 
+
+   The master is responsible for calculating the worksets and assigning
+   it to all the members and to itself.
+
+   The information provided by this MIB implementation will vary depending
+   on if this node is a master or member."
+   
+   REVISION "0105140000Z"
+   DESCRIPTION "Initial Version of the MIB -- Kripa Karlekar"
+   ::= { ipsoProducts 5 }
+
+-- MIB Contains 5 tables
+
+ipsoLBClusterInfo    OBJECT IDENTIFIER ::= { ipsoLBClusterMIB 1}
+ipsoLBClusterNodeSpecificInfo OBJECT IDENTIFIER ::= { ipsoLBClusterMIB 2}
+ipsoLBClusterNotificationGroup OBJECT IDENTIFIER ::= { ipsoLBClusterMIB 3}
+
+ipsoLBNumClusters OBJECT-TYPE
+  SYNTAX 	INTEGER
+  MAX-ACCESS	read-only
+  STATUS        current
+  DESCRIPTION   "Number of clusters in which this node is either a master
+		 or a member"
+  ::= {ipsoLBClusterInfo 1}
+
+ipsoLBClusterInfoTable OBJECT-TYPE
+  SYNTAX  	SEQUENCE OF IpsoLBClusterInfoEntry
+  MAX-ACCESS  	not-accessible
+  STATUS	current
+  DESCRIPTION  	"This table contains a row for each cluster to which
+		 this system belongs."
+  ::= {ipsoLBClusterInfo 2}
+
+ipsoLBClusterInfoEntry  OBJECT-TYPE
+  SYNTAX 	IpsoLBClusterInfoEntry
+  MAX-ACCESS 	not-accessible
+  STATUS	current
+  DESCRIPTION	"An entry containing cluster management information for
+		 each cluster this system belongs."
+  INDEX {ipsoLBClusterInfoClusterIndex}
+  ::= {ipsoLBClusterInfoTable 1}
+
+IpsoLBClusterInfoEntry ::= 
+  SEQUENCE {
+     ipsoLBClusterInfoClusterIndex INTEGER,
+     ipsoLBClusterInfoClusterID	INTEGER,
+     ipsoLBClusterInfoClusterNumMembers INTEGER,
+     ipsoLBClusterInfoClusterNumInterfaces INTEGER,
+     ipsoLBClusterInfoClusterUpTimeAtJoin TimeStamp,
+     ipsoLBClusterInfoSystemUpTimeAtJoin TimeStamp,
+     ipsoLBClusterInfoClusterTotalBuckets INTEGER,
+     ipsoLBClusterInfoClusterBucketsAssigned INTEGER,
+     ipsoLBClusterInfoClusterMode OCTET STRING
+  }
+
+ipsoLBClusterInfoClusterIndex OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The Cluster Index"
+  ::= { ipsoLBClusterInfoEntry 1}
+
+ipsoLBClusterInfoClusterID OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The Identity for the cluster"
+  ::= { ipsoLBClusterInfoEntry 2}
+
+ipsoLBClusterInfoClusterNumMembers OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS	read-only
+  STATUS        current
+  DESCRIPTION   "Number of members for this cluster"
+  ::= { ipsoLBClusterInfoEntry 3}
+
+ipsoLBClusterInfoClusterNumInterfaces OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS	read-only
+  STATUS        current
+  DESCRIPTION   "Number of interfaces participating in this cluster"
+  ::= { ipsoLBClusterInfoEntry 4}
+
+ipsoLBClusterInfoClusterUpTimeAtJoin OBJECT-TYPE
+  SYNTAX	TimeStamp
+  MAX-ACCESS	read-only
+  STATUS        current
+  DESCRIPTION   "Time since the cluster started when this member joined the cluster"
+  ::= { ipsoLBClusterInfoEntry 5}
+
+ipsoLBClusterInfoSystemUpTimeAtJoin OBJECT-TYPE
+  SYNTAX	TimeStamp
+  MAX-ACCESS	read-only
+  STATUS        current
+  DESCRIPTION   "The system up time when this member joined the cluster"
+  ::= { ipsoLBClusterInfoEntry 6}
+
+ipsoLBClusterInfoClusterTotalBuckets OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS	read-only
+  STATUS        current
+  DESCRIPTION   "Overall number of buckets that will be distributed among
+		 cluster members for this cluster"
+  ::= { ipsoLBClusterInfoEntry 7}
+
+ipsoLBClusterInfoClusterBucketsAssigned OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS	read-only
+  STATUS        current
+  DESCRIPTION   "Total number of buckets assigned to each individual
+		 cluster members on this cluster"
+  ::= { ipsoLBClusterInfoEntry 8}
+
+ipsoLBClusterInfoClusterMode OBJECT-TYPE
+  SYNTAX    OCTET STRING 
+  MAX-ACCESS   read-only
+  STATUS   current
+  DESCRIPTION  " This mode determines whether a cluster is configured to
+                 forward traffic via a unicast MAC address (forward) or
+                 multicast MAC address (multicast).
+		 Valid values are: 
+		    multicast (mcast), 
+		    forwarding (forwarding), 
+		    unicast (ucast) and
+		    multicast group (mcast_group).
+                 All systems in a cluster must have the same value for
+                 the clusterMode attribute."
+  ::={ipsoLBClusterInfoEntry 9}
+
+ipsoLBClusterAddressInfoTable OBJECT-TYPE
+  SYNTAX  	SEQUENCE OF IpsoLBClusterAddressInfoEntry
+  MAX-ACCESS  	not-accessible
+  STATUS	current
+  DESCRIPTION  	"This table contains a row for each cluster to which
+		 this system belongs. This table provides cluster 
+		 interface address for this cluster."
+  ::={ipsoLBClusterInfo 3}
+
+ipsoLBClusterAddressInfoEntry  OBJECT-TYPE
+  SYNTAX 	IpsoLBClusterAddressInfoEntry
+  MAX-ACCESS 	not-accessible
+  STATUS	current
+  DESCRIPTION	"An entry containing cluster interface address 
+		 information of each cluster this node is participating."
+  INDEX {ipsoLBClusterAddressInfoIndex, ipsoLBClusterAddressInfoAddress}
+  ::= {ipsoLBClusterAddressInfoTable 1}
+
+IpsoLBClusterAddressInfoEntry ::= 
+  SEQUENCE {
+     ipsoLBClusterAddressInfoIndex	INTEGER,
+     ipsoLBClusterAddressInfoAddress     IpAddress,
+     ipsoLBClusterAddressInfoMACAddress  MacAddress
+  }
+
+ipsoLBClusterAddressInfoIndex OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The cluster index"
+  ::= { ipsoLBClusterAddressInfoEntry 1}
+
+ipsoLBClusterAddressInfoAddress OBJECT-TYPE
+  SYNTAX	IpAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The cluster interface address" 
+  ::= { ipsoLBClusterAddressInfoEntry 2}
+
+ipsoLBClusterAddressInfoMACAddress OBJECT-TYPE
+  SYNTAX	MacAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The cluster MAC Address"
+  ::= { ipsoLBClusterAddressInfoEntry 3}
+
+ipsoLBClusterMemberTable OBJECT-TYPE
+  SYNTAX  	SEQUENCE OF IpsoLBClusterMemberEntry
+  MAX-ACCESS  	not-accessible
+  STATUS	current
+  DESCRIPTION  	"This table has information about all the members 
+                 in each cluster this node participates. The information
+		 in this table varies depending on if this mode is a member
+		 or master in each cluster. If this node is a master in a
+		 cluster it furnishes more information"
+  ::= {ipsoLBClusterInfo 4}
+
+ipsoLBClusterMemberEntry  OBJECT-TYPE
+  SYNTAX 	IpsoLBClusterMemberEntry
+  MAX-ACCESS 	not-accessible
+  STATUS	current
+  DESCRIPTION	"An entry containing member information."
+  INDEX {ipsoLBClusterMemberIndex, ipsoLBClusterMemberID}
+  ::= {ipsoLBClusterMemberTable 1}
+
+IpsoLBClusterMemberEntry ::= 
+  SEQUENCE {
+     ipsoLBClusterMemberIndex	INTEGER,
+     ipsoLBClusterMemberID	INTEGER,
+     ipsoLBClusterMemberPercentageBucketsAssigned     INTEGER,
+     ipsoLBClusterMemberRating 	OCTET STRING,
+     ipsoLBClusterMemberPrimaryAddress    IpAddress
+  }
+
+ipsoLBClusterMemberIndex OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The index of the cluster"
+  ::= { ipsoLBClusterMemberEntry 1}
+
+ipsoLBClusterMemberID OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The member id in the cluster"
+  ::= { ipsoLBClusterMemberEntry 2}
+
+ipsoLBClusterMemberPercentageBucketsAssigned OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "A percentage of how many buckets this member is processing
+	         for each cluster"
+  ::= { ipsoLBClusterMemberEntry 3}
+
+ipsoLBClusterMemberRating OBJECT-TYPE
+  SYNTAX       OCTET STRING
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The Rating of this member for this cluster, only available on Master."
+  ::= { ipsoLBClusterMemberEntry 4}
+
+ipsoLBClusterMemberPrimaryAddress OBJECT-TYPE
+  SYNTAX	IpAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "Members's primary interface address"
+  ::= { ipsoLBClusterMemberEntry 5}
+
+
+ipsoLBClusterNodeSpecificTable OBJECT-TYPE
+  SYNTAX  	SEQUENCE OF IpsoLBClusterNodeSpecificEntry
+  MAX-ACCESS  	not-accessible
+  STATUS	current
+  DESCRIPTION  	"This table contains a row for each cluster to which
+		 this system belongs. This table provides specific 
+		 cluster related information about this node"
+  ::= {ipsoLBClusterNodeSpecificInfo 1}
+
+ipsoLBClusterNodeSpecificEntry  OBJECT-TYPE
+  SYNTAX 	IpsoLBClusterNodeSpecificEntry
+  MAX-ACCESS 	not-accessible
+  STATUS	current
+  DESCRIPTION	"An entry containing management information for
+		 this node in each cluster."
+  INDEX { ipsoLBClusterNodeSpecificIndex }		 
+  ::= {ipsoLBClusterNodeSpecificTable 1}
+
+IpsoLBClusterNodeSpecificEntry ::= 
+  SEQUENCE {
+     ipsoLBClusterNodeSpecificIndex	INTEGER,
+     ipsoLBClusterNodeSpecificMemberID		INTEGER,
+     ipsoLBClusterNodeSpecificPercentageBucketsAssigned    INTEGER,
+     ipsoLBClusterNodeSpecificMemberMode 	INTEGER,
+     ipsoLBClusterNodeSpecificMemberRating   INTEGER,
+     ipsoLBClusterNodeSpecificMemberPrimaryAddress IpAddress
+  }
+
+ipsoLBClusterNodeSpecificIndex OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The cluster index for which this node is a member"
+  ::= { ipsoLBClusterNodeSpecificEntry 1}
+
+ipsoLBClusterNodeSpecificMemberID OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "This member's id in the cluster"
+  ::= { ipsoLBClusterNodeSpecificEntry 2}
+
+ipsoLBClusterNodeSpecificPercentageBucketsAssigned OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "Percentage of buckets assigned to this member in this cluster"
+  ::= { ipsoLBClusterNodeSpecificEntry 3}
+
+ipsoLBClusterNodeSpecificMemberMode OBJECT-TYPE
+  SYNTAX	INTEGER {
+		  uninitialized(1),
+		  initialized(2),
+		  joining(3),
+		  becomingmaster(4),
+		  master(5),
+	      member(6),
+		  unknown(7)
+		}
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The member's mode in this cluster"
+  ::= { ipsoLBClusterNodeSpecificEntry 4}
+ 
+ipsoLBClusterNodeSpecificMemberRating OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "Member's rating in this cluster"
+  ::= { ipsoLBClusterNodeSpecificEntry 5}
+
+ipsoLBClusterNodeSpecificMemberPrimaryAddress OBJECT-TYPE
+  SYNTAX	IpAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "Members's primary interface address"
+  ::= { ipsoLBClusterNodeSpecificEntry 6}
+
+
+ipsoLBClusterNodeSpecificInterfaceTable OBJECT-TYPE
+  SYNTAX  	SEQUENCE OF IpsoLBClusterNodeSpecificInterfaceEntry
+  MAX-ACCESS  	not-accessible
+  STATUS	current
+  DESCRIPTION  	"This table contains information about each interface
+		 that participates in the cluster.
+		 The interfaces in this node can be a part of multiple
+		 cluster in which case there will be a row for each
+		 interface in each cluster."
+  ::= {ipsoLBClusterNodeSpecificInfo 2}
+
+ipsoLBClusterNodeSpecificInterfaceEntry  OBJECT-TYPE
+  SYNTAX 	IpsoLBClusterNodeSpecificInterfaceEntry
+  MAX-ACCESS 	not-accessible
+  STATUS	current
+  DESCRIPTION	"An entry containing management information for
+		 each interface in this member for each cluster."
+  INDEX { ipsoLBClusterNSInterfaceClusterIndex, ipsoLBClusterNSInterfaceIfIndex}
+  ::= {ipsoLBClusterNodeSpecificInterfaceTable 1}
+
+IpsoLBClusterNodeSpecificInterfaceEntry ::= 
+  SEQUENCE {
+     ipsoLBClusterNSInterfaceClusterIndex	INTEGER,
+     ipsoLBClusterNSInterfaceMemberID 		INTEGER,
+     ipsoLBClusterNSInterfaceIfIndex     	InterfaceIndex,
+     ipsoLBClusterNSInterfaceClusterIPAddress   IpAddress,
+     ipsoLBClusterNSInterfaceClusterNetMask     IpAddress,
+     ipsoLBClusterNSInterfaceClusterBroadcastAddress   IpAddress,
+     ipsoLBClusterNSInterfaceRealIPAddress      IpAddress,
+     ipsoLBClusterNSInterfaceMasterIPAddress	IpAddress,
+     ipsoLBClusterNSInterfaceClusterMcastGroup	IpAddress
+  }
+
+ipsoLBClusterNSInterfaceClusterIndex OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The cluster index for which this node is a member"
+  ::= { ipsoLBClusterNodeSpecificInterfaceEntry 1}
+
+ipsoLBClusterNSInterfaceMemberID OBJECT-TYPE
+  SYNTAX	INTEGER
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "This member's ID"
+  ::= { ipsoLBClusterNodeSpecificInterfaceEntry 2}
+
+ipsoLBClusterNSInterfaceIfIndex OBJECT-TYPE
+  SYNTAX	InterfaceIndex
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The interface index in the interface table"
+  ::= { ipsoLBClusterNodeSpecificInterfaceEntry 3}
+
+ipsoLBClusterNSInterfaceClusterIPAddress OBJECT-TYPE
+  SYNTAX	IpAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "Cluster's IP address for this interface"
+  ::= { ipsoLBClusterNodeSpecificInterfaceEntry 4}
+
+ipsoLBClusterNSInterfaceClusterNetMask OBJECT-TYPE
+  SYNTAX	IpAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "Cluster Netmask "
+  ::= { ipsoLBClusterNodeSpecificInterfaceEntry 5}
+
+ipsoLBClusterNSInterfaceClusterBroadcastAddress OBJECT-TYPE
+  SYNTAX	IpAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The Broadcast address"
+  ::= { ipsoLBClusterNodeSpecificInterfaceEntry 6}
+
+ipsoLBClusterNSInterfaceRealIPAddress OBJECT-TYPE
+  SYNTAX	IpAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "The real IP Address of the interface, if there
+		 are multiple IP address then this will the first
+		 IP address configured"
+  ::= { ipsoLBClusterNodeSpecificInterfaceEntry 7}
+
+ipsoLBClusterNSInterfaceMasterIPAddress OBJECT-TYPE
+  SYNTAX	IpAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "Master's IP address associated with this interface"
+  ::= { ipsoLBClusterNodeSpecificInterfaceEntry 8}
+
+ipsoLBClusterNSInterfaceClusterMcastGroup OBJECT-TYPE
+  SYNTAX	IpAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION   "IP multicast group associated with this interface"
+  ::= { ipsoLBClusterNodeSpecificInterfaceEntry 9}
+
+-- Following are the cluster related notifcation traps
+
+
+ipsoLBClusterNewMasterReason OBJECT-TYPE
+  SYNTAX INTEGER {
+	oldMasterHelloTimeout (1),
+	iamBetterMaster(2),
+	initalizedAsMaster(3),
+	unknown(4)
+  }
+  MAX-ACCESS accessible-for-notify
+  STATUS	current
+  DESCRIPTION
+	"Potential reason why this node became a master."
+  ::= { ipsoLBClusterNotificationGroup 1 }
+
+ipsoLBClusterTrapsPrefix OBJECT IDENTIFIER ::= { ipsoLBClusterMIB 0 }
+
+ipsoLBClusterMemberJoin NOTIFICATION-TYPE
+  OBJECTS {ipsoLBClusterInfoClusterID, ipsoLBClusterMemberID, ipsoLBClusterAddressInfoAddress}
+  STATUS  	current
+  DESCRIPTION "This trap is sent when a member node joins the cluster by the master"
+  ::= { ipsoLBClusterTrapsPrefix 1 }
+
+ipsoLBClusterMemberLeft NOTIFICATION-TYPE
+  OBJECTS {ipsoLBClusterInfoClusterID, ipsoLBClusterMemberID, ipsoLBClusterAddressInfoAddress}
+  STATUS  	current
+  DESCRIPTION "This trap is sent when a member node leaves the cluster by the master."
+  ::= { ipsoLBClusterTrapsPrefix 2 }
+
+ipsoLBClusterNewMaster NOTIFICATION-TYPE
+  OBJECTS {ipsoLBClusterInfoClusterID, ipsoLBClusterNewMasterReason}
+  STATUS   current
+  DESCRIPTION "This trap is sent when a cluster is formed and a new master is elected."
+  ::= { ipsoLBClusterTrapsPrefix 3 }
+
+ipsoLBJoinReject NOTIFICATION-TYPE
+  OBJECTS {ipsoLBClusterInfoClusterID, ipsoMemberIPAddress, ipsoMemberRejectErcode, 
+  ipsoMemberRejectWrongIntf, ipsoMemberRejectPrimaryIntf, ipsoMemberRejectCip,
+  ipsoMemberRejectHash }
+  STATUS  	current
+  DESCRIPTION "This trap is sent when a member's request to join the cluster
+  is rejected"
+  ::= { ipsoLBClusterTrapsPrefix 4 }
+
+ipsoLBClusterNewProtocol NOTIFICATION-TYPE
+  OBJECTS {ipsoLBClusterInfoClusterID, ipsoLBClusterMemberID, ipsoMemberInterfaceAddr, ipsoMemberInterfaceNetmask}
+  STATUS   current
+  DESCRIPTION "This trap is sent when a cluster protocol interface changes."
+  ::= { ipsoLBClusterTrapsPrefix 5 }
+
+--ERROR REASONS
+
+--ERROR CODE INTEGER
+ipsoMemberRejectErcode OBJECT-TYPE
+  SYNTAX INTEGER {
+    internalerroronmaster (55),
+    numberofmembersclustercansupportexceeded (22),
+    nodeUnreachableOnOneOfTheSelectedInterfaces (65),
+    protocolVersionMismatch (61),
+    configurationMismatch (6)
+  }
+  MAX-ACCESS accessible-for-notify
+  STATUS    current
+  DESCRIPTION "Potential reason why this node is rejected."
+::= { ipsoLBClusterNotificationGroup 6 }
+
+-- ERROR REASON WRONG NO OF INTERFACES CHOSEN
+ipsoMemberRejectWrongIntf OBJECT-TYPE
+  SYNTAX       OCTET STRING
+  MAX-ACCESS   accessible-for-notify
+  STATUS       current
+  DESCRIPTION  "Wrong number of Interfaces Selected."
+::= { ipsoLBClusterNotificationGroup 7 }
+
+-- ERROR REASON WRONG PRIMARY INTERFACE SELECTED
+ipsoMemberRejectPrimaryIntf OBJECT-TYPE
+  SYNTAX        OCTET STRING
+  MAX-ACCESS    accessible-for-notify
+  STATUS        current
+  DESCRIPTION   "Primary addresses didn't match."
+::= { ipsoLBClusterNotificationGroup 8 }
+
+-- ERROR REASON WRONG CLUSTER IP ADDRESS ON MORE INTERFACES
+ipsoMemberRejectCip OBJECT-TYPE
+  SYNTAX        OCTET STRING
+  MAX-ACCESS    accessible-for-notify
+  STATUS        current
+  DESCRIPTION   "Cluster IP address didn't match on one or more interfaces."
+::= { ipsoLBClusterNotificationGroup 9 }
+
+-- ERROR REASON WRONG HASH ON OR MORE INTERFACES
+ipsoMemberRejectHash OBJECT-TYPE
+  SYNTAX         OCTET STRING
+  MAX-ACCESS     accessible-for-notify
+  STATUS         current
+  DESCRIPTION   "Hash Configuration did not match on one or more interfaces."
+::= { ipsoLBClusterNotificationGroup 10 }
+
+--IP ADDRESS OF THE MEMBER THAT IS REJECTED, that has JOINED or LEFT.
+ipsoMemberIPAddress OBJECT-TYPE
+  SYNTAX	    IpAddress
+  MAX-ACCESS    accessible-for-notify
+  STATUS        current
+  DESCRIPTION   "IP address of a member."
+::= { ipsoLBClusterNotificationGroup 11 }
+
+ipsoMemberInterfaceAddr OBJECT-TYPE
+  SYNTAX	    OCTET STRING 
+  MAX-ACCESS    accessible-for-notify
+  STATUS        current
+  DESCRIPTION   "New Protocol IP address of a member."
+::= { ipsoLBClusterNotificationGroup 12 }
+
+ipsoMemberInterfaceNetmask OBJECT-TYPE
+  SYNTAX	    INTEGER
+  MAX-ACCESS    accessible-for-notify
+  STATUS        current
+  DESCRIPTION   "New Protocol netmask."
+::= { ipsoLBClusterNotificationGroup 13 }
+END

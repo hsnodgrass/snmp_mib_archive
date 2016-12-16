@@ -1,0 +1,530 @@
+-- **********************************************************************
+--
+-- Name:	3Com Switch Configuration Backup & Restore Control MIB
+-- 
+-- Description: 
+--
+-- This MIB has been designed for use with the Simple Configuration
+-- Backup and Restore Feature.
+--
+-- This MIB allows the user to save the configuration of a stack of
+-- devices to a file on a TFTP Server, verify that the configuration
+-- was stored correctly, restore the configuration from the TFTP Server
+-- and produce a snapshot of the current device status and configuration.
+--
+-- Not all of the configuration information from the device will be 
+-- saved in the backup file.  Security information such as passwords and
+-- RADIUS shared secrets shall not be backed up.  Storing these in a user
+-- readable file would be a potential security breach.  Furthermore, 
+-- there is no point in storing the basic IP address, subnetwork mask and
+-- default gateway.  If these are not already configured on the device,
+-- it is impossible to TFTP the file to the device.  And changing these
+-- parameters accidentally to the settings of another device could break
+-- the user's network.
+--
+-- At the head of the backup file there shall be:
+--   (1) An indication of the hardware configuration of the device that
+--       has produced this backup.  This shall include information about
+--       every unit in the stack and the plug-in modules that are 
+--       contained in each unit.
+--   (2) An agent-generated comment that describes the backup. This may
+--       include such items as the device name, the time when the backup
+--       was taken (if supported on the device) and any other pertinent
+--       information.  This differs from (1) above in that this is 
+--       intended to be read by the user.
+--   (3) Additional notes that the user may wish to attach to the file
+--       for their own housekeeping purposes.
+-- This is followed by the data contents of the backup file.
+--
+-- When a user is restoring a file, they will normally use the 
+-- loadDescriptionOnly operation first.  This reads the contents of (2) 
+-- and (3) above into MIB variables.  These would then be displayed to
+-- the user.  If the user is happy that the correct backup file has 
+-- been selected, then they would perform the restoreConfig operation.
+-- This restores all of the configuration information that was saved
+-- for the device.
+--
+-- Lock Mechanism:
+--
+-- This MIB employs a simple locking mechanism.  When an operation is
+-- in progress, all of the objects become read-only - that is any
+-- attempt to write to the object should be rejected with a bad value
+-- error.  The only exception to this is that any user may write
+-- abortAction(2) to a3ComBackupAction - this will abort the current
+-- operation.  When the abortion has completed, the objects will 
+-- return to read-write operation where appropriate.
+--
+--    For example, if a user tries to write a new filename to 
+--    a3ComBackupFilename, then the write will succeed if
+--    a3ComBackupAction is notActive(1) and will fail otherwise.
+--    This means that another user cannot corrupt the parameters
+--    of the current operation.
+--
+-- The objects shall also become read-only if another operation in the 
+-- device means that a backup or restore operation cannot be executed
+-- at this time.  An example could be a software upgrade.  In this case
+-- a3ComBackupAction would be notActive(1).  For simplicity, the user 
+-- is still allowed to write abortAction(2) to a3ComBackupAction.
+--
+-- **********************************************************************
+--
+-- History  Date        Reason for Change
+--
+-- 0.01     Sep 2001    Created.
+-- 0.02     Oct 2001    Updated after initial review comments.
+-- 0.03     Oct 2001    Minor editorial changes.
+-- 0.04     Oct 2001    Updated after review with 3NS.
+-- 0.05     Nov 2001    Restructured to allow for incorporation of user
+--                      locking mechanism.
+-- 0.06     Nov 2001    Removed locking mechanism as being too complex.
+--                      MIB items are now read-only during operations as
+--                      an alternative locking mechanism.
+-- 0.07     Nov 2001    Re-ordered the backup status enumerations.
+-- 0.08     Dec 2001    Moved MIB root from products MIB to the generic branch
+-- 0.09     Jan 2002    Added a3ComBackupResetNecessary to the MIB
+-- 0.10     Jan 2002    No change to MIB contents.
+-- 0.11     Feb 2002    Added a3ComBackupLastAction to the MIB and two new
+--                      backup status values.
+-- 0.12     Feb 2002    Changed a3ComBackupKBytes to a3ComBackupBytes.
+-- 1.00     Feb 2002    Now an Approved Standard.
+--
+-- **********************************************************************
+-- Copyright (c) 2001 3Com Corporation, All Rights Reserved
+-- **********************************************************************
+
+A3COM0469-BACKUP-AND-RESTORE DEFINITIONS ::= BEGIN
+
+
+	IMPORTS
+		a3ComBackup-mib FROM A3COM0004-GENERIC
+		mgmt, NetworkAddress, IpAddress, Counter, Gauge, TimeTicks, 
+                  enterprises FROM RFC1155-SMI
+		OBJECT-TYPE FROM RFC-1212
+		TRAP-TYPE FROM RFC-1215
+		DisplayString, PhysAddress, snmp FROM RFC1213-MIB
+		TruthValue FROM SNMPv2-TC
+		;
+
+
+-- **********************************************************************
+-- The following enumeration type defines the error messages that the
+-- backup restore and snapshot operations may generate.  They are listed
+-- here at the head of the MIB since there are rather a lot of them.
+-- **********************************************************************
+
+BackupStatus ::= INTEGER {
+   backupTftpFileNotFound (1),
+-- The TFTP Server was unable to locate the file that the user has
+-- specified.  The user should be prompted to re-enter the filename
+-- correctly.  This status is not applicable to operations that are 
+-- creating a new backup file.
+
+   backupTftpAccessViolation (2),
+-- The TFTP Server will not allow the user access to the specified 
+-- filename.  The user needs to reconfigure the TFTP Server or to select
+-- a more appropriate filename.
+
+   backupTftpDiskFull (3),
+-- The TFTP Server has been unable to create the specified file since it
+-- has run out of disk space.  The user needs to rationalise the file
+-- usage on the TFTP Server.  Or more disk space needs to be allocated
+-- on the TFTP Server.
+
+   backupTftpIllegalOperation (4),
+   backupTftpUnknownTransferId (5),
+-- The communications between the device and the TFTP Server have been
+-- corrupted.  The user should sort out any network problems and then
+-- repeat the operation.
+
+   backupTftpFileExists (6),
+-- The specified filename already exists on the TFTP Server and the TFTP
+-- Server has been configured so that overwriting a file is not allowed.
+-- The user should either use a new filename or should remove the file
+-- from the TFTP Server before repeating the command.
+
+   backupTftpNoSuchUser (7),
+-- The TFTP Server is not happy with this device trying to use it.  It
+-- may have an access table listing the IP addresses of the devices that
+-- may access it.  In that case, this device's IP address may not be in
+-- that list.
+
+   backupNoResponse (8),
+-- The device was unable to contact the TFTP Server.  The user should
+-- ensure that the correct TFTP Server IP address has been configured.
+
+   backupNoResource (9),
+-- The device was unable to carry out the operation because of a lack
+-- of resources (probably memory).  The user should consider restarting
+-- the device.
+
+   backupRecordLengthMismatch (10),
+   backupBadRecordType (11),
+   backupChecksumError (12),
+-- These indicate that the file which is being read has been corrupted.
+-- it is possible that the user has mistyped the filename and the wrong
+-- file is being read.
+
+   backupWrongHardwareType (13),
+   backupWrongHardwareVersion (14),
+-- This indicates that the backup file has been generated using a 
+-- different hardware configuration.  The user has either changed the
+-- device configuration or has selected the wrong backup file.  If the
+-- device configuration has been changed, the user may want to use the
+-- restoreIgnoringErrors operation.
+
+   backupHeaderMissing (15),
+-- The header information is missing from the backup file.  This means
+-- that the device is unable to determine if the file is appropriate to
+-- this device.  It is possible that the user has mistyped the filename.
+-- This error is returned for the loadDescriptionOnly operation if it
+-- cannot find the header.  It is not returned for the restoreConfig
+-- operation - this is to allow user generated files to be executed on
+-- the device.
+
+   backupByteCountIncorrect (16),
+   backupAddressIncorrect (17),
+-- These would be used by a binary format backup restoration if an 
+-- error is discovered in the format of the file.  The backup file is
+-- either corrupt or for a totally different type of device.  The user
+-- should select an appropriate backup file.
+
+   backupErasureFailed (18),
+   backupFlashProgramFailed (19),
+-- A binary format backup restore was unable to erase or write the 
+-- configuration data to the flash memory.  This could indicate that
+-- the life of the flash memory has been exhausted.  The user should
+-- retry the operation before returning the unit for repair.
+
+   backupWaitingToStart (20),
+-- The operation is waiting to be started.  This state may last some 
+-- time if necessary resources are being used by another operation.
+-- If it continues for too long, it may indicate a software lock-up
+-- and the user may need to restart the device.
+
+   backupOperationInProgress (21),
+-- The operation is in progress.
+
+   backupOperationSucceeded (22),
+-- The operation succeeded.
+
+   backupAbortedByUser (23),
+-- A user aborted the operation by setting the action to abortAction.
+
+   backupNotRequired (24),
+-- Probably not required by the backup operations.  This would indicate
+-- that the device already has the configuration stored in the file
+-- and that there is therefore no need to do the restore.
+
+   backupUnknownFailure (25),
+-- A catch-all for any other unexplained error.  The user should retry
+-- the operation.
+
+   backupAbortedAutomatically (26),
+-- This indicates that the operation was automatically aborted.  This
+-- may be due to a hardware configuration change or a software agent
+-- upgrade.
+
+   backupFileValid (27),
+-- The indicated backup file contains the same data that this device
+-- would produce for a new backup.
+
+   backupBadCommand (28),
+-- A restore of a CLI-based backup file encountered a command that it
+-- did not recognise.  The user has probably loaded a backup file that
+-- was generated by a later version of the agent.
+
+   backupCommandFailed (29),
+-- The restoration operation was terminated because a CLI command
+-- discovered an error when trying to execute.  The user may have edited
+-- the file and introduced an error.  Alternatively, the user may have
+-- created the backup with a later version of the agent.
+
+   backupFilenameInvalid (30),
+-- A legitimate operation was started but the filename had not been
+-- configured correctly.  The filename has probably been left blank.
+
+   backupTftpServerInvalid (31)
+-- A legitimate operation was started but the TFTP server had not been
+-- configured correctly.  The object has probably been left at 0.0.0.0.
+
+     }
+
+
+-- **********************************************************************
+
+a3ComBackupNecessary OBJECT-TYPE
+      SYNTAX      TruthValue
+      ACCESS      read-only
+      STATUS      mandatory
+      DESCRIPTION "This object is used to warn the user that any 
+        previous backup that they have taken may no longer be used to 
+        restore the configuration to this device.  It is therefore 
+        imperative that the user takes a new backup.
+
+        This object shall return true(1) if the user has taken a backup 
+        in the past and the current hardware configuration of the 
+        device does not match the configuration at the time of the 
+        previous backup.  In such a case, the backup file will either 
+        contain commands that can not be executed on the current 
+        hardware or will not contain configuration data for additional 
+        hardware.  The user needs either to take a new backup or to 
+        restore the original configuration.  Note that if the user 
+        restores the original hardware configuration, this item shall
+        (by definition) return to false(2)."
+      ::= {a3ComBackup-mib 1}
+
+a3ComBackupTftpServer OBJECT-TYPE
+      SYNTAX      IpAddress
+      ACCESS      read-write
+      STATUS      mandatory
+      DESCRIPTION "This object is used to store the IP address of the 
+        TFTP Server which is being used to hold the backup and snapshot
+        files.  Before a user has programmed an address, this value shall
+        return 0.0.0.0  Only valid class A, B or C IP addresses may be 
+        programmed into this object.
+
+        This object shall be read-only when an operation is in progress.
+        That is when a3ComBackupAction is not notActive(1)"
+      ::= {a3ComBackup-mib 2}
+
+a3ComBackupFilename OBJECT-TYPE
+      SYNTAX      DisplayString
+      ACCESS      read-write
+      STATUS      mandatory
+      DESCRIPTION "The name of the backup or snapshot file on the TFTP
+        Server.  This may include directory information as appropriate 
+        to the TFTP Server being used.  This value shall contain a zero
+        length string until the user specifies a particular value.
+
+        This object shall be read-only when an operation is in progress.
+        That is when a3ComBackupAction is not notActive(1)"
+      ::= {a3ComBackup-mib 3}
+
+a3ComBackupAgentComment OBJECT-TYPE
+      SYNTAX      DisplayString
+      ACCESS      read-only
+      STATUS      mandatory
+      DESCRIPTION "This object contains the header comment that the 
+        agent prepends to the backup and snapshot files.  By default,
+        it will contain a zero length string.  It shall also be set to
+        a zero length string by the agent when any operation is 
+        started.  As the operation proceeds, this object shall be set 
+        to the generated string for backup and snapshot operations and
+        to the received string for restore operations.  The string shall
+        then remain unchanged until the next operation commences.
+
+        If the file being restored does not contain a header, this 
+        object shall contain the zero length string when the operation
+        has completed.
+
+        This object shall be read-only when an operation is in progress.
+        That is when a3ComBackupAction is not notActive(1)"
+      ::= {a3ComBackup-mib 4}
+
+a3ComBackupUserComment OBJECT-TYPE
+      SYNTAX      DisplayString
+      ACCESS      read-write
+      STATUS      mandatory
+      DESCRIPTION "This object is similar to the agent comment object 
+        above but it allows the user to add their own notes to the 
+        backup or snapshot file.  This object shall default to a zero
+        length string. Before a user starts a backup or snapshot 
+        operation, they should set their comments in this object (or 
+        clear it if they have no comments).  For restore operations
+        this object shall be cleared as the restore commences and shall
+        be loaded with the user comment from the restored file's header
+        when it is received.
+
+        If the file being restored does not contain a header, this 
+        object shall contain the zero length string when the operation
+        has completed.
+
+        This object shall be read-only when an operation is in progress.
+        That is when a3ComBackupAction is not notActive(1)"
+      ::= {a3ComBackup-mib 5}
+
+a3ComBackupAction OBJECT-TYPE
+      SYNTAX      INTEGER  {
+                  notActive (1),
+                  abortAction (2),
+                  cliSave (3),
+                  cliVerify (4),
+                  binarySave (5),
+                  binaryVerify (6),
+                  restoreConfig (7),
+                  restoreIgnoringErrors (8),
+                  loadDescriptionOnly (9),
+                  takeSnapshot (10)
+      }
+      ACCESS      read-write
+      STATUS      mandatory
+      DESCRIPTION "This object actually starts the operation.  The user's
+        parameters MUST have been entered into the preceeding objects
+        before a command is started.  The objects SHOULD all be set using
+        a single SNMP packet.  This reduces the liklihood of one user
+        altering another user's parameters inadvertantly.
+
+        This object shall return notActive(1) when no operations are in
+        progress.  While an operation is in progress, it will return the
+        enumeration for the operation that is in progress.  When that 
+        operation finishes, this object shall return to notActive(1).
+
+        The user may set this object to abortAction(2) at any time.  This
+        will abort any operation that is currently in progress.  While 
+        the operation is being aborted, this object shall return
+        abortAction(2).  When the abort is complete, this value shall
+        return to notActive(1).  The a3ComBackupStatus shall be set to
+        backupAbortedByUser(23) to indicate that the command was aborted.
+
+        The user may only start any of the other operations when the state
+        is notActive(1).  Once an operation is in progress, this object
+        shall return the enumeration for the operation until it completes.
+        The outcome of the operation may be read from a3ComBackupStatus
+        below.
+
+        A device may refuse to carry out an operation if it is currently
+        unable to carry out the operation or if the operation is not
+        supported.  In this case a bad value response shall be returned.
+
+        The cliSave(3) operation saves the configuration as a list of CLI 
+        commands.  If these commands are played back to the device, then
+        the resultant configuration of the device would be that of the 
+        device when the backup was taken.  The cliVerify(4) operation 
+        checks that a backup file contains the commands that the current
+        configuration of the device would generate.
+
+        The binarySave(5) and binaryVerify(6) operations are similar to
+        the CLI operations.  The difference being that the configuration
+        is stored in a binary format rather than the CLI command format.
+
+        The restoreConfig(7) operation will read the configuration from
+        the specified file and apply it to the current device.  It is
+        assumed that the configuration file will have been generated by
+        this device or by a device of identical configuration.  If this
+        is not the case, then the operation shall be aborted and the
+        a3ComBackupStatus shall be set to backupWrongHardwareType.  If
+        any of the commands fail to execute, then the operation is
+        aborted and a3ComBackupStatus is set to backupBadCommand or
+        backupCommandFailed.  The details of the failed command shall be
+        stored in a3ComBackupFailedCommand and a3ComBackupFailureReason.
+
+        The preceeding is a deliberate protection mechanism.  It ensures
+        that a user does not accidentally restore the wrong configuration
+        to a device.  However, there may be times when a user wants to 
+        copy the configuration from one type of device to another.  The
+        user may edit the file to remove commands that the new device
+        does not understand.  This could be a time consuming process.
+        We therefore also allow the user the restoreIgnoringErrors(8)
+        operation.  This is similar to the restoreConfig(7) operation
+        above with the exception that all errors are ignored and the 
+        restore passes onto the next configuration item in the backup
+        file.  The objects a3ComBackupFailedCommand and 
+        a3ComBackupFailureReason will contain details of the last error
+        which occurred.
+
+        As an additional protection mechanism, the user may also load
+        just the comment fields from the backup file.  These can then be
+        displayed to the user so that they can confirm that they have
+        selected the correct operation.  In this case the user would
+        select the loadDescriptionOnly(9) operation; wait for it to
+        complete; display the comments to the user and ask for 
+        confiirmation; if the user is happy that it is the correct file
+        it is then loaded using the restoreConfig(7) operation.  
+
+        Note: It is possible for another user to overwrite the parameters
+        while the confirmation is awaited.  The user SHOULD therefore
+        set the parameters to the same values as were used for the
+        loadDescriptionOnly(9) operation in the same SNMP packet as the
+        setting of the restoreConfig(7) operation.
+
+        The final operation is takeSnapshot(10).  A snapshot creates a
+        file which contains the current status of the device.  This 
+        includes dynamic details such as what addresses have been 
+        learned on a port as well as the configuration details.  This
+        file is intended for human reading and contains the detail in 
+        a tabular format.  A snapshot is similar to the output that 
+        would be created by running all of the display and summary
+        commands on the device."
+      ::= {a3ComBackup-mib 6}
+
+a3ComBackupStatus OBJECT-TYPE
+      SYNTAX      BackupStatus
+      ACCESS      read-only
+      STATUS      mandatory
+      DESCRIPTION "This returns the status of the current or the previous
+        operation.  See the top of this MIB for a list of all of the 
+        possible values that this object may take."
+      ::= {a3ComBackup-mib 7}
+
+a3ComBackupBytes OBJECT-TYPE
+      SYNTAX      INTEGER
+      ACCESS      read-only
+      STATUS      mandatory
+      DESCRIPTION "The number of bytes of the configuration data that
+        have been transferred between the device and the TFTP Server.
+        This may be used by the user interface to provide an indication
+        of the progress of the operation."
+      ::= {a3ComBackup-mib 8}
+
+a3ComBackupFailedCommand OBJECT-TYPE
+      SYNTAX      DisplayString
+      ACCESS      read-only
+      STATUS      mandatory
+      DESCRIPTION "If any restore command fails, then this object shall 
+        contain the command line that caused the failure.  It shall be 
+        cleared when the next restore operation commences.  Where the 
+        failures are being ignored, it shall contain the details of the
+        last command that was ignored."
+      ::= {a3ComBackup-mib 9}
+
+a3ComBackupFailureReason OBJECT-TYPE
+      SYNTAX      DisplayString
+      ACCESS      read-only
+      STATUS      mandatory
+      DESCRIPTION "If a3ComBackupFailedCommand contains a failed 
+        command, then this object contains the error message that the 
+        failed command produced.  Where the failures are being ignored, 
+        it shall contain the details of the last command that was 
+        ignored."
+      ::= {a3ComBackup-mib 10}
+
+a3ComBackupResetNecessary OBJECT-TYPE
+      SYNTAX      TruthValue
+      ACCESS      read-only
+      STATUS      mandatory
+      DESCRIPTION "This object is used to inform management stations such
+        as 3NS that the device must be reset to factory defaults before
+        a backup file may be restored.  It shall return true(1) if the 
+        device must first be returned to factory defaults.
+
+        Note that the basic IP parameters are not to be returned to the
+        factory defaults otherwise communication with the device would
+        be lost.  These IP parameters are not saved in the backup file."
+      ::= {a3ComBackup-mib 11}
+
+a3ComBackupLastAction OBJECT-TYPE
+      SYNTAX      INTEGER  {
+                  noCommandIssued (1),
+                  cliSave (3),
+                  cliVerify (4),
+                  binarySave (5),
+                  binaryVerify (6),
+                  restoreConfig (7),
+                  restoreIgnoringErrors (8),
+                  loadDescriptionOnly (9),
+                  takeSnapshot (10)
+      }
+      ACCESS      read-only
+      STATUS      mandatory
+      DESCRIPTION "This object returns the last operation that was
+        performed by the user.  This is used for display purposes so
+        that a suitable message may be displayed to the user."
+      ::= {a3ComBackup-mib 12}
+
+
+-- **********************************************************************
+
+END
+
+
+

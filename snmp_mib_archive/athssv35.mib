@@ -1,0 +1,87 @@
+ADTRAN-ATLAS-HSSI-V35-MIB     DEFINITIONS ::= BEGIN
+
+-- TITLE:               Atlas HSSI/V.35 MIB
+-- FILENAME:            athssv35.mib
+-- PARTNUMBER:
+-- AUTHOR:              Jason Schock
+
+-- HISTORY:
+--   06/03/2002  Created.
+
+-- This MIB defines a generic ATLAS HSSI/V.35 interface.
+
+IMPORTS
+        enterprises
+                FROM RFC1155-SMI
+        ifIndex
+                FROM RFC1213-MIB
+        TRAP-TYPE
+                FROM RFC-1215
+        adATLASModuleInfoFPStatus
+                FROM ADTRAN-ATLAS-MODULE-MIB
+        adATLASUnitSlotAddress, adATLASUnitPortAddress, adATLASUnitFPStatus
+                FROM ADTRAN-ATLAS-UNIT-MIB;
+
+-- OBJECT IDENTIFIERS
+
+adtran               OBJECT IDENTIFIER ::= { enterprises 664 }
+adMgmt               OBJECT IDENTIFIER ::= { adtran 2 }
+adATLASmg            OBJECT IDENTIFIER ::= { adMgmt 154 }
+adGenATLASmg         OBJECT IDENTIFIER ::= { adATLASmg 1 }
+adATLASHSSIV35mg     OBJECT IDENTIFIER ::= { adGenATLASmg 11 }
+
+--_____________________________________________
+-- Atlas Enterprise Specific HSSI/V.35 Traps --
+--_____________________________________________
+
+adATLASHSSIV35IfceDeact  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates a HSSI/V.35 interface has been deactivated
+                 because the number of active DS1 links has fallen below the
+                 user-defined threshold value."
+        --#TYPE       "HSSI/V.35 Interface Deactivation"
+        --#SUMMARY    "ATLAS 15401100: HSSI/V.35 Interface Deactivation"
+        --#SUMMARY    "Line %d, Slot %d, Port %d,"
+        --#SUMMARY    "Module Status %d, Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15401100
+
+adATLASHSSIV35IfceReact  TRAP-TYPE
+        ENTERPRISE     adATLASmg
+        VARIABLES {
+                ifIndex,
+                adATLASUnitSlotAddress,
+                adATLASUnitPortAddress,
+                adATLASModuleInfoFPStatus,
+                adATLASUnitFPStatus
+        }
+        DESCRIPTION
+                "This trap indicates a HSSI/V.35 interface has been reactivated
+                 because either the number of active DS1 links has risen above
+                 the user-defined threshold value or because the user has
+                 manually reactivated it."
+        --#TYPE       "HSSI/V.35 Interface Reactivation"
+        --#SUMMARY    "ATLAS 15401101: HSSI/V.35 Interface Reactivation"
+        --#SUMMARY    "Line %d, Slot %d, Port %d,"
+        --#SUMMARY    "Module Status %d, Box Status %d"
+        --#ARGUMENTS  {0,1,2,3,4}
+        --#SEVERITY   MAJOR
+        --#GENERIC    6
+        --#CATEGORY   "Error Events"
+        --#SOURCE_ID  "A"
+        --#TIMEINDEX  0
+        ::= 15401101
+END

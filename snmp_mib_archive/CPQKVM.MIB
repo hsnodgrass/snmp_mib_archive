@@ -1,0 +1,1085 @@
+--------------------------------------------------------------------------------
+--                     HP IP Console Switch - MIB
+--         Management Information Base for SNMP Network Management
+--
+--              Revision: 1.1
+--		*********************************************************************
+--		Release History
+--		Date: April 10, 2003 (Corrected Spelling Errors)
+--		Revised by Brian Spencer
+--		Date: April 1, 2003 (Added Category,Trap Type, Time Index to Lockout Traps)
+--		Revised by Mark Spence
+--              Date: October 22, 2002
+--              Initial 1.1 Release
+--		*********************************************************************
+--
+--   Copyright 2002 Hewlett-Packard Corporation. All Rights Reserved.
+--
+--   The information in this document is subject to change without notice.
+--
+--------------------------------------------------------------------------------
+--
+-- The Compaq Enterprise number is 232.
+-- The ASN.1 prefix to, and including the Compaq Enterprise is: 1.3.6.1.4.1.232
+--
+
+CPQKVM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+   compaq                   FROM CPQHOST-MIB
+   Gauge                    FROM RFC1155-SMI
+   enterprises              FROM RFC1155-SMI
+   TimeTicks                FROM RFC1155-SMI
+   IpAddress                FROM RFC1155-SMI
+   Counter                  FROM RFC1155-SMI
+   NetworkAddress           FROM RFC1155-SMI
+   OBJECT-TYPE              FROM RFC-1212
+   DisplayString            FROM RFC1213-MIB
+   PhysAddress              FROM RFC1213-MIB
+   TRAP-TYPE                FROM RFC-1215;
+
+-- Note: uncomment the following compaq OBJECT IDENTIFIER and comment out
+-- "compaq FROM CPQHOST-MIB" above to compile without the CPQHOST-MIB
+
+-- compaq         OBJECT IDENTIFIER ::= { enterprises 232 }
+
+--------------------------------------------------------------------------------
+-- Object Groupings
+--------------------------------------------------------------------------------
+
+-- Note: every product type should be uniquely identified underneath the
+-- cpqKvmProducts object group. Each product should report its unique
+-- cpqKvmProducts OBJECT IDENTIFIER in mib-2.system.sysObjectID. The following
+-- products are currently defined:
+--
+--    cpqKvmProducts.1 = Compaq IP Console Switch 1x1x16
+--    cpqKvmProducts.2 = Compaq IP Console Switch 3x1x16
+--
+
+cpqKvm            OBJECT IDENTIFIER ::= { compaq 160 }               -- 1.3.6.1.4.1.232.160
+cpqKvmProducts    OBJECT IDENTIFIER ::= { cpqKvm 1 }                 -- 1.3.6.1.4.1.232.160.1
+cpqKvmManagement  OBJECT IDENTIFIER ::= { cpqKvm 2 }                 -- 1.3.6.1.4.1.232.160.2
+
+cpqKvmTrapObject  OBJECT IDENTIFIER ::= { cpqKvmManagement 6 }       -- 1.3.6.1.4.1.232.160.2.6
+
+--------------------------------------------------------------------------------
+-- Trap Object Group (cpqKvmTrapObject)                  1.3.6.1.4.1.232.160.2.6
+--
+-- The following objects are implemented only for the generation of
+-- TRAPs. The objects are sent in traps and are not accessible in
+-- any other way.
+--------------------------------------------------------------------------------
+
+cpqKvmTrapObjectUserName OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (3..16) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the name of the user
+         for which the trap condition occurred. If the trap condition occurred
+         as a result of activity on the local port (OSD), then the value of this
+         object will be the following string:
+
+            local port
+         "
+      ::= { cpqKvmTrapObject 1 }
+
+cpqKvmTrapObjectTargetUserName OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (3..16) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the name of the target
+         user for which a trap condition occurred.
+         "
+      ::= { cpqKvmTrapObject 2 }
+
+cpqKvmTrapObjectImageType OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..64) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the type of software image
+         for which the trap condition occurred.
+         "
+      ::= { cpqKvmTrapObject 3 }
+
+cpqKvmTrapObjectImageNewVersion OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..32) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the version of the new
+         software image the console switch is being upgraded to.
+         "
+      ::= { cpqKvmTrapObject 4 }
+
+cpqKvmTrapObjectImageCurrentVersion OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..32) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the version of the
+         software image that the console switch is currently running.
+         "
+      ::= { cpqKvmTrapObject 5 }
+
+cpqKvmTrapObjectImageUpgradeResults OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..64) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to report the results of a
+         TFTP image upgrade."
+      ::= { cpqKvmTrapObject 6 }
+
+cpqKvmTrapObjectSessionIdentifier OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..32) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the session
+         for which the trap condition occurred. The value will be
+         the name of a server if the server name is known, otherwise
+         the value will be the connection path to a server.
+
+         If the value is a connection path it will have the following format:
+
+            IA i:Channel c
+
+         Where i is the ID of the interface adapter, and c is the cascade switch
+         channel number (0 if there is no switch in the path).
+         "
+      ::= { cpqKvmTrapObject 7 }
+
+cpqKvmTrapObjectIaId OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..32) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the interface adapter for
+         which the trap condition occurred.
+         "
+      ::= { cpqKvmTrapObject 8 }
+
+cpqKvmTrapObjectCascadeSwitchName OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..15) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the cascade switch for
+         which the trap condition occurred.
+         "
+      ::= { cpqKvmTrapObject 9 }
+
+cpqKvmTrapObjectOldCascadeSwitchName OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..15) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the old name of a cascade
+         switch whose name was changed.
+         "
+      ::= { cpqKvmTrapObject 10 }
+
+cpqKvmTrapObjectServerName OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..15) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the server for
+         which the trap condition occurred.
+         "
+      ::= { cpqKvmTrapObject 11 }
+
+cpqKvmTrapObjectOldServerName OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..15) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the old name of a server
+         whose name was changed.
+         "
+      ::= { cpqKvmTrapObject 12 }
+
+cpqKvmTrapObjectFileName OBJECT-TYPE
+      SYNTAX DisplayString ( SIZE (0..12) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the name of a file
+         for which the trap condition occurred.
+         "
+      ::= { cpqKvmTrapObject 13 }
+
+cpqKvmTrapObjectFirmwareCondition OBJECT-TYPE
+      SYNTAX OCTET STRING ( SIZE (0..64) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This trap message will contain data for application specific
+         diagnostics.  It is designed in provision for diagnostic help
+         for installation-specific problems, would require the operator
+         to install firmware provided to isolate their particular problems
+         and to enable the trap to report conditions.
+
+         The contents will be an Application Message Packet with
+         the address, size, and command header removed.  The parameters
+         of the message will depend on the specific problem the firmware
+         is designed to detect and report.
+         "
+      ::= { cpqKvmTrapObject 14 }
+
+cpqKvmTrapObjectDeviceId OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..32) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the device for which
+         the trap condition occurred.
+         "
+      ::= { cpqKvmTrapObject 15 }
+
+cpqKvmTrapObjectAlarmCondition OBJECT-TYPE
+      SYNTAX INTEGER {
+                        alarm(1),
+                        ok(2)
+                     }
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify Warning/Alarm activity for
+         the device on which the trap condition occurred.
+         Alarm sets the alarm, OK indicates the condition has cleared up.
+          "
+      ::= { cpqKvmTrapObject 16 }
+
+cpqKvmTrapObjectAlarmDescription OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..64) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to explain the Warning/Alarm condition
+         for which the trap condition occurred.  This is intended for display
+         or logging.
+         "
+      ::= { cpqKvmTrapObject 17 }
+
+cpqKvmTrapObjectLockReason OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..64) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to explain the reason for which a 
+         user account has been locked.
+         "
+      ::= { cpqKvmTrapObject 18 }
+
+cpqKvmTrapObjectUnlockReason OBJECT-TYPE
+      SYNTAX UTF8String ( SIZE (0..64) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to explain the reason for which a
+         user account has been unlocked.
+         "
+      ::= { cpqKvmTrapObject 19 }
+
+cpqKvmTrapObjectIPAddress OBJECT-TYPE
+      SYNTAX DisplayString( SIZE (0..32) )
+      ACCESS not-accessible
+      STATUS mandatory
+  --% AVAILABILITY public
+      DESCRIPTION
+         "This object is sent in a trap to identify the IP address for 
+         which a trap condition occurred.
+         "
+      ::= { cpqKvmTrapObject 20 }
+
+--------------------------------------------------------------------------------
+-- Enterprise Traps
+--------------------------------------------------------------------------------
+
+cpqKvmRebootStartedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   { cpqKvmTrapObjectUserName }
+      DESCRIPTION
+         "The console switch is in the process of rebooting.
+
+         The name of the user who initiated the reboot
+         is contained in cpqKvmTrapObjectUserName.
+         "
+
+      --#TYPE        "Reboot Trap"
+      --#SUMMARY     "The console switch is rebooting. Command issued by user: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 1
+
+cpqKvmUserLoginTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   { cpqKvmTrapObjectUserName }
+      DESCRIPTION
+         "A user logged into the console switch.
+
+         The name of the user who logged in
+         is contained in cpqKvmTrapObjectUserName.
+         "
+
+      --#TYPE        "User Login Trap"
+      --#SUMMARY     "User logged into the console switch. User: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 2
+
+cpqKvmUserLogoutTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   { cpqKvmTrapObjectUserName }
+      DESCRIPTION
+         "A user logged out of the console switch.
+
+         The name of the user who logged out is contained
+         in cpqKvmTrapObjectUserName.
+         "
+
+      --#TYPE        "User Logout Trap"
+      --#SUMMARY     "User logged out of the console switch. User: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 3
+
+cpqKvmVideoSessionStartedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectSessionIdentifier
+                  }
+      DESCRIPTION
+         "A video session has started.
+
+         The name of the user who is connected to the session
+         is contained in cpqKvmTrapObjectUserName.
+
+         The session identifier is contained in
+         cpqKvmTrapObjectSessionIdentifier.
+         "
+
+      --#TYPE        "Video Session Started Trap"
+      --#SUMMARY     "Video session started. User: %s. Server: %s."
+      --#ARGUMENTS   { 0, 1 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 4
+
+cpqKvmVideoSessionStoppedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectSessionIdentifier
+                  }
+      DESCRIPTION
+         "A video session has stopped.
+
+         The name of the user who was connected to the session
+         is contained in cpqKvmTrapObjectUserName.
+
+         The session identifier is contained in
+         cpqKvmTrapObjectSessionIdentifier.
+         "
+
+      --#TYPE        "Video Session Stopped Trap"
+      --#SUMMARY     "Video session stopped. User: %s. Server: %s"
+      --#ARGUMENTS   { 0, 1 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 5
+
+cpqKvmVideoSessionTerminatedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectTargetUserName,
+                     cpqKvmTrapObjectSessionIdentifier
+                  }
+      DESCRIPTION
+         "A video session has been terminated by another
+         user.
+
+         The name of the user who terminated the session is
+         contained in cpqKvmTrapObjectUserName.
+
+         The name of the user who was terminated from the session
+         is contained in cpqKvmTrapObjectTargetUserName.
+
+         The session identifier is contained in
+         cpqKvmTrapObjectSessionIdentifier.
+         "
+
+      --#TYPE        "Video Session Terminated Trap"
+      --#SUMMARY     "Video session terminated. Command issued by user: %s. Terminated user: %s. Server: %s."
+      --#ARGUMENTS   { 0, 1, 2 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 6
+
+cpqKvmLocalPortViewingStartedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   { cpqKvmTrapObjectSessionIdentifier }
+      DESCRIPTION
+         "A user on the local port has started viewing a server.
+
+         The session identifier is contained in
+         cpqKvmTrapObjectSessionIdentifier.
+         "
+
+      --#TYPE        "Local Port Viewing Started Trap"
+      --#SUMMARY     "Viewing started on the local port. Server: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 7
+
+cpqKvmLocalPortViewingStoppedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   { cpqKvmTrapObjectSessionIdentifier }
+      DESCRIPTION
+         "A user on the local port has stopped viewing a server.
+
+         The session identifier is contained in
+         cpqKvmTrapObjectSessionIdentifier.
+         "
+
+      --#TYPE        "Local Port Viewing Stopped Trap"
+      --#SUMMARY     "Viewing stopped on the local port. Server: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 8
+
+cpqKvmImageUpgradeStarted TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectImageType,
+                     cpqKvmTrapObjectImageNewVersion,
+                     cpqKvmTrapObjectImageCurrentVersion
+                  }
+      DESCRIPTION
+         "The console switch has started a TFTP upgrade of an image.
+
+         The name of the user who initiated the TFTP image upgrade is
+         contained in cpqKvmTrapObjectUserName.
+
+         The type of image that is being upgraded is contained
+         in cpqKvmTrapObjectImageType.
+
+         The version of the image that the console switch is upgrading to is
+         contained in cpqKvmTrapObjectImageNewVersion.
+
+         The version of the image that the console switch is currently running
+         is contained in cpqKvmTrapObjectImageCurrentVersion.
+         "
+
+      --#TYPE        "Image Upgrade Started Trap"
+      --#SUMMARY     "TFTP image upgrade started. Command issued by user: %s. Image type: %s. New version: %s. Current version: %s"
+      --#ARGUMENTS   { 0, 1, 2, 3 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 9
+
+cpqKvmImageUpgradeResultsTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   { cpqKvmTrapObjectImageUpgradeResults }
+      DESCRIPTION
+         "The results of a TFTP image upgrade."
+
+      --#TYPE        "Image Upgrade Results Trap"
+      --#SUMMARY     "%s"
+      --#ARGUMENTS   { 0 }
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#SEVERITY    INFORMATIONAL
+      ::= 10
+
+cpqKvmUserAddedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectTargetUserName
+                  }
+      DESCRIPTION
+         "A new user has been added to the local user database.
+
+         The name of the user who added the new user is contained
+         in cpqKvmTrapObjectUserName.
+
+         The name of the new user is contained in
+         cpqKvmTrapObjectTargetUserName.
+         "
+
+      --#TYPE        "User Added Trap"
+      --#SUMMARY     "New user added to local user database. Command issued by user: %s. New user: %s."
+      --#ARGUMENTS   { 0, 1 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 11
+
+cpqKvmUserDeletedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectTargetUserName
+                  }
+      DESCRIPTION
+         "A user has been deleted from the local user database.
+
+         The name of the user who deleted the user is contained
+         in cpqKvmTrapObjectUserName.
+
+         The name of the user who was deleted is contained
+         in cpqKvmTrapObjectTargetUserName.
+         "
+
+      --#TYPE        "User Deleted Trap"
+      --#SUMMARY     "User deleted from local user database. Command issued by user: %s. Deleted user: %s."
+      --#ARGUMENTS   { 0, 1 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 12
+
+cpqKvmUserModifiedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectTargetUserName
+                  }
+      DESCRIPTION
+         "A user was modified.
+
+         The name of the user who modified the user is contain
+         in cpqKvmTrapObjectUserName.
+
+         The name of the user who was modified is contained
+         in cpqKvmTrapObjectTargetUserName.
+         "
+
+      --#TYPE        "User Modified Trap"
+      --#SUMMARY     "User modified in local user database. Command issued by user: %s. Modified user: %s."
+      --#ARGUMENTS   { 0, 1 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 13
+
+cpqKvmUserAuthenticationFailureTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   { cpqKvmTrapObjectUserName }
+      DESCRIPTION
+         "A user failed to authenticate with the console switch.
+
+         The name of the user who failed to authenticate
+         is contained in cpqKvmTrapObjectUserName.
+         "
+
+      --#TYPE        "User Authentication Failed Trap"
+      --#SUMMARY     "User authentication failed with the console switch. User: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 14
+
+cpqKvmIaAddedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   { cpqKvmTrapObjectIaId }
+      DESCRIPTION
+         "An interface adapter was added. The ID of the interface adapter which
+         was added is contained in cpqKvmTrapObjectIaId.
+         "
+
+      --#TYPE        "Interface Adapter Added Trap"
+      --#SUMMARY     "Interface adapter added. IA ID: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 15
+
+cpqKvmIaRemovedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   { cpqKvmTrapObjectIaId }
+      DESCRIPTION
+         "An interface adapter was removed. The ID of the interface adapter
+         which was removed is contained in cpqKvmTrapObjectIaId.
+         "
+
+      --#TYPE        "Interface Adapter Removed Trap"
+      --#SUMMARY     "Interface adapter removed. IA ID: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 16
+
+cpqKvmServerNameChangedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectOldServerName,
+                     cpqKvmTrapObjectServerName,
+                     cpqKvmTrapObjectIaId
+                  }
+      DESCRIPTION
+         "The name of a server has changed.
+
+         The previous name of the server is contained in
+         cpqKvmTrapObjectOldServerName.
+
+         The new name of the server is contained in
+         cpqKvmTrapObjectServerName.
+
+         The ID of the interface adapter the server is attached to is
+         contained in cpqKvmTrapObjectIaId,
+         "
+
+      --#TYPE        "Server Name Changed Trap"
+      --#SUMMARY     "Server name changed. Old name: %s. New name: %s. Attached to IA: %s."
+      --#ARGUMENTS   { 0, 1, 2 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 17
+
+cpqKvmCascadeSwitchAddedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                    cpqKvmTrapObjectCascadeSwitchName,
+                    cpqKvmTrapObjectIaId
+                  }
+      DESCRIPTION
+         "A cascade switch was added. The name of the switch
+         which was added is contained in cpqKvmTrapObjectCascadeSwitchName.
+
+         The ID of the interface adapter the switch was added to is contained
+         in cpqKvmTrapObjectIaId.
+         "
+
+      --#TYPE        "Cascade Switch Added Trap"
+      --#SUMMARY     "Cascade switch added. Cascade switch name: %s. Attached to IA: %s."
+      --#ARGUMENTS   { 0, 1 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 18
+
+cpqKvmCascadeSwitchRemovedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                    cpqKvmTrapObjectCascadeSwitchName,
+                    cpqKvmTrapObjectIaId
+                  }
+      DESCRIPTION
+         "A cascade switch was removed. The name of the switch
+         which was removed is contained in cpqKvmTrapObjectCascadeSwitchName.
+
+         The ID of the interface adapter the switch was attached to is contained
+         in cpqKvmTrapObjectIaId.
+         "
+
+      --#TYPE        "Cascade Switch Removed Trap"
+      --#SUMMARY     "Cascade switch removed. Cascade switch name: %s. Was attached to IA: %s."
+      --#ARGUMENTS   { 0, 1 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 19
+
+cpqKvmCascadeSwitchNameChangedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectOldCascadeSwitchName,
+                     cpqKvmTrapObjectCascadeSwitchName,
+                     cpqKvmTrapObjectIaId
+                  }
+      DESCRIPTION
+         "The name of a cascade switch has changed.
+
+         The previous name of the cascade switch is contained in
+         cpqKvmTrapObjectOldCascadeSwitchName.
+
+         The new name of the cascade switch is contained in
+         cpqKvmTrapObjectCascadeSwitchName.
+
+         The ID of the interface adapter the switch is attached to is contained
+         in cpqKvmTrapObjectIaId.
+         "
+
+      --#TYPE        "Cascade Switch Name Changed Trap"
+      --#SUMMARY     "Cascade switch name changed. Old name: %s. New name: %s. Attached to IA: %s."
+      --#ARGUMENTS   { 0, 1, 2 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 20
+
+cpqKvmConfigurationFileLoadedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectFileName
+                  }
+      DESCRIPTION
+         "The console switch has loaded a configuration file.
+
+         The name of the user who commanded the console switch to load the
+         configuration file is contained in cpqKvmTrapObjectUserName.
+
+         The name of the file that was loaded is contained in
+         cpqKvmTrapObjectFileName.
+         "
+
+      --#TYPE        "Configuration File Loaded Trap"
+      --#SUMMARY     "Configuration file loaded in the console switch. Command issued by user: %s. Name of file loaded: %s."
+      --#ARGUMENTS   { 0, 1 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 21
+
+cpqKvmUserDatabaseFileLoadedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectFileName
+                  }
+      DESCRIPTION
+         "The console switch has loaded a user database file.
+
+         The name of the user who commanded the console switch to load the
+         user database file is contained in cpqKvmTrapObjectUserName.
+
+         The name of the file that was loaded is contained in
+         cpqKvmTrapObjectFileName.
+         "
+
+      --#TYPE        "Database File Loaded Trap"
+      --#SUMMARY     "User database file loaded in the console switch. Command issued by user: %s. Name of file loaded: %s."
+      --#ARGUMENTS   { 0, 1 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 22
+
+cpqKvmInvalidHookupDetectedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectFirmwareCondition
+                  }
+      DESCRIPTION
+         "The console switch has detected an invalid connection.
+
+         This can include two interface adapters on a port where one or more
+         have a cascade switch, or some other illegal setup condition.
+
+         Information about the nature of the failure is stored in the
+         cpqKvmTrapObjectFirmwareCondition object.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Invalid connection detected. Device ID: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 23
+
+cpqKvmSubsystemUpgradeStartedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectFirmwareCondition
+                  }
+      DESCRIPTION
+         "The console switch has started a Subsystem Upgrade.
+
+         This can be a download from the DModule to the Main Board, or
+         a interface adapter or other subsystem download from the Main Board...
+
+         Information about the subsystem being updated is stored in the
+         cpqKvmTrapObjectFirmwareCondition object.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Subsystem Upgrade started. Device ID: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 24
+
+cpqKvmSubsystemRestartTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectFirmwareCondition
+                  }
+      DESCRIPTION
+         "The console switch has completed a download and is restarting the
+         subsystem specified in the cpqKvmTrapObjectFirmwareCondition object.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Subsystem restarting. Device ID: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 25
+
+cpqKvmFirmwareCommunicationsTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectFirmwareCondition
+                  }
+      DESCRIPTION
+         "The console switch has detected communication problems in the system
+         configuration.  This can be used to indicate install problems that
+         might result in perceived problems with the switch.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Communication problems in the system configuration. Device ID: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    MAJOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 26
+
+cpqKvmNVMemoryFailureTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectFirmwareCondition
+                  }
+      DESCRIPTION
+         "The console switch has detected a memory problem, the nature of which
+          has been described in the cpqKvmTrapObjectFirmwareCondition object.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Memory problem. Device ID: %s"
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    CRITICAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 27
+
+cpqKvmWatchdogResetTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectFirmwareCondition
+                  }
+      DESCRIPTION
+         "The console switch has detected a watchdog reset condition.
+
+         This indicates a catastrophic failure in the Firmware/Hardware
+         preventing normal operation of the console switch.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Watchdog reset. Device ID: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    CRITICAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 28
+
+cpqKvmDiagnosticConditionTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectFirmwareCondition
+                  }
+      DESCRIPTION
+         "The console switch has detected a special condition to be trapped
+          for diagnostics.  The condition has been recorded is stored
+          in the cpqKvmTrapObjectFirmwareCondition object.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Special condition was trapped. Device ID: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 29
+
+cpqKvmSubsystemUpgradeFailureTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectFirmwareCondition
+                  }
+      DESCRIPTION
+         "The console switch has detected a special condition resulting in a
+         failed subsystem update.  The condition has been recorded is stored
+         in the cpqKvmTrapObjectFirmwareCondition object.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Subsystem upgrade failed. Device ID: %s."
+      --#ARGUMENTS   { 0 }
+      --#SEVERITY    INFORMATIONAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 30
+
+cpqKvmWarningConditionTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectAlarmCondition,
+                     cpqKvmTrapObjectAlarmDescription
+                  }
+      DESCRIPTION
+         "The console switch has detected a special condition to be trapped
+         for warning the operator.  The condition indicates some parameter
+         outside of normal operation, such as over temperature range.
+         These are not expected to result in unusual behavior, but may
+         be precursor to a subsequent urgent condition.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Warning condition. Device ID: %s. Alarm condition: %d. Alarm description: %s."
+      --#ARGUMENTS   { 0, 1, 2 }
+      --#SEVERITY    MINOR
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 31
+
+cpqKvmUrgentConditionTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectDeviceId,
+                     cpqKvmTrapObjectAlarmCondition,
+                     cpqKvmTrapObjectAlarmDescription
+                  }
+      DESCRIPTION
+         "The console switch has detected a special condition to be trapped
+         for alerting the operator.  The condition indicates some parameter
+         outside of normal operation that is expected to result in
+         unpredictable system behavior.
+         "
+
+      --#TYPE        "Status Trap"
+      --#SUMMARY     "Urgent condition. Device ID: %s. Alarm condition: %d. Alarm description: %s."
+      --#ARGUMENTS   { 0, 1, 2 }
+      --#SEVERITY    CRITICAL
+      --#CATEGORY    "SYSTEM AND ENVIRONMENTAL"
+      --#TIMEINDEX   99
+      ::= 32
+
+cpqKvmUserLockedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectIPAddress,
+                     cpqKvmTrapObjectTargetUserName,
+                     cpqKvmTrapObjectLockReason
+                  }
+      DESCRIPTION
+         "A user account has been locked.
+
+         The IP address of the client is contained in cpqKvmTrapObjectIPAddress.
+
+         The name of the user who was locked is contained
+         in cpqKvmTrapObjectTargetUserName.
+
+         The reason for which the user account has been locked is contained
+         in cpqKvmTrapObjectLockReason.
+         "
+
+      --#TYPE        "User Account Lockout"
+      --#SUMMARY     "User account has been locked. Client IP Address: %s. Locked user: %s. Reason: %s"
+      --#ARGUMENTS   { 0, 1, 2 }
+      --#SEVERITY    MINOR
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 33
+
+cpqKvmUserUnlockedTrap TRAP-TYPE
+      ENTERPRISE  cpqKvmProducts
+      VARIABLES   {
+                     cpqKvmTrapObjectIPAddress,
+                     cpqKvmTrapObjectUserName,
+                     cpqKvmTrapObjectTargetUserName,
+                     cpqKvmTrapObjectUnlockReason
+                  }
+      DESCRIPTION
+         "A user account has been unlocked.
+
+         The IP address of the client that originated the unlock request
+         is contained in cpqKvmTrapObjectIPAddress. When the user 
+         account is unlocked by an appliance reboot or by the expiration
+         of the lockout period (as specified in the 
+         cpqKvmTrapObjectUnlockReason object), the IP address 
+         will be blank.
+
+
+         The name of the user who unlocked the user is contained
+         in cpqKvmTrapObjectUserName. When the user account is unlocked 
+         by an appliance reboot or by the expiration of the lockout period 
+         (as specified in the cpqKvmTrapObjectUnlockReason object), the
+         name of the user will be blank.
+
+         The name of the user who was unlocked is contained
+         in cpqKvmTrapObjectTargetUserName.
+
+         The reason for which the user account has been unlocked is contained 
+         in cpqKvmTrapObjectUnlockReason.
+         "
+
+      --#TYPE        "User Account Unlocked"
+      --#SUMMARY     "User account has been unlocked. Client IP Address: %s. Command issued by user: %s. Unlocked user: %s. Reason: %s"
+      --#ARGUMENTS   { 0, 1, 2, 3 }
+      --#SEVERITY    MINOR
+      --#CATEGORY    "REMOTE MONITORING AND MANAGEMENT"
+      --#TIMEINDEX   99
+      ::= 34
+
+END
+

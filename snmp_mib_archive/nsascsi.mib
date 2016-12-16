@@ -1,0 +1,527 @@
+-- ****************************************************************************
+--                    HP NetServer SCSI Information
+--        Management Information Base for SNMP Network Management
+--
+-- 
+--      Revision - 1.01
+--
+--      Copyright 1994-2003 Hewlett Packard Company.
+--      All Rights Reserved.
+--
+--      The information in this document is subject to change without notice.
+--
+-- ****************************************************************************
+-- COMMENTS
+--
+--      Changes - Date: 10-30-2003
+--        MIB Rev has changed from 1.0 to 1.01
+--        Affected MIB parameters
+--          hpnsaScsiMibRevMinor
+--          hpnsaScsiAgentModuleDate - changed from SIZE (7)    to SIZE (0..7)
+--          hpnsaScsiDevVendorId     - changed from SIZE (0..7) to SIZE (0..8)
+--          hpnsaScsiDevProductId    - changed from SIZE (0..7) to SIZE (0..16)
+--          
+--
+-- ****************************************************************************
+--      The hp Enterprise number is 11.
+--      The ASN.1 prefix to, and including the hp Enterprise is:
+--              1.3.6.1.4.1.11
+--
+-- hp   (1.3.6.1.4.1.11)
+--    nm   (1.3.6.1.4.1.11.2)
+--        hpnsa   (1.3.6.1.4.1.11.2.23)
+--            hpnsaScsi Group  (1.3.6.1.4.1.11.2.23.14)
+--                hpnsaScsiMibRev Group  (1.3.6.1.4.1.11.2.23.14.1)             
+--                    hpnsaScsiMibRevMajor  (1.3.6.1.4.1.11.2.23.14.1.1)  
+--                    hpnsaScsiMibRevMinor  (1.3.6.1.4.1.11.2.23.14.1.2) 
+--                hpnsaScsiAgent Group  (1.3.6.1.4.1.11.2.23.14.2)
+--                    hpnsaScsiAgentModuleEntry  (1.3.6.1.4.1.11.2.23.14.2.1)
+--                        hpnsaScsiAgentModuleIndex  (1.3.6.1.4.1.11.2.23.14.2.1.1)
+--                        hpnsaScsiAgentModuleName  (1.3.6.1.4.1.11.2.23.14.2.1.2)
+--                        hpnsaScsiAgentModuleVersion  (1.3.6.1.4.1.11.2.23.14.2.1.3)
+--                        hpnsaScsiAgentModuleDate  (1.3.6.1.4.1.11.2.23.14.2.1.4)
+--                        hpnsaScsiAgentModulePurpose  (1.3.6.1.4.1.11.2.23.14.2.1.5)        
+--                hpnsaScsiHba Group  (1.3.6.1.4.1.11.2.23.14.3)
+--                    hpnsaScsiHbaTable   (1.3.6.1.4.1.11.2.23.14.3.1)
+--                        hpnsaScsiHbaEntry   (1.3.6.1.4.1.11.2.23.14.3.1.1)
+--                            hpnsaScsiHbaIndex   (1.3.6.1.4.1.11.2.23.14.3.1.1.1)
+--                            hpnsaScsiHbaTargetId   (1.3.6.1.4.1.11.2.23.14.3.1.1.2)    
+--                            hpnsaScsiHbaManagerId  (1.3.6.1.4.1.11.2.23.14.3.1.1.3) 
+--                            hpnsaScsiHbaHostAdapterId  (1.3.6.1.4.1.11.2.23.14.3.1.1.4)     
+--               hpnsaScsiDev Group  (1.3.6.1.4.1.11.2.23.14.4)
+--                   hpnsaScsiDevTable   (1.3.6.1.4.1.11.2.23.14.4.1)
+--                       hpnsaScsiDevEntry   (1.3.6.1.4.1.11.2.23.14.4.1.1)
+--                           hpnsaScsiDevHbaIndex   (1.3.6.1.4.1.11.2.23.14.4.1.1.1)
+--                           hpnsaScsiDevTargIdIndex   (1.3.6.1.4.1.11.2.23.14.4.1.1.2)
+--                           hpnsaScsiDevLunIndex   (1.3.6.1.4.1.11.2.23.14.4.1.1.3)
+--                           hpnsaScsiDevType   (1.3.6.1.4.1.11.2.23.14.4.1.1.4)
+--                           hpnsaScsiDevRmb   (1.3.6.1.4.1.11.2.23.14.4.1.1.5)
+--                           hpnsaScsiDevAnsiVer   (1.3.6.1.4.1.11.2.23.14.4.1.1.6)
+--                           hpnsaScsiDevEcmaVer   (1.3.6.1.4.1.11.2.23.14.4.1.1.7)
+--                           hpnsaScsiDevIsoVer   (1.3.6.1.4.1.11.2.23.14.4.1.1.8)
+--                           hpnsaScsiDevVendorId   (1.3.6.1.4.1.11.2.23.14.4.1.1.9)
+--                           hpnsaScsiDevProductId   (1.3.6.1.4.1.11.2.23.14.4.1.1.10)
+--                           hpnsaScsiDevProductRev   (1.3.6.1.4.1.11.2.23.14.4.1.1.11)
+--                           hpnsaScsiDevLogicalBlocks   (1.3.6.1.4.1.11.2.23.14.4.1.1.12)
+--                           hpnsaScsiDevBlockLength   (1.3.6.1.4.1.11.2.23.14.4.1.1.13)
+--                           hpnsaScsiDevCapacity   (1.3.6.1.4.1.11.2.23.14.4.1.1.14)
+--
+--      The SCSI group provides a set of tables that detail the
+--      configuration information regarding the SCSI configuration.
+--
+--      Implementation of the hpnsaScsi group is optional.
+--      The hpnsaScsi group should be included on any system with an SCSI
+--      bus architecture.
+--
+-- ****************************************************************************
+
+HPNSASCSI-MIB DEFINITIONS ::= BEGIN
+    IMPORTS
+        enterprises     FROM RFC1155-SMI
+		  DisplayString   FROM RFC1213-MIB
+		  OBJECT-TYPE     FROM RFC-1212;
+
+	 hp                   OBJECT IDENTIFIER ::= {enterprises 11}
+	 nm                   OBJECT IDENTIFIER ::= {hp 2}
+	 hpnsa                OBJECT IDENTIFIER ::= {nm 23}
+	 hpnsaScsi            OBJECT IDENTIFIER ::= {hpnsa 14}
+	 hpnsaScsiMibRev      OBJECT IDENTIFIER ::= {hpnsaScsi 1}
+	 hpnsaScsiAgent       OBJECT IDENTIFIER ::= {hpnsaScsi 2}
+	 hpnsaScsiHba         OBJECT IDENTIFIER ::= {hpnsaScsi 3}
+	 hpnsaScsiDev         OBJECT IDENTIFIER ::= {hpnsaScsi 4}
+
+-- ****************************************************************************
+--   HP SCSI Information MIB Revision
+--   ===============================
+--
+-- hp   (1.3.6.1.4.1.11)
+--    nm   (1.3.6.1.4.1.11.2)
+--        hpnsa   (1.3.6.1.4.1.11.2.23)
+--            hpnsaScsi Group  (1.3.6.1.4.1.11.2.23.14)
+--                hpnsaScsiMibRev Group  (1.3.6.1.4.1.11.2.23.14.1)             
+--                    hpnsaScsiMibRevMajor  (1.3.6.1.4.1.11.2.23.14.1.1)  
+--                    hpnsaScsiMibRevMinor  (1.3.6.1.4.1.11.2.23.14.1.2) 
+--
+--    Implementation of the MibRev group is mandatory for all HPNSA Agents
+--    supporting the HP SCSI Information MIB.
+--
+--    An HPNSA Agent conforming to this document will return a
+--    hpnsaScsiMibRevMajor of 1 and a hpnsaScsiMibRevMinor of 0. 
+--
+--
+-- ****************************************************************************
+
+    hpnsaScsiMibRevMajor OBJECT-TYPE
+        SYNTAX  INTEGER (1..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The major revision level of the MIB.
+            
+            A change in the major revision level represents a major change
+            in the architecture or functions of the MIB."
+        ::= { hpnsaScsiMibRev 1 }
+
+    hpnsaScsiMibRevMinor OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The minor revision level of the MIB.
+            
+            A change in the minor revision level may represent some minor
+            additional support, no changes to any pre-existing information
+            has occurred."
+        ::= { hpnsaScsiMibRev 2 }
+
+-- ****************************************************************************
+--   HP SCSI Info MIB Agent Information
+--   ================================
+--
+--   hp  (1.3.6.1.4.1.11)
+--           nm  (1.3.6.1.4.1.11.2)
+--           hpnsa  (1.3.6.1.4.1.11.2.23)
+--            hpnsaScsi Group    (1.3.6.1.4.1.11.2.23.14)
+--               hpnsaScsiAgent Group  (1.3.6.1.4.1.11.2.23.14.2)
+--                 hpnsaScsiAgentModuleTable  (1.3.6.1.4.1.11.2.23.14.2.1)
+--                  hpnsaScsiAgentModuleEntry  (1.3.6.1.4.1.11.2.23.14.2.1.1)
+--                       hpnsaScsiAgentModuleIndex  (1.3.6.1.4.1.11.2.23.14.2.1.1)
+--                       hpnsaScsiAgentModuleName  (1.3.6.1.4.1.11.2.23.14.2.1.1.2)
+--                       hpnsaScsiAgentModuleVersion  (1.3.6.1.4.1.11.2.23.14.2.1.1.3)
+--                       hpnsaScsiAgentModuleDate  (1.3.6.1.4.1.11.2.23.14.2.1.1.4)
+--
+--    Implementation of the SCSI Agent group is mandatory for all HPNSA Agents
+--    supporting the hp SCSI Information MIB.
+--
+--*****************************************************************************
+
+
+    hpnsaScsiAgentModuleTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF HPnsaScsiAgentModuleEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A table of SNMP Agents that satisfy request pertaining to this MIB."
+        ::= { hpnsaScsiAgent 1 }
+
+    hpnsaScsiAgentModuleEntry OBJECT-TYPE
+        SYNTAX  HPnsaScsiAgentModuleEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A description of the Agents that access system information."
+        INDEX   { hpnsaScsiAgentModuleIndex }
+        ::= { hpnsaScsiAgentModuleTable 1 }
+
+        HPnsaScsiAgentModuleEntry ::= SEQUENCE {
+            hpnsaScsiAgentModuleIndex       INTEGER,
+            hpnsaScsiAgentModuleName        DisplayString,
+            hpnsaScsiAgentModuleVersion     DisplayString,
+            hpnsaScsiAgentModuleDate        OCTET STRING
+        }
+
+    hpnsaScsiAgentModuleIndex OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "A unique index for this module description."
+        ::= { hpnsaScsiAgentModuleEntry 1 }
+
+    hpnsaScsiAgentModuleName OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..255))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The module name."
+        ::= { hpnsaScsiAgentModuleEntry 2 }
+
+    hpnsaScsiAgentModuleVersion OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..10))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The module version in XX.YY format.
+            Where XX is the major version number and YY is the minor version
+            number.  This field will be a null (size 0) string if the agent
+            cannot provide the module version."
+        ::= { hpnsaScsiAgentModuleEntry 3 }
+
+    hpnsaScsiAgentModuleDate OBJECT-TYPE
+        SYNTAX  OCTET STRING (SIZE (0..7))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The module date.
+
+             field  octets  contents                  range
+             _________________________________________________
+               1      1-2   year                      0..65536
+               2       3    month                     1..12
+               3       4    day                       1..31
+               4       5    hour                      0..23
+               5       6    minute                    0..59  
+               6       7    second                    0..60
+                            (use 60 for leap-second)
+
+            
+            This field will be set to year = 0 if the agent cannot provide
+            the module date.  The hour, minute, and second field will be set
+            to zero (0) if they are not relevant.  The year field is set
+               with the most significant octet first."
+        ::= { hpnsaScsiAgentModuleEntry 4 }
+
+
+-- ****************************************************************************
+--   hp Net Server SCSI HBA Table
+--   ============================
+--
+--   hp  (1.3.6.1.4.1.11)
+--          nm  (1.3.6.1.4.1.11.2)
+--           hpnsa  (1.3.6.1.4.1.11.2.23)
+--            hpnsaScsi Group    (1.3.6.1.4.1.11.2.23.14)
+--               hpnsaScsiHba Group  (1.3.6.1.4.1.11.2.23.14.3)
+--                   hpnsaScsiHbaTable   (1.3.6.1.4.1.11.2.23.14.3.1)
+--                       hpnsaScsiHbaEntry   (1.3.6.1.4.1.11.2.23.14.3.1.1)
+--                           hpnsaScsiHbaIndex   (1.3.6.1.4.1.11.2.23.14.3.1.1.1)
+--                           hpnsaScsiHbaTargetId   (1.3.6.1.4.1.11.2.23.14.3.1.1.2)    
+--                           hpnsaScsiHbaManagerId  (1.3.6.1.4.1.11.2.23.14.3.1.1.3) 
+--                           hpnsaScsiHbaHostAdapterId  (1.3.6.1.4.1.11.2.23.14.3.1.1.4)     
+--
+--    Implementation of the SCSI Table is mandatory for all 
+--    HPNSA Agents supporting the hp SCSI information MIB.
+--
+-- ****************************************************************************
+
+
+    hpnsaScsiHbaTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF HpnsaScsiHbaEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A list of SCSI Host Bus Adapter entries."
+        ::= { hpnsaScsiHba 1 }
+
+    hpnsaScsiHbaEntry OBJECT-TYPE
+        SYNTAX  HpnsaScsiHbaEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A description of an SCSI device/function."
+        INDEX   { hpnsaScsiHbaIndex }
+        ::= { hpnsaScsiHbaTable 1 }
+
+    HpnsaScsiHbaEntry ::= SEQUENCE {
+        hpnsaScsiHbaIndex              INTEGER (0..255),
+        hpnsaScsiHbaTargetId           INTEGER (0..7),
+        hpnsaScsiHbaManagerId          DisplayString,
+        hpnsaScsiHbaHostAdapterId      DisplayString
+    }
+
+    hpnsaScsiHbaIndex OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The SCSI HBA number that this entry describes."
+        ::= { hpnsaScsiHbaEntry 1 }
+
+    hpnsaScsiHbaTargetId OBJECT-TYPE
+        SYNTAX  INTEGER (0..7)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The SCSI target ID or SCSI address for this HBA."
+        ::= { hpnsaScsiHbaEntry 2 }
+
+    hpnsaScsiHbaManagerId OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..15))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "String that describes the SCSI Manager."
+        ::= { hpnsaScsiHbaEntry 3 }
+
+    hpnsaScsiHbaHostAdapterId OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..15))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "String that describes the SCSI host adapter."
+        ::= { hpnsaScsiHbaEntry 4 }
+
+
+
+-- ****************************************************************************
+--   hp Net Server SCSI Device Table
+--   ===============================
+--
+--   hp  (1.3.6.1.4.1.11)
+--        nm  (1.3.6.1.4.1.11.2)
+--           hpnsa  (1.3.6.1.4.1.11.2.23)
+--            hpnsaScsi Group    (1.3.6.1.4.1.11.2.23.14)
+--               hpnsaScsiDev Group  (1.3.6.1.4.1.11.2.23.14.4)
+--                   hpnsaScsiDevTable   (1.3.6.1.4.1.11.2.23.14.4.1)
+--                       hpnsaScsiDevEntry   (1.3.6.1.4.1.11.2.23.14.4.1.1)
+--                           hpnsaScsiDevHbaIndex   (1.3.6.1.4.1.11.2.23.14.4.1.1.1)
+--                           hpnsaScsiDevTargIdIndex   (1.3.6.1.4.1.11.2.23.14.4.1.1.2)
+--                           hpnsaScsiDevLunIndex   (1.3.6.1.4.1.11.2.23.14.4.1.1.3)
+--                           hpnsaScsiDevType   (1.3.6.1.4.1.11.2.23.14.4.1.1.4)
+--                           hpnsaScsiDevRmb   (1.3.6.1.4.1.11.2.23.14.4.1.1.5)
+--                           hpnsaScsiDevAnsiVer   (1.3.6.1.4.1.11.2.23.14.4.1.1.6)
+--                           hpnsaScsiDevEcmaVer   (1.3.6.1.4.1.11.2.23.14.4.1.1.7)
+--                           hpnsaScsiDevIsoVer   (1.3.6.1.4.1.11.2.23.14.4.1.1.8)
+--                           hpnsaScsiDevVendorId   (1.3.6.1.4.1.11.2.23.14.4.1.1.9)
+--                           hpnsaScsiDevProductId   (1.3.6.1.4.1.11.2.23.14.4.1.1.10)
+--                           hpnsaScsiDevProductRev   (1.3.6.1.4.1.11.2.23.14.4.1.1.11)
+--                           hpnsaScsiDevLogicalBlocks   (1.3.6.1.4.1.11.2.23.14.4.1.1.12)
+--                           hpnsaScsiDevBlockLength   (1.3.6.1.4.1.11.2.23.14.4.1.1.13)
+--                           hpnsaScsiDevCapacity   (1.3.6.1.4.1.11.2.23.14.4.1.1.14)
+--
+--    Implementation of the SCSI Device Table is mandatory for all 
+--    HPNSA Agents supporting the hp SCSI information MIB.
+--
+-- ****************************************************************************
+
+
+    hpnsaScsiDevTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF HpnsaScsiDevEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A list of SCSI device entries."
+        ::= { hpnsaScsiDev 1 }
+
+    hpnsaScsiDevEntry OBJECT-TYPE
+        SYNTAX  HpnsaScsiDevEntry
+        ACCESS  not-accessible
+        STATUS  mandatory
+        DESCRIPTION
+            "A description of a SCSI device."
+        INDEX   { hpnsaScsiDevHbaIndex,
+                  hpnsaScsiDevTargIdIndex,
+                  hpnsaScsiDevLunIndex }
+        ::= { hpnsaScsiDevTable 1 }
+
+    HpnsaScsiDevEntry ::= SEQUENCE {
+        hpnsaScsiDevHbaIndex           INTEGER (0..255),
+        hpnsaScsiDevTargIdIndex        INTEGER (0..7),
+        hpnsaScsiDevLunIndex           INTEGER (0..7),
+        hpnsaScsiDevType               INTEGER (0..31),
+        hpnsaScsiDevRmb                INTEGER (0..1),
+        hpnsaScsiDevAnsiVer            INTEGER (0..7),
+        hpnsaScsiDevEcmaVer            INTEGER (0..7),
+        hpnsaScsiDevIsoVer             INTEGER (0..3),
+        hpnsaScsiDevVendorId           DisplayString,
+        hpnsaScsiDevProductId          DisplayString,
+        hpnsaScsiDevProductRev         DisplayString,
+        hpnsaScsiDevLogicalBlocks      INTEGER,
+        hpnsaScsiDevBlockLength        INTEGER,
+        hpnsaScsiDevCapacity           INTEGER (0..65535)
+    }
+
+    hpnsaScsiDevHbaIndex OBJECT-TYPE
+        SYNTAX  INTEGER (0..255)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The SCSI HBA number that this entry describes."
+        ::= { hpnsaScsiDevEntry 1 }
+
+    hpnsaScsiDevTargIdIndex OBJECT-TYPE
+        SYNTAX  INTEGER (0..7)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The SCSI target ID or SCSI address for this HBA."
+        ::= { hpnsaScsiDevEntry 2 }
+
+    hpnsaScsiDevLunIndex OBJECT-TYPE
+        SYNTAX  INTEGER (0..7)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The SCSI LUN for this HBA."
+        ::= { hpnsaScsiDevEntry 3 }
+
+    hpnsaScsiDevType OBJECT-TYPE
+        SYNTAX  INTEGER (0..31)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Identifies the type of SCSI device:
+       
+             Code   Description
+             ----   -----------
+             00h    Direct-access device (e.g. magnetic disk)
+             01h    Sequential-access device (e.g. magnetic tape)
+             02h    Printer device
+             03h    Processor device
+             04h    Write-once read-multiple device (e.g. some optical disks)
+             05h    CD-ROM device    
+             06h    Scanner device
+             07h    Optical Memory device (e.g. some optical disks)
+             08h    Medium Changer device (e.g. jukeboxes)
+             09h    Communications device
+            0A-1Eh  Reserved
+             1Fh    Unknown or no device type"
+        ::= { hpnsaScsiDevEntry 4 }
+
+    hpnsaScsiDevRmb OBJECT-TYPE
+        SYNTAX  INTEGER (0..1)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+             "Identifies whether the medium is removable or not.
+                0 = medium is not removable
+                1 = medium is removable"
+        ::= { hpnsaScsiDevEntry 5 }
+
+    hpnsaScsiDevAnsiVer OBJECT-TYPE
+        SYNTAX  INTEGER (0..7)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Indicates the implemented ANSI version of this device.
+                0  = might or might not comply to an ANSI standard
+                1  = complies to ANSI X3.131-1986 (SCSI-1)
+                2  = comples to ANSI ?????? (SCSI-II)
+               3-7 = reserved"
+        ::= { hpnsaScsiDevEntry 6 }
+
+    hpnsaScsiDevEcmaVer OBJECT-TYPE
+        SYNTAX  INTEGER (0..7)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Indicates the implemented ECMA version of this device.
+             Zero code indicates that this device does not comply 
+             with this standard."
+        ::= { hpnsaScsiDevEntry 7 }
+
+    hpnsaScsiDevIsoVer OBJECT-TYPE
+        SYNTAX  INTEGER (0..3)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Indicates the implemented ISO version of this device.
+             Zero code indicates that this device does not comply 
+             with this standard."
+        ::= { hpnsaScsiDevEntry 8 }
+
+    hpnsaScsiDevVendorId OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..8))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Identifies the vendor of the product."
+        ::= { hpnsaScsiDevEntry 9 }
+
+    hpnsaScsiDevProductId OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..16))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Identifies the product as defined by the vendor."
+        ::= { hpnsaScsiDevEntry 10 }
+
+    hpnsaScsiDevProductRev OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..7))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Identifies the product revision level."
+        ::= { hpnsaScsiDevEntry 11 }
+
+    hpnsaScsiDevLogicalBlocks OBJECT-TYPE
+        SYNTAX  INTEGER 
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "A 32-bit value that represents the total number of
+             logical blocks for this device. Octet 1 is the LSB,
+             and octet 4 is the MSB."
+        ::= { hpnsaScsiDevEntry 12 }
+
+    hpnsaScsiDevBlockLength OBJECT-TYPE
+        SYNTAX INTEGER 
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "A 32-bit value that represents the size of a logical
+             block for this device. Octet 1 is the LSB, and octet 4
+             is the MSB."
+        ::= { hpnsaScsiDevEntry 13 }
+
+    hpnsaScsiDevCapacity OBJECT-TYPE
+        SYNTAX  INTEGER (0..65535)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "A value that represents the capacity of the device in
+             megabytes. One megabyte equals to 1,048,576 when 
+             calculating this value."
+        ::= { hpnsaScsiDevEntry 14 }
+END
+
+

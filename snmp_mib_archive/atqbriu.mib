@@ -1,0 +1,108 @@
+ADTRAN-ATLAS550-QUAD-BRI-U-MIB    DEFINITIONS ::= BEGIN
+
+-- TITLE:               Atlas 550 Quad BRI-U Option Module MIB
+-- FILENAME:            atqbriu.mib
+-- PARTNUMBER:
+-- AUTHOR:              Jason Schock
+
+-- HISTORY:
+--   06/18/2002  Created.
+
+-- This MIB supports the ATLAS 550 Quad BRI-U Option Module.
+
+IMPORTS
+        enterprises, Counter
+                FROM RFC1155-SMI
+        OBJECT-TYPE
+                FROM RFC-1212
+        adATLASBRIIfIndex
+                FROM ADTRAN-ATLAS-BRI-MIB;
+
+-- OBJECT IDENTIFIERS
+adtran                  OBJECT IDENTIFIER ::= { enterprises 664 }
+adMgmt                  OBJECT IDENTIFIER ::= { adtran 2 }
+adATLAS550QuadBRIUmg    OBJECT IDENTIFIER ::= { adMgmt 274 }
+
+--___________________________________________________________
+--     The ATLAS 550 Quad BRI-U Interface Status Table     --
+--___________________________________________________________
+
+adATLAS550QuadBRIUIfTable  OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLAS550QuadBRIUIfEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The ATLAS 550 Quad BRI-U Interface Status Table."
+
+    ::= { adATLAS550QuadBRIUmg 1 }
+
+adATLAS550QuadBRIUIfEntry  OBJECT-TYPE
+    SYNTAX  AdATLAS550QuadBRIUIfEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the ATLAS 550 Quad BRI-U Interface Status Table"
+    INDEX   { adATLAS550QuadBRIUIfIndex }
+
+    ::= { adATLAS550QuadBRIUIfTable 1 }
+
+AdATLAS550QuadBRIUIfEntry ::=
+    SEQUENCE {
+        adATLAS550QuadBRIUIfIndex
+            INTEGER,
+        adATLAS550QuadBRIUIfNEBE
+            Counter,
+        adATLAS550QuadBRIUIfFEBE
+            Counter,
+        adATLAS550QuadBRIUIfResetBECounts
+            INTEGER
+    }
+
+-- Interface Number
+adATLAS550QuadBRIUIfIndex OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the interface number of a
+        particular port on the Quad BRI-U Option Module within
+        the ATLAS 550 product. This number will be the same as
+        the ifIndex located in the MIB-II interface table."
+
+    ::= { adATLAS550QuadBRIUIfEntry 1 }
+
+-- Near End Block Error Count
+adATLAS550QuadBRIUIfNEBE  OBJECT-TYPE
+    SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable keeps count of the amount of blocks
+        with errors recieved at the local interface."
+
+    ::= { adATLAS550QuadBRIUIfEntry 2 }
+
+-- Far End Block Error Count
+adATLAS550QuadBRIUIfFEBE  OBJECT-TYPE
+    SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable keeps count of the amount of blocks
+        with errors recieved at the far interface."
+
+    ::= { adATLAS550QuadBRIUIfEntry 3 }
+
+-- Reset NEBE and FEBE Counts
+adATLAS550QuadBRIUIfResetBECounts  OBJECT-TYPE
+    SYNTAX  INTEGER {
+                resetCounts(1)
+            }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable is used to reset the NEBE and FEBE counters."
+
+    ::= { adATLAS550QuadBRIUIfEntry 4 }
+
+END

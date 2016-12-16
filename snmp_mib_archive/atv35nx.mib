@@ -1,0 +1,1120 @@
+ADTRAN-ATLAS-V35NX-MIB          DEFINITIONS ::= BEGIN
+
+-- TITLE:               Atlas V.35 Nx Interface MIB
+-- FILENAME:            atv35nx.mib
+-- PARTNUMBER:
+-- AUTHOR:              Benny Sharp
+
+-- HISTORY:
+--   02/06/2002	 Created.
+
+-- This MIB defines a generic ATLAS V.35 Nx interface.
+
+IMPORTS
+        enterprises, Gauge, Counter
+                FROM RFC1155-SMI
+        OBJECT-TYPE
+                FROM RFC-1212
+        ifIndex
+                FROM RFC1213-MIB
+        TRAP-TYPE
+                FROM RFC-1215
+        adATLASModuleInfoFPStatus
+                FROM ADTRAN-ATLAS-MODULE-MIB
+        adATLASUnitSlotAddress, adATLASUnitPortAddress, adATLASUnitFPStatus
+                FROM ADTRAN-ATLAS-UNIT-MIB;
+
+-- OBJECT IDENTIFIERS
+adtran                  OBJECT IDENTIFIER ::= { enterprises 664 }
+adMgmt                  OBJECT IDENTIFIER ::= { adtran 2 }
+adATLASmg               OBJECT IDENTIFIER ::= { adMgmt 154 }
+adGenATLASmg            OBJECT IDENTIFIER ::= { adATLASmg 1 }
+adATLASV35Nxmg          OBJECT IDENTIFIER ::= { adGenATLASmg 7 }
+
+adATLASV35NxIfNumber OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The number of V.35 Nx ports (regardless of their current
+        state) present on this system."
+
+    ::= { adATLASV35Nxmg 1 }
+
+
+--___________________________________________________________
+--       The ATLAS V.35 Nx Interface Status Table          --
+--___________________________________________________________
+
+adATLASV35NxIfTable  OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLASV35NxIfEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The ATLAS V.35 Nx Interface Status Table."
+
+    ::= { adATLASV35Nxmg 2 }
+
+adATLASV35NxIfEntry  OBJECT-TYPE
+    SYNTAX  AdATLASV35NxIfEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the ATLAS V.35 Nx Interface Status Table."
+    INDEX   { adATLASV35NxIfIndex }
+
+    ::= { adATLASV35NxIfTable 1 }
+
+AdATLASV35NxIfEntry ::=
+    SEQUENCE {
+        adATLASV35NxIfIndex
+            INTEGER,
+        adATLASV35NxIfSlotNum
+            INTEGER,
+        adATLASV35NxIfPortNum
+            INTEGER,
+        adATLASV35NxIfAlarmStatus
+            INTEGER (0..15),
+        adATLASV35NxIfDTEStatus
+            INTEGER (0..511),
+        adATLASV35NxIfDataRate
+            Gauge,
+        adATLASV35NxIfPLLFifoStatus
+            INTEGER (0..31)
+    }
+
+-- Interface Number
+adATLASV35NxIfIndex OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the interface number of a
+        particular V.35 Nx port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+    ::= { adATLASV35NxIfEntry 1 }
+
+-- Slot Number
+adATLASV35NxIfSlotNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the slot number of a
+        particular ATLAS module with a V.35 Nx interface."
+
+    ::= { adATLASV35NxIfEntry 2 }
+
+-- Port Number
+adATLASV35NxIfPortNum OBJECT-TYPE
+        SYNTAX    INTEGER
+        ACCESS    read-only
+        STATUS    mandatory
+        DESCRIPTION
+        "This variable indicates the port number of a
+        particular V.35 Nx interface on an ATLAS module."
+
+    ::= { adATLASV35NxIfEntry 3 }
+
+-- Alarm Status
+adATLASV35NxIfAlarmStatus    OBJECT-TYPE
+    SYNTAX  INTEGER (0..15)
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This bit-encoded variable indicates the current alarm
+        status of a V.35 Nx interface.  This variable is encoded
+        as follows:
+
+        CLOCK SLIP ALARM    0x01
+        PLL ALARM           0x02
+        ZERO ALARM          0x04
+        NO EXT CLK ALARM    0x08
+
+        Note: There may be multiple bits set based on the current
+        state of the interface.  If a bit is set, then the
+        corresponding alarm is active."
+
+    ::= { adATLASV35NxIfEntry 4 }
+
+-- DTE Status
+adATLASV35NxIfDTEStatus  OBJECT-TYPE
+    SYNTAX  INTEGER(0..511)
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This bit-encoded variable indicates the current state
+        of the DTE leads on a V.35 Nx interface.  This variable
+        is encoded as follows:
+
+        RTS     0x001
+        CTS     0x002
+        DTR     0x004
+        DSR     0x008
+        DCD     0x010
+        RI      0x020
+        TD      0x040
+        RD      0x080
+        EC      0x100
+
+        Note: There may be multiple bits set based on the current
+        state of the interface.  If a bit is set, then the
+        corresponding DTE lead is active."
+
+    ::= { adATLASV35NxIfEntry 5 }
+
+-- Data Rate
+adATLASV35NxIfDataRate  OBJECT-TYPE
+    SYNTAX  Gauge
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the current data rate of a
+        V.35 Nx interface."
+
+    ::= { adATLASV35NxIfEntry 6 }
+
+-- PLL/FIFO Status
+adATLASV35NxIfPLLFifoStatus  OBJECT-TYPE
+    SYNTAX  INTEGER(0..31)
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This bit-encoded variable indicates the current
+        PLL/FIFO status of a V.35 Nx interface.  This
+        variable is encoded as follows:
+
+        LOCK     0x01
+        RXE      0x02
+        RXF      0x04
+        TXE      0x08
+        TXF      0x10
+
+        Note: There may be multiple bits set based on the current
+        state of the interface."
+
+    ::= { adATLASV35NxIfEntry 7 }
+
+
+--____________________________________________________________
+--   The ATLAS V.35 Nx Interface Inband Statistics Table    --
+--____________________________________________________________
+
+adATLASV35NxIfInbandStatTable  OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLASV35NxIfInbandStatEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The ATLAS V.35 Nx Interface Inband Statistics Table."
+
+    ::= { adATLASV35Nxmg 3 }
+
+adATLASV35NxIfInbandStatEntry  OBJECT-TYPE
+    SYNTAX  AdATLASV35NxIfInbandStatEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the ATLAS V.35 Nx Interface Inband
+        Statistics Table."
+    INDEX   {adATLASV35NxIfInbandStatIndex }
+
+    ::= { adATLASV35NxIfInbandStatTable 1 }
+
+AdATLASV35NxIfInbandStatEntry ::=
+    SEQUENCE {
+        adATLASV35NxIfInbandStatIndex
+                INTEGER,
+        adATLASV35NxIfInbandStatRxFrames
+                Counter,
+        adATLASV35NxIfInbandStatTxFrames
+                Counter,
+        adATLASV35NxIfInbandStatRxBytes
+                Counter,
+        adATLASV35NxIfInbandStatTxBytes
+                Counter,
+        adATLASV35NxIfInbandStatReset
+	    	INTEGER
+    }
+
+-- The ATLAS V.35 Nx Interface Inband Statistics Table Index
+adATLASV35NxIfInbandStatIndex OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the Interface number of a
+        particular V.35 Nx port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+    ::= { adATLASV35NxIfInbandStatEntry 1 }
+
+-- Receive Frames
+adATLASV35NxIfInbandStatRxFrames OBJECT-TYPE
+    SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the number of frames
+        recieved by a particular V.35 Nx interface."
+
+    ::= { adATLASV35NxIfInbandStatEntry 2 }
+
+-- Transmit Frames
+adATLASV35NxIfInbandStatTxFrames OBJECT-TYPE
+    SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the number of frames
+        transmitted by a particular V.35 Nx interface."
+
+    ::= { adATLASV35NxIfInbandStatEntry 3 }
+
+-- Receive Bytes
+adATLASV35NxIfInbandStatRxBytes OBJECT-TYPE
+    SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the number of bytes recieved
+        by a particular V.35 Nx interface."
+
+    ::= { adATLASV35NxIfInbandStatEntry 4 }
+
+-- Transmit Bytes
+adATLASV35NxIfInbandStatTxBytes OBJECT-TYPE
+    SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the number of bytes
+        transmitted by a particular V.35 Nx interface."
+
+    ::= { adATLASV35NxIfInbandStatEntry 5 }
+
+-- Reset Inband Statistics
+adATLASV35NxIfInbandStatReset OBJECT-TYPE
+    SYNTAX  INTEGER {
+		resetStats(1)
+	    }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable is used to reset the inband statistics."
+
+    ::= { adATLASV35NxIfInbandStatEntry 6 }
+
+
+-- _______________________________________________________
+--   	  The ATLAS V.35 Nx Interface Test Table    	--
+-- _______________________________________________________
+
+adATLASV35NxTstTable  OBJECT-TYPE
+    SYNTAX  SEQUENCE OF AdATLASV35NxTstEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "The ATLAS V.35 Nx Interface Test Table."
+
+    ::= { adATLASV35Nxmg 4 }
+
+adATLASV35NxTstEntry  OBJECT-TYPE
+    SYNTAX  AdATLASV35NxTstEntry
+    ACCESS  not-accessible
+    STATUS  mandatory
+    DESCRIPTION
+        "An entry in the ATLAS V.35 Nx Interface Test Table."
+    INDEX   { adATLASV35NxTstIndex }
+
+    ::= { adATLASV35NxTstTable 1 }
+
+AdATLASV35NxTstEntry ::=
+    SEQUENCE {
+        adATLASV35NxTstIndex
+            INTEGER,
+        adATLASV35NxTstLoopbk
+            INTEGER,
+        adATLASV35NxTstLoopbkStatus
+            INTEGER,
+        adATLASV35NxTst511Pattern
+            INTEGER,
+        adATLASV35NxTstPatternSync
+            INTEGER,
+        adATLASV35NxTstPatternSyncLost
+            INTEGER,
+        adATLASV35NxTstPatternESs
+            Counter,
+        adATLASV35NxTstInjectErrs
+            INTEGER,
+        adATLASV35NxTstClearRslts
+            INTEGER
+    }
+
+-- The ATLAS V.35 Nx Interface Test Table Index
+adATLASV35NxTstIndex OBJECT-TYPE
+    SYNTAX  INTEGER
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the interface number of a
+        particular V.35 Nx port within the ATLAS product.
+        This number will be the same as the ifIndex located in
+        the MIB-II interface table."
+
+    ::= { adATLASV35NxTstEntry 1 }
+
+-- Loopback Control
+adATLASV35NxTstLoopbk OBJECT-TYPE
+    SYNTAX  INTEGER {
+		noLpBk(1),
+		localLpBk(2),
+		remoteLpBk(3)
+	    }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable controls the activation and
+        deactivation of loopbacks on a particular
+        V.35 Nx interface."
+
+    ::= { adATLASV35NxTstEntry 2 }
+
+-- Loopback Status
+adATLASV35NxTstLoopbkStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+		inactive(1),
+		loopingUpRmt(2),
+		rmtLooped(3),
+		loopingDownRmt(4),
+		rmtLoopFailed(5),
+		loopedFromRmt(6),
+		loopbkActive(7)
+	    }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates a V.35 Nx interface’s
+        current loopback status by displaying one of the
+        following status messages:
+
+        • No loopback active
+		• Looping up remote unit
+		• Remote unit looped back
+		• Looping down remote unit
+		• Remote loopup failed
+		• Port looped from remote source
+		• Port loopback active."
+
+    ::= { adATLASV35NxTstEntry 3 }
+
+-- 511 Test Pattern
+adATLASV35NxTst511Pattern OBJECT-TYPE
+    SYNTAX  INTEGER {
+		off(1),
+		on(2)
+	    }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable controls the activation and
+        deactivation of the 511 test pattern generator
+        and detector."
+
+    ::= { adATLASV35NxTstEntry 4 }
+
+-- Test Pattern Synchronization
+adATLASV35NxTstPatternSync OBJECT-TYPE
+    SYNTAX  INTEGER {
+		synced(1),
+		noSync(2)
+	    }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable displays the synchronization status
+        of the 511 pattern test."
+
+    ::= { adATLASV35NxTstEntry 5 }
+
+-- Test Pattern Synchronization Lost
+adATLASV35NxTstPatternSyncLost OBJECT-TYPE
+    SYNTAX  INTEGER {
+		syncLost(1),
+		syncNotLost(2)
+	    }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable displays whether or not the synchronization
+        was ever lost during the 511 pattern test."
+
+    ::= { adATLASV35NxTstEntry 6 }
+
+-- Test Pattern Errored Seconds
+adATLASV35NxTstPatternESs OBJECT-TYPE
+    SYNTAX  Counter
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "This variable indicates the number of seconds
+        (after pattern sync) of the 511 pettern test that
+        have contained at least one error."
+
+    ::= { adATLASV35NxTstEntry 7 }
+
+-- Error Injection
+adATLASV35NxTstInjectErrs OBJECT-TYPE
+    SYNTAX  INTEGER {
+		injectError(1)
+	    }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "Inject a 511 pattern error into the data stream."
+
+    ::= { adATLASV35NxTstEntry 8 }
+
+-- Clear Test Results
+adATLASV35NxTstClearRslts OBJECT-TYPE
+    SYNTAX  INTEGER {
+		clearResults(1)
+	    }
+    ACCESS  read-write
+    STATUS  mandatory
+    DESCRIPTION
+        "Reset all test results."
+
+    ::= { adATLASV35NxTstEntry 9 }
+
+--___________________________________________
+-- ATLAS Enterprise Specific V.35 Nx Traps --
+--___________________________________________
+
+adATLASV35NxSlipAlarmActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfAlarmStatus
+    }
+    DESCRIPTION
+        "This trap indicates a SLIP alarm is active."
+    --#TYPE         "Error - SLIP Alarm Active"
+    --#SUMMARY      "ATLAS 15400700: Received SLIP alarm active for "
+    --#SUMMARY      "Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, Alarm Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     MAJOR
+    --#GENERIC      6
+    --#CATEGORY     "Error Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400700
+
+adATLASV35NxSlipAlarmInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfAlarmStatus
+    }
+    DESCRIPTION
+        "This trap indicates a SLIP alarm is inactive."
+    --#TYPE         "Error - SLIP Alarm Inactive"
+    --#SUMMARY      "ATLAS 15400701: Received SLIP alarm inactive for "
+    --#SUMMARY      "Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, Alarm Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     MAJOR
+    --#GENERIC      6
+    --#CATEGORY     "Error Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400701
+
+adATLASV35NxPLLAlarmActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfAlarmStatus
+    }
+    DESCRIPTION
+        "This trap indicates a PLL alarm is active."
+    --#TYPE         "Error - PLL Alarm Active"
+    --#SUMMARY      "ATLAS 15400702: Received PLL alarm active for "
+    --#SUMMARY      "Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, Alarm Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     MAJOR
+    --#GENERIC      6
+    --#CATEGORY     "Error Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400702
+
+adATLASV35NxPLLAlarmInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfAlarmStatus
+    }
+    DESCRIPTION
+        "This trap indicates a PLL alarm is inactive."
+    --#TYPE         "Error - PLL Alarm Inactive"
+    --#SUMMARY      "ATLAS 15400703: Received PLL alarm inactive for "
+    --#SUMMARY      "Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, Alarm Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     MAJOR
+    --#GENERIC      6
+    --#CATEGORY     "Error Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400703
+
+adATLASV35NxZeroAlarmActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfAlarmStatus
+    }
+    DESCRIPTION
+        "This trap indicates a Zero alarm is active."
+    --#TYPE         "Error - Zero Alarm Active"
+    --#SUMMARY      "ATLAS 15400704: Received Zero alarm active for "
+    --#SUMMARY      "Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, Alarm Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     WARNING
+    --#GENERIC      6
+    --#CATEGORY     "Error Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400704
+
+adATLASV35NxZeroAlarmInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfAlarmStatus
+    }
+    DESCRIPTION
+        "This trap indicates a Zero alarm is inactive."
+    --#TYPE         "Error - Zero Alarm Inactive"
+    --#SUMMARY      "ATLAS 15400705: Received Zero alarm inactive for "
+    --#SUMMARY      "Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, Alarm Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     WARNING
+    --#GENERIC      6
+    --#CATEGORY     "Error Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400705
+
+adATLASV35NxExtClkAlarmActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfAlarmStatus
+    }
+    DESCRIPTION
+        "This trap indicates a no external clock alarm is active."
+    --#TYPE         "Error - No External Clock Alarm Active"
+    --#SUMMARY      "ATLAS 15400706: Received No External Clock alarm active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, Alarm Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     MAJOR
+    --#GENERIC      6
+    --#CATEGORY     "Error Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400706
+
+adATLASV35NxExtClkAlarmInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfAlarmStatus
+    }
+    DESCRIPTION
+        "This trap indicates a no external clock alarm is inactive."
+    --#TYPE         "Error - No External Clock Alarm Inactive"
+    --#SUMMARY      "ATLAS 15400707: Received No External Clock alarm inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, Alarm Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     MAJOR
+    --#GENERIC      6
+    --#CATEGORY     "Error Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400707
+
+adATLASV35NxRTSActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the RTS Lead is active."
+    --#TYPE         "Info - RTS Lead Active"
+    --#SUMMARY      "ATLAS 15400708: Received RTS lead active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400708
+
+adATLASV35NxRTSInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the RTS Lead is inactive."
+    --#TYPE         "Info - RTS Lead Inactive"
+    --#SUMMARY      "ATLAS 15400709: Received RTS lead inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400709
+
+adATLASV35NxCTSActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the CTS Lead is active."
+    --#TYPE         "Info - CTS Lead Active"
+    --#SUMMARY      "ATLAS 15400710: Received CTS lead active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400710
+
+adATLASV35NxCTSInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the CTS Lead is inactive."
+    --#TYPE         "Info - CTS Lead Inactive"
+    --#SUMMARY      "ATLAS 15400711: Received CTS lead inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400711
+
+adATLASV35NxDTRActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the DTR Lead is active."
+    --#TYPE         "Info - DTR Lead Active"
+    --#SUMMARY      "ATLAS 15400712: Received DTR lead active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400712
+
+adATLASV35NxDTRInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the DTR Lead is inactive."
+    --#TYPE         "Info - DTR Lead Inactive"
+    --#SUMMARY      "ATLAS 15400713: Received DTR lead inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400713
+
+adATLASV35NxDSRActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the DSR Lead is active."
+    --#TYPE         "Info - DSR Lead Active"
+    --#SUMMARY      "ATLAS 15400714: Received DSR lead active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400714
+
+adATLASV35NxDSRInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the DSR Lead is inactive."
+    --#TYPE         "Info - DSR Lead Inactive"
+    --#SUMMARY      "ATLAS 15400715: Received DSR lead inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400715
+
+adATLASV35NxDCDActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the DCD Lead is active."
+    --#TYPE         "Info - DCD Lead Active"
+    --#SUMMARY      "ATLAS 15400716: Received DCD lead active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400716
+
+adATLASV35NxDCDInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the DCD Lead is inactive."
+    --#TYPE         "Info - DCD Lead Inactive"
+    --#SUMMARY      "ATLAS 15400717: Received DCD lead inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400717
+
+adATLASV35NxRIActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the RI Lead is active."
+    --#TYPE         "Info - RI Lead Active"
+    --#SUMMARY      "ATLAS 15400718: Received RI lead active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400718
+
+adATLASV35NxRIInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the RI Lead is inactive."
+    --#TYPE         "Info - RI Lead Inactive"
+    --#SUMMARY      "ATLAS 15400719: Received RI lead inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400719
+
+adATLASV35NxTDActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the presence of transistions on the TD lead."
+    --#TYPE         "Info - TD Transitions Active"
+    --#SUMMARY      "ATLAS 15400720: TD Transitions active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400720
+
+adATLASV35NxTDInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the absence of transistions on the TD lead."
+    --#TYPE         "Info - TD Transistions Inactive"
+    --#SUMMARY      "ATLAS 15400721: TD Transistions inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400721
+
+adATLASV35NxRDActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the presence of transistions on the RD Lead."
+    --#TYPE         "Info - RD Transistions Active"
+    --#SUMMARY      "ATLAS 15400722: RD Transistions active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400722
+
+adATLASV35NxRDInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the absence of transistions on the RD Lead."
+    --#TYPE         "Info - RD Transistions Inactive"
+    --#SUMMARY      "ATLAS 15400723: RD Transistions inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400723
+
+adATLASV35NxECActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the presence of transistions on the EC Lead."
+    --#TYPE         "Info - EC Transistions Active"
+    --#SUMMARY      "ATLAS 15400724: EC Transistions active "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400724
+
+adATLASV35NxECInActive      TRAP-TYPE
+    ENTERPRISE      adATLASmg
+    VARIABLES {
+        ifIndex,
+        adATLASUnitSlotAddress,
+        adATLASUnitPortAddress,
+        adATLASModuleInfoFPStatus,
+        adATLASUnitFPStatus,
+        adATLASV35NxIfDTEStatus
+    }
+    DESCRIPTION
+        "This trap indicates the absence of transistions on the EC Lead."
+    --#TYPE         "Info - EC Transistions Inactive"
+    --#SUMMARY      "ATLAS 15400725: EC Transistions inactive "
+    --#SUMMARY      "for Line %d, Slot %d, Port %d, Module Status %d, "
+    --#SUMMARY      "Box Status %d, DTE Lead Status %d"
+    --#ARGUMENTS    {0,1,2,3,4,5}
+    --#SEVERITY     INFORMATIONAL
+    --#GENERIC      6
+    --#CATEGORY     "Status Events"
+    --#SOURCE_ID   "A"
+    --#TIMEINDEX    0
+    ::= 15400725
+
+END

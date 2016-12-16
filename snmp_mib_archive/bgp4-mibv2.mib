@@ -1,0 +1,3951 @@
+-- extracted from draft-ietf-idr-bgp4-mibv2-05.txt
+-- at Fri Jul 15 06:34:41 2005
+
+BGP4-V2-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+	MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+	Counter32, Gauge32, mib-2, Unsigned32, Integer32,
+     TimeTicks
+	    FROM SNMPv2-SMI
+	InetAddressType, InetAddress, InetPortNumber,
+	InetAutonomousSystemNumber, InetAddressPrefixLength
+	    FROM INET-ADDRESS-MIB
+	TEXTUAL-CONVENTION, TruthValue, RowPointer, StorageType,
+	RowStatus
+	    FROM SNMPv2-TC
+	MODULE-COMPLIANCE, OBJECT-GROUP, NOTIFICATION-GROUP
+	    FROM SNMPv2-CONF
+	SnmpAdminString
+	    FROM SNMP-FRAMEWORK-MIB;
+
+
+    bgpM2 MODULE-IDENTITY
+	LAST-UPDATED "200507130000Z"
+	ORGANIZATION "IETF IDR Working Group"
+	CONTACT-INFO "E-mail:  idr@merit.net
+
+		      Jeffrey Haas  (Editor)
+		      825 Victors Way, Suite 100
+		      Ann Arbor, MI  48108
+		      Tel: +1 734 222-1600
+		      Fax: +1 734 222-1602
+		      E-mail: jhaas@nexthop.com"
+
+	DESCRIPTION
+	    "This MIB module defines management objects for
+	     the Border Gateway Protocol, Version 4."
+	::= { mib-2 XXX }
+-- RFC Ed.: replace XXX with IANA-assigned number & remove this note
+
+    BgpM2Identifier ::= TEXTUAL-CONVENTION
+	DISPLAY-HINT "1d."
+	STATUS	     current
+	DESCRIPTION
+	    "The representation of a BGP Identifier.  The BGP
+	     Identifier should be represented in the OCTET STRING
+	     as with the first OCTET of the string containing
+	     the first OCTET of the BGP Identifier received or sent
+	     in the OPEN packet and so on.
+	     Even though the BGP Identifier is trending away from
+	     an IP address it is still displayed as if it was one,
+	     even when it would be an illegal IP address."
+	SYNTAX OCTET STRING(SIZE (4))
+
+
+    BgpM2Afi ::= TEXTUAL-CONVENTION
+	DISPLAY-HINT "d"
+	STATUS	     current
+	DESCRIPTION
+	    "The representation of a BGP AFI"
+	SYNTAX Unsigned32(0..65535)
+
+
+    BgpM2Safi ::= TEXTUAL-CONVENTION
+	DISPLAY-HINT "d"
+	STATUS	     current
+	DESCRIPTION
+	    "The representation of a BGP SAFI"
+	SYNTAX Unsigned32(0..255)
+
+
+    BgpM2Community ::= TEXTUAL-CONVENTION
+	DISPLAY-HINT "2d:"
+	STATUS	     current
+	DESCRIPTION
+	    "The representation of a BGP Community."
+	SYNTAX OCTET STRING(SIZE(4))
+
+
+    BgpM2ExtendedCommunity ::= TEXTUAL-CONVENTION
+	DISPLAY-HINT "1x:"
+	STATUS	     current
+	DESCRIPTION
+	    "The representation of a BGP Extended Community."
+	SYNTAX OCTET STRING(SIZE(8))
+
+
+    bgpM2BaseScalars
+	OBJECT IDENTIFIER ::= { bgpM2 1 }
+
+
+    --
+    -- Notifications
+    --
+
+    bgpM2BaseNotifications
+	OBJECT IDENTIFIER ::= { bgpM2BaseScalars 0 }
+    bgpM2Established NOTIFICATION-TYPE
+	OBJECTS {
+	    bgpM2PeerLocalAddrType,
+	    bgpM2PeerLocalAddr,
+	    bgpM2PeerRemoteAddrType,
+	    bgpM2PeerRemoteAddr,
+	    bgpM2PeerLastErrorReceived,
+	    bgpM2PeerState
+	}
+	STATUS	current
+	DESCRIPTION
+	    "The BGP Established event is generated when
+	     the BGP FSM enters the ESTABLISHED state."
+	::= { bgpM2BaseNotifications 1 }
+
+
+    bgpM2BackwardTransition NOTIFICATION-TYPE
+	OBJECTS {
+	    bgpM2PeerLocalAddrType,
+	    bgpM2PeerLocalAddr,
+	    bgpM2PeerRemoteAddrType,
+	    bgpM2PeerRemoteAddr,
+	    bgpM2PeerLastErrorReceived,
+	    bgpM2PeerLastErrorReceivedText,
+	    bgpM2PeerState
+	}
+	STATUS	current
+	DESCRIPTION
+	    "The BGPBackwardTransition Event is generated
+	     when the BGP FSM moves from a higher numbered
+	     state to a lower numbered state."
+	::= { bgpM2BaseNotifications 2 }
+
+
+    --
+    -- BGP Supported Version Table
+    --
+
+    bgpM2Version
+	OBJECT IDENTIFIER ::= { bgpM2BaseScalars 1 }
+
+
+    bgpM2VersionTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2VersionEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Table of supported BGP versions."
+	::= { bgpM2Version 1 }
+
+
+    bgpM2VersionEntry OBJECT-TYPE
+	SYNTAX	   BgpM2VersionEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing data on a given supported version
+	     of the Border Gateway Protocol and the level of
+	     support provided.	It is expected that any agent
+	     implementation supporting this MIB module will
+	     report support for Version 4 of the Border Gateway
+	     Protocol at the very minimum."
+	INDEX {
+	    bgpM2VersionIndex
+	}
+	::= { bgpM2VersionTable 1 }
+
+
+    BgpM2VersionEntry ::= SEQUENCE {
+	    bgpM2VersionIndex
+		Unsigned32,
+	    bgpM2VersionSupported
+		TruthValue
+    }
+
+
+    bgpM2VersionIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32(0..255)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The version number of the BGP Protocol."
+	::= { bgpM2VersionEntry 1 }
+
+
+    bgpM2VersionSupported OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value is TRUE if this version of the BGP protocol
+	     identified in 'bgpM2VersionIndex' is supported.  The absence
+	     of a row for a particular bgpM2VersionIndex indicates that
+	     that bgpM2VersionIndex protocol version number is not
+	     supported."
+	::= { bgpM2VersionEntry 2 }
+    --
+    -- Supported BGP Capabilities
+    --
+
+    bgpM2SupportedCapabilities
+	OBJECT IDENTIFIER ::= { bgpM2BaseScalars 2 }
+
+
+    bgpM2CapabilitySupportAvailable OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value is TRUE if capability support is
+	     available and is enabled."
+	::= { bgpM2SupportedCapabilities 1 }
+
+
+    bgpM2SupportedCapabilitiesTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2SupportedCapabilityEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Table of supported BGP-4 capabilities."
+	::= { bgpM2SupportedCapabilities 2 }
+
+
+    bgpM2SupportedCapabilitiesEntry OBJECT-TYPE
+	SYNTAX	   BgpM2SupportedCapabilityEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Information about supported capabilities indexed
+	     by capability number."
+	INDEX {
+	    bgpM2SupportedCapabilityCode
+	}
+	::= { bgpM2SupportedCapabilitiesTable 1 }
+
+
+    BgpM2SupportedCapabilityEntry ::= SEQUENCE {
+	bgpM2SupportedCapabilityCode
+	    Unsigned32,
+	bgpM2SupportedCapability
+	    TruthValue
+    }
+    bgpM2SupportedCapabilityCode OBJECT-TYPE
+	SYNTAX	   Unsigned32 (0..255)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Index of supported capability.  The index directly
+	     corresponds with the BGP-4 Capability Advertisement
+	     Capability Code."
+	::= { bgpM2SupportedCapabilitiesEntry 1 }
+
+
+    bgpM2SupportedCapability OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value is True if this capability is supported,
+	     False otherwise."
+	::= { bgpM2SupportedCapabilitiesEntry 2 }
+
+
+    --
+    -- Base Scalars
+    --
+
+
+    bgpM2AsSize OBJECT-TYPE
+	SYNTAX	   INTEGER {
+	    twoOctet(1),
+	    fourOctet(2)
+	}
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The size of the AS value in this implementation.
+
+	     The semantics of this are determined as per the
+	     as-4bytes draft."
+	REFERENCE
+	    "draft-ietf-idr-as4bytes-04"
+	::= { bgpM2BaseScalars 4 }
+
+
+    bgpM2LocalAs OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The local autonomous system number.
+
+	     If the bgpM2AsSize is twoOctet, then the range is
+	     constrained to be 0-65535."
+	::= { bgpM2BaseScalars 5 }
+
+
+    bgpM2LocalIdentifier OBJECT-TYPE
+	SYNTAX	   BgpM2Identifier
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP Identifier of local system.
+
+	     Current practice is trending away from this value being
+	     treated as an IP address and more as a generic
+	     identifier."
+	::= { bgpM2BaseScalars 6 }
+
+
+    --
+    -- Base Scalar Extensions
+    --
+
+    bgpM2BaseScalarExtensions
+	OBJECT IDENTIFIER ::= { bgpM2BaseScalars 7 }
+
+
+    bgpM2BaseScalarNonCapExts
+	OBJECT IDENTIFIER ::= { bgpM2BaseScalarExtensions 1 }
+
+
+    bgpM2BaseScalarCapExts
+	OBJECT IDENTIFIER ::= { bgpM2BaseScalarExtensions 2 }
+
+
+    --
+    -- Base Scalar Route Reflection Extensions
+    --
+
+    bgpM2BaseScalarRouteReflectExts OBJECT IDENTIFIER ::=
+	{ bgpM2BaseScalarNonCapExts 2796 }
+
+
+    bgpM2RouteReflector OBJECT-TYPE
+	SYNTAX	    TruthValue
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "This value is TRUE if this implementation supports the
+	     BGP Route Reflection Extension and is enabled as a
+	     route reflector.  If the BGP Route Reflection extension
+	     is not supported this value must be FALSE."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	::= { bgpM2BaseScalarRouteReflectExts 1 }
+
+
+    bgpM2ClusterId OBJECT-TYPE
+	SYNTAX	    BgpM2Identifier
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "The configured Cluster-ID of the BGP Speaker.  This will
+	     default to the BGP Speaker's BgpM2Identifier if this
+	     speaker is functioning as a route reflector and an
+	     explicit Cluster-ID has not been configured.
+
+	     A value of 0.0.0.0 will be present if Route Reflection is
+	     not enabled."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	::= { bgpM2BaseScalarRouteReflectExts 2 }
+
+
+    --
+    -- Base Scalar AS Confederation Extensions
+    --
+
+    bgpM2BaseScalarASConfedExts OBJECT IDENTIFIER ::=
+	 { bgpM2BaseScalarNonCapExts 3065 }
+
+
+    bgpM2ConfederationRouter OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value is TRUE if this implementation supports the
+	     BGP AS Confederations Extension and this router is
+	     configured to be in a confederation."
+	REFERENCE
+	    "RFC 3065 - Autonomous System Confederations for BGP"
+	::= { bgpM2BaseScalarASConfedExts 1 }
+    bgpM2ConfederationId OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The local Confederation Identification Number.
+
+	     This value will be zero (0) if this BGP Speaker is not
+	     a confederation router."
+	REFERENCE
+	    "RFC 3065 - Autonomous System Confederations for BGP"
+	::= { bgpM2BaseScalarASConfedExts 2 }
+
+
+    --
+    -- Base Configuration Objects
+    --
+
+    bgpM2BaseScalarConfiguration
+	OBJECT IDENTIFIER ::= { bgpM2BaseScalars 8 }
+
+
+    bgpM2CfgBaseScalarStorageType OBJECT-TYPE
+	SYNTAX	   StorageType
+	MAX-ACCESS read-write
+	STATUS	   current
+	DESCRIPTION
+	    "This object specifies the intended storage type for
+	     all configurable base scalars."
+	::= { bgpM2BaseScalarConfiguration 1 }
+
+
+    bgpM2CfgLocalAs OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-write
+	STATUS	   current
+	DESCRIPTION
+	    "The local autonomous system number.
+
+	     If the bgpM2AsSize is twoOctet, then the range is
+	     constrained to be 0-65535."
+	::= { bgpM2BaseScalarConfiguration 2 }
+
+
+    bgpM2CfgLocalIdentifier OBJECT-TYPE
+	SYNTAX	   BgpM2Identifier
+	MAX-ACCESS read-write
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP Identifier of local system.
+
+	     Current practice is trending away from this value being
+	     treated as an IP address and more as a generic
+	     identifier."
+	::= { bgpM2BaseScalarConfiguration 3 }
+
+
+    --
+    -- Base Scalar Extensions
+    --
+
+    bgpM2CfgBaseScalarExtensions
+	OBJECT IDENTIFIER ::= { bgpM2BaseScalarConfiguration 4 }
+
+
+    bgpM2CfgBaseScalarNonCapExts
+	OBJECT IDENTIFIER ::= { bgpM2CfgBaseScalarExtensions 1 }
+
+
+    bgpM2CfgBaseScalarCapExts
+	OBJECT IDENTIFIER ::= { bgpM2CfgBaseScalarExtensions 2 }
+
+
+    --
+    -- Base Scalar Route Reflection Extensions
+    --
+
+    bgpM2CfgBaseScalarReflectorExts
+	OBJECT IDENTIFIER ::= { bgpM2CfgBaseScalarNonCapExts 2796 }
+
+
+    bgpM2CfgRouteReflector OBJECT-TYPE
+	SYNTAX	    TruthValue
+	MAX-ACCESS  read-write
+	STATUS	    current
+	DESCRIPTION
+	    "This value is set to true if this implementation will
+	     be supporting route reflection."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	::= { bgpM2CfgBaseScalarReflectorExts 1 }
+
+
+    bgpM2CfgClusterId OBJECT-TYPE
+	SYNTAX	    BgpM2Identifier
+	MAX-ACCESS  read-write
+	STATUS	    current
+	DESCRIPTION
+	    "The configured Cluster-ID of the BGP Speaker.  This will
+	     default to the BGP Speaker's BgpM2Identifier if this
+	     speaker is functioning as a route reflector and an
+	     explicit Cluster-ID has not been configured.
+
+	     A value of 0.0.0.0 will be present if Route Reflection is
+	     not enabled."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	::= { bgpM2CfgBaseScalarReflectorExts 2 }
+
+
+    --
+    -- Base Scalar AS Confederation Extensions
+    --
+
+    bgpM2CfgBaseScalarASConfedExts
+	OBJECT IDENTIFIER ::= { bgpM2CfgBaseScalarNonCapExts 3065 }
+
+
+    bgpM2CfgConfederationRouter OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-write
+	STATUS	   current
+	DESCRIPTION
+	    "This value is set to true if this implementation will be
+	     supporting BGP AS Confederations."
+	REFERENCE
+	    "RFC 3065 - Autonomous System Confederations for BGP"
+	::= { bgpM2CfgBaseScalarASConfedExts 1 }
+
+
+    bgpM2CfgConfederationId OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-write
+	STATUS	   current
+	DESCRIPTION
+	    "The local Confederation Identification Number.
+
+	     This value will be zero (0) if this BGP Speaker is not
+	     a confederation router."
+	REFERENCE
+	    "RFC 3065 - Autonomous System Confederations for BGP"
+	::= { bgpM2CfgBaseScalarASConfedExts 2 }
+    --
+    -- BGP Peer Data
+    --
+
+    bgpM2Peer
+	OBJECT IDENTIFIER ::= { bgpM2 2 }
+
+
+    bgpM2PeerData
+	OBJECT IDENTIFIER ::= { bgpM2Peer 1 }
+
+
+    bgpM2PeerTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PeerEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "BGP peer table.
+
+	     This table contains, one entry per remote BGP peer,
+	     any information about the connections with the remote
+	     BGP peers."
+	::= { bgpM2PeerData 1 }
+
+
+    bgpM2PeerEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PeerEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing information about the connection with
+	     a remote BGP peer."
+	INDEX {
+	 bgpM2PeerInstance,
+	    bgpM2PeerLocalAddrType,
+	    bgpM2PeerLocalAddr,
+	    bgpM2PeerRemoteAddrType,
+	    bgpM2PeerRemoteAddr
+	}
+	::= { bgpM2PeerTable 1 }
+
+
+    BgpM2PeerEntry ::= SEQUENCE {
+     bgpM2PeerInstance
+	 Unsigned32,
+	bgpM2PeerIdentifier
+	    BgpM2Identifier,
+	bgpM2PeerState
+	    INTEGER,
+	bgpM2PeerStatus
+	    INTEGER,
+	bgpM2PeerConfiguredVersion
+	    Unsigned32,
+	bgpM2PeerNegotiatedVersion
+	    Unsigned32,
+	bgpM2PeerLocalAddrType
+	    InetAddressType,
+	bgpM2PeerLocalAddr
+	    InetAddress,
+	bgpM2PeerLocalPort
+	    InetPortNumber,
+	bgpM2PeerLocalAs
+	    InetAutonomousSystemNumber,
+	bgpM2PeerRemoteAddrType
+	    InetAddressType,
+	bgpM2PeerRemoteAddr
+	    InetAddress,
+	bgpM2PeerRemotePort
+	    InetPortNumber,
+	bgpM2PeerRemoteAs
+	    InetAutonomousSystemNumber,
+	bgpM2PeerIndex
+	    Unsigned32
+    }
+
+
+    bgpM2PeerInstance OBJECT-TYPE
+     SYNTAX	Unsigned32
+     MAX-ACCESS read-only
+     STATUS	current
+     DESCRIPTION
+	 "The routing instance index.
+
+	  Some BGP implementations permit the creation of
+	  multiple instances of a BGP routing process.	An
+	  example includes RFC 2547 PE-CE routers.
+
+	  Implementations that do not support multiple
+	  routing instances should return 1 for this object.
+
+	  XXX TODO - We need to provide a way to configure these
+	  in the peer configuration table."
+	::= { bgpM2PeerEntry 1 }
+
+
+    bgpM2PeerIdentifier OBJECT-TYPE
+
+	SYNTAX	   BgpM2Identifier
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP Identifier of this entry's remote BGP peer.
+
+	     This entry should be 0.0.0.0 unless the bgpM2PeerState is
+	     in the OpenConfirm or the Established state."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Sec. 4.2"
+	::= { bgpM2PeerEntry 2 }
+
+
+    bgpM2PeerState OBJECT-TYPE
+	SYNTAX	   INTEGER {
+	    idle(1),
+	    connect(2),
+	    active(3),
+	    opensent(4),
+	    openconfirm(5),
+	    established(6)
+	}
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The remote BGP peer's FSM state."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Sec. 8"
+	::= { bgpM2PeerEntry 3 }
+
+
+    bgpM2PeerStatus OBJECT-TYPE
+	SYNTAX	   INTEGER {
+	    halted(1),
+	    running(2)
+	}
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Whether or not the BGP FSM for this remote peer is halted
+	     or running.  The BGP FSM for a remote peer is halted after
+	     processing a Stop event.  Likewise, it is in the running
+	     state after a Start event.
+
+	     The bgpM2PeerState will generally be in the idle state when
+	     the FSM is halted, although some extensions such as
+	     Graceful Restart will leave the peer in the Idle state
+	     but with the FSM running."
+	::= { bgpM2PeerEntry 4 }
+
+
+    bgpM2PeerConfiguredVersion OBJECT-TYPE
+	SYNTAX	   Unsigned32 (1..255)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The configured version to originally start with this
+	     remote peer.  The BGP speaker may permit negotiation to a
+	     lower version number of the protocol."
+	::= { bgpM2PeerEntry 5 }
+
+
+    bgpM2PeerNegotiatedVersion OBJECT-TYPE
+	SYNTAX	   Unsigned32 (1..255)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The negotiated version of BGP running between the two
+	     peers."
+	::= { bgpM2PeerEntry 6 }
+
+
+    bgpM2PeerLocalAddrType OBJECT-TYPE
+	SYNTAX	   InetAddressType
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The address family of the local end of the peering
+	     session."
+	::= { bgpM2PeerEntry 7 }
+
+
+    bgpM2PeerLocalAddr OBJECT-TYPE
+	SYNTAX	   InetAddress (SIZE(4..20))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The address of the local end of the peering session."
+	::= { bgpM2PeerEntry 8 }
+
+
+    bgpM2PeerLocalPort OBJECT-TYPE
+	SYNTAX	   InetPortNumber
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The local port for the TCP connection between the BGP
+	     peers."
+	::= { bgpM2PeerEntry 9 }
+
+
+    bgpM2PeerLocalAs OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Some implementations of BGP can represent themselves
+	     as multiple ASs.  This is the AS that this peering
+	     session is representing itself as to the remote peer."
+	::= { bgpM2PeerEntry 10 }
+
+
+    bgpM2PeerRemoteAddrType OBJECT-TYPE
+	SYNTAX	   InetAddressType
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The address family of the remote end of the peering
+	     session."
+	::= { bgpM2PeerEntry 11 }
+
+
+    bgpM2PeerRemoteAddr OBJECT-TYPE
+	SYNTAX	   InetAddress (SIZE(4..20))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The address of the remote end of the peering session."
+	::= { bgpM2PeerEntry 12 }
+
+
+    bgpM2PeerRemotePort OBJECT-TYPE
+	SYNTAX	   InetPortNumber
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The remote port for the TCP connection between the BGP
+	     peers.  In the case of a transport for which the notion
+	     of 'port' is irrelevant, an instance value of -1
+	     should be returned by the agent for this object.
+
+	     Note that the objects bgpM2PeerLocalAddr,
+	     bgpM2PeerLocalPort, bgpM2PeerRemoteAddr and
+	     bgpM2PeerRemotePort provide the appropriate reference to
+	     the standard MIB TCP connection table. or even the ipv6
+	     TCP MIB as in rfc2452."
+	REFERENCE
+	    "RFC 2012 - SNMPv2 Management Information Base for the
+	     Transmission Control Protocol using SMIv2.
+	     RFC 2542 - IP Version 6 Management Information Base
+	     for the Transmission Control Protocol."
+	::= { bgpM2PeerEntry 13 }
+
+
+    bgpM2PeerRemoteAs OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The remote autonomous system number."
+	::= { bgpM2PeerEntry 14 }
+
+
+    bgpM2PeerIndex OBJECT-TYPE
+	SYNTAX	    Unsigned32
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "This value is a unique index for the remote peer entry
+	     in the bgpM2PeerTable.  It is assigned by the agent
+	     at the point of creation of the bgpM2PeerTable row
+	     entry.  While its value is guaranteed to be unique at
+	     any time, it is otherwise opaque to the management
+	     application with respect to its value or the contiguity
+	     of bgpM2PeerIndex row instance values across rows of
+	     the bgpM2PeerTable.  It is used to provide an index
+	     structure for other tables whose data is logically
+	     per-peer.
+
+	     For explicitly configured peers, this value will remain
+	     consistent until this row is deleted by deleting the
+	     configured peers.	Unconfigured peers will generate
+	     a monotonically increasing number when a BGP FSM is
+	     built to process the peering session.  Values in the
+	     bgpM2PeerTable and other tables utilizing bgpM2PeerIndex
+	     are expected to remain in existence for an arbitrary
+	     time after the unconfigured peer has been deleted
+	     in order to allow management applications to extract
+	     useful management information for those peers.  Thus,
+	     an unconfigured peer using the same indices as the
+	     bgpM2PeerTable that comes up while this row still
+	     exists will re-utilize the same row."
+	 ::= { bgpM2PeerEntry 15 }
+
+
+    --
+    -- Errors
+    --
+
+    bgpM2PeerErrors
+	OBJECT IDENTIFIER ::= { bgpM2Peer 2 }
+
+    bgpM2PeerErrorsTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PeerErrorsEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "On a per peer basis, this table reflects the last
+	     protocol-defined error encountered and reported on
+	     the peer session.	If no entry for a given peer,
+	     by its bgpM2PeerIndex, exists in this table, then no
+	     such errors have been observed, reported, and
+	     recorded on the  session."
+	::= { bgpM2PeerErrors 1 }
+
+
+    bgpM2PeerErrorsEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PeerErrorsEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Each entry contains information about errors sent
+	     and received for a particular BGP peer."
+	AUGMENTS {
+	    bgpM2PeerEntry
+	}
+	::= { bgpM2PeerErrorsTable 1 }
+
+
+    BgpM2PeerErrorsEntry ::= SEQUENCE {
+	bgpM2PeerLastErrorReceived
+	    OCTET STRING,
+	bgpM2PeerLastErrorSent
+	    OCTET STRING,
+	bgpM2PeerLastErrorReceivedTime
+	    TimeTicks,
+	bgpM2PeerLastErrorSentTime
+	    TimeTicks,
+	bgpM2PeerLastErrorReceivedText
+	    SnmpAdminString,
+
+	bgpM2PeerLastErrorSentText
+	    SnmpAdminString,
+	bgpM2PeerLastErrorReceivedData
+	    OCTET STRING,
+	bgpM2PeerLastErrorSentData
+	    OCTET STRING
+    }
+
+
+    bgpM2PeerLastErrorReceived OBJECT-TYPE
+	SYNTAX	   OCTET STRING (SIZE (2))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The last error code and subcode received by this BGP
+	     Speaker via a NOTIFICATION message for this peer.
+	     If no error has occurred, this field is zero.
+	     Otherwise, the first byte of this two byte
+	     OCTET STRING contains the error code, and the second
+	     byte contains the subcode."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-15.txt, Sec. 4.5"
+	::= { bgpM2PeerErrorsEntry 1 }
+
+
+    bgpM2PeerLastErrorSent OBJECT-TYPE
+	SYNTAX	   OCTET STRING (SIZE (2))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The last error code and subcode sent by this BGP
+	     Speaker via a NOTIFICATION message to this peer.
+	     If no error has occurred, this field is zero.
+	     Otherwise, the first byte of this two byte
+	     OCTET STRING contains the error code, and the second
+	     byte contains the subcode."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-15.txt, Sec. 4.5"
+	::= { bgpM2PeerErrorsEntry 2 }
+
+
+    bgpM2PeerLastErrorReceivedTime OBJECT-TYPE
+	SYNTAX	   TimeTicks
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The timestamp that the last NOTIFICATION was received from
+	     this peer."
+
+	REFERENCE
+	    "draft-ietf-idr-bgp4-15.txt, Sec. 4.5"
+	::= { bgpM2PeerErrorsEntry 3 }
+
+
+    bgpM2PeerLastErrorSentTime OBJECT-TYPE
+	SYNTAX	   TimeTicks
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The timestamp that the last NOTIFICATION was sent to
+	     this peer."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-15.txt, Sec. 4.5"
+	::= { bgpM2PeerErrorsEntry 4 }
+
+
+    bgpM2PeerLastErrorReceivedText OBJECT-TYPE
+	SYNTAX	   SnmpAdminString
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This object contains an implementation specific
+	     explanation of the error that was reported."
+	::= { bgpM2PeerErrorsEntry 5 }
+
+
+    bgpM2PeerLastErrorSentText OBJECT-TYPE
+	SYNTAX	   SnmpAdminString
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This object contains an implementation specific
+	     explanation of the error that is being reported."
+	::= { bgpM2PeerErrorsEntry 6 }
+
+
+    bgpM2PeerLastErrorReceivedData OBJECT-TYPE
+	SYNTAX	   OCTET STRING (SIZE(0..4075))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The last error code's data seen by this peer."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-15.txt, Sec. 4.5"
+	::= { bgpM2PeerErrorsEntry 7 }
+    bgpM2PeerLastErrorSentData OBJECT-TYPE
+	SYNTAX	   OCTET STRING (SIZE(0..4075))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The last error code's data sent to this peer."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-15.txt, Sec. 4.5"
+	::= { bgpM2PeerErrorsEntry 8 }
+
+
+    --
+    -- Peer Event Times
+    --
+
+    bgpM2PeerTimers
+	OBJECT IDENTIFIER ::= { bgpM2Peer 3 }
+
+
+    bgpM2PeerEventTimesTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PeerEventTimesEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "A table reporting the per-peering session amount
+	     of time elapsed and update events since the peering
+	     session advanced into the Established state."
+	::= { bgpM2PeerTimers 1 }
+
+
+    bgpM2PeerEventTimesEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PeerEventTimesEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Each row contains a set of statistics about time
+	     spent and events encountered in the peer session
+	     Established state."
+	AUGMENTS {
+	    bgpM2PeerEntry
+	}
+	::= { bgpM2PeerEventTimesTable 1 }
+
+
+    BgpM2PeerEventTimesEntry ::= SEQUENCE {
+	bgpM2PeerFsmEstablishedTime
+	    Gauge32,
+	bgpM2PeerInUpdatesElapsedTime
+	    Gauge32
+    }
+
+
+    bgpM2PeerFsmEstablishedTime OBJECT-TYPE
+	SYNTAX	   Gauge32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This timer indicates how long (in seconds) this
+	     peer has been in the Established state or how long
+	     since this peer was last in the Established state.
+	     It is set to zero when a new peer is configured or
+	     the router is booted."
+	::= { bgpM2PeerEventTimesEntry 1 }
+
+
+    bgpM2PeerInUpdatesElapsedTime OBJECT-TYPE
+	SYNTAX	   Gauge32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Elapsed time in seconds since the last BGP UPDATE
+	     message was received from the peer.  Each time
+	     bgpM2PeerInUpdates is incremented, the value of this
+	     object is set to zero (0).	 This value shall also be
+	     zero (0) when the peer is not in the Established state"
+	::= { bgpM2PeerEventTimesEntry 2 }
+
+
+    --
+    -- Peer Configured Timers
+    --
+
+    bgpM2PeerConfiguredTimersTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PeerConfiguredTimersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Per peer management data on BGP session timers."
+	::= { bgpM2PeerTimers 2 }
+
+    bgpM2PeerConfiguredTimersEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PeerConfiguredTimersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Each entry corresponds to the current state of
+	     BGP timers on a given peering session."
+	AUGMENTS {
+	    bgpM2PeerEntry
+	}
+	::= { bgpM2PeerConfiguredTimersTable 1 }
+
+
+    BgpM2PeerConfiguredTimersEntry ::= SEQUENCE {
+	bgpM2PeerConnectRetryInterval
+	    Unsigned32,
+	bgpM2PeerHoldTimeConfigured
+	    Unsigned32,
+	bgpM2PeerKeepAliveConfigured
+	    Unsigned32,
+	bgpM2PeerMinASOrigInterval
+	    Unsigned32,
+	bgpM2PeerMinRouteAdverInterval
+	    Unsigned32
+    }
+
+
+    bgpM2PeerConnectRetryInterval OBJECT-TYPE
+	SYNTAX	   Unsigned32 (1..65535)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the ConnectRetry
+	     timer.  The suggested value for this timer is 120
+	     seconds."
+	::= { bgpM2PeerConfiguredTimersEntry 1 }
+
+
+    bgpM2PeerHoldTimeConfigured OBJECT-TYPE
+	SYNTAX	   Unsigned32 ( 0 | 3..65535 )
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the Hold Time configured
+	     for this BGP speaker with this peer.  This value
+	     is placed in an OPEN message sent to this peer by
+	     this BGP speaker, and is compared with the Hold
+	     Time field in an OPEN message received from the
+	     peer when determining the Hold Time (bgpM2PeerHoldTime)
+	     with the peer.  This value must not be less than
+	     three seconds if it is not zero (0) in which case
+	     the Hold Time is NOT to be established with the
+	     peer.  The suggested value for this timer is 90
+	     seconds."
+
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Appendix 6.4"
+	::= { bgpM2PeerConfiguredTimersEntry 2 }
+
+
+    bgpM2PeerKeepAliveConfigured OBJECT-TYPE
+	SYNTAX	   Unsigned32 ( 0 | 1..21845 )
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the KeepAlive timer
+	     configured for this BGP speaker with this peer.
+	     The value of this object will only determine the
+	     KEEPALIVE messages frequency relative to the value
+	     specified in bgpM2PeerHoldTimeConfigured; the actual
+	     time interval for the KEEPALIVE messages is indicated
+	     by bgpM2PeerKeepAlive.  A reasonable maximum value
+	     for this timer would be configured to be one third
+	     of that of bgpM2PeerHoldTimeConfigured.
+
+	     If the value of this object is zero (0), no
+	     periodical KEEPALIVE messages are sent to the peer
+	     after the BGP connection has been established.
+	     The suggested value for this timer is 30 seconds."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Appendix 6.4"
+	::= { bgpM2PeerConfiguredTimersEntry 3 }
+
+
+    bgpM2PeerMinASOrigInterval OBJECT-TYPE
+	SYNTAX	   Unsigned32 (0..65535)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the MinASOriginationInterval
+	     timer.  The suggested value for this timer is 15
+	     seconds."
+	::= { bgpM2PeerConfiguredTimersEntry 4 }
+
+
+    bgpM2PeerMinRouteAdverInterval OBJECT-TYPE
+	SYNTAX	   Unsigned32 (0..65535)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the
+	     MinRouteAdvertisementInterval timer.  The suggested
+	     value for this timer is 30 seconds."
+	::= { bgpM2PeerConfiguredTimersEntry 5 }
+
+
+    --
+    -- Peer Negotiated Timers
+    --
+
+    bgpM2PeerNegotiatedTimersTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PeerNegotiatedTimersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Current values of per-peer timers which can be
+	     dynamically set in the bgpM2PeerConfiguredTimersTable.
+	     Values reflected in this table are the current
+	     operational values, after negotiation from values
+	     derived from initial configuration or last set from
+	     bgpM2PeerConfiguredTimersTable row instances."
+	::= { bgpM2PeerTimers 3 }
+
+
+    bgpM2PeerNegotiatedTimersEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PeerNegotiatedTimersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Each entry reflects a value of the currently
+	     operational, negotiated timers as reflected in the
+	     BgpM2PeerNegotiatedTimersEntry."
+	AUGMENTS {
+	    bgpM2PeerEntry
+	}
+	::= { bgpM2PeerNegotiatedTimersTable 1 }
+
+
+    BgpM2PeerNegotiatedTimersEntry ::= SEQUENCE {
+	bgpM2PeerHoldTime
+	    Unsigned32,
+	bgpM2PeerKeepAlive
+	    Unsigned32
+    }
+
+
+    bgpM2PeerHoldTime OBJECT-TYPE
+	SYNTAX	   Unsigned32  ( 0 | 3..65535 )
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The value of this object is calculated by this BGP
+	     Speaker as being;
+
+	     zero (0) - if this was the value sent by the peer and
+	     this value is permitted by this BGP Speaker.  In this
+	     case, no keepalive messages are sent and the Hold Timer
+	     is not set.
+
+	     At least three (3).  This value is the smaller of
+	     the value sent by this peer in the OPEN message and
+	     bgpM2PeerHoldTimeConfigured for this peer.
+
+	     This value is only defined when the peering session is
+	     in the Established state."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Sec. 4.2"
+	::= { bgpM2PeerNegotiatedTimersEntry 1 }
+
+
+    bgpM2PeerKeepAlive OBJECT-TYPE
+	SYNTAX	   Unsigned32 ( 0 | 1..21845 )
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the KeepAlive timer
+	     established with the peer.	 The value of this object
+	     is calculated by this BGP speaker such that, when
+	     compared with bgpM2PeerHoldTime, it has the same
+	     proportion as what bgpM2PeerKeepAliveConfigured has
+	     when compared with bgpM2PeerHoldTimeConfigured.  If
+	     the value of this object is zero (0), it indicates
+	     that the KeepAlive timer has not been established
+	     with the peer, or, the value of
+	     bgpM2PeerKeepAliveConfigured is zero (0).
+
+	     This value is only defined when the peering session is
+	     in the Established state."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17, Sec. 4.4"
+	::= { bgpM2PeerNegotiatedTimersEntry 2 }
+
+
+    --
+    -- Peer Capabilities
+    --
+
+    bgpM2PeerCapabilities
+	OBJECT IDENTIFIER ::= { bgpM2Peer 4 }
+    --
+    -- Announced Capabilities
+    --
+
+    bgpM2PeerCapsAnnouncedTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PeerCapsAnnouncedEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "This table contains the capabilities
+	     that are supported for a given peer."
+	::= { bgpM2PeerCapabilities 1 }
+
+
+    bgpM2PeerCapsAnnouncedEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PeerCapsAnnouncedEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "These entries are keyed by a BGP-4 peer remote
+	     address and the BGP Capability Code"
+	INDEX {
+	    bgpM2PeerIndex,
+	    bgpM2PeerCapAnnouncedCode,
+	    bgpM2PeerCapAnnouncedIndex
+	}
+	::= { bgpM2PeerCapsAnnouncedTable 1 }
+
+
+    BgpM2PeerCapsAnnouncedEntry ::= SEQUENCE {
+	bgpM2PeerCapAnnouncedCode
+	    Unsigned32,
+	bgpM2PeerCapAnnouncedIndex
+	    Unsigned32,
+	bgpM2PeerCapAnnouncedValue
+	    OCTET STRING
+    }
+
+
+    bgpM2PeerCapAnnouncedCode OBJECT-TYPE
+	SYNTAX	   Unsigned32 (0..255)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP Capability Advertisement Capability Code."
+	::= { bgpM2PeerCapsAnnouncedEntry 1 }
+    bgpM2PeerCapAnnouncedIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32 (1..128)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Multiple instances of a given capability may be sent
+	     bgp a BGP speaker.	 This variable is used to index them."
+	::= { bgpM2PeerCapsAnnouncedEntry 2 }
+
+
+    bgpM2PeerCapAnnouncedValue OBJECT-TYPE
+	SYNTAX	   OCTET STRING (SIZE(0..255))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The value of the announced capability."
+	::= { bgpM2PeerCapsAnnouncedEntry 3 }
+
+
+    --
+    -- Received Capabilities
+    --
+
+    bgpM2PeerCapsReceivedTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM24PeerCapsReceivedEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "This table contains the capabilities
+	    that are supported for a given peer."
+	::= { bgpM2PeerCapabilities 2 }
+
+
+    bgpM2PeerCapsReceivedEntry OBJECT-TYPE
+	SYNTAX	   BgpM24PeerCapsReceivedEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "These entries are keyed by a BGP-4 peer remote
+	    address and the BGP Capability Code"
+	INDEX {
+	    bgpM2PeerIndex,
+	    bgpM2PeerCapReceivedCode,
+	    bgpM2PeerCapReceivedIndex
+	}
+	::= { bgpM2PeerCapsReceivedTable 1 }
+    BgpM24PeerCapsReceivedEntry ::= SEQUENCE {
+	bgpM2PeerCapReceivedCode
+	    Unsigned32,
+	bgpM2PeerCapReceivedIndex
+	    Unsigned32,
+	bgpM2PeerCapReceivedValue
+	    OCTET STRING
+    }
+
+
+    bgpM2PeerCapReceivedCode OBJECT-TYPE
+	SYNTAX	   Unsigned32 (0..255)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP Capability Advertisement Capability Code."
+	::= { bgpM2PeerCapsReceivedEntry 1 }
+
+
+    bgpM2PeerCapReceivedIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32 (1..128)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Multiple instances of a given capability may be sent
+	     bgp a BGP speaker.	 This variable is used to index them."
+	::= { bgpM2PeerCapsReceivedEntry 2 }
+
+
+    bgpM2PeerCapReceivedValue OBJECT-TYPE
+	SYNTAX	   OCTET STRING (SIZE(0..255))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The value of the announced capability."
+	::= { bgpM2PeerCapsReceivedEntry 3 }
+
+
+    --
+    -- Per-peer counters
+    --
+
+    bgpM2PeerCounters
+	OBJECT IDENTIFIER ::= { bgpM2Peer 6 }
+
+
+    bgpM2PeerCountersTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PeerCountersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "The counters associated with a BGP Peer."
+	::= { bgpM2PeerCounters 1 }
+
+
+    bgpM2PeerCountersEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PeerCountersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Each entry contains counters of message transmissions
+	     and FSM transitions for a given BGP Peering session."
+	AUGMENTS {
+	    bgpM2PeerEntry
+	}
+	::= { bgpM2PeerCountersTable 1 }
+
+
+    BgpM2PeerCountersEntry ::= SEQUENCE {
+	bgpM2PeerInUpdates
+	    Counter32,
+	bgpM2PeerOutUpdates
+	    Counter32,
+	bgpM2PeerInTotalMessages
+	    Counter32,
+	bgpM2PeerOutTotalMessages
+	    Counter32,
+	bgpM2PeerFsmEstablishedTrans
+	    Counter32
+    }
+
+
+-- +++wayne need to describe what happens if connection is broken
+-- and then reestablished. Does the prior counter value accumulate?
+    bgpM2PeerInUpdates OBJECT-TYPE
+	SYNTAX	   Counter32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The number of BGP UPDATE messages received on this
+	     connection.  This object should be initialized to zero
+	     (0) when the connection is established."
+	::= { bgpM2PeerCountersEntry 1 }
+
+
+    bgpM2PeerOutUpdates OBJECT-TYPE
+
+	SYNTAX	   Counter32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The number of BGP UPDATE messages transmitted on this
+	     connection.  This object should be initialized to zero
+	     (0) when the connection is established."
+	::= { bgpM2PeerCountersEntry 2 }
+
+
+    bgpM2PeerInTotalMessages OBJECT-TYPE
+	SYNTAX	   Counter32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The total number of messages received from the remote
+	     peer on this connection.  This object should be
+	     initialized to zero when the connection is established."
+	::= { bgpM2PeerCountersEntry 3 }
+
+
+    bgpM2PeerOutTotalMessages OBJECT-TYPE
+	SYNTAX	   Counter32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The total number of messages transmitted to the remote
+	     peer on this connection.  This object should be
+	     initialized to zero when the connection is established."
+	::= { bgpM2PeerCountersEntry 4 }
+
+
+    bgpM2PeerFsmEstablishedTrans OBJECT-TYPE
+	SYNTAX	   Counter32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	"The total number of times the BGP FSM
+	transitioned into the established state
+	for this peer."
+	::= { bgpM2PeerCountersEntry 5 }
+
+
+    --
+    -- Per-Peer Prefix Counters
+    --
+
+    bgpM2PrefixCountersTable OBJECT-TYPE
+
+	SYNTAX	   SEQUENCE OF BgpM2PrefixCountersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Additional per-peer, per AFI SAFI counters for prefixes"
+	::= { bgpM2PeerCounters 2 }
+
+
+    bgpM2PrefixCountersEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PrefixCountersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing information about a bgp-peers prefix
+	     counters."
+	INDEX {
+	    bgpM2PeerIndex,
+	    bgpM2PrefixCountersAfi,
+	    bgpM2PrefixCountersSafi
+	}
+	::= { bgpM2PrefixCountersTable 1 }
+
+
+    BgpM2PrefixCountersEntry ::= SEQUENCE {
+	bgpM2PrefixCountersAfi
+	    BgpM2Afi,
+	bgpM2PrefixCountersSafi
+	    BgpM2Safi,
+	bgpM2PrefixInPrefixes
+	    Gauge32,
+	bgpM2PrefixInPrefixesAccepted
+	    Gauge32,
+	bgpM2PrefixInPrefixesRejected
+	    Gauge32,
+	bgpM2PrefixOutPrefixes
+	    Gauge32
+    }
+
+
+    bgpM2PrefixCountersAfi OBJECT-TYPE
+	SYNTAX	   BgpM2Afi
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The AFI index of the per-peer, per prefix counters"
+	::= { bgpM2PrefixCountersEntry 1 }
+    bgpM2PrefixCountersSafi OBJECT-TYPE
+	SYNTAX	   BgpM2Safi
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The SAFI index of the per-peer, per prefix counters"
+	::= { bgpM2PrefixCountersEntry 2 }
+
+
+    bgpM2PrefixInPrefixes OBJECT-TYPE
+	SYNTAX	   Gauge32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The number of prefixes received from a peer and are
+	     stored in the Adj-Ribs-In for that peer."
+	     -- jmh - note that we are allowing stuff to be discarded
+	::= { bgpM2PrefixCountersEntry 7 }
+
+
+    bgpM2PrefixInPrefixesAccepted OBJECT-TYPE
+	SYNTAX	   Gauge32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The number of prefixes for a peer that are installed
+	     in the Adj-Ribs-In and are eligible to become active
+	     in the Loc-Rib."
+	::= { bgpM2PrefixCountersEntry 8 }
+
+
+    bgpM2PrefixInPrefixesRejected OBJECT-TYPE
+	SYNTAX	   Gauge32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The number of prefixes for a peer that are installed
+	     in the Adj-Ribs-In and are NOT eligible to become active
+	     in the Loc-Rib."
+	::= { bgpM2PrefixCountersEntry 9 }
+
+
+    bgpM2PrefixOutPrefixes OBJECT-TYPE
+	SYNTAX	   Gauge32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The number of prefixes for a peer that are installed
+	     in that peers Adj-Ribs-Out."
+	::= { bgpM2PrefixCountersEntry 10 }
+
+
+
+    bgpM2PeerExtensions
+	OBJECT IDENTIFIER ::= { bgpM2Peer 7 }
+
+
+    bgpM2PeerNonCapExts
+	OBJECT IDENTIFIER ::= { bgpM2PeerExtensions 1 }
+
+
+    bgpM2PeerCapExts
+	OBJECT IDENTIFIER ::= { bgpM2PeerExtensions 2 }
+
+
+    --
+    -- Peer Route Reflection Extensions
+    --
+
+    bgpM2PeerRouteReflectionExts
+	OBJECT IDENTIFIER ::= { bgpM2PeerNonCapExts 2796 }
+
+
+    bgpM2PeerReflectorClientTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PeerReflectorClientEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Table of route reflection client settings on a per-peer
+	     basis."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	::= { bgpM2PeerRouteReflectionExts 1 }
+
+
+    bgpM2PeerReflectorClientEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PeerReflectorClientEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing data on a per-peer basis on whether
+	     the peer is configured as a route reflector client."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	AUGMENTS {
+	    bgpM2PeerEntry
+
+	}
+	::= { bgpM2PeerReflectorClientTable 1 }
+
+
+    BgpM2PeerReflectorClientEntry ::= SEQUENCE {
+	bgpM2PeerReflectorClient
+	    INTEGER
+    }
+
+    bgpM2PeerReflectorClient OBJECT-TYPE
+	SYNTAX	  INTEGER {
+	    nonClient(0),
+	    client(1),
+	    meshedClient(2)
+	}
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "This value indicates whether the given peer is a
+	     reflector client of this router, or not.  A value of
+	     nonClient indicates that this peer is not a reflector
+	     client.  A value of client indicates that this peer is a
+	     reflector client that is not fully meshed with other
+	     reflector clients.	 A value of meshedClient indicates
+	     that the peer is a reflector client and is fully meshed
+	     with all other reflector clients.
+
+	     This value must be nonClient (0) for BGP external peers."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	::= { bgpM2PeerReflectorClientEntry 1 }
+
+
+    --
+    -- Peer AS Confederations Extensions
+    --
+
+    bgpM2PeerASConfederationExts
+	OBJECT IDENTIFIER ::= { bgpM2PeerNonCapExts 3065 }
+
+
+    bgpM2PeerConfedMemberTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PeerConfedMemberEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Table of confederation member settings on a per-peer
+	     basis."
+
+	REFERENCE
+	    "RFC 3065 - BGP Confederations"
+	::= { bgpM2PeerASConfederationExts 1 }
+
+
+    bgpM2PeerConfedMemberEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PeerConfedMemberEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing data on a per-peer basis on whether
+	     the peer is configured as a BGP confederation member."
+	REFERENCE
+	    "RFC 3065 - BGP Confederations"
+	AUGMENTS {
+	    bgpM2PeerEntry
+	}
+	::= { bgpM2PeerConfedMemberTable 1 }
+
+
+    BgpM2PeerConfedMemberEntry ::= SEQUENCE {
+	bgpM2PeerConfedMember
+	    TruthValue
+    }
+
+
+    bgpM2PeerConfedMember OBJECT-TYPE
+	SYNTAX	    TruthValue
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "This value indicates whether the given peer is in our
+	     confederation or not."
+	REFERENCE
+	    "RFC 3065 - BGP Confederations"
+	::= { bgpM2PeerConfedMemberEntry 1 }
+
+
+    --
+    -- Peer configuration objects
+    --
+
+    bgpM2PeerConfiguration
+	OBJECT IDENTIFIER ::= { bgpM2Peer 8 }
+
+
+    --
+    -- Administering activated peering sessions
+    --
+
+    bgpM2CfgPeerAdminStatusTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2CfgPeerAdminStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Table containing rows for administratively starting and
+	     stopping peering sessions."
+	::= { bgpM2PeerConfiguration 1 }
+
+
+    bgpM2CfgPeerAdminStatusEntry OBJECT-TYPE
+	SYNTAX	   BgpM2CfgPeerAdminStatusEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing row for administratively starting and
+	     stopping peers."
+	INDEX {
+	    bgpM2PeerIndex
+	}
+	::= { bgpM2CfgPeerAdminStatusTable 1 }
+
+
+    BgpM2CfgPeerAdminStatusEntry ::= SEQUENCE {
+	bgpM2CfgPeerAdminStatus
+	    INTEGER
+    }
+
+
+    bgpM2CfgPeerAdminStatus OBJECT-TYPE
+	SYNTAX	    INTEGER {
+	    stop(1),
+	    start(2)
+	}
+	MAX-ACCESS read-write
+	STATUS	current
+	DESCRIPTION
+	    "This object allows the Manual Stop and Manual Start
+	     events to be sent to an activated peering session."
+	::= { bgpM2CfgPeerAdminStatusEntry 1 }
+
+
+    --
+    -- Peer Configuration
+    --
+    bgpM2CfgPeerNextIndex OBJECT-TYPE
+	SYNTAX	   Integer32 (0..65535)
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This object contains the next appropriate value to
+	     use as an index for creation of a row instance in
+	     in the bgpM2CfgPeerTable.	If the number of available
+	     entries in the bgpM2CfgPeerTable is exhausted, a
+	     retrieval value of this object instance will return
+	     0.	 A value of 0 may also be returned if the agent
+	     is otherwise incapable of bgpM2CfgPeerTable row creation
+	     at the time of bgpM2CfgPeerNextIndex retrieval."
+	::= { bgpM2PeerConfiguration 2 }
+
+
+    bgpM2CfgPeerTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2CfgPeerEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "BGP configuration peer table.
+
+	     This table allows the configuration of the parameters
+	     for a session with a BGP peer.
+
+	     +++wayne provide description of how config should be done
+	     for a peer per table."
+	::= { bgpM2PeerConfiguration 3 }
+
+
+    bgpM2CfgPeerEntry OBJECT-TYPE
+	SYNTAX	   BgpM2CfgPeerEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing information set up by a management
+	     entity to configure a connection with a BGP peer."
+	INDEX { bgpM2CfgPeerIndex }
+	::= { bgpM2CfgPeerTable 1 }
+
+
+    BgpM2CfgPeerEntry ::= SEQUENCE {
+	bgpM2CfgPeerConfiguredVersion
+	    Unsigned32,
+	bgpM2CfgAllowVersionNegotiation
+	    TruthValue,
+	bgpM2CfgPeerLocalAddrType
+	    InetAddressType,
+	bgpM2CfgPeerLocalAddr
+	    InetAddress,
+	bgpM2CfgPeerLocalAs
+	    InetAutonomousSystemNumber,
+	bgpM2CfgPeerRemoteAddrType
+	    InetAddressType,
+	bgpM2CfgPeerRemoteAddr
+	    InetAddress,
+	bgpM2CfgPeerRemoteAs
+	    InetAutonomousSystemNumber,
+	bgpM2CfgPeerEntryStorageType
+	    StorageType,
+	bgpM2CfgPeerError
+	    INTEGER,
+	bgpM2CfgPeerBgpPeerEntry
+	    RowPointer,
+	bgpM2CfgPeerRowEntryStatus
+	    RowStatus,
+	bgpM2CfgPeerIndex
+	    Integer32,
+	bgpM2CfgPeerStatus
+	    INTEGER
+	}
+
+
+    bgpM2CfgPeerConfiguredVersion OBJECT-TYPE
+	SYNTAX	   Unsigned32 (1..255)
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "The configured version to originally start with
+	     this peer.	 The BGP speaker may permit negotiation
+	     to a lower version number of the protocol depending on the
+	     set value of bgpM2CfgAllowVersionNegotiation."
+	DEFVAL	   { 4 }
+	::= { bgpM2CfgPeerEntry 1 }
+
+
+    bgpM2CfgAllowVersionNegotiation OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "If set to true, during session establishment with this
+	     peer, negotiation to a version lower than that specified
+	     in bgpM2CfgPeerConfiguredVersion will be allowed."
+	DEFVAL { false }
+	::= { bgpM2CfgPeerEntry 2 }
+
+
+    bgpM2CfgPeerLocalAddrType OBJECT-TYPE
+	SYNTAX	   InetAddressType
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "The address family of the speakers of this BGP
+	     session."
+	::= { bgpM2CfgPeerEntry 3 }
+
+
+    bgpM2CfgPeerLocalAddr OBJECT-TYPE
+	SYNTAX	   InetAddress (SIZE (4..20))
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "The address of the local end of the peering session."
+	::= { bgpM2CfgPeerEntry 4 }
+
+
+    bgpM2CfgPeerLocalAs OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "Autonomous system represented to peer on peering
+	     session initialization.  Some implementations of
+	     BGP can represent themselves as multiple ASes.
+	     These implementations can set this to an alternate
+	     autonomous system.	 If this object is set to zero
+	     (0) at the point this row instance is set to active,
+	     then the implementation will initialize this session
+	     representing itself as the value of bgpM2CfgLocalAs."
+	DEFVAL { 0 }
+	::= { bgpM2CfgPeerEntry 5 }
+
+
+    bgpM2CfgPeerRemoteAddrType OBJECT-TYPE
+	SYNTAX	   InetAddressType
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "The address family of the speakers of the remote BGP
+	     session."
+	::= { bgpM2CfgPeerEntry 6 }
+    bgpM2CfgPeerRemoteAddr OBJECT-TYPE
+	SYNTAX	    InetAddress (SIZE(4..20))
+	MAX-ACCESS  read-create
+	STATUS	    current
+	DESCRIPTION
+	    "The address of the remote end (destination address
+	     of peer) for peering session."
+	::= { bgpM2CfgPeerEntry 7 }
+
+
+    bgpM2CfgPeerRemoteAs OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "Autonomous system number of the remote peer."
+	::= { bgpM2CfgPeerEntry 8 }
+
+
+    bgpM2CfgPeerEntryStorageType OBJECT-TYPE
+	SYNTAX	   StorageType
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "This object type specifies the intended storage
+	     type for the bgpM2CfgPeerEntry row instance."
+	::= { bgpM2CfgPeerEntry 9 }
+
+
+    bgpM2CfgPeerError  OBJECT-TYPE
+	SYNTAX	    INTEGER {
+	    unknown(0),
+	    notActivated (1),
+	    errDuplicatePeeringSession (2),
+	    activated (3)
+	    -- +++wayne more to follow
+	}
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "This value indicates the current error status of
+	     the row denoting the configured error status.
+
+	     If this row is still under creation (has not been activated
+	     bgpM2CfgPeerRowEntryStatus), then this instance will be set to
+	     not-activated (1).
+
+	     At the point that the row is activated, bgpM2CfgPeerError
+	     will reflect the error status of the row data itself.  If
+	     there is another session already activated with the same
+	     local and remote addresses as denoted by
+	     {bgpM2CfgPeerLocalAddrType, bgpM2CfgPeerLocalAddr,
+	     bgpM2CfgPeerRemoteAddr}, then
+	     the value of this will be set to
+	     err-duplicate-peering-session (2).
+
+	     If this row is associated with a peer session whose
+	     initialization has been attempted, the value will be
+	     set to activated (3) (and, bgpM2PeerCfgPeerEntry will
+	     be set to the row instance of the entry in the
+	     bgpM2PeerTable which reflects the state of the peering
+	     session).
+
+	     Note that this object only reflects the error as a
+	     function of the attempted activation of this row as
+	     containing data for a bgp peering session.	 The actual
+	     state of the session at the point of any protocol exchange
+	     or session state machine initiation is reflected in the
+	     bgpM2PeerTable row instance (as reflected through
+	     bgpM2CfgPeerPeerEntry) associated with this row instance."
+	::= { bgpM2CfgPeerEntry 10 }
+
+
+    bgpM2CfgPeerBgpPeerEntry OBJECT-TYPE
+	SYNTAX	    RowPointer
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "Upon activation of the session data contained in this
+	     row instance, this object points to an instance of a row
+	     within the bgpM2PeerTable reflecting the session in its
+	     initializing or operational state.	 Retrieval of this
+	     column instance will always yield a value of {0.0} unless
+	     the session has successfully been activated (via
+	     bgpM2CfgPeerRowEntryStatus).  Such row instances will always
+	     have a value of bgpM2CfgPeerError which is activated (3)."
+	::= { bgpM2CfgPeerEntry 11 }
+
+
+    bgpM2CfgPeerRowEntryStatus	OBJECT-TYPE
+	SYNTAX	   RowStatus
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "This object type is used to control creation,
+	     activation, and deletion of this row instance."
+
+	    -- +++wayne need better directions for agent auto-removal
+	    -- of row instances which have moved to active or error
+	    -- state
+	::= { bgpM2CfgPeerEntry 12 }
+
+
+    bgpM2CfgPeerIndex OBJECT-TYPE
+	SYNTAX	   Integer32 (1..65535)
+	MAX-ACCESS accessible-for-notify
+	STATUS	   current
+	DESCRIPTION
+	    "Uniquely identifies an instance of a peer row, as
+	     an element of configuration."
+	::= { bgpM2CfgPeerEntry 13 }
+
+
+    bgpM2CfgPeerStatus OBJECT-TYPE
+	SYNTAX	    INTEGER {
+	    halted(1),
+	    running(2)
+	}
+	MAX-ACCESS read-create
+	STATUS	current
+	DESCRIPTION
+	     "This specifies the state of the peering session upon
+	      activation.  If disabled, the FSM is in the halted
+	      state and no Automatic Start events are generated.
+	      If enabled, the FSM is in the running state and
+	      Automatic Start events may be generated."
+	::= { bgpM2CfgPeerEntry 14 }
+
+
+    --
+    -- Per-peer timers table
+    --
+
+    bgpM2CfgPeerTimersTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2CfgPeerTimersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Table for configuration of per-peer timers."
+	::= {  bgpM2PeerConfiguration 4 }
+
+
+    bgpM2CfgPeerTimersEntry OBJECT-TYPE
+	SYNTAX	    BgpM2CfgPeerTimersEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing per-peer timer configuration."
+	AUGMENTS {
+	    bgpM2CfgPeerEntry
+	}
+	::= { bgpM2CfgPeerTimersTable 1 }
+
+
+    BgpM2CfgPeerTimersEntry ::= SEQUENCE {
+	bgpM2CfgPeerConnectRetryInterval
+	    Unsigned32,
+	bgpM2CfgPeerHoldTimeConfigured
+	    Unsigned32,
+	bgpM2CfgPeerKeepAliveConfigured
+	    Unsigned32,
+	bgpM2CfgPeerMinASOrigInterval
+	    Unsigned32,
+	bgpM2CfgPeerMinRouteAdverInter
+	    Unsigned32
+    }
+
+
+    bgpM2CfgPeerConnectRetryInterval OBJECT-TYPE
+	SYNTAX	   Unsigned32 (1..65535)
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the ConnectRetry
+	     timer.  The suggested value for this timer is 120
+	     seconds."
+	DEFVAL {
+	    120
+	}
+	::= { bgpM2CfgPeerTimersEntry 1 }
+
+
+    bgpM2CfgPeerHoldTimeConfigured OBJECT-TYPE
+	SYNTAX	   Unsigned32 ( 0 | 3..65535 )
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the Hold Time configured
+	     for this BGP speaker with this peer.  This value
+	     is placed in an OPEN message sent to this peer by
+	     this BGP speaker, and is compared with the Hold
+	     Time field in an OPEN message received from the
+	     peer when determining the Hold Time (bgpM2PeerHoldTime)
+	     with the peer.  This value must not be less than
+	     three seconds if it is not zero (0) in which case
+	     the Hold Time is NOT to be established with the
+	     peer.  The suggested value for this timer is 90
+	     seconds."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Appendix 6.4"
+	DEFVAL {
+	    90
+	}
+	::= { bgpM2CfgPeerTimersEntry 2 }
+
+
+    bgpM2CfgPeerKeepAliveConfigured OBJECT-TYPE
+	SYNTAX	   Unsigned32 ( 0 | 1..21845 )
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the KeepAlive timer
+	     configured for this BGP speaker with this peer.
+	     The value of this object will only determine the
+	     KEEPALIVE messages frequency relative to the value
+	     specified in bgpM2PeerHoldTimeConfigured; the actual
+	     time interval for the KEEPALIVE messages is indicated
+	     by bgpM2PeerKeepAlive.  A reasonable maximum value
+	     for this timer would be configured to be one third
+	     of that of bgpM2PeerHoldTimeConfigured.
+
+	     If the value of this object is zero (0), no
+	     periodical KEEPALIVE messages are sent to the peer
+	     after the BGP connection has been established.
+	     The suggested value for this timer is 30 seconds."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Appendix 6.4"
+	DEFVAL {
+	    30
+	}
+	::= { bgpM2CfgPeerTimersEntry 3 }
+
+
+    bgpM2CfgPeerMinASOrigInterval OBJECT-TYPE
+	SYNTAX	   Unsigned32 (0..65535)
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the MinASOriginationInterval
+	     timer.  The suggested value for this timer is 15
+	     seconds."
+
+	DEFVAL {
+	    15
+	}
+	::= { bgpM2CfgPeerTimersEntry 4 }
+
+
+    bgpM2CfgPeerMinRouteAdverInter OBJECT-TYPE
+	SYNTAX	   Unsigned32 (0..65535)
+	MAX-ACCESS read-create
+	STATUS	   current
+	DESCRIPTION
+	    "Time interval in seconds for the
+	     MinRouteAdvertisementInterval timer.  The suggested
+	     value for this timer is 30 seconds."
+	DEFVAL {
+	    30
+	}
+	::= { bgpM2CfgPeerTimersEntry 5 }
+
+
+    --
+    -- Per-peer configuration extensions
+    --
+
+    bgpM2CfgPeerExtensions
+	OBJECT IDENTIFIER ::= { bgpM2PeerConfiguration 5 }
+
+
+    bgpM2CfgPeerNonCapExts
+	OBJECT IDENTIFIER ::= { bgpM2CfgPeerExtensions 1 }
+
+
+    bgpM2CfgPeerCapExts
+	OBJECT IDENTIFIER ::= { bgpM2CfgPeerExtensions 2 }
+
+
+    --
+    -- Peer route reflection configuration
+    --
+
+    bgpM2CfgPeerRouteReflectionExts
+	OBJECT IDENTIFIER ::= { bgpM2CfgPeerNonCapExts 2796 }
+
+
+    bgpM2CfgPeerReflectorClientTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2CfgPeerReflectorClientEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Table of route reflection client settings on a per-peer
+	     basis."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	::= { bgpM2CfgPeerRouteReflectionExts 1 }
+
+
+    bgpM2CfgPeerReflectorClientEntry OBJECT-TYPE
+	SYNTAX	   BgpM2CfgPeerReflectorClientEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing data on a per-peer basis on whether
+	     the peer is configured as a route reflector client."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	AUGMENTS {
+	    bgpM2CfgPeerEntry
+	}
+	::= { bgpM2CfgPeerReflectorClientTable 1 }
+
+
+    BgpM2CfgPeerReflectorClientEntry ::= SEQUENCE {
+	bgpM2CfgPeerReflectorClient
+	    INTEGER
+    }
+
+    bgpM2CfgPeerReflectorClient OBJECT-TYPE
+	SYNTAX	  INTEGER {
+	    nonClient(0),
+	    client(1),
+	    meshedClient(2)
+	}
+	MAX-ACCESS  read-create
+	STATUS	    current
+	DESCRIPTION
+	    "This value indicates whether the given peer is a
+	     reflector client of this router, or not.  A value of
+	     nonClient indicates that this peer is not a reflector
+	     client.  A value of client indicates that this peer is a
+	     reflector client that is not fully meshed with other
+	     reflector clients.	 A value of meshedClient indicates
+	     that the peer is a reflector client and is fully meshed
+	     with all other reflector clients.
+
+	     This value must be nonClient (0) for BGP external peers."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	::= { bgpM2CfgPeerReflectorClientEntry 1 }
+
+
+    --
+    -- Peer AS Confederations Extensions
+    --
+
+    bgpM2CfgPeerASConfederationExts
+	OBJECT IDENTIFIER ::= { bgpM2CfgPeerNonCapExts 3065 }
+
+
+    bgpM2CfgPeerConfedMemberTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2CfgPeerConfedMemberEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Table of confederation member settings on a per-peer
+	     basis."
+	REFERENCE
+	    "RFC 3065 - BGP Confederations"
+	::= { bgpM2CfgPeerASConfederationExts 1 }
+
+
+    bgpM2CfgPeerConfedMemberEntry OBJECT-TYPE
+	SYNTAX	   BgpM2CfgPeerConfedMemberEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing data on a per-peer basis on whether
+	     the peer is configured as a BGP confederation member."
+	REFERENCE
+	    "RFC 3065 - BGP Confederations"
+	AUGMENTS {
+	    bgpM2PeerEntry
+	}
+	::= { bgpM2CfgPeerConfedMemberTable 1 }
+
+
+    BgpM2CfgPeerConfedMemberEntry ::= SEQUENCE {
+	bgpM2CfgPeerConfedMember
+	    TruthValue
+    }
+
+
+    bgpM2CfgPeerConfedMember OBJECT-TYPE
+	SYNTAX	    TruthValue
+	MAX-ACCESS  read-create
+	STATUS	    current
+	DESCRIPTION
+	    "This value indicates whether the given peer is in our
+	     confederation or not."
+	REFERENCE
+	    "RFC 3065 - BGP Confederations"
+	::= { bgpM2CfgPeerConfedMemberEntry 1 }
+
+
+    --
+    -- BGP NLRI Data
+    --
+
+    bgpM2Rib
+	OBJECT IDENTIFIER ::= { bgpM2 3 }
+
+
+    --
+    -- NLRI Table
+    --
+
+    bgpM2NlriTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2NlriEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP-4 Received Path Attribute Table contains
+	     information about paths to destination networks
+	     received from all BGP4 peers.  Collectively, this
+	     represents the Adj-Ribs-In.  The route where
+	     bgpM2NlriBest is TRUE represents, for this NLRI,
+	     the route that is installed in the LocRib from the
+	     Adj-Ribs-In."
+	::= { bgpM2Rib 1 }
+
+
+    bgpM2NlriEntry OBJECT-TYPE
+	SYNTAX	   BgpM2NlriEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Information about a path to a network."
+	INDEX {
+	    bgpM2PeerIndex,
+	    bgpM2NlriAfi,
+	    bgpM2NlriSafi,
+	    bgpM2NlriPrefix,
+	    bgpM2NlriPrefixLen,
+	    bgpM2NlriIndex
+	}
+	::= { bgpM2NlriTable 1 }
+
+
+    BgpM2NlriEntry ::= SEQUENCE {
+	bgpM2NlriIndex
+	    Unsigned32,
+	bgpM2NlriAfi
+	    BgpM2Afi,
+	bgpM2NlriSafi
+	    BgpM2Safi,
+     bgpM2NlriPrefixType
+	 InetAddressType,
+	bgpM2NlriPrefix
+	    InetAddress,
+	bgpM2NlriPrefixLen
+	    InetAddressPrefixLength,
+	bgpM2NlriBest
+	    TruthValue,
+	bgpM2NlriCalcLocalPref
+	    Unsigned32,
+	bgpM2PathAttrIndex
+	    Unsigned32,
+	bgpM2NlriOpaqueType
+	    INTEGER,
+	bgpM2NlriOpaquePointer
+	    RowPointer
+    }
+
+
+    bgpM2NlriIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This index allows for multiple instances of a base
+	     prefix for a certain AFI SAFI from a given peer.
+	     This is currently useful for two things:
+	     1. Allowing for a peer in future implementations to
+		send more than a single route instance.
+	     2. Allow for extensions which extend the NLRI field
+		to send the same prefix while utilizing other
+		extension specific information.	 An example of
+		this is RFC 3107 - Carrying MPLS labels in BGP."
+	REFERENCE
+	    "RFC 3107 - Carrying Label Information in BGP-4"
+	::= { bgpM2NlriEntry 1 }
+    bgpM2NlriAfi OBJECT-TYPE
+	SYNTAX	   BgpM2Afi
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The address family of the prefix for this NLRI."
+	::= { bgpM2NlriEntry 2 }
+
+
+    bgpM2NlriSafi OBJECT-TYPE
+	SYNTAX	   BgpM2Safi
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The subsequent address family of the prefix for
+	     this NLRI"
+	REFERENCE
+	    "RFC 2858 - Multiprotocol Extensions for BGP-4"
+	::= { bgpM2NlriEntry 3 }
+
+
+    bgpM2NlriPrefixType OBJECT-TYPE
+	SYNTAX	   InetAddressType
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The type of the IP address prefix in the
+	  Network Layer Reachability Information field.
+	  The value of this object is derived from the
+	  appropriate value from the bgpM2NlriAfi field.
+	  Where an appropriate InetAddressType is not
+	  available, the value of the object must be
+	  unknown(0).
+
+	  XXX TODO - This seems like a hack."
+	::= { bgpM2NlriEntry 4 }
+
+
+    bgpM2NlriPrefix OBJECT-TYPE
+	SYNTAX	   InetAddress	(SIZE (4..20))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "An IP address prefix in the Network Layer
+	     Reachability Information field.  This object
+	     is an IP address containing the prefix with
+	     length specified by
+	     bgpM2PathAttrAddrPrefixLen.
+	     Any bits beyond the length specified by
+	     bgpM2PathAttrAddrPrefixLen are zeroed."
+	::= { bgpM2NlriEntry 5 }
+
+
+    bgpM2NlriPrefixLen OBJECT-TYPE
+	SYNTAX	   InetAddressPrefixLength
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Length in bits of the address prefix in
+	     the Network Layer Reachability Information field."
+	::= { bgpM2NlriEntry 6 }
+
+
+    bgpM2NlriBest OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "An indication of whether or not this route
+	     was chosen as the best BGP4 route."
+	::= { bgpM2NlriEntry 7 }
+
+
+    bgpM2NlriCalcLocalPref OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The degree of preference calculated by the
+	     receiving BGP4 speaker for an advertised
+	     route."
+	::= { bgpM2NlriEntry 8 }
+
+
+    bgpM2PathAttrIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value is a unique index for the per-NLRI entry
+	     in the bgpM2PathAttrTable.	 It is assigned by the
+	     agent at the point of creation of the bgpM2PathAttrTable
+	     row entry.	 While its value is guaranteed to be unique
+	     at any time, it is otherwise opaque to the management
+	     application with respect to its value or the contiguity
+	     of bgpM2PathAttrIndex row instance values across rows
+	     of the bgpM2PeerAttrTable.	 It is used to provide an
+	     index structure for other tables whose data is logically
+	     per-peer, per-NLRI."
+	::= { bgpM2NlriEntry 9 }
+
+
+    bgpM2NlriOpaqueType OBJECT-TYPE
+	SYNTAX	   INTEGER {
+	    none(0),
+	    bgpMplsLabelStack(1)
+	}
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This object enumerates the type of the row that is
+	     pointed to in the table row bgpM2NlriOpaquePointer
+	     instance, if bgpM2NlriOpaquePointer is in fact not
+	     a zero length.  bgpM2NlriOpaqueType is necessary since
+	     the data referenced by bgpM2NlriOpaquePointer is
+	     opaque to BGP.  For example, in the case of RFC 3107,
+	     the label stack that is pointed to may occur in the
+	     mplsLabelStackTable from the MPLS-LSR-MIB, and the
+	     instance value of bgpM2NlriOpaqueType would be
+	     bgpMplsLabelStack(1)."
+	REFERENCE
+	    "RFC 3107 - Carrying Label Information in BGP-4
+	     draft-ietf-mpls-lsr-mib-08.txt"
+	::= { bgpM2NlriEntry 10 }
+
+
+    bgpM2NlriOpaquePointer OBJECT-TYPE
+	SYNTAX	   RowPointer
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Pointer to a row that decomposes the data that is
+	     opaque to the BGP MIB but is sent in the NLRI.
+	     This RowPointer has zero (0) length data instance
+	     if bgpM2NlriOpaqueType is none."
+	::= { bgpM2NlriEntry 11 }
+
+
+    --
+    -- Adj-Ribs-Out Table
+    --
+
+    bgpM2AdjRibsOutTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2AdjRibsOutEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "This table contains on a per-peer basis one or more
+	     routes from the bgpM2NlriTable that have been
+	     placed in this peer's Adj-Ribs-Out."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Sec. 3.2"
+	::= { bgpM2Rib 2 }
+
+
+    bgpM2AdjRibsOutEntry OBJECT-TYPE
+	SYNTAX	   BgpM2AdjRibsOutEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "List of BGP routes that have been placed into a
+	     peer's Adj-Ribs-Out."
+	INDEX {
+	    bgpM2PeerIndex,
+	    bgpM2NlriAfi,
+	    bgpM2NlriSafi,
+	    bgpM2NlriPrefix,
+	    bgpM2NlriPrefixLen,
+	    bgpM2AdjRibsOutIndex
+	}
+	::= { bgpM2AdjRibsOutTable 1 }
+
+
+    BgpM2AdjRibsOutEntry ::= SEQUENCE {
+	bgpM2AdjRibsOutIndex
+	    Unsigned32,
+	bgpM2AdjRibsOutRoute
+	    RowPointer
+    }
+
+
+    bgpM2AdjRibsOutIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Certain extensions to BGP permit multiple instance of
+	     a per afi, per safi prefix to be advertised to a peer.
+	     This object allows the enumeration of them."
+	::= { bgpM2AdjRibsOutEntry 1 }
+    bgpM2AdjRibsOutRoute OBJECT-TYPE
+	SYNTAX	   RowPointer
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This object points to the route in the bgpM2NlriTable
+	     that corresponds to the entry in the peer's
+	     Adj-Rib-Out.  Outgoing route maps are not
+	     reflected at this point as those are part of the
+	     Update-Send process."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Sec. 9.2"
+	::= { bgpM2AdjRibsOutEntry 2 }
+
+
+    --
+    -- BGP Rib Path Attributes Table
+    --
+
+    --
+    -- Path Attribute Counter
+    --
+
+    bgpM2PathAttrCount OBJECT-TYPE
+	SYNTAX	   Counter32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The number of entries in the bgpM2PathAttrTable."
+	::= { bgpM2Rib 3 }
+
+
+    --
+    -- Path Attributes Table
+    --
+
+    bgpM2PathAttrTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PathAttrEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Provides per advertised network-prefix attribute data,
+	     as advertised over a peering session."
+	::= { bgpM2Rib 4 }
+
+
+    bgpM2PathAttrEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PathAttrEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Each entry contains data about a given network
+	     prefix, per-prefix and per-advertising peer."
+	INDEX {
+	    bgpM2PathAttrIndex
+	}
+	::= { bgpM2PathAttrTable 1 }
+
+
+    BgpM2PathAttrEntry ::= SEQUENCE {
+	bgpM2PathAttrOrigin
+	    INTEGER,
+	bgpM2PathAttrNextHopAddrType
+	    InetAddressType,
+	bgpM2PathAttrNextHop
+	    InetAddress,
+	bgpM2PathAttrMedPresent
+	    TruthValue,
+	bgpM2PathAttrMed
+	    Unsigned32,
+	bgpM2PathAttrLocalPrefPresent
+	    TruthValue,
+	bgpM2PathAttrLocalPref
+	    Unsigned32,
+	bgpM2PathAttrAtomicAggregate
+	    INTEGER,
+	bgpM2PathAttrAggregatorAS
+	    InetAutonomousSystemNumber,
+	bgpM2PathAttrAggregatorAddr
+	    BgpM2Identifier,
+	bgpM2AsPathCalcLength
+	    Unsigned32,
+	bgpM2AsPathString
+	    SnmpAdminString,
+	bgpM2AsPathIndex
+	    Unsigned32
+    }
+
+
+    bgpM2PathAttrOrigin OBJECT-TYPE
+	SYNTAX	   INTEGER {
+	    igp(1),-- networks are interior
+	    egp(2),-- networks learned via the EGP protocol
+	    incomplete(3) -- undetermined
+	    }
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The ultimate origin of the path information."
+	::= { bgpM2PathAttrEntry 1 }
+
+
+    bgpM2PathAttrNextHopAddrType OBJECT-TYPE
+	SYNTAX	    InetAddressType
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "The address family of the address for
+	     the border router that should be used
+	     to access the destination network."
+	::= { bgpM2PathAttrEntry 2 }
+
+
+    bgpM2PathAttrNextHop OBJECT-TYPE
+	SYNTAX	   InetAddress (SIZE(4..20))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The address of the border router that
+	     should be used to access the destination
+	     network.  This address is the nexthop
+	     address received in the UPDATE packet.
+	     The address family of this object will be the
+	     same as that of the prefix in this row.
+
+	     Note that for RFC2545 style double nexthops,
+	     this object will always contain the global scope
+	     nexthop.  bgpM2LinkLocalNextHopTable will contain
+	     the linklocal scope nexthop.
+
+	     In the case that the mechanism documented in
+	     draft-kato-bgp-ipv6-link-local-00.txt is used and
+	     only a link local nexthop has been sent, ,
+	     bgpM2LinkLocalNextHopPresent will be false
+	     and bgpM2PathAttrNextHop will contain the link local
+	     nexthop."
+	::= { bgpM2PathAttrEntry 3 }
+
+
+    bgpM2PathAttrMedPresent OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Whether or not the MED value is present.
+	     If it is not present, the bgpM2PathAttrMed
+	     object has no useful value and should be set to 0."
+	::= { bgpM2PathAttrEntry 4 }
+
+
+    bgpM2PathAttrMed OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This metric is used to discriminate
+	     between multiple exit points to an
+	     adjacent autonomous system."
+	::= { bgpM2PathAttrEntry 5 }
+
+
+    bgpM2PathAttrLocalPrefPresent OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Whether or not the LocalPref value is present.
+	     If it is not present, the bgpM2PathAttrLocalPref
+	     object has no useful value and should be set to 0."
+	::= { bgpM2PathAttrEntry 6 }
+
+
+    bgpM2PathAttrLocalPref OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The originating BGP4 speakers degree of
+	     preference for an advertised route."
+	::= { bgpM2PathAttrEntry 7 }
+
+
+    bgpM2PathAttrAtomicAggregate OBJECT-TYPE
+	SYNTAX	   INTEGER {
+	    atomicAggregatePresent(1),
+	    atomicAggregateMissing(2)
+	    }
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "When this object is set to atomicAggregatePresent,
+	  the ATOMIC_AGGREGATE Path Attribute is present
+	  and indicates that the NLRI MUST NOT be made
+	  more specific."
+	::= { bgpM2PathAttrEntry 8 }
+
+
+    bgpM2PathAttrAggregatorAS OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The AS number of the last BGP4 speaker that
+	     performed route aggregation.  A value of
+	     zero (0) indicates the absence of this
+	     attribute.
+
+	     Note propagation of AS of zero is illegal in
+	     the Internet."
+	::= { bgpM2PathAttrEntry 9 }
+
+
+    bgpM2PathAttrAggregatorAddr OBJECT-TYPE
+	SYNTAX	   BgpM2Identifier
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The IP address of the last BGP4 speaker
+	     that performed route aggregation.	A
+	     value of 0.0.0.0 indicates the absence
+	     of this attribute."
+	::= { bgpM2PathAttrEntry 10 }
+
+
+    bgpM2AsPathCalcLength OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value represents the calculated length of the
+	     AS Path according to the rules of the BGP specification.
+	     This value is used in route selection."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Sec. 9.1.2.2.a"
+	::= { bgpM2PathAttrEntry 11 }
+
+
+    bgpM2AsPathString OBJECT-TYPE
+	SYNTAX	   SnmpAdminString
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This is a string depicting the autonomous system
+	     path to this network which was received from the
+	     peer which advertised it.	The format of the string
+	     is implementation-dependent, and should be designed
+	     for operator readability."
+	::= { bgpM2PathAttrEntry 12 }
+
+
+    bgpM2AsPathIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value is a unique index for the decomposed AS Path
+	     in the bgpM2AsPathTable.  It is assigned by the
+	     agent at the point of creation of the bgpM2AsPathTable
+	     row entry.	 While its value is guaranteed to be unique
+	     at any time, it is otherwise opaque to the management
+	     application with respect to its value or the contiguity
+	     of bgpM2AsPathIndex row instance values across rows
+	     of the bgpM2AsPathTable."
+	::= { bgpM2PathAttrEntry 13 }
+
+
+    --
+    -- As-4 byte AS_PATH
+    --
+
+    bgpM2AsPath4byteTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2AsPath4byteEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "This table is present for BGP speakers that support
+	     the AS 4byte specification and are functioning as
+	     a router between 2-byte and 4-byte AS space."
+	REFERENCE
+	    "draft-ietf-idr-as4bytes-04.txt - BGP support for
+	     four-octet AS number space"
+	::= { bgpM2Rib 5 }
+
+
+    bgpM2AsPath4byteEntry OBJECT-TYPE
+	SYNTAX	   BgpM2AsPath4byteEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Each row contains the information for the AS 4-byte
+	     extension's NEW_AS_PATH and NEW_AGGREGATOR attributes."
+	AUGMENTS {
+	    bgpM2PathAttrEntry
+	}
+	::= { bgpM2AsPath4byteTable 1 }
+
+
+    BgpM2AsPath4byteEntry ::= SEQUENCE {
+	bgpM2AsPath4bytePathPresent
+	    TruthValue,
+	bgpM2AsPath4byteAggregatorAS
+	    InetAutonomousSystemNumber,
+	bgpM2AsPath4byteCalcLength
+	    Unsigned32,
+	bgpM2AsPath4byteString
+	    SnmpAdminString,
+	bgpM2AsPath4byteIndex
+	    Unsigned32
+    }
+
+
+    bgpM2AsPath4bytePathPresent OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value may only be true if this BGP Speaker
+	     is functioning as a router between ASs that
+	     are in 2-byte and 4-byte AS space.	 If this
+	     value is true, then the NEW_AS_PATH attributes
+	     are present and the 4-byte versions of the
+	     appropriate path attributes are in this row.
+
+	     If this value is false, then the following values
+	     will be present in the row:
+
+	     bgpM2PathAttrAggregatorAS - zero (0).
+	     bgpM2AsPathCalcLength - zero (0).
+	     bgpM2AsPathString - zero (0) length string.
+	     bgpM2AsPathIndex - zero (0)."
+	::= { bgpM2AsPath4byteEntry 1 }
+
+
+    bgpM2AsPath4byteAggregatorAS OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The NEW_AGGREGATOR AS number of the last BGP4 speaker
+	     that performed route aggregation.	A value of
+	     zero (0) indicates the absence of this
+	     attribute.
+
+	     Note propagation of AS of zero is illegal in
+	     the Internet."
+	::= { bgpM2AsPath4byteEntry 2 }
+
+
+    bgpM2AsPath4byteCalcLength OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value represents the calculated length of the
+	     NEW_AS_PATH according to the rules of the BGP specification.
+	     This value is used in route selection."
+	REFERENCE
+	    "draft-ietf-idr-bgp4-17.txt, Sec. 9.1.2.2.a"
+	::= { bgpM2AsPath4byteEntry 3 }
+
+
+    bgpM2AsPath4byteString OBJECT-TYPE
+	SYNTAX	   SnmpAdminString
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This is a string depicting the autonomous system
+	     path to this network which was received from the
+	     peer which advertised it.	The format of the string
+	     is implementation-dependent, and should be designed
+	     for operator readability."
+	::= { bgpM2AsPath4byteEntry 4 }
+
+
+    bgpM2AsPath4byteIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value is a unique index for the decomposed AS Path
+	     in the bgpM2AsPathTable.  It is assigned by the
+	     agent at the point of creation of the bgpM2AsPathTable
+	     row entry.	 While its value is guaranteed to be unique
+	     at any time, it is otherwise opaque to the management
+	     application with respect to its value or the contiguity
+	     of bgpM2AsPathIndex row instance values across rows
+	     of the bgpM2AsPathTable. "
+	::= { bgpM2AsPath4byteEntry 5 }
+
+
+    --	  BGP 4 Path attribute AS Path Table.  There is one row in
+    --	  this table for each AS which is advertised for a given
+    --	  route as provided from a peer.
+
+-- JMH
+-- We need one of these for the NewAsPath for the 4byte draft
+
+    bgpM2AsPathTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2AsPathEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP-4 Path Attribute AS Path Table
+	     contains the per network path (NLRI)
+	     AS PATH data received from the
+	     advertising BGP peer."
+	::= { bgpM2Rib 6 }
+
+
+    bgpM2AsPathTableEntry OBJECT-TYPE
+	SYNTAX	   BgpM2AsPathEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Information about an AS path provided with a path to
+	     a network."
+	INDEX {
+	    bgpM2PathAttrIndex,
+	    bgpM2AsPathSegmentIndex,
+	    bgpM2AsPathElementIndex
+	}
+	::= { bgpM2AsPathTable 1 }
+
+
+    BgpM2AsPathEntry ::= SEQUENCE {
+	bgpM2AsPathSegmentIndex
+	    Unsigned32,
+	bgpM2AsPathElementIndex
+	    Unsigned32,
+	bgpM2AsPathType
+	    INTEGER,
+	bgpM2AsPathElementValue
+	    InetAutonomousSystemNumber
+    }
+
+
+    bgpM2AsPathSegmentIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "A per-AS path segment index.  This will index a set of
+	     autonomous systems in an AS path which are part
+	     of the same sequence or set (as determined by
+	     the row value of bgpM2AsPathType, which
+	     should be the same value for each bgpM2AsPathTable
+	     entry indexed by the same (bgpM2PathAttrIndex,
+	     bgpM2AsPathIndex) pair)."
+	::= { bgpM2AsPathTableEntry 1 }
+
+
+    bgpM2AsPathElementIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "A per-AS element index.  This will index a particular
+	     AS within a sequence or set of autonomous systems in
+	     an AS path."
+	::= { bgpM2AsPathTableEntry 2 }
+
+
+    bgpM2AsPathType OBJECT-TYPE
+	SYNTAX	INTEGER {
+	    asSet(1),
+	    asSequence(2),
+	    confedSequence(3),
+	    confedSet(4)
+	 }
+	 MAX-ACCESS  read-only
+	 STATUS	     current
+	 DESCRIPTION
+	     "The type of sequence in which this asPath
+	      was advertised as an attribute.  Note that
+	      all asPath row instances for a given (bgpM2PathAttrIndex,
+	      bgpM2AsPathIndex) index pair will have their
+	      bgpM2AsPathType set to the same value.
+	      The values for bgpM2AsPathType are
+	      interpreted as defined in the base BGP document
+	      and the BGP AS Confederations document."
+
+	REFERENCE
+	    "draft-ietf-idr-bgp4-16
+	     RFC 3065 - BGP AS Confederations"
+	::= { bgpM2AsPathTableEntry 3 }
+
+
+    bgpM2AsPathElementValue OBJECT-TYPE
+	SYNTAX	   InetAutonomousSystemNumber
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "An AS value for an AS the related NLRI traversed
+	     in the propagation of its advertisement.  This
+	     value is to be interpreted in the context of the
+	     sequence implied by bgpM2AsPathIndex and
+	     bgpM2AsPathType (and, in sequence of the
+	     other table rows with the same value of
+	     bgpM2PathAttrIndex and bgpM2AsPathIndex)."
+	::= { bgpM2AsPathTableEntry 4 }
+
+
+    --	  BGP 4 Path unknown attribute.	 There is one row in
+    --	  this table for each attribute not known by this BGP
+    --	  implementation (or agent instrumentation), but provided
+    --	  from a peer.
+
+    bgpM2PathAttrUnknownTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PathAttrUnknownEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP-4 Path Attribute Unknown Table
+	     contains the per network path (NLRI)
+	     data on the path attributes advertised
+	     with a route but not known to the local BGP implementation
+	     or not otherwise capable of being returned from this agent.
+
+	     The absence of row data for a given index value for
+	     bgpM2PathAttrIndex indicates a lack of such unknown
+	     attribute information for the indicated network path
+	     (as indexed by that bgpM2PathAttrIndex value in the
+	     bgpM2PathAttrTable)."
+	::= { bgpM2Rib 7 }
+
+
+    bgpM2PathAttrUnknownEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PathAttrUnknownEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Information about an unknown attribute
+	     provided with a path to a network."
+	INDEX {
+	    bgpM2PathAttrIndex,
+	    bgpM2PathAttrUnknownIndex
+	}
+	::= { bgpM2PathAttrUnknownTable 1 }
+
+
+    BgpM2PathAttrUnknownEntry ::= SEQUENCE {
+	bgpM2PathAttrUnknownIndex
+	    Unsigned32,
+	bgpM2PathAttrUnknownType
+	    Unsigned32,
+	bgpM2PathAttrUnknownValue
+	    OCTET STRING
+    }
+
+
+    bgpM2PathAttrUnknownIndex OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "An integer index for a row in this table."
+	::= { bgpM2PathAttrUnknownEntry 1 }
+
+
+    bgpM2PathAttrUnknownType OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "The attribute type advertised with this unknown
+	     attribute by the peer."
+	::= { bgpM2PathAttrUnknownEntry 2 }
+
+
+    -- Maximum size of the following is derived as
+    --	   4096	  max message size
+    --	 -  16	  BGP message marker bytes
+    --	 -   2	  BGP message size
+    --	 -   1	  BGP message type (UPDATE with unknown attr)
+    --	 -   2	  UPDATE routes length (even assuming no routes)
+    --	 -   2	  UPDATE path attributes length
+    --	 -   1	  path attribute flag octet
+    --	 -   2	  unknown path attr type (in bgpM2PathAttrUnknownType)
+    --	---------
+    --	  4070 bytes maximum per-message attribute value data
+
+
+    bgpM2PathAttrUnknownValue OBJECT-TYPE
+	SYNTAX	   OCTET STRING (SIZE(0..4070))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "Value of path attribute not understood
+	     by the base BGP-4 document.
+
+	     Octets beyond the maximum size, if any,
+	     are not recorded by this row object. "
+	::= { bgpM2PathAttrUnknownEntry 3 }
+
+
+    --
+    -- Path Attribute Extensions
+    --
+
+    bgpM2PathAttrExtensions
+	OBJECT IDENTIFIER ::= { bgpM2Rib 8 }
+
+
+    bgpM2PathAttrNonCapExts
+	OBJECT IDENTIFIER ::= { bgpM2PathAttrExtensions 1 }
+
+
+    bgpM2PathAttrCapExts
+	OBJECT IDENTIFIER ::= { bgpM2PathAttrExtensions 2 }
+
+
+    --
+    -- Path Attribute Route Reflection Extensions
+    --
+
+    --
+    -- Originator ID Table
+    --
+
+    bgpM2PathAttrRouteReflectionExts
+	OBJECT IDENTIFIER ::= { bgpM2PathAttrNonCapExts 2796 }
+
+
+    bgpM2PathAttrOriginatorIdTable OBJECT-TYPE
+	SYNTAX	    SEQUENCE OF BgpM2PathAttrOriginatorIdEntry
+	MAX-ACCESS  not-accessible
+	STATUS	    current
+	DESCRIPTION
+	    "Per prefix data pertinent to advertisement of a
+	     network prefix through an originator."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	::= { bgpM2PathAttrRouteReflectionExts 1 }
+
+
+    bgpM2PathAttrOriginatorIdEntry OBJECT-TYPE
+	SYNTAX	    BgpM2PathAttrOriginatorIdEntry
+	MAX-ACCESS  not-accessible
+	STATUS	    current
+	DESCRIPTION
+	    "Each entry contains data pertinent to a network
+	     prefix as received through its originating BGP
+	     route reflector."
+	REFERENCE
+	    "RFC 2796 - BGP Route Reflection"
+	INDEX {
+	    bgpM2PathAttrIndex
+	}
+	::= { bgpM2PathAttrOriginatorIdTable 1 }
+
+
+    BgpM2PathAttrOriginatorIdEntry ::= SEQUENCE {
+	bgpM2PathAttrOriginatorId
+	    BgpM2Identifier
+    }
+
+
+    bgpM2PathAttrOriginatorId OBJECT-TYPE
+	SYNTAX	    BgpM2Identifier
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "The Originator-ID identifying the router that initially
+	     advertised this destination to a Route Reflector.	A
+	     value of 0.0.0.0 indicates the absence of this attribute."
+	REFERENCE
+	     "This attribute is defined in [RFC2796]."
+	::= { bgpM2PathAttrOriginatorIdEntry 1 }
+
+
+    --
+    -- Cluster table
+    --
+    bgpM2PathAttrClusterTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PathAttrClusterEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP-4 Path Attribute Cluster Table
+	     contains the per network path (NLRI)
+	     data on the reflection path which a
+	     route has traversed.  The absence of row
+	     data for a given index value for bgpM2PathAttrIndex
+	     indicates a lack of this attribute information
+	     for the indicated network path (as indexed by
+	     that bgpM2PathAttrIndex value in the bgpM2PathAttrTable)."
+	::= { bgpM2PathAttrRouteReflectionExts 2 }
+
+
+    bgpM2PathAttrClusterEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PathAttrClusterEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Information about a cluster traversal
+	     provided with a path to a network."
+	INDEX {
+	    bgpM2PathAttrIndex,
+	    bgpM2PathAttrClusterIndex
+	}
+	::= { bgpM2PathAttrClusterTable 1 }
+
+
+    BgpM2PathAttrClusterEntry ::= SEQUENCE {
+	bgpM2PathAttrClusterIndex
+	    Unsigned32,
+	bgpM2PathAttrClusterValue
+	    BgpM2Identifier
+    }
+
+
+    bgpM2PathAttrClusterIndex OBJECT-TYPE
+	SYNTAX	   Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "An integral index for a row in this table."
+	::= { bgpM2PathAttrClusterEntry 1 }
+
+
+    bgpM2PathAttrClusterValue OBJECT-TYPE
+
+	SYNTAX	    BgpM2Identifier
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "A four octet long value representing a part of the
+	    reflection path that the route has passed.	Each such four
+	    octet long value represents the ID of a cluster that
+	    the route has traversed.  The sequence of this path as
+	    received in the route advertisement will be preserved in
+	    the sequence of bgpM2PathAttrClusterTable rows (and the
+	    bgpM2PathAttrClusterValues in each row) as returned for
+	    a given bgpM2PathAttrIndex value, and the monotonically
+	    increasing sequence of bgpM2PathAttrClusterIndex values
+	    for that bgpM2PathAttrIndex."
+	REFERENCE
+	    "This attribute is defined in [RFC2796]."
+	::= { bgpM2PathAttrClusterEntry 2 }
+
+
+    --
+    -- BGP Communities
+    --
+
+    bgpM2PathAttrCommunityExts
+	OBJECT IDENTIFIER ::= { bgpM2PathAttrNonCapExts 1997 }
+
+
+    bgpM2PathAttrCommTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PathAttrCommEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP-4 Path Attribute Community Table
+	     contains the per network path (NLRI)
+	     data on the community membership advertised
+	     with a route.  The absence of row
+	     data for a given index value for bgpM2PathAttrIndex
+	     indicates a lack of this attribute information
+	     for the indicated network path (as indexed by
+	     that bgpM2PathAttrIndex value in the bgpM2PathAttrTable)."
+	::= { bgpM2PathAttrCommunityExts 1 }
+
+
+    bgpM2PathAttrCommEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PathAttrCommEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Information about a community association
+	     provided with a path to a network."
+	INDEX {
+	    bgpM2PathAttrIndex,
+	    bgpM2PathAttrCommIndex
+	}
+	::= { bgpM2PathAttrCommTable 1 }
+
+
+    BgpM2PathAttrCommEntry ::= SEQUENCE {
+	bgpM2PathAttrCommIndex
+	    Unsigned32,
+	bgpM2PathAttrCommValue
+	    BgpM2Community
+    }
+
+
+    bgpM2PathAttrCommIndex OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "An integer index for a row in this table."
+	::= { bgpM2PathAttrCommEntry 1 }
+
+
+    bgpM2PathAttrCommValue  OBJECT-TYPE
+	SYNTAX	    BgpM2Community
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "A value representing a community.	 There are certain
+	     4-octet long values which could be returned in this
+	     columnar row data that carry additional semantics."
+	REFERENCE
+	    "RFC 1997 - BGP Communities Attribute"
+	::= { bgpM2PathAttrCommEntry 2 }
+
+
+    --
+    -- BGP Extended Communities
+    --
+
+    bgpM2PathAttrExtCommTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2PathAttrExtCommEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "The BGP-4 Path Attribute Community Table
+	    contains the per network path (NLRI)
+	    data on the extended community membership advertised
+	    with a route.  The absence of row
+	    data for a given index value for bgpM2PathAttrIndex
+	    indicates a lack of this attribute information
+	    for the indicated network path (as indexed by
+	    that bgpM2PathAttrIndex value in the bgpM2PathAttrTable).
+
+	    XXX JMH - can not assign the OID until an RFC is published."
+	::= { bgpM2PathAttrNonCapExts XXX }
+
+
+    bgpM2PathAttrExtCommEntry OBJECT-TYPE
+	SYNTAX	   BgpM2PathAttrExtCommEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Information about an extended community association
+	     provided with a path to a network."
+	INDEX {
+	    bgpM2PathAttrIndex,
+	    bgpM2PathAttrExtCommIndex
+	}
+	::= { bgpM2PathAttrExtCommTable 1 }
+
+
+    BgpM2PathAttrExtCommEntry ::= SEQUENCE {
+	bgpM2PathAttrExtCommIndex
+	    Unsigned32,
+	bgpM2PathAttrExtCommValue
+	    BgpM2ExtendedCommunity
+    }
+
+
+    bgpM2PathAttrExtCommIndex OBJECT-TYPE
+	SYNTAX Unsigned32
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "An integral index for a row in this table."
+	::= { bgpM2PathAttrExtCommEntry 1 }
+
+
+    bgpM2PathAttrExtCommValue  OBJECT-TYPE
+	SYNTAX	    BgpM2ExtendedCommunity
+	MAX-ACCESS  read-only
+	STATUS	    current
+	DESCRIPTION
+	    "A value representing an extended community which was
+	    received with the route implied by the bgpM2PathAttr
+	    Index value of this row data.   There are certain
+	    8-octet long values which could be returned in this
+	    columnar row data that carry additional semantics."
+	REFERENCE
+	    "BGP-EXTCOMM - BGP Extended Communities Attribute"
+	::= { bgpM2PathAttrExtCommEntry 2 }
+
+
+    --
+    -- RFC 2545 link local nexthop
+    --
+
+    bgpM2LinkLocalNextHopTable OBJECT-TYPE
+	SYNTAX	   SEQUENCE OF BgpM2LinkLocalNextHopEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Table of link local nexthops as sent by RFC 2545
+	     for IPv6 BGP Speakers."
+	REFERENCE
+	    "RFC 2545 - Use of BGP-4 Multiprotocol Extensions
+	     for IPv6 Inter-Domain Routing"
+	::= { bgpM2PathAttrNonCapExts 2545 }
+
+
+    bgpM2LinkLocalNextHopEntry OBJECT-TYPE
+	SYNTAX	   BgpM2LinkLocalNextHopEntry
+	MAX-ACCESS not-accessible
+	STATUS	   current
+	DESCRIPTION
+	    "Entry containing the link-local nexthops as sent
+	     by a BGP speaker running RFC 2545 extensions for
+	     double-nexthops."
+	INDEX {
+	    bgpM2PathAttrIndex
+	}
+	::= { bgpM2LinkLocalNextHopTable 1 }
+
+
+    BgpM2LinkLocalNextHopEntry ::= SEQUENCE {
+	bgpM2LinkLocalNextHopPresent
+	    TruthValue,
+	bgpM2LinkLocalNextHop
+	    InetAddress
+    }
+    bgpM2LinkLocalNextHopPresent OBJECT-TYPE
+	SYNTAX	   TruthValue
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value is TRUE if and only if the BGP
+	     speaker is receiving IPv6 NLRI using the
+	     RFC 2545 double nexthop convention and it
+	     has received a link local scope nexthop in
+	     addition to the global scope nexthop."
+	::= { bgpM2LinkLocalNextHopEntry 1 }
+
+
+    bgpM2LinkLocalNextHop OBJECT-TYPE
+	SYNTAX	   InetAddress (SIZE(20))
+	MAX-ACCESS read-only
+	STATUS	   current
+	DESCRIPTION
+	    "This value contains an IPv6 link local address of
+	    InetAddressType of type ipv6z.  This value is only
+	    present if bgpM2LinkLocalNextHopPresent is true."
+	::= { bgpM2LinkLocalNextHopEntry 2 }
+
+
+    --
+    -- Conformance Information
+    --
+
+    bgpM2Conformance
+	OBJECT IDENTIFIER ::= { bgpM2 4 }
+
+
+    bgpM2MIBCompliances OBJECT IDENTIFIER ::=
+	{ bgpM2Conformance 1 }
+
+
+    bgpM2MIBGroups	OBJECT IDENTIFIER ::=
+	{ bgpM2Conformance 2 }
+
+
+    bgpM2MIBCompliance MODULE-COMPLIANCE
+	STATUS	current
+	DESCRIPTION
+	    "The compliance statement for entities which
+	    implement the BGP4 mib."
+	 MODULE	 -- this module
+	 MANDATORY-GROUPS {
+	    bgpM2TimersGroup,
+	    bgpM2CountersGroup,
+	    bgpM2AsPathGroup,
+	    bgpM2As4byteGroup,
+	    bgpM2BaseGroup,
+	    bgpM2ErrorsGroup,
+	    bgpM2PeerGroup,
+	    bgpM2PathAttributesGroup
+	    }
+	GROUP bgpM2MIBNotificationsGroup
+	DESCRIPTION
+	    "The notifications group is completely optional,
+	     but highly recommended."
+	GROUP bgpM2CommunitiesGroup
+	DESCRIPTION
+	    "The communities group is mandatory only for those
+	     which support the BGP community attribute."
+	GROUP bgpM2ExtCommunitiesGroup
+	DESCRIPTION
+	    "The communities group is mandatory only for those
+	     which support the BGP extended community attribute."
+	GROUP bgpM2RouteReflectionGroup
+	DESCRIPTION
+	    "The communities group is mandatory only for those
+	     which support the BGP route reflection relationships."
+	GROUP bgpM2AsConfederationGroup
+	DESCRIPTION
+	    "The communities group is mandatory only for those
+	     which support the BGP confederation membership."
+	GROUP bgpM2TimersGroup
+	DESCRIPTION
+	    "This group is mandatory for all agent implementations."
+	GROUP bgpM2CountersGroup
+	DESCRIPTION
+	    "This group is mandatory for all agent implementations."
+	GROUP bgpM2CapabilitiesGroup
+	DESCRIPTION
+	    "This group is mandatory for all agent implementations."
+	GROUP bgpM2AsPathGroup
+	DESCRIPTION
+	    "This group is mandatory for all agent implementations."
+	GROUP bgpM2As4byteGroup
+	DESCRIPTION
+	    "This group is mandatory for all agent implementations."
+	GROUP bgpM2BaseGroup
+	DESCRIPTION
+	    "This group is mandatory for all agent implementations."
+	GROUP bgpM2ErrorsGroup
+	DESCRIPTION
+	    "This group is mandatory for all agent implementations."
+	GROUP bgpM2PeerGroup
+	DESCRIPTION
+	    "This group is mandatory for all agent implementations."
+	GROUP bgpM2PathAttributesGroup
+	DESCRIPTION
+	    "This group is mandatory for all agent implementations."
+	GROUP bgpM2PeerConfigurationGroup
+	DESCRIPTION
+	    "This group is optional for implementations that wish to
+	     support configuration via SNMP."
+	GROUP bgpM2PeerRouteReflectorCfgGroup
+	DESCRIPTION
+	    "This group is optional for implementations that wish to
+	     support configuration of route reflection via SNMP.
+	     Implementation of this feature requires support of the
+	     bgpM2PeerConfigurationGroup."
+	GROUP bgpM2PeerAsConfederationCfgGroup
+	DESCRIPTION
+	    "This group is optional for implementations that wish to
+	     support configuration of BGP AS Confederations via SNMP.
+	     Implementation of this feature requires support of the
+	     bgpM2PeerConfigurationGroup."
+	GROUP bgpM2Rfc2545Group
+	DESCRIPTION
+	    "This group is required for peers that support exchanging
+	     of IPv6 NLRI per RFC 2545."
+	::= { bgpM2MIBCompliances 1 }
+
+
+
+    bgpM2CommunitiesGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2PathAttrCommIndex,
+	    bgpM2PathAttrCommValue
+	}
+	STATUS current
+	DESCRIPTION
+	    "Objects associated with BGP communities."
+	::= { bgpM2MIBGroups 1 }
+
+
+    bgpM2ExtCommunitiesGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2PathAttrExtCommIndex,
+	    bgpM2PathAttrExtCommValue
+	}
+	STATUS current
+	DESCRIPTION
+	    "Objects associated with BGP extended communities."
+	::= { bgpM2MIBGroups 2 }
+
+
+    bgpM2RouteReflectionGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2RouteReflector,
+	    bgpM2ClusterId,
+	    bgpM2PeerReflectorClient,
+	    bgpM2PathAttrOriginatorId,
+	    bgpM2PathAttrClusterIndex,
+	    bgpM2PathAttrClusterValue
+	}
+	STATUS current
+	DESCRIPTION
+	    "Objects associated with BGP route reflection."
+	::= { bgpM2MIBGroups 3 }
+
+
+    bgpM2AsConfederationGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2ConfederationRouter,
+	    bgpM2ConfederationId,
+	    bgpM2PeerConfedMember
+	}
+	STATUS current
+	DESCRIPTION
+	    "Objects associated with BGP confederation membership."
+	::= { bgpM2MIBGroups 4 }
+
+
+    bgpM2TimersGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2PeerFsmEstablishedTime,
+	    bgpM2PeerInUpdatesElapsedTime,
+	    bgpM2PeerConnectRetryInterval,
+	    bgpM2PeerHoldTimeConfigured,
+	    bgpM2PeerKeepAliveConfigured,
+	    bgpM2PeerMinASOrigInterval,
+	    bgpM2PeerMinRouteAdverInterval,
+	    bgpM2PeerHoldTime,
+	    bgpM2PeerKeepAlive
+	}
+	STATUS current
+	DESCRIPTION
+	    "Objects associated with BGP peering timers."
+	::= { bgpM2MIBGroups 5 }
+    bgpM2CountersGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2PeerInUpdates,
+	    bgpM2PeerOutUpdates,
+	    bgpM2PeerInTotalMessages,
+	    bgpM2PeerOutTotalMessages,
+	    bgpM2PeerFsmEstablishedTrans,
+	    bgpM2PrefixCountersAfi,
+	    bgpM2PrefixCountersSafi,
+	    bgpM2PrefixInPrefixes,
+	    bgpM2PrefixInPrefixesAccepted,
+	    bgpM2PrefixInPrefixesRejected,
+	    bgpM2PrefixOutPrefixes
+	}
+	STATUS current
+	DESCRIPTION
+	    "Objects to count discrete events and exchanges on BGP
+	     sessions."
+	 ::= { bgpM2MIBGroups 6 }
+
+
+    bgpM2CapabilitiesGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2CapabilitySupportAvailable,
+	    bgpM2SupportedCapabilityCode,
+	    bgpM2SupportedCapability,
+	    bgpM2PeerCapAnnouncedCode,
+	    bgpM2PeerCapAnnouncedIndex,
+	    bgpM2PeerCapAnnouncedValue,
+	    bgpM2PeerCapReceivedCode,
+	    bgpM2PeerCapReceivedIndex,
+	    bgpM2PeerCapReceivedValue
+	}
+	STATUS current
+	DESCRIPTION
+	    "Objects to report capabilities as received on BGP
+	     sessions."
+	::= { bgpM2MIBGroups 7 }
+
+
+    bgpM2AsPathGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2AsPathSegmentIndex,
+	    bgpM2AsPathElementIndex,
+	    bgpM2AsPathType,
+	    bgpM2AsPathElementValue
+	}
+	STATUS current
+	DESCRIPTION
+	    "Objects to report AS paths received on BGP NLRIs."
+	::= { bgpM2MIBGroups 8 }
+
+
+    bgpM2As4byteGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2AsSize,
+	    bgpM2AsPath4bytePathPresent,
+	    bgpM2AsPath4byteAggregatorAS,
+	    bgpM2AsPath4byteCalcLength,
+	    bgpM2AsPath4byteString,
+	    bgpM2AsPath4byteIndex
+	}
+	STATUS current
+	DESCRIPTION
+	    "AS Size objects."
+	::= { bgpM2MIBGroups 9 }
+
+
+    bgpM2BaseGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2LocalAs,
+	    bgpM2LocalIdentifier,
+	    bgpM2VersionIndex,
+	    bgpM2VersionSupported
+	}
+	STATUS current
+	DESCRIPTION
+	    "Basic objects in local BGP implementation."
+	::= { bgpM2MIBGroups 10 }
+
+
+    bgpM2ErrorsGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2PeerLastErrorReceived,
+	    bgpM2PeerLastErrorReceivedData,
+	    bgpM2PeerLastErrorReceivedTime,
+	    bgpM2PeerLastErrorReceivedText,
+	    bgpM2PeerLastErrorSent,
+	    bgpM2PeerLastErrorSentData,
+	    bgpM2PeerLastErrorSentTime,
+	    bgpM2PeerLastErrorSentText
+	}
+	STATUS current
+	DESCRIPTION
+	    "Errors received on BGP peering sessions."
+	::= { bgpM2MIBGroups 11 }
+    bgpM2PeerGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2PeerInstance,
+	    bgpM2PeerIdentifier,
+	    bgpM2PeerState,
+	    bgpM2PeerStatus,
+	    bgpM2PeerConfiguredVersion,
+	    bgpM2PeerNegotiatedVersion,
+	    bgpM2PeerLocalAddrType,
+	    bgpM2PeerLocalAddr,
+	    bgpM2PeerLocalPort,
+	    bgpM2PeerLocalAs,
+	    bgpM2PeerRemoteAddrType,
+	    bgpM2PeerRemoteAddr,
+	    bgpM2PeerRemotePort,
+	    bgpM2PeerRemoteAs,
+	    bgpM2PeerIndex
+	}
+	STATUS current
+	DESCRIPTION
+	    "Core object types on BGP peering sessions."
+	::= { bgpM2MIBGroups 12 }
+
+
+    bgpM2PathAttributesGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2PathAttrCount,
+	    bgpM2AsPathCalcLength,
+	    bgpM2AsPathElementValue,
+	    bgpM2AsPathIndex,
+	    bgpM2AsPathString,
+	    bgpM2AsPathType,
+	    bgpM2NlriAfi,
+	    bgpM2NlriBest,
+	    bgpM2NlriPrefixType,
+	    bgpM2NlriPrefix,
+	    bgpM2NlriPrefixLen,
+	    bgpM2NlriSafi,
+	    bgpM2NlriOpaqueType,
+	    bgpM2NlriOpaquePointer,
+	    bgpM2NlriIndex,
+	    bgpM2NlriCalcLocalPref,
+	    bgpM2AdjRibsOutIndex,
+	    bgpM2AdjRibsOutRoute,
+	    bgpM2PathAttrAggregatorAS,
+	    bgpM2PathAttrAggregatorAddr,
+	    bgpM2PathAttrAtomicAggregate,
+	    bgpM2PathAttrIndex,
+	    bgpM2PathAttrLocalPref,
+	    bgpM2PathAttrLocalPrefPresent,
+	    bgpM2PathAttrMed,
+	    bgpM2PathAttrMedPresent,
+	    bgpM2PathAttrNextHop,
+	    bgpM2PathAttrNextHopAddrType,
+	    bgpM2PathAttrOrigin,
+	    bgpM2PathAttrUnknownIndex,
+	    bgpM2PathAttrUnknownType,
+	    bgpM2PathAttrUnknownValue
+	}
+	STATUS current
+	DESCRIPTION
+	    "Attributes received on BGP peering sessions."
+	::= { bgpM2MIBGroups 13 }
+
+    bgpM2PeerConfigurationGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2CfgBaseScalarStorageType,
+	    bgpM2CfgLocalAs,
+	    bgpM2CfgLocalIdentifier,
+	    bgpM2CfgPeerAdminStatus,
+	    bgpM2CfgPeerNextIndex,
+	    bgpM2CfgPeerConfiguredVersion,
+	    bgpM2CfgAllowVersionNegotiation,
+	    bgpM2CfgPeerLocalAddrType,
+	    bgpM2CfgPeerLocalAddr,
+	    bgpM2CfgPeerLocalAs,
+	    bgpM2CfgPeerRemoteAddrType,
+	    bgpM2CfgPeerRemoteAddr,
+	    bgpM2CfgPeerRemoteAs,
+	    bgpM2CfgPeerEntryStorageType,
+	    bgpM2CfgPeerError,
+	    bgpM2CfgPeerBgpPeerEntry,
+	    bgpM2CfgPeerRowEntryStatus,
+	    bgpM2CfgPeerIndex,
+	    bgpM2CfgPeerStatus,
+	    bgpM2CfgPeerConnectRetryInterval,
+	    bgpM2CfgPeerHoldTimeConfigured,
+	    bgpM2CfgPeerKeepAliveConfigured,
+	    bgpM2CfgPeerMinASOrigInterval,
+	    bgpM2CfgPeerMinRouteAdverInter
+	}
+	STATUS current
+	DESCRIPTION
+	    "Configuration objects for BGP peers."
+	::= { bgpM2MIBGroups 14 }
+    bgpM2PeerRouteReflectorCfgGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2CfgRouteReflector,
+	    bgpM2CfgClusterId,
+	    bgpM2CfgPeerReflectorClient
+	}
+	STATUS current
+	DESCRIPTION
+	    "Configuration objects for BGP peers that support route
+	     reflection."
+	::= { bgpM2MIBGroups 15 }
+
+
+    bgpM2PeerAsConfederationCfgGroup OBJECT-GROUP
+	OBJECTS {
+	    bgpM2CfgConfederationRouter,
+	    bgpM2CfgConfederationId,
+	    bgpM2CfgPeerConfedMember
+	}
+	STATUS current
+	DESCRIPTION
+	    "Configuration objects for BGP peers that support BGP
+	     confederations."
+	::= { bgpM2MIBGroups 16 }
+
+
+    bgpM2MIBNotificationsGroup NOTIFICATION-GROUP
+	NOTIFICATIONS {
+	    bgpM2Established,
+	    bgpM2BackwardTransition
+	}
+	STATUS	current
+	DESCRIPTION
+	    "This group contains objects for notifications
+	     supported by this mib module."
+	::= { bgpM2MIBGroups 17 }
+
+
+    bgpM2Rfc2545Group OBJECT-GROUP
+	OBJECTS {
+	    bgpM2LinkLocalNextHopPresent,
+	    bgpM2LinkLocalNextHop
+	}
+	STATUS current
+	DESCRIPTION
+	    "This group is required for peers that support exchanging
+	     of IPv6 NLRI per RFC 2545."
+	::= { bgpM2MIBGroups 18 }
+
+END
+
+-- 
+--    Copyright (C) The Internet Society (2005).
+-- 
+--    This document is subject to the rights, licenses and restrictions
+--    contained in BCP 78, and except as set forth therein, the authors
+--    retain all their rights.
+-- 
+--    This document and the information contained herein are provided on an
+--    "AS IS" basis and THE CONTRIBUTOR, THE ORGANIZATION HE/SHE REPRESENTS
+--    OR IS SPONSORED BY (IF ANY), THE INTERNET SOCIETY AND THE INTERNET
+--    ENGINEERING TASK FORCE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED,
+--    INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+--    HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES
+--    OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+-- 
+-- 
+-- 
+-- 

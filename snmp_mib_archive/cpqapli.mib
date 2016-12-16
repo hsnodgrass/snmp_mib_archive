@@ -1,0 +1,200 @@
+-- ****************************************************************************
+--
+--                  Appliance MIB Management Functions
+--         Management Information Base for SNMP Network Management
+--
+--
+--      Copyright 2000,2003 Hewlett-Packard Development Company, L.P.
+--
+--      Hewlett-Packard Company shall not be liable for technical or
+--      editorial errors or omissions contained herein. The information in
+--      this document is provided "as is" without warranty of any kind and
+--      is subject to change without notice. The warranties for HP products
+--      are set forth in the express limited warranty statements
+--      accompanying such products. Nothing herein should be construed as
+--      constituting an additional warranty.
+--
+--      Confidential computer software. Valid license from HP required for
+--      possession, use or copying. Consistent with FAR 12.211 and 12.212,
+--      Commercial Computer Software, Computer Software Documentation, and
+--      Technical Data for Commercial Items are licensed to the U.S.
+--      Government under vendor's standard commercial license.
+--
+--      Refer to the READMIB.RDM file for more information about the
+--      organization of the information in the Compaq Enterprise.
+--
+--      The Compaq Enterprise number is 232.
+--      The ASN.1 prefix to, and including the Compaq Enterprise is:
+--           1.3.6.1.4.1.232
+--
+-- ****************************************************************************
+
+CPQAPPLIANCE-MIB DEFINITIONS ::= BEGIN
+
+   IMPORTS
+       compaq                  FROM CPQHOST-MIB
+       enterprises             FROM RFC1155-SMI
+       Counter                 FROM RFC1155-SMI
+       DisplayString           FROM RFC1213-MIB
+       OBJECT-TYPE             FROM RFC-1212
+       TRAP-TYPE               FROM RFC-1215
+       sysName                 FROM RFC1213-MIB
+       cpqHoTrapFlags          FROM CPQHOST-MIB;
+
+-- compaq             OBJECT IDENTIFIER ::= { enterprises 232 }
+
+   cpqApplianceMgmt    OBJECT IDENTIFIER ::= { compaq 21 }
+
+   cpqApMibRev         OBJECT IDENTIFIER ::= { cpqApplianceMgmt 1 }
+   cpqApComponent      OBJECT IDENTIFIER ::= { cpqApplianceMgmt 2 }
+
+   cpqApInterface      OBJECT IDENTIFIER ::= { cpqApComponent 1 }
+   cpqApConfig         OBJECT IDENTIFIER ::= { cpqApComponent 2 }
+
+   cpqApOsCommon       OBJECT IDENTIFIER ::= { cpqApInterface 4 }
+
+-- ****************************************************************************
+--   Appliance MIB Information MIB Revision
+--   ======================================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqApplianceMgmt Group         (1.3.6.1.4.1.232.21)
+--       cpqApMibRev Group             (1.3.6.1.4.1.232.21.1)
+--
+--
+--      An SNMP agent conforming to this document will return a
+--      cpqApMibRevMajor of one (1) and a cpqApMibRevMinor of zero (0).
+--
+--      Implementation of the cpqApMibRev group is mandatory for all agents
+--      supporting the Compaq Appliance MIB Management MIB.
+--
+--      Note:  This MIB was created after the initial Compaq Appliance was
+--             shipped (the Compaq TaskSmart Server for Internet Caching).
+--             The initial appliance placed the OID 1.3.6.1.4.1.232.21.1
+--             into the 'sysObjectId' variable in MIB-II's System group.
+--             This will not have any adverse affects to this MIB.  Future
+--             Appliances will not collide with any of the OID's in this MIB.
+--
+-- ****************************************************************************
+
+   cpqApMibRevMajor OBJECT-TYPE
+       SYNTAX  INTEGER (1..65535)
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+           "The Major Revision level of the MIB.
+
+           A change in the major revision level represents a major change
+           in the architecture of the MIB.  A change in the major revision
+           level may indicate a significant change in the information
+           supported and/or the meaning of the supported information,
+           correct interpretation of data may require a MIB document with
+           the same major revision level."
+       ::= { cpqApMibRev 1 }
+
+   cpqApMibRevMinor OBJECT-TYPE
+       SYNTAX  INTEGER (0..65535)
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+           "The Minor Revision level of the MIB.
+
+           A change in the minor revision level may represent some minor
+           additional support, no changes to any pre-existing information
+           has occurred."
+       ::= { cpqApMibRev 2 }
+
+   cpqApMibCondition OBJECT-TYPE
+       SYNTAX  INTEGER {
+           other(1),
+           ok(2),
+           degraded(3),
+           failed(4)
+           }
+       ACCESS  read-only
+       STATUS  mandatory
+       DESCRIPTION
+           "The overall condition of the Appliance MIB.
+
+           This object represents the overall status of the Appliance
+           MIB management system represented by this MIB."
+
+       ::= { cpqApMibRev 3 }
+
+-- ****************************************************************************
+--   Appliance MIB OS Common Group
+--   ============================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqApplianceMgmt Group         (1.3.6.1.4.1.232.21)
+--       cpqApComponent Group          (1.3.6.1.4.1.232.21.2)
+--        cpqApInterface Group         (1.3.6.1.4.1.232.21.2.1)
+--         cpqApOsCommon Group         (1.3.6.1.4.1.232.21.2.1.4)
+--
+--  Implementation of the cpqApOsCommon group is mandatory for all
+--  agents that support the Appliance MIB Management MIB.
+--
+-- ****************************************************************************
+
+   cpqApOsCommonPollFreq OBJECT-TYPE
+       SYNTAX  INTEGER (0..2147483647)
+       ACCESS  read-write
+       STATUS  mandatory
+       DESCRIPTION
+           "The Agent's polling frequency.
+
+           The frequency, in seconds, at which the Agent requests
+           information from.  A frequency of zero indicates that the
+           Agent retrieves the information upon request of a
+           management station, it does not poll at a specific interval.
+
+           If the poll frequency is zero (0) all attempts to write to this
+           object will fail.  If the poll frequency is non-zero,
+           setting this value will change the polling frequency of the
+           Agent.  Setting the poll frequency to zero will always
+           fail, an agent may also choose to fail any request to change
+           the poll frequency to a value that would severely impact system
+           performance."
+       ::= { cpqApOsCommon 1 }
+
+
+-- ****************************************************************************
+--   Appliance MIB Status Group
+--   =========================
+--
+-- The compaq enterprise               (1.3.6.1.4.1.232)
+--      cpqApplianceMgmt Group         (1.3.6.1.4.1.232.21)
+--       cpqApComponent Group          (1.3.6.1.4.1.232.21.2)
+--        cpqApConfig Group            (1.3.6.1.4.1.232.21.2.2)
+--
+--      The cpqApConfig group describes the configuration information for
+--      the instrumented Appliance product.
+--
+--      Implementation of the cpqApConfig group is mandatory for agents
+--      supporting the Appliance MIB Management MIB.
+--
+-- ****************************************************************************
+
+   cpqApApplianceId OBJECT-TYPE
+       SYNTAX  INTEGER
+       ACCESS read-only
+       STATUS mandatory
+       DESCRIPTION
+           "A unique identifier of the Appliance.
+
+           This can be used by management consoles to allow specific logic
+           which pertains to the particular appliance.  For example, this
+           might be used to provide custom graphics for a particular
+           appliance.  Each appliance that needs differentiation
+           will be give a different appliance ID."
+       ::= { cpqApConfig 1 }
+
+   cpqApApplianceDescription OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE (0..80))
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The text description of this Appliance."
+       ::= { cpqApConfig 2 }
+END
+
