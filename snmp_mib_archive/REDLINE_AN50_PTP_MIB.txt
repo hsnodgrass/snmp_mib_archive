@@ -1,0 +1,946 @@
+
+-- *****************************************************************
+-- Redline AN-50 MIB
+-- Copyright (c) 2002 by Redline Communications, Inc.
+-- All rights reserved.
+-- *****************************************************************
+
+REDLINE-AN50-MIB DEFINITIONS ::= BEGIN
+ 
+IMPORTS
+
+        IpAddress, Counter, TimeTicks, enterprises  FROM RFC1155-SMI
+      	OBJECT-TYPE                           FROM RFC-1212
+        TRAP-TYPE                             FROM RFC-1215;
+
+
+--      ORGANIZATION "Redline Communications, Inc."
+
+--      postal:  Redline Communications Inc.
+--              90 Tiverton Court Suite 102
+--              Markham Ontario L2R 9V2
+--              Canada
+--      phone:     +1 905 479-8344
+--      DESCRIPTION "This MIB contains Redline-defined AN-50 attributes."
+
+--      LAST-UPDATED "200307240930Z"
+--      Author: Sinisa Djurkic
+--      DESCRIPTION "New variables for PMP project intoduced."
+
+--      REVISION "200307110930Z"
+--      Author: Sinisa Djurkic
+--      DESCRIPTION "Introduced OIDs for the AN30 application."
+
+--      REVISION "200301080930Z"
+--      Author: Sinisa Djurkic
+--      DESCRIPTION "New AN-50 terminology and new powersupply trap introduced."
+
+--      REVISION  "200212121145Z"
+--      Author: Sinisa Djurkic
+--      Appreciation: Aurel Picu, Alex Prvulesku
+--      DESCRIPTION "Added scalars for front plate and chassis."
+
+--      REVISION    "200211030000Z"
+--      Author: Sinisa Djurkic
+--      Appreciation: Aurel Picu
+--      DESCRIPTION "Added scalars from mib-II interface tree."
+
+--      REVISION    "200210210000Z"
+--      Author: Sinisa Djurkic
+--      Appreciation: Aurel Picu, Claude Daniel Ndjouou
+--      DESCRIPTION "MIB overhauled, complete V1 conversion."
+
+--      REVISION    "200204090000Z"
+--      Primary Author: Claude Daniel Ndjouou, Ioan Cautil
+--      DESCRIPTION "Initial version of this MIB module."
+
+--      REVISION    "200308200000Z"
+--      Author: Bogdan Moldoveanu
+--      DESCRIPTION "Added an50GenChannelAutoScan and the trap an50ModifiedIDTrap."
+
+--      REVISION    "200401070000Z"
+--      Author: Bogdan Moldoveanu
+--      DESCRIPTION "Added an50WrlsDFSAction an50WrlsAntennaGain,an50WrlsATPEnabled and trap an50pmpRegistrationMissed "
+
+--      REVISION    "200401080000Z"
+--      Author: Bogdan Moldoveanu
+--      DESCRIPTION "Added trap an50pmpRegistrationSuccessful "
+
+--      REVISION    "200401270000Z"
+--      Author: Bogdan Moldoveanu
+--      DESCRIPTION "Added trap an50DFSEvent"
+
+-- Registration of object identifiers
+redline         OBJECT IDENTIFIER ::= { enterprises 10728 }
+redlineProducts OBJECT IDENTIFIER ::= { redline 1 }
+redlineMgmt     OBJECT IDENTIFIER ::= { redline 2 }
+redlineAn50     OBJECT IDENTIFIER ::= { redlineMgmt 16} 
+an50General     OBJECT IDENTIFIER ::= { redlineAn50 1 }
+an50Config      OBJECT IDENTIFIER ::= { redlineAn50 2 }
+an50Pm          OBJECT IDENTIFIER ::= { redlineAn50 3 }
+an50Trap        OBJECT IDENTIFIER ::= { redlineAn50 4 }
+an50LinkPmp     OBJECT IDENTIFIER ::= { redlineAn50 5 }
+
+an50GenUBR OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        "Indicates the system's current uncoded burst rate. With adaptive modulation enabled, this rate may change over time,
+                  depending on the prevailing propagation conditions. "
+        ::= { an50General 1 }
+
+an50GenRFLink OBJECT-TYPE
+        SYNTAX  INTEGER { notConnected(1), connected(2) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "connected(2) indicates  the  terminal  is  communicating  properly  to  the remote terminal. 
+            notConnected(1) indicates there is no communication with the remote terminal."
+        ::= { an50General 2 }
+
+an50GenFrequency OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The frequency which represents the operating channel of the link. 
+		The system can be configured to operate over 9 distinct channels."
+        ::= { an50General 3 }
+
+an50GenAllignmentMode OBJECT-TYPE
+        SYNTAX  INTEGER { voltage (1), buzzer (2) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Specifies if the antenna alignment buzzer is enabled or not."
+        ::= { an50General 4 }
+
+an50GenEncryptionEnabled OBJECT-TYPE
+        SYNTAX  INTEGER { no (1), yes (2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Specifies if encryption is enabled or not."
+        ::= { an50General 5 }
+
+an50GenFlowControlEnabled OBJECT-TYPE
+        SYNTAX  INTEGER { no (1), yes (2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "This attribute specifies if flow control is enabled or not."
+        ::= { an50General 6 }
+
+an50GenHttpAccessEnabled OBJECT-TYPE
+        SYNTAX  INTEGER { no (1), yes (2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "This attribute specifies if Http Access is enabled or not."
+        ::= { an50General 7 }
+
+an50GenTelnetAccessEnabled OBJECT-TYPE
+        SYNTAX  INTEGER { no (1), yes (2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "This attribute specifies if Telnet Access is enabled or not."
+        ::= { an50General 8 }
+
+an50GenTelnetPort OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "This attribute specifies the Telnet port number."
+        ::= { an50General 9 }
+
+an50GenOptionsKey OBJECT-TYPE
+        SYNTAX  OCTET STRING
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "This attribute specifies the Product Options Key."
+        ::= { an50General 10 }
+
+an50GenResetDevice OBJECT-TYPE
+        SYNTAX  INTEGER { donothing(1), reset(2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            " Resets the AN50 terminal."
+        ::= { an50General 11 }
+
+an50GenFault OBJECT-TYPE
+        SYNTAX  INTEGER { off (1), on (2), unknown (3) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The attribute specifies the Fault LED status of the terminal."
+        ::= { an50General 12 }
+
+an50GenTxPower OBJECT-TYPE
+        SYNTAX  INTEGER (-20 .. 20)
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        "The actual Tx Power of the AN-50 Node."
+        ::= { an50General 13 }
+
+an50GenRegisteredStations OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        "The actual number of configured links."
+        ::= { an50General 14 }
+
+an50GenRegisteredConnections OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        "The actual number of configured connections."
+        ::= { an50General 15 }
+
+an50GenActiveWirelessLinks OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        "The actual number of provisioned links."
+        ::= { an50General 16 }
+
+an50GenChannelAutoScan OBJECT-TYPE
+	  SYNTAX  INTEGER { no (1), yes (2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+        "Auto-Scanning feature for the channel."
+        ::= { an50General 17 }
+
+an50GenIduType OBJECT-TYPE
+	  SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        "Indoor Unit Type."
+        ::= { an50General 18 }
+
+an50GenOduType OBJECT-TYPE
+	  SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        "Outdoor Unit Type."
+        ::= { an50General 19 }
+
+
+--
+--  Ethernet Configuration Group
+--
+
+an50ConfigEther  	OBJECT IDENTIFIER ::= { an50Config 1 }
+
+an50EtherMacAddress OBJECT-TYPE
+        SYNTAX  OCTET STRING
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Ethernet MAC address of the local terminal." 
+        ::= { an50ConfigEther 1 }
+
+an50EtherGateway OBJECT-TYPE
+        SYNTAX      IpAddress
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The IP Gateway of the AN-50 This field is used to specify the IP address of the gateway with 
+             which the AN-50 is communicating through the core network."
+        ::= { an50ConfigEther 2 }
+
+an50EtherPortStatus OBJECT-TYPE
+        SYNTAX  INTEGER { down (1), up (2), unknown (3) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The attribute specifies the status of the Ethernet Port of the AN50."
+        ::= { an50ConfigEther 3 }
+
+an50EtherIP OBJECT-TYPE
+        SYNTAX  IpAddress
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The IP address of the AN-50, The default  address from the factory
+		is 192.168.25.2. For the initial set-up, the terminal should not
+		 be connected to the Internet network, i.e. the host computer should
+		 be connected directly to the terminal Ethernet port, to  avoid  address
+		  conflicts with other devices in a public network.  Once the IP address has been set,
+		 the terminal can be connected to  the  core  network,  where  it  can  receive  either
+		  static  or  dynamic addressing (DHCP) in future configuration updates." 
+        ::= { an50ConfigEther 4 }
+
+an50EtherMask OBJECT-TYPE
+        SYNTAX    IpAddress
+        ACCESS    read-write
+        STATUS    mandatory
+        DESCRIPTION
+            "The IP Subnet Mask of the AN-50, The value is typically set to 255.255.255.0 (Class C 
+		subnet), which prevents certain local devices from going out into the wireless network."
+        ::= { an50ConfigEther 5 }
+
+an50Ether100 OBJECT-TYPE
+        SYNTAX  INTEGER { s10Mbs (1), s100Mbs (2), unknown (3) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Specifies the 100 Mb/s Ethernet LED status of the AN50."
+        ::= { an50ConfigEther 6 }
+
+an50EtherFd OBJECT-TYPE
+        SYNTAX  INTEGER { halfDuplex (1), fullDuplex (2), unknown (3) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The attribute specifies the Ethernet FD LED status of the AN50."
+        ::= { an50ConfigEther 7 }
+
+--
+--  Wireless Configuration Group
+--
+
+an50ConfigWireless  	OBJECT IDENTIFIER ::= { an50Config 2 }
+
+an50WrlsChannel OBJECT-TYPE
+        SYNTAX  INTEGER { chan1 (1), chan1A (2), chan2 (3), chan2A (4),
+		              chan3 (5), chan3A (6), chan4 (7), chan4A (8), chan5 (9) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "specifies  the  operating  channel  of  the  system,  within  the  100 
+		MHz available in the 5.8GHz UNII band. 
+		To  avoid  interference,  two  PTP  links  operating  in  the  same  physical 
+		location (co-located) or within close proximity (e.g. across the street) must 
+		be separated by at least one channel, i.e. the gap between channels should 
+		be 20 MHz or more (e.g. channels 1 and 3)."
+        ::= { an50ConfigWireless 1 }
+
+an50WrlsTxPower OBJECT-TYPE
+        SYNTAX  INTEGER (-20 .. 20)
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+        "The Tx Power of the AN-50. Specifies the power level of the system, which is 
+	preset at the factory  and should not be altered.  In the event that this 
+	parameter needs to be changed, please contact the Redline support team."
+        ::= { an50ConfigWireless 2 }
+
+an50WrlsModReduction OBJECT-TYPE
+        SYNTAX  INTEGER (0..7)
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The Modulation Reduction Level of the AN-50. Applies  when  the  Adaptive rate is  disabled.  
+		Specifies how many levels the system must drop in modulation before 
+		beginning re-transmission to address packet errors. 
+		The value can be set from 1-7, with 2 being the typical value."
+        ::= { an50ConfigWireless 3 }
+
+an50WrlsAdaptiveMod OBJECT-TYPE
+         SYNTAX  INTEGER { notAdaptiveRate(1), adaptiveRate(2) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION "Setting this attribute to AdaptiveRate(2) sets  the  system  to  operate  in  adaptive 
+		modulation mode.  It is recommended to keep the AN-50 in this mode so 
+		that the system can automatically adjust the modulation level to  the 
+		highest possible data rate based on measured RF performance. The user 
+		can define the minimum desired modulation level by setting the Main rate
+		parameter.
+		If  the  system  meets  this  data  rate,  then  the Signal LED on the front
+		panel will light continuously green.  If packet errors exceed one out of a million,
+		the system will automatically lower the modulation level to maintain the link.
+		In this case, the LED will flash green.   
+		If errors  continue when the system reaches the lowest modulation level, 
+		the LED will flash red to indicate a failed RF link.  
+		The user can also disable the dynamic modulation mode by disabling
+		Adaptive Modulation. In this mode, the user is required to set the Burst Rate and the Modulation
+                        Reduction Level. It is recommended not to operate the system in manual mode, as this mode 
+		is intended primarily for field support.
+		Note the Signal LED will light solid green when the packet error rate is 
+		less than 1 out of a million. When  the errors exceed this limit, the LED 
+		will not illuminate, indicating the RF link has failed."
+        ::= { an50ConfigWireless 4 }
+
+an50WrlsUBR OBJECT-TYPE
+        SYNTAX  INTEGER (0..7)
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+        "Set uncoded burst rate in steps (0=6Mb/s,1=9Mb/s,2=12Mb/s,3=18Mb/s,4=24Mb/s,5=36Mb/s,6=48Mb/s,7=54Mbs).
+                Defines the desired net uncoded burst rate for the link."
+        ::= { an50ConfigWireless 5 }
+
+an50WrlsMaster OBJECT-TYPE
+        SYNTAX INTEGER { ptpSlave(1), ptpMaster(2),pmpSlave(3), pmpMaster(4) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+        "1 = PMP Slave, 2 = PTP Master, 3 = PMP Slave, 4 = PMP Master"
+        ::= { an50ConfigWireless 6 }
+
+an50WrlsVersion OBJECT-TYPE
+        SYNTAX INTEGER { firstFlash(1), secondFlash(2) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION "Sets the version of the AN50 system software.
+              Software can be remotely downloaded into the AN50. The system 
+              comprises sufficient memory to hold two independent software loads.
+              The operator can specify which load to set as the active version."
+        ::= { an50ConfigWireless 7 }
+
+an50WrlsEncryptCode OBJECT-TYPE
+        SYNTAX  OCTET STRING
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The Encryption Key used for the AN-50.  Enter the MAC address of the remote terminal
+             to enable over-the-air data encryption."
+        ::= { an50ConfigWireless 8 }
+
+an50WrlsCableAttenuation OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The Cable Attenuation for the AN-50"
+        ::= { an50ConfigWireless 9 }
+
+an50WrlsRfPortStatus OBJECT-TYPE
+        SYNTAX  INTEGER { down (1), up (2), unknown (3)}
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "The attribute specifies the status of the AN50s Wireless Port."
+        ::= { an50ConfigWireless 10 }
+
+an50WrlsSaveConfig OBJECT-TYPE
+        SYNTAX  INTEGER { donothing(1), saveCofig(2) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The attribute saves the entire config set of the AN50."
+        ::= { an50ConfigWireless 11 }
+
+an50WrlsActivateConfig OBJECT-TYPE
+        SYNTAX  INTEGER { donothing(1), activeCofig(2) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The attribute activates the entire config set of the AN50."
+        ::= { an50ConfigWireless 12 }
+
+an50WrlsRadioEnable OBJECT-TYPE
+        SYNTAX  INTEGER { txOff (1), txOn (2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Radio Enable specifies whether radio transmission is enabled or disabled."
+        ::= { an50ConfigWireless 13 }
+
+an50WrlsRfStatusErrorCode OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Specifies the Error Code for the RF Status."
+        ::= { an50ConfigWireless 14 }
+
+an50WrlsRfSignal OBJECT-TYPE
+        SYNTAX  INTEGER { off (1), on (2), blinking(3) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+            "Specifies the Wireless Signal LED status."
+        ::= { an50ConfigWireless 15 }
+
+
+an50WrlsLLMode OBJECT-TYPE
+        SYNTAX  INTEGER { auto (1), manual (2) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Manual Link Length Mode."
+        ::= { an50ConfigWireless 16 }
+
+an50WrlsLMU OBJECT-TYPE
+        SYNTAX  INTEGER { mile (1), km (2) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Link Measurements Units (mile / Km)."
+        ::= { an50ConfigWireless 17 }
+
+an50WrlsLL OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Link Length."
+        ::= { an50ConfigWireless 18 }
+
+
+an50ConfigScheduler OBJECT IDENTIFIER ::= { an50ConfigWireless 19 }
+
+an50WrlsFrameSize OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Specifies the size of wireless frame (DL+RTD+UL)in micro seconds."
+        ::= { an50ConfigScheduler 1 }
+
+an50WrlsMinBlockSize OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Specifies a minimum number of bytes compising transmitted block."
+        ::= { an50ConfigScheduler 2 }
+
+an50WrlsDownlinkSize OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Specifies the size of downlink sub-frame in micro seconds."
+        ::= { an50ConfigScheduler 3 }
+
+an50WrlsRoundTripDelay OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Specifies the round trip delay in micro seconds."
+        ::= { an50ConfigScheduler 4 }
+
+an50WrlsAdaptiveDLSize OBJECT-TYPE
+        SYNTAX  INTEGER { off (1), on (2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Enables or desables adaptive downlink size."
+        ::= { an50ConfigScheduler 5 }
+
+an50WrlsExtSyncronize OBJECT-TYPE
+        SYNTAX  INTEGER { off (1), on (2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Enables or desables external synchronization."
+        ::= { an50ConfigScheduler 6 }
+
+an50WrlsMaximumDistance OBJECT-TYPE
+        SYNTAX  INTEGER (0..100)
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Maximum distance between basestation and subscriber station in km."
+        ::= { an50ConfigScheduler 7 }
+
+an50WrlsRegistrationPeriod OBJECT-TYPE
+        SYNTAX  INTEGER (0..100)
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Number of frames between registration periods."
+        ::= { an50ConfigScheduler 8 }
+
+
+--
+-- Config Default Group
+--
+an50ConfigDefGroup OBJECT IDENTIFIER ::= { an50ConfigWireless 20 }
+an50WrlsBroadcastDLCIR OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Broadcast DL CIR in kbps."
+        ::= { an50ConfigDefGroup 1 }
+
+an50WrlsBroadcastDLPIR OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Broadcast Dl PIR in kbps."
+        ::= { an50ConfigDefGroup 2 }
+
+an50WrlsDFSAction OBJECT-TYPE
+        SYNTAX  INTEGER { none (1), txDisabled(2), changeFreq(3)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Action taken when another system is detected on the same frequency"
+        ::= { an50ConfigWireless 21 }
+
+an50WrlsAntennaGain OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Antenna Gain"
+        ::= { an50ConfigWireless 22 }
+
+an50WrlsATPEnabled OBJECT-TYPE
+        SYNTAX  INTEGER { no (1), yes(2)}
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "Automatic Transmitted Power Control Enable"
+        ::= { an50ConfigWireless 23 }
+
+
+--
+-- Performance Data Group
+--
+
+an50ResetStatistics OBJECT-TYPE
+        SYNTAX INTEGER { donothing(1), reset(2) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "A value of reset(2) resets the performance statistics on the AN-50
+		a value of donothing(1) does nothing."
+        ::= { an50Pm 1 }
+--
+-- Ethernet Performance Data Group
+--
+an50PmEther		OBJECT IDENTIFIER ::= { an50Pm 2 }
+
+an50PmEtherRxPackets OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Counts the  number of packets successfully received by the local system." 
+        ::= { an50PmEther 1 }
+
+an50PmEtherRxPacketsErr OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Counts the  number of packet errors received by the local system." 
+        ::= { an50PmEther 2 }
+
+an50PmEtherTxPackets OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Counts the  number of Ethernet packets transmitted by the local system." 
+        ::= { an50PmEther 3 }
+
+an50PmEtherTxPacketsErr OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Counts the  number of Ethernet errors  packets transmitted by the local system." 
+        ::= { an50PmEther 4 }
+
+an50PmEtherRxPacketsDisc OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Counts the  number of packets discarded by receiver." 
+        ::= { an50PmEther 5 }
+
+an50PmEtherTxPacketsDisc OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Counts the  number of packets discarded by transmitter." 
+        ::= { an50PmEther 6 }
+
+
+--
+-- Wireless Performance Data Group
+--
+an50PmWrls	OBJECT IDENTIFIER ::= { an50Pm 3 }
+
+an50PmWrlsRxSigMin OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Indicates the minimum received signal strength measured since the last SNMP update."
+        ::= { an50PmWrls 1 }
+
+an50PmWrlsRxSigMean OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Indicates the average received signal strength measured since the last SNMP update."
+        ::= { an50PmWrls 2 }
+
+an50PmWrlsRxSigMax OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Indicates the maximum received signal strength measured since the last SNMP update"
+        ::= { an50PmWrls 3 }
+
+an50PmWrlsAvgSinAdr OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        "Indicates the average signal to noise ratio measured since the last SNMP update.  
+        The ratio is based on the digital information provided from the output of the AtoD converter."
+        ::= { an50PmWrls 4 }
+
+an50PmWrlsRxPackets OBJECT-TYPE
+        SYNTAX   Counter
+        ACCESS  read-only
+        STATUS   mandatory
+        DESCRIPTION
+	" Indicates the number of packets received over the air from the remote terminal."
+        ::= { an50PmWrls 5 }
+
+an50PmWrlsRxPacketsRetx OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION "Indicates the number of packets retransmitted over the air from the remoter terminal."
+        ::= { an50PmWrls 6 }
+
+an50PmWrlsRxPacketsDisc OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	" Indicates the number of packets, originating from the remote terminal
+	 that were lost over the air due to degradation in the RF link."
+        ::= { an50PmWrls 7 }
+
+an50PmWrlsTxPackets OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	" Indicates the number of wireless packets (including Ethernet frames 
+	 and error correction bytes) transmitted over the air by the local terminal."
+        ::= { an50PmWrls 8}
+
+an50PmWrlsTxPacketsRetx OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION "Indicates the number of packets retransmitted 
+	over the air by the local terminal.  The retransmission scheme is based on 
+	the Acknowledge/Request (ARQ) algorithm that detects when packets are 
+	lost and makes a request to the MAC scheduler to repeat transmission of 
+	the lost packets."
+        ::= { an50PmWrls 9}
+
+an50PmWrlsTxPacketsDisc OBJECT-TYPE
+        SYNTAX  Counter
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"Indicates the total number of packets lost over the air due to degradation
+	 in the RF link."
+        ::= { an50PmWrls 10}
+
+an50PmWrlsCalcDst OBJECT-TYPE
+        SYNTAX  INTEGER
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+	"The calculated link distance."
+        ::= { an50PmWrls 11}
+
+--
+-- Software Upgrade Group
+--
+
+an50Sw  		OBJECT IDENTIFIER ::= { an50Config 3 }
+
+an50SwServer OBJECT-TYPE
+        SYNTAX      IpAddress
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The address of the TFTP server used for software upgrades.
+             If the TFTP server is unknown, return 0.0.0.0."
+        ::= { an50Sw 1 }
+
+an50SwFilename OBJECT-TYPE
+        SYNTAX      OCTET STRING (SIZE(0..32))
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "The file name of the software image to be loaded into this device."
+        ::= { an50Sw 2 }
+
+an50SwAdminStatus OBJECT-TYPE
+        SYNTAX INTEGER { noUpgrade(1), upgrade(2) }
+        ACCESS  read-write
+        STATUS  mandatory
+        DESCRIPTION
+            "If set to upgrade(2), the device will initiate a
+             TFTP software image download using an50SwFilename.
+             If the download process is interrupted by a reset or
+             power failure, the device will load the previous image.
+             If set to noUpgrade(1), the device will
+             revert to the previous version of the software.
+             At initial startup, this object has the default value of
+             noUpgrade(1)."
+        ::= { an50Sw 3 }
+
+an50SwOperStatus OBJECT-TYPE
+        SYNTAX INTEGER { inProgress(1), completeSuccess(2), failed(3), other(4) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION "InProgress(1) indicates that a TFTP download is underway,
+             completeSuccess(2) indicates that the last software upgrade was successful, 
+             failed(3) indicates that the last attempted download
+             failed, ordinarily due to TFTP timeout."
+        ::= { an50Sw 4 }
+
+an50SwCurrentVers OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+            "The software version currently operating in this device's flash.
+             This object should be in the syntax used by the individual
+             vendor to identify software versions. If it is not applicable,
+             this MUST contain an empty string."
+    ::= { an50Sw 5 }
+
+an50SwOtherVers OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION "The software version in the secondary flash.
+             This object should be in the syntax used by the individual
+             vendor to identify software versions. If it is not applicable,
+             this MUST contain an empty string."
+    ::= { an50Sw 6 }
+
+--
+-- Traps Group.
+--
+
+an50SysLastTrapTime OBJECT-TYPE
+    SYNTAX      	TimeTicks
+    ACCESS  	read-only
+    STATUS      	mandatory
+    DESCRIPTION
+        "The value of system.sysUpTime when the last trap was generated. If no traps
+         have been generated since the last reset, this attribute has a value of 0.
+         No trap is issued as a result of a change to this value."
+    ::= { an50Trap 1 }
+
+
+   an50TftpFailTrap TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50SwServer,
+                            an50SwFilename,
+                            an50SwAdminStatus, 
+                            an50SwOperStatus,
+                            an50SysLastTrapTime }
+                DESCRIPTION "An event to report the failure of a Software Download."
+            ::= 1
+
+   an50TftpSuccessTrap TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50SwServer,
+                          an50SwFilename,
+			  an50SwAdminStatus, 
+			  an50SwOperStatus, 
+                          an50SysLastTrapTime }
+                DESCRIPTION "An event to report the success of a Software Download."
+            ::= 2
+
+   an50PswdChangeFailTrap TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50SysLastTrapTime }
+                DESCRIPTION "An event to report the failure of a password change."
+            ::= 3
+
+   an50FirmwareConfigFailTrap TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50SysLastTrapTime }
+                DESCRIPTION "An event to report the failure of a firmware config."
+            ::= 4
+
+   an50EepromCorruptedTrap TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50SysLastTrapTime }
+                DESCRIPTION "An event to report the corruption of the EEPROM."
+            ::= 5
+
+   an50PowerSupplyFailureTrap TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50SysLastTrapTime }
+                DESCRIPTION "An event to report the power supply failure."
+            ::= 6
+   
+   an50SaveConfigTrap TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50SysLastTrapTime }
+                DESCRIPTION "An event to report the saving of configuration"
+            ::= 7
+
+   an50ModifiedIDTrap TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50pmpLastModifiedCID,
+				   an50SysLastTrapTime  }
+                DESCRIPTION "An event to report the modification in the configuration of a CID"
+            ::= 8
+
+   an50pmpRegistrationMissed TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50pmpLastMissedSsMacAddress,
+				   an50SysLastTrapTime  }
+                DESCRIPTION "An event to report the missing of the registration by a AN50 Subscriber to one BS.This trap is sent by the BS and contains the MAC address of the SS missing the registration"
+            ::= 9
+
+   an50pmpRegistrationSuccessful TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50pmpLastRegisteredSsMacAddress,
+				   an50SysLastTrapTime  }
+                DESCRIPTION "An event to report the successful registration of an AN50 Subscriber to BS.This trap is sent by the BS and contains the MAC address of the newly registered SS"
+            ::= 10
+
+   an50DFSEvent TRAP-TYPE
+                ENTERPRISE redline
+                VARIABLES { an50SysLastTrapTime  }
+                DESCRIPTION "An event to report a DFS event in AN50"
+            ::= 11
+
+  an50MaxCid	 	OBJECT-TYPE
+    SYNTAX      		INTEGER (1 .. 1024)
+    ACCESS  		read-only
+    STATUS      		mandatory
+    DESCRIPTION        	"The maximum number of CID for this equipment"
+    ::= { an50LinkPmp 1 }
+
+  an50LinkCurrentAvailId	OBJECT-TYPE
+    SYNTAX      			INTEGER
+    ACCESS  			read-only
+    STATUS      			mandatory
+    DESCRIPTION        		"The maximum number of CID for this equipment"
+    ::= { an50LinkPmp 2 }
+
+END

@@ -1,0 +1,618 @@
+SWITCHVOX-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        OBJECT-TYPE, MODULE-IDENTITY, Integer32, Counter32, TimeTicks,
+        Unsigned32, Gauge32
+                FROM SNMPv2-SMI
+
+        TEXTUAL-CONVENTION, DisplayString, TruthValue
+                FROM SNMPv2-TC
+
+        digium
+                FROM DIGIUM-MIB;
+switchvox MODULE-IDENTITY
+          LAST-UPDATED    "201304111900Z"
+       	  ORGANIZATION    "Digium, Inc."
+          CONTACT-INFO
+                "Digium Support
+                Postal: Digium, Inc.
+                        445 Jan Davis Drive
+                        Huntsville, AL 35806
+                        USA
+                   Tel: +1 256 428 6000
+                 Email: support@digium.com"
+          DESCRIPTION
+                "Switchvox is Digium's family of Voice Over IP Phone systems 
+		for small and medium businesses. "
+          REVISION        "200908061900Z"
+          DESCRIPTION
+                "Initial published revision."
+          ::= { digium 10 }
+
+
+switchvoxInfo 	               OBJECT IDENTIFIER ::= { switchvox 1 }
+switchvoxVoipProviders         OBJECT IDENTIFIER ::= { switchvox 2 }
+switchvoxHardwareStatus        OBJECT IDENTIFIER ::= { switchvox 3 }
+switchvoxPhoneStatus           OBJECT IDENTIFIER ::= { switchvox 4 }
+switchvoxCurrentCalls          OBJECT IDENTIFIER ::= { switchvox 5 }
+switchvoxHardwareChannels      OBJECT IDENTIFIER ::= { switchvox 6 }
+switchvoxSubscriptionDate      OBJECT IDENTIFIER ::= { switchvox 7 }
+switchvoxRaid      	           OBJECT IDENTIFIER ::= { switchvox 8 }
+switchvoxFailover      	       OBJECT IDENTIFIER ::= { switchvox 9 }
+switchvoxPeering      	       OBJECT IDENTIFIER ::= { switchvox 10 }
+
+
+
+-- switchvoxInfo
+
+svoxSoftwareVersion OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Software version"
+        	     ::= { switchvoxInfo 1 }
+
+svoxMaxConcurrentCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Maximum concurrent calls"
+        	     ::= { switchvoxInfo 2 }
+
+svoxUsedPhoneConfigFeaturePacks OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Used phone configuration feature packs"
+        	     ::= { switchvoxInfo 3 }
+
+svoxMaxPhoneConfigFeaturePacks OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Maximum phone configuration feature packs"
+        	     ::= { switchvoxInfo 4 }
+
+svoxUsedExtensions OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Used extensions"
+        	     ::= { switchvoxInfo 5 }
+
+svoxMaxExtensions OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Maximum extensions"
+        	     ::= { switchvoxInfo 6 }
+
+
+-- switchvoxVoipProviders 
+
+svoxVoipProviders OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Current number of active voip providers"
+        	     ::= { switchvoxVoipProviders 1 }
+
+svoxAvailableVoipProviders OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Current number of active and available voip providers"
+        	     ::= { switchvoxVoipProviders 2 }
+
+svoxVoipProvTable OBJECT-TYPE
+        	  SYNTAX          SEQUENCE OF SvoxVoipProvEntry
+        	  MAX-ACCESS      not-accessible
+       		  STATUS          current
+        	  DESCRIPTION
+			"Table with details of the currently active voip providers."
+        	   	::= { switchvoxVoipProviders 3 }
+
+svoxVoipProvEntry OBJECT-TYPE
+        	  SYNTAX          SvoxVoipProvEntry
+        	  MAX-ACCESS      not-accessible
+        	  STATUS          current
+        	  DESCRIPTION
+               	   "Details of a single voip provider."
+        	   INDEX           { svoxVoipProvId }
+        	   ::= { svoxVoipProvTable 1 }
+
+SvoxVoipProvEntry ::= SEQUENCE {
+        	  svoxVoipProvId	  Integer32,
+        	  svoxVoipProvName	  DisplayString,
+        	  svoxVoipProvHost	  DisplayString,
+        	  svoxVoipProvAcctId      Integer32,
+        	  svoxVoipProvCallBack    Integer32,
+        	  svoxVoipProvLatency     Integer32,
+       	  	  svoxVoipProvState	  DisplayString
+}
+
+
+-- switchvoxHardwareStatus 
+
+
+
+svoxMemoryInfo    OBJECT-TYPE
+        	  SYNTAX          SEQUENCE OF SvoxMemoryInfoEntry
+        	  MAX-ACCESS      not-accessible
+       		  STATUS          current
+        	  DESCRIPTION
+			"Table with details of the machines memory."
+        	   	::= { switchvoxHardwareStatus 1 }
+
+svoxMemoryInfoEntry OBJECT-TYPE
+        	  SYNTAX          SvoxMemoryInfoEntry
+        	  MAX-ACCESS      not-accessible
+        	  STATUS          current
+        	  DESCRIPTION
+               	   "Details of the machines memory."
+        	   INDEX           { svoxMemoryUsed }
+        	   ::= { svoxMemoryInfo 1 }
+
+SvoxMemoryInfoEntry ::= SEQUENCE {
+		    svoxMemoryUsed		Integer32,
+		    svoxMemoryTotal		Integer32,
+		    svoxSwapUsed		Integer32,
+		    svoxSwapTotal		Integer32,
+		    svoxMemoryInfoLastUpdate	DisplayString	
+		}
+
+
+svoxDiskInfo    OBJECT-TYPE
+        	  SYNTAX          SEQUENCE OF SvoxDiskInfoEntry
+        	  MAX-ACCESS      not-accessible
+       		  STATUS          current
+        	  DESCRIPTION
+			"Table with details of the machines disks."
+        	   	::= { switchvoxHardwareStatus 2 }
+
+svoxDiskInfoEntry OBJECT-TYPE
+        	  SYNTAX          SvoxDiskInfoEntry
+        	  MAX-ACCESS      not-accessible
+        	  STATUS          current
+        	  DESCRIPTION
+               	   "Details of the machines disks"
+        	   INDEX           { svoxDiskUsed }
+        	   ::= { svoxDiskInfo 1 }
+
+SvoxDiskInfoEntry ::= SEQUENCE {
+		    svoxDiskUsed		Integer32,
+		    svoxDiskTotal		Integer32,
+		    svoxDiskInfoLastUpdate	DisplayString	
+		}
+
+
+svoxLoadInfo    OBJECT-TYPE
+        	  SYNTAX          SEQUENCE OF SvoxLoadInfoEntry
+        	  MAX-ACCESS      not-accessible
+       		  STATUS          current
+        	  DESCRIPTION
+			"Table with details of the machines load."
+        	   	::= { switchvoxHardwareStatus 3 }
+
+svoxLoadInfoEntry OBJECT-TYPE
+        	  SYNTAX          SvoxLoadInfoEntry
+        	  MAX-ACCESS      not-accessible
+        	  STATUS          current
+        	  DESCRIPTION
+               	   "Details of the machines load."
+        	   INDEX           { svoxLoad }
+        	   ::= { svoxLoadInfo 1 }
+
+SvoxLoadInfoEntry ::= SEQUENCE {
+		    svoxLoad	DisplayString			
+		}
+
+-- switchvoxPhoneStatus 
+
+svoxPhoneStatus OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Current number of provisioned phones"
+        	     ::= { switchvoxPhoneStatus 1 }
+
+svoxAvailablePhoneStatus OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Current number of provisioned and available phones"
+        	     ::= { switchvoxPhoneStatus 2 }
+
+svoxPhoneStatusTable OBJECT-TYPE
+        	  SYNTAX          SEQUENCE OF SvoxPhoneStatusEntry
+        	  MAX-ACCESS      not-accessible
+       		  STATUS          current
+        	  DESCRIPTION
+			"Table with details of the provisioned phones."
+        	   	::= { switchvoxPhoneStatus 3 }
+
+svoxPhoneStatusEntry OBJECT-TYPE
+        	  SYNTAX          SvoxPhoneStatusEntry
+        	  MAX-ACCESS      not-accessible
+        	  STATUS          current
+        	  DESCRIPTION
+               	   "Details of a single phone."
+        	   INDEX           { svoxPhoneStatusId }
+        	   ::= { svoxPhoneStatusTable 1 }
+
+SvoxPhoneStatusEntry ::= SEQUENCE {
+        	  svoxPhoneStatusId		Integer32,
+        	  svoxPhoneStatusExtension	Integer32,
+        	  svoxPhoneStatusCallerId	DisplayString,
+        	  svoxPhoneStatusUserAgent      DisplayString,
+        	  svoxPhoneStatusIpAddress    	DisplayString,
+       	  	  svoxPhoneStatusState	  	DisplayString
+}
+
+
+
+-- switchvoxCurrentCalls
+
+svoxTotalCurrentCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 1 }
+
+svoxAgentLoginCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 2 }
+
+svoxAgentLogoutCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 3 }
+
+svoxCheckingVoicemailCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 4 }
+
+svoxConferenceCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 5 }
+
+svoxDirectoryCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 6 }
+
+svoxFaxingCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 7 }
+
+svoxIntercomCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 8 }
+
+svoxIVRCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 9 }
+
+svoxLeavingVoicemailCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 10 }
+
+svoxMonitoringCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 11 }
+
+svoxParkedCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 12 }
+
+svoxQueuedCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 13 }
+
+svoxReceivingFaxCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 14 }
+
+svoxRingingCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 15 }
+
+svoxTalkingCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 16  }
+
+svoxUnknownCalls OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     ""
+        	     ::= { switchvoxCurrentCalls 17 }
+
+
+
+-- switchvoxHardwareChannels 
+
+svoxHardwareChannels OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Current number of active hardware channels"
+        	     ::= { switchvoxHardwareChannels 1 }
+
+svoxAvailableHardwareChannels OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Current number of active and available hardware channels"
+        	     ::= { switchvoxHardwareChannels 2 }
+
+svoxHardwareChanTable OBJECT-TYPE
+        	  SYNTAX          SEQUENCE OF SvoxHardwareChanEntry
+        	  MAX-ACCESS      not-accessible
+       		  STATUS          current
+        	  DESCRIPTION
+			"Table with details of the currently active hardware channels."
+        	   	::= { switchvoxHardwareChannels 3 }
+
+svoxHardwareChanEntry OBJECT-TYPE
+        	  SYNTAX          SvoxHardwareChanEntry
+        	  MAX-ACCESS      not-accessible
+        	  STATUS          current
+        	  DESCRIPTION
+               	   "Details of a single hardware channel."
+        	   INDEX           { svoxHardwareChanId }
+        	   ::= { svoxHardwareChanTable 1 }
+
+SvoxHardwareChanEntry ::= SEQUENCE {
+        	  svoxHardwareChanId		DisplayString,
+        	  svoxHardwareChanName	  	DisplayString,
+        	  svoxHardwareChanChannel 	Integer32,
+        	  svoxHardwareChanGroupName     DisplayString,
+        	  svoxHardwareChanSignalling    DisplayString,
+       	  	  svoxHardwareChanAlarm	  	DisplayString
+}
+
+-- switchvoxSubscriptionDate
+
+svoxSubExpireDate OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Subscription expiration date"
+        	     ::= { switchvoxSubscriptionDate 1 }
+
+svoxSubDaysLeft OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Days left in subscription"
+        	     ::= { switchvoxSubscriptionDate 2 }
+
+
+-- switchvoxRaid
+
+svoxRaidControllerStatus OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "controller status"
+        	     ::= { switchvoxRaid 1 }
+
+
+svoxRaidLogicalDeviceStatus OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "logical device status"
+        	     ::= { switchvoxRaid 2 }
+
+svoxRaidDeviceZeroStatus OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "device #0 status"
+        	     ::= { switchvoxRaid 3 }
+
+svoxRaidDeviceOneStatus OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "device #1 status"
+        	     ::= { switchvoxRaid 4 }
+
+svoxRaidDeviceTwoStatus OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "device #2 status"
+        	     ::= { switchvoxRaid 5 }
+
+svoxRaidDeviceThreeStatus OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "device #3 status"
+        	     ::= { switchvoxRaid 6 }
+
+-- switchvoxFailover
+
+svoxFailoverOverallStatus OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Overall Status"
+        	     ::= { switchvoxFailover 1 }
+
+svoxFailoverState OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Data Backup Status"
+        	     ::= { switchvoxFailover 2 }
+
+svoxFailoverState OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Active Status"
+        	     ::= { switchvoxFailover 3 }
+
+svoxFailoverState OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Primary Status"
+        	     ::= { switchvoxFailover 4 }
+
+svoxFailoverState OBJECT-TYPE
+        	  SYNTAX          DisplayString
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Partner Status"
+        	     ::= { switchvoxFailover 5 }
+
+
+-- switchvoxPeering 
+
+svoxPeering OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Current number of active voip providers"
+        	     ::= { switchvoxPeering 1 }
+
+svoxAvailablePeering OBJECT-TYPE
+        	  SYNTAX          Integer32
+       		  MAX-ACCESS      read-only
+       		  STATUS          current
+        	  DESCRIPTION
+               	     "Current number of active and available voip providers"
+        	     ::= { switchvoxPeering 2 }
+
+svoxPeerTable OBJECT-TYPE
+        	  SYNTAX          SEQUENCE OF SvoxPeerEntry
+        	  MAX-ACCESS      not-accessible
+       		  STATUS          current
+        	  DESCRIPTION
+			"Table with details of the currently active peers."
+        	   	::= { switchvoxPeering 3 }
+
+svoxPeerEntry OBJECT-TYPE
+        	  SYNTAX          SvoxPeerEntry
+        	  MAX-ACCESS      not-accessible
+        	  STATUS          current
+        	  DESCRIPTION
+               	   "Details of a single peer."
+        	   INDEX           { svoxPeerId }
+        	   ::= { svoxPeerTable 1 }
+
+SvoxPeerEntry ::= SEQUENCE {
+        	  svoxPeerId				Integer32,
+        	  svoxPeerName	 	 		DisplayString,
+        	  svoxPeerUUID	  	 		DisplayString,
+        	  svoxPeerName       		DisplayString,
+        	  svoxPeerHostname	 		DisplayString,
+        	  svoxPeerUsername   		DisplayString,
+       	  	  svoxPeerDialPrefix 		Integer32,
+       	  	  svoxPeerLatency 			DisplayString,
+       	  	  svoxPeerStatus 			DisplayString,
+       	  	  svoxPeerDisabled 			DisplayString,
+       	  	  svoxPeerIncompatible 		DisplayString,
+       	  	  svoxPeerExtConflicts 		DisplayString,
+       	  	  svoxPeerNumPendingEvents 	DisplayString,
+       	  	  svoxPeerSyncStatus 		DisplayString,
+       	  	  svoxPeerStatusType 		DisplayString
+}
+
+
+
+
+END
+
