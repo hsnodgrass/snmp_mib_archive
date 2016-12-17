@@ -1,0 +1,422 @@
+-- ****************************************************************************
+--
+--                         Virtual Connect QoS MIB
+--
+--      Copyright 2012 Hewlett-Packard Development Company, L.P.
+-- 
+--
+-- ****************************************************************************
+
+HPVCQOS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE,
+    mib-2			        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, TruthValue,
+    RowPointer                          FROM SNMPv2-TC
+    SnmpAdminString                     FROM SNMP-FRAMEWORK-MIB
+    enterprises                         FROM RFC1155-SMI
+    ifIndex				FROM IF-MIB
+
+
+    MODULE-COMPLIANCE, OBJECT-GROUP,
+    NOTIFICATION-GROUP                  FROM SNMPv2-CONF
+
+    virtualConnect			FROM HPVCMODULE-MIB;
+
+vcQoSMIB MODULE-IDENTITY
+    LAST-UPDATED "201204250000Z"            -- 25 April 2012
+    ORGANIZATION "Hewlett-Packard Company"
+    CONTACT-INFO "Contact HP Support"
+    DESCRIPTION
+     "This MIB module describes QoS specific MIB objects present in the
+      Virtual Connect VC-Enet Module." 
+     
+
+-- Revision History
+
+       REVISION     "201204250000Z"            -- 25 April 2012
+       DESCRIPTION  "Draft-0. Initial cut.  -Quynh Nguyen"
+    ::= { virtualConnect 5 }
+
+vcQoSMIBObjects		OBJECT IDENTIFIER ::= { vcQoSMIB 1 }
+
+-- Top level object for VC MIB
+vcQoSIfQoSConfig        OBJECT IDENTIFIER ::= { vcQoSMIBObjects 2 }
+vcQoSTrafficClassConfig	OBJECT IDENTIFIER ::= { vcQoSMIBObjects 3 }
+vcQoSTrafficClass	OBJECT IDENTIFIER ::= { vcQoSMIBObjects 4 }
+vcQoSClassificationMap	OBJECT IDENTIFIER ::= { vcQoSMIBObjects 5 }
+vcQoSDot1pMap		OBJECT IDENTIFIER ::= { vcQoSMIBObjects 6 }
+vcQoSDscpMap		OBJECT IDENTIFIER ::= { vcQoSMIBObjects 7 }
+
+--
+-- Textual conventions
+--
+
+VcQoSConfigType ::= TEXTUAL-CONVENTION			
+	STATUS		current
+	DESCRIPTION
+		"The configuration type of QoS operation in a VC Domain.
+		 The enumerations are described below:
+			unknown
+			passthrough
+			customFCoE
+			customNoFCoE
+		"
+	SYNTAX		INTEGER
+	{
+		unknown(1),
+		passthrough(2),
+		customFCoE(3),
+		customNoFCoE(4)
+	}
+
+--
+-- Object Definitions
+--
+
+-- Configuration Type of QoS
+
+vcQoSConfigType		OBJECT-TYPE
+	SYNTAX		VcQoSConfigType
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+		"The configuration type of QoS used in this VC Enet module."
+	::= { vcQoSMIBObjects 1 }
+
+
+-- Sets of classification configurations
+
+vcQoSIfQoSConfigTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF VcQoSIfQoSConfigEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION
+		"This table lists the Traffic Class Config table and
+                 the Classification Map table associcated with each
+                 port."
+	::= { vcQoSIfQoSConfig 1 }
+
+vcQoSIfQoSConfigEntry	OBJECT-TYPE
+	SYNTAX		VcQoSIfQoSConfigEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	""
+	INDEX		{ ifIndex }
+	::= { vcQoSIfQoSConfigTable 1 }	
+
+VcQoSIfQoSConfigEntry ::=
+	SEQUENCE {
+		vcQoSIfQoSTrafficClassConfigIndex	INTEGER,
+		vcQoSIfQoSClassificationMapIndex	INTEGER
+	}
+
+vcQoSIfQoSTrafficClassConfigIndex	OBJECT-TYPE
+	SYNTAX				INTEGER
+	MAX-ACCESS			read-only
+	STATUS				current
+	DESCRIPTION
+		"Value should be index value of the corresponding 
+                 TrafficClassConfigTable entry"
+	::= { vcQoSIfQoSConfigEntry 1 }
+
+vcQoSIfQoSClassificationMapIndex	OBJECT-TYPE
+	SYNTAX				INTEGER
+	MAX-ACCESS			read-only
+	STATUS				current
+	DESCRIPTION
+		"Value should be index value of the corresponding 
+                 ClassificationMap entry
+                "
+	::= { vcQoSIfQoSConfigEntry 2 }
+
+-- Traffic Class Configurations 
+
+vcQoSTrafficClassConfigTable	OBJECT-TYPE
+	SYNTAX			SEQUENCE OF VcQoSTrafficClassConfigEntry
+	MAX-ACCESS		not-accessible
+	STATUS			current
+	DESCRIPTION
+		"This table lists the available Traffic Class Tables."
+	::= { vcQoSTrafficClassConfig 1 }
+
+vcQoSTrafficClassConfigEntry	OBJECT-TYPE
+	SYNTAX			VcQoSTrafficClassConfigEntry
+	MAX-ACCESS		not-accessible
+	STATUS			current
+	DESCRIPTION		
+		"One entry represents a Traffic Class Table"
+	INDEX			{ vcQoSTrafficClassConfigIndex }
+	::= { vcQoSTrafficClassConfigTable 1 }
+
+VcQoSTrafficClassConfigEntry ::=
+	SEQUENCE {
+		vcQoSTrafficClassConfigIndex	INTEGER,
+		vcQoSTrafficClassConfigName	SnmpAdminString	
+	}
+
+vcQoSTrafficClassConfigIndex	OBJECT-TYPE
+	SYNTAX			INTEGER
+	MAX-ACCESS		read-only
+	STATUS			current
+	DESCRIPTION
+		"Index for the Traffic Class Config Table"
+	::= { vcQoSTrafficClassConfigEntry 1 }
+
+vcQoSTrafficClassConfigName	OBJECT-TYPE
+	SYNTAX			SnmpAdminString
+	MAX-ACCESS		read-only
+	STATUS			current
+	DESCRIPTION
+		"Name of the Traffic Class Table associated with this entry"
+	::= { vcQoSTrafficClassConfigEntry 2 }
+
+-- Traffic Classes Configuration 
+
+vcQoSTrafficClassTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF VcQoSTrafficClassEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION
+		"Traffic Class Definition Table"
+	::= { vcQoSTrafficClass 1 }
+
+vcQoSTrafficClassEntry	OBJECT-TYPE
+	SYNTAX		VcQoSTrafficClassEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	""
+	INDEX		{ vcQoSTrafficClassConfigIndex,
+			  vcQoSTrafficClassId }
+	::= { vcQoSTrafficClassTable 1 }
+
+VcQoSTrafficClassEntry ::=
+	SEQUENCE {
+		vcQoSTrafficClassId			INTEGER,
+		vcQoSTrafficClassName			SnmpAdminString,
+		vcQoSTrafficClassRealTime		TruthValue,
+		vcQoSTrafficClassShare			INTEGER,
+		vcQoSTrafficClassMaxShare		INTEGER,
+		vcQoSTrafficClassEgressDot1pPrio	INTEGER,
+		vcQoSTrafficClassEnabled		TruthValue
+	}
+
+vcQoSTrafficClassId	OBJECT-TYPE
+	SYNTAX		INTEGER(1..8)
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+		"Class/queue ID, index for the Traffic Class Table"
+	::= { vcQoSTrafficClassEntry 1 }
+
+vcQoSTrafficClassName	OBJECT-TYPE
+	SYNTAX		SnmpAdminString
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+		"Administratively assigned name for the Traffic Class"
+	::= { vcQoSTrafficClassEntry 2 }
+
+vcQoSTrafficClassRealTime	OBJECT-TYPE
+	SYNTAX			TruthValue
+	MAX-ACCESS		read-only
+	STATUS			current
+	DESCRIPTION
+		"Returns true if this class is real time."
+	::= { vcQoSTrafficClassEntry 3 }
+
+vcQoSTrafficClassShare	OBJECT-TYPE
+	SYNTAX		INTEGER(1..100)
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+		"Assigned minimum share for traffic in this class"
+	::= { vcQoSTrafficClassEntry 4 }
+
+vcQoSTrafficClassMaxShare	OBJECT-TYPE
+	SYNTAX			INTEGER(1..100)
+	MAX-ACCESS		read-only
+	STATUS			current
+	DESCRIPTION
+		"Maximum share allowed for traffic in this class"
+	::= { vcQoSTrafficClassEntry 5 }
+
+vcQoSTrafficClassEgressDot1pPrio	OBJECT-TYPE
+	SYNTAX				INTEGER(0..7)
+	MAX-ACCESS			read-only
+	STATUS				current
+	DESCRIPTION
+		"802.1p priority traffic in this class will egress with"
+	::= { vcQoSTrafficClassEntry 6 }
+
+vcQoSTrafficClassEnabled	OBJECT-TYPE
+	SYNTAX			TruthValue
+	MAX-ACCESS		read-only
+	STATUS			current
+	DESCRIPTION
+		"Returns true if this class is enabled."
+	::= { vcQoSTrafficClassEntry 7 }
+
+
+-- Class Mappings
+
+-- Classification Map
+
+vcQoSClassificationMapTable	OBJECT-TYPE
+	SYNTAX			SEQUENCE OF VcQoSTrafficClassConfigEntry
+	MAX-ACCESS		not-accessible
+	STATUS			current
+	DESCRIPTION
+		"This table lists the configured classification maps."
+	::= { vcQoSClassificationMap 1 }
+
+vcQoSClassificationMapEntry	OBJECT-TYPE
+	SYNTAX			VcQoSClassificationMapEntry
+	MAX-ACCESS		not-accessible
+	STATUS			current
+	DESCRIPTION		
+		"Each entry is associated with a DSCP, Dot1p, ... map." 
+	INDEX			{ vcQoSClassificationMapIndex }
+	::= { vcQoSClassificationMapTable 1 }
+
+VcQoSClassificationMapEntry ::=
+	SEQUENCE {
+		vcQoSClassificationMapIndex	INTEGER,
+		vcQoSClassificationMapName	SnmpAdminString
+	}
+
+vcQoSClassificationMapIndex	OBJECT-TYPE
+	SYNTAX			INTEGER
+	MAX-ACCESS		read-only
+	STATUS			current
+	DESCRIPTION
+		"Index for the Classification Map Table"
+	::= { vcQoSClassificationMapEntry 1 }
+
+vcQoSClassificationMapName	OBJECT-TYPE
+	SYNTAX			SnmpAdminString
+	MAX-ACCESS		read-only
+	STATUS			current
+	DESCRIPTION
+		"Name of the classification map associated with this entry"
+	::= { vcQoSClassificationMapEntry 2 }
+
+-- Dot1p-to-class map
+
+vcQoSDot1pMapTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF VcQoSDot1pMapEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION
+		"Table of Ingress Dot1p to class mappings"
+	::= { vcQoSDot1pMap 1 }
+
+vcQoSDot1pMapEntry	OBJECT-TYPE
+	SYNTAX		VcQoSDot1pMapEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	""
+	INDEX		{ vcQoSClassificationMapIndex,
+			  vcQoSDot1pMapPrioValue }
+	::= { vcQoSDot1pMapTable 1 }	
+
+VcQoSDot1pMapEntry ::=
+	SEQUENCE {
+		vcQoSDot1pMapPrioValue		INTEGER,
+		vcQoSDot1MapTrafficClassId		INTEGER
+	}
+
+vcQoSDot1pMapPrioValue	OBJECT-TYPE
+	SYNTAX		INTEGER(0..7)
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+		" Ingress Dot1p value of the traffic."
+	::= { vcQoSDot1pMapEntry 1 }
+
+vcQoSDot1pMapTrafficClassId	OBJECT-TYPE
+	SYNTAX			INTEGER(1..8)
+	MAX-ACCESS		read-only
+	STATUS			current
+	DESCRIPTION
+		"Class/queue ID of the associated Traffic Class"
+	::= { vcQoSDot1pMapEntry 2 }
+
+
+-- DSCP-to-class map
+
+vcQoSDscpMapTable	OBJECT-TYPE
+	SYNTAX		SEQUENCE OF VcQoSDscpMapEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION
+		"Table of Ingress DSCP to class mappings"
+	::= { vcQoSDscpMap 1 }
+
+vcQoSDscpMapEntry	OBJECT-TYPE
+	SYNTAX		VcQoSDscpMapEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	""
+	INDEX		{ vcQoSClassificationMapIndex,
+			  vcQoSDscpMapDscpValue }
+	::= { vcQoSDscpMapTable 1 }	
+
+VcQoSDscpMapEntry ::=
+	SEQUENCE {
+		vcQoSDscpMapDscpValue		INTEGER,
+		vcQoSDscpMapTrafficClassId	INTEGER
+	}
+
+vcQoSDscpMapDscpValue	OBJECT-TYPE
+	SYNTAX		INTEGER(0..63)
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+		"Ingress DSCP value of the traffic."
+	::= { vcQoSDscpMapEntry 1 }
+
+vcQoSDscpMapTrafficClassId	OBJECT-TYPE
+	SYNTAX			INTEGER(1..8)
+	MAX-ACCESS		read-only
+	STATUS			current
+	DESCRIPTION
+		"Class/queue ID of the associated Traffic Class"
+	::= { vcQoSDscpMapEntry 2 }
+
+--
+-- Conformance
+--
+
+vcQoSMIBConformance OBJECT IDENTIFIER ::= { vcQoSMIB 2 }
+vcQoSMIBCompliances OBJECT IDENTIFIER ::= { vcQoSMIBConformance 1 }
+vcQoSMIBGroups      OBJECT IDENTIFIER ::= { vcQoSMIBConformance 2 }
+
+-- Compliance
+
+vcQoSMIBCompliance MODULE-COMPLIANCE
+        STATUS current
+        DESCRIPTION
+
+                "The compliance statement for entities which implement
+                the VC MIB."
+        MODULE  -- this module
+                MANDATORY-GROUPS {
+                        vcQoSGroup
+                }
+
+        ::= { vcQoSMIBCompliances 1 }
+
+-- Units of Conformance
+
+vcQoSGroup OBJECT-GROUP
+        OBJECTS {
+                vcQoSIfQoSConfig, vcQoSTrafficClassConfig, vcQoSTrafficClass,
+		vcQoSClassificationMap, vcQoSDot1pMap, vcQoSDscpMap
+        }
+        STATUS current
+        DESCRIPTION
+                "Virtual Connect QoS objects."
+        ::= { vcQoSMIBGroups 1 }
+END

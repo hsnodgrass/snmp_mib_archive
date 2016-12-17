@@ -1,0 +1,253 @@
+-- =========================================================================
+-- Copyright (c) 2004-2013 Hangzhou H3C Tech. Co., Ltd. All rights reserved.
+--
+-- Description:This file describes various common MIB objects implemented by both
+--             Routers and Switches for use.
+-- Reference:
+-- Version: V2.4
+-- History:
+-- V1.0 2004-6-30 Created by MIB standard group
+-- V1.1 16th Aug 2004
+--      Add a trap node 'hh3cRebootSendTrap' into hh3cSystemNotification
+-- V2.0 2004-10-12 updated by gaolong
+--      Import from SNMPv2-SMI and SNMPv2-TC instead from RFC1212 and RFC1155-SMI
+--      Change ACCESS clauses to MAX-ACCESS
+--      Change STATUS clauses from mandatory to current
+-- V2.1 2008-11-11 add node hh3cSysBootType by lifengguang
+-- V2.2 2009-05-05 add hh3cSysStatisticPeriod, hh3cSysSamplePeriod,
+--      hh3cSysTrapResendPeriod, hh3cSysTrapCollectionPeriod, hh3cSysColdStartTrap,
+--      hh3cSysWarmStartTrap, hh3cSysSnmpPort, hh3cSysSnmpTrapPort, hh3cSysNetID,
+--      hh3cSysLastSampleTime by jinyi
+-- V2.3 2012-01-07 add node hh3cSysTrapSendNum and hh3cSysFirstTrapTime by duyanbing
+-- V2.4 2012-06-06 add node hh3cSysBannerMOTD by jixugang
+-- =========================================================================
+HH3C-COMMON-SYSTEM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, TimeTicks, Integer32
+        FROM SNMPv2-SMI
+    DisplayString, DateAndTime
+        FROM SNMPv2-TC
+    hh3c
+        FROM HH3C-OID-MIB;
+
+hh3cSystem MODULE-IDENTITY
+    LAST-UPDATED "201206060000Z"
+    ORGANIZATION "Hangzhou H3C Technologies Co., Ltd."
+    CONTACT-INFO
+        "Platform Team H3C Technologies Co., Ltd.
+        Hai-Dian District Beijing P.R. China
+        Zip:100085
+        http://www.h3c.com"
+    DESCRIPTION
+        "This file describes various common MIB objects implemented by
+        both Routers and Switches for use."
+    REVISION     "200406300000Z"
+    DESCRIPTION  "The initial revision of this MIB module."
+    ::= { hh3c 6 }
+
+-- ==============================
+-- Begin define of hh3cmHostName
+-- ==============================
+
+    hh3cWriteConfig OBJECT-TYPE
+        SYNTAX INTEGER{
+                       save(1)
+                      }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Write config to router."
+        ::= { hh3cSystem 5 }
+
+    hh3cStartFtpServer OBJECT-TYPE
+        SYNTAX INTEGER{
+                       enable(1),
+                       disable(2)
+                       }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Decide whether start ftp-server.enable(1) indicates to start ftp-server;
+            disable(2) indicates to stop ftp-server."
+        ::= { hh3cSystem 6 }
+
+    hh3cReboot OBJECT-TYPE
+        SYNTAX INTEGER{
+                       reboot(1)
+                       }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Reboot router."
+        ::= { hh3cSystem 7 }
+
+    hh3cSystemNotification OBJECT IDENTIFIER ::= { hh3cSystem 8 }
+
+    hh3cWriteSuccessTrap NOTIFICATION-TYPE
+        STATUS current
+        DESCRIPTION
+            "send a trap about write success."
+        ::= { hh3cSystemNotification 1 }
+
+    hh3cWriteFailureTrap NOTIFICATION-TYPE
+        STATUS current
+        DESCRIPTION
+            "send a trap about write failure."
+        ::= { hh3cSystemNotification 2 }
+
+    hh3cRebootSendTrap NOTIFICATION-TYPE
+        STATUS current
+        DESCRIPTION
+            "When users restart the device with command
+            'reboot', this trap will be sent two seconds
+             before the device reboots."
+        ::= { hh3cSystemNotification 3 }
+
+    hh3cSysColdStartTrap NOTIFICATION-TYPE
+        OBJECTS
+            {
+                hh3cSysFirstTrapTime
+            }
+        STATUS current
+        DESCRIPTION
+            "A system cold start trap."
+        ::= { hh3cSystemNotification 4 }
+
+    hh3cSysWarmStartTrap NOTIFICATION-TYPE
+        OBJECTS
+            {
+                hh3cSysFirstTrapTime
+            }
+        STATUS current
+        DESCRIPTION
+            "A system warm start trap."
+        ::= { hh3cSystemNotification 5 }
+
+    hh3cSoftwareVersion OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Software version."
+        ::= { hh3cSystem 9 }
+
+    hh3cSysBootType OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            coldStart(1),           -- Cold start
+            warmStart(2)            -- Warm start
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The boot type of the system whether the last device reboot was by
+            CLI (warm start) or power off (cold start)."
+        ::= { hh3cSystem 10 }
+
+    hh3cSystemInfo OBJECT IDENTIFIER ::= { hh3cSystem 11 }
+
+    hh3cSysStatisticPeriod OBJECT-TYPE
+        SYNTAX      Integer32(0..900)
+        UNITS       "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The statistic period. The device collects statistics
+             within the period."
+        DEFVAL { 0 }
+        ::= { hh3cSystemInfo 1 }
+
+    hh3cSysSamplePeriod OBJECT-TYPE
+        SYNTAX      Integer32(0..300)
+        UNITS       "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The sampling period. The device takes samples periodically
+             for statistics collection."
+        DEFVAL { 0 }
+        ::= { hh3cSystemInfo 2 }
+
+    hh3cSysTrapResendPeriod OBJECT-TYPE
+        SYNTAX      Integer32(0..3600)
+        UNITS       "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The trap resending period. If the value is zero, the trap
+             will not be re-sent."
+        DEFVAL { 0 }
+        ::= { hh3cSystemInfo 3 }
+
+    hh3cSysTrapCollectionPeriod OBJECT-TYPE
+        SYNTAX      Integer32(0..60)
+        UNITS       "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The trap collecting period. If the value is zero, the trap
+             will not be re-sent."
+        DEFVAL { 0 }
+        ::= { hh3cSystemInfo 4 }
+
+    hh3cSysSnmpPort OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "UDP port for SNMP protocol entity to receive messages except Trap-PDU."
+        ::= { hh3cSystemInfo 5 }
+
+    hh3cSysSnmpTrapPort OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "UDP port for Trap-PDU to receive messages."
+        ::= { hh3cSystemInfo 6 }
+
+    hh3cSysNetID OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..127))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The system Net ID."
+        ::= { hh3cSystemInfo 7 }
+
+    hh3cSysLastSampleTime OBJECT-TYPE
+        SYNTAX      DateAndTime
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The last sample local time of the system."
+        ::= { hh3cSystemInfo 8 }
+
+    hh3cSysTrapSendNum OBJECT-TYPE
+        SYNTAX      Integer32(0..24)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The trap send times. If the value is zero, the trap
+             will be sent all the time if it occurs."
+        ::= { hh3cSystemInfo 9 }
+
+    hh3cSysFirstTrapTime OBJECT-TYPE
+        SYNTAX      TimeTicks
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Represents the first trap time."
+        ::= { hh3cSystemInfo 10 }
+
+    hh3cSysBannerMOTD OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..2000))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "An administratively configured message that is displayed
+             to the user when logged in to the device through either
+             the console or web-ui."
+        ::= { hh3cSystemInfo 11 }
+
+END

@@ -1,0 +1,77 @@
+#!/bin/sh
+if ps -ef | grep mxdomainmgr
+then
+
+    echo Copying cfg files to /opt/mx/mibs
+    for NAME in $(ls *.cfg)
+    do
+    	echo $NAME
+        cp -f $NAME /opt/mx/mibs
+    done
+
+    echo Copying mib files to /opt/mx/mibs
+    for NAME in $(ls *.mib)
+    do
+    	echo $NAME
+        cp -f $NAME /opt/mx/mibs
+    done
+
+    echo Copying mcompile to /opt/mx/bin
+
+    if uname -a | grep Linux
+    then
+        echo Copying mcompile
+	cp linuxmcompile /opt/mx/bin/mcompile
+	chmod +x /opt/mx/bin/mcompile
+    else
+        if uname -a | grep HP-UX
+	then
+            if uname -a | grep 11.23
+	    then
+	        if uname -a | grep ia64
+		then
+                    cp hpux1123iamcompile /opt/mx/bin/mcompile
+                    chmod +x /opt/mx/bin/mcompile
+		else
+                    cp hpux1123pamcompile /opt/mx/bin/mcompile
+                    chmod +x /opt/mx/bin/mcompile
+		fi
+	    elif uname -a | grep 11.31
+	    then
+	        if uname -a | grep ia64
+		then
+                    cp hpux1123iamcompile /opt/mx/bin/mcompile
+                    chmod +x /opt/mx/bin/mcompile
+		else
+                    cp hpux1123pamcompile /opt/mx/bin/mcompile
+                    chmod +x /opt/mx/bin/mcompile
+		fi
+	    else
+                if uname -a | grep 11.11
+                then
+                    cp hpux1111mcompile /opt/mx/bin/mcompile
+                    chmod +x /opt/mx/bin/mcompile
+		fi
+	    fi
+	fi
+    fi
+
+   echo Following MIBs may have been already registered in HP SIM, so un-installing them.
+   echo If your SIM does not have these MIBs already installed, then you may get an error message while un-installing it, which you can ignore.
+
+   for NAME in $(cat modifiedcfgs.list)
+   do
+      mibfilename="$(echo $NAME | sed 's/\.cfg/\.mib/g')"
+      /opt/mx/bin/mxmib -d $mibfilename
+   done
+
+   echo Importing mibs into Systems Insight Manager
+   for NAME in $(cat cfgstoimport.list)
+   do
+       /opt/mx/bin/mxmib -a $NAME
+    done
+   
+   echo MIB Update for Management CD completed successfully.
+else
+    echo No Mib update - Systems Insight Manager is not running!
+fi
