@@ -1,6 +1,6 @@
 ## Synopsis
 
-An archive of over 4500 MIBs for SNMP. The MIBs come from a multitude of vendors, so please search the repository for ones you need. Also, please throw any MIBs in here that are missing. Eventually, together, we can make this repository a one-stop MIB shop and all stop scouring the internet for that one MIB we need.
+An archive of over 3000 unique MIBs for SNMP. The MIBs come from a multitude of vendors, so please search the repository for ones you need. Also, please throw any MIBs in here that are missing. Eventually, together, we can make this repository a one-stop MIB shop and all stop scouring the internet for that one MIB we need.
 
 ## Motivation
 
