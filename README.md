@@ -1,6 +1,6 @@
 ## Synopsis
 
-An archive of 4576 MIBs for SNMP. The MIBs come from a multitude of vendors, so please search the repository for ones you need. Also, please throw any MIBs in here that are missing. Eventually, together, we can make this repository a one-stop MIB shop and all stop scouring the internet for that one MIB we need.
+An archive of over 4500 MIBs for SNMP. The MIBs come from a multitude of vendors, so please search the repository for ones you need. Also, please throw any MIBs in here that are missing. Eventually, together, we can make this repository a one-stop MIB shop and all stop scouring the internet for that one MIB we need.
 
 ## Motivation
 
@@ -8,7 +8,7 @@ I created this out of frustration at the severe lack of large, free MIB reposito
 
 ## Installation
 
-Clone or download the repository, the move the MIB files to where they are needed. On \*nix systems, this is typically `/usr/share/snmp/mibs`.
+Clone or download the repository, then move the MIB files to where they are needed. On \*nix systems, this is typically `/usr/share/snmp/mibs`.
 
 ## Contributers
 
