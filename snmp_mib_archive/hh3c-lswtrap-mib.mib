@@ -1,0 +1,227 @@
+-- ==================================================================
+-- Copyright (c) 2004-2012 Hangzhou H3C Tech. Co., Ltd. All rights reserved.
+--
+-- Description: Lan Switch trap MIB
+-- Reference:
+-- Version: V1.2
+-- History:
+-- V1.0 Created by Zhangshilin, 2001.06.29
+-- V1.1 Modified by lifengguang 2008.11.10, add trap node hh3cBootImageUpdated
+-- V1.2 2011-11-26 updated by duyanbing
+--      Add hh3cDevMFirstTrapTime to powerfailure and hh3cPowerNormal.
+-- ==================================================================
+
+-- ==================================================================
+--
+-- Variables and types be imported
+--
+-- ==================================================================
+HH3C-LswTRAP-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY,NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+
+    hh3clswCommon
+        FROM HH3C-OID-MIB
+
+    hh3cDevMPowerNum, hh3cDevMFanNum, hh3cDevMFirstTrapTime
+        FROM HH3C-LswDEVM-MIB
+
+    hh3cLswFrameIndex, hh3cLswSlotIndex, hh3cLswSubslotIndex
+        FROM HH3C-LSW-DEV-ADM-MIB;
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+     hh3cLswTrapMib MODULE-IDENTITY
+            LAST-UPDATED "201111260000Z"
+            ORGANIZATION
+                "Hangzhou H3C Tech. Co., Ltd."
+            CONTACT-INFO
+                "Platform Team Hangzhou H3C Tech. Co., Ltd.
+                Hai-Dian District Beijing P.R. China
+                http://www.h3c.com
+                Zip:100085
+                "
+            DESCRIPTION
+            ""
+            REVISION "201111260000Z"
+            DESCRIPTION
+            ""
+            ::= { hh3clswCommon 12 }
+
+    hh3csLswTRAPMibObject OBJECT IDENTIFIER ::= { hh3cLswTrapMib 1 }
+
+    hh3cpowerfailure NOTIFICATION-TYPE
+      OBJECTS { hh3cDevMPowerNum, hh3cDevMFirstTrapTime }
+      STATUS  current
+      DESCRIPTION
+              "Power supply failure"
+      ::= { hh3csLswTRAPMibObject 1 }
+
+    hh3cPowerNormal NOTIFICATION-TYPE
+      OBJECTS { hh3cDevMPowerNum, hh3cDevMFirstTrapTime }
+      STATUS  current
+      DESCRIPTION
+              "Power supply normal"
+      ::= { hh3csLswTRAPMibObject 2 }
+
+    hh3cMasterPowerNormal NOTIFICATION-TYPE
+      OBJECTS { hh3cDevMPowerNum }
+      STATUS  current
+      DESCRIPTION
+              "Master power supply normal"
+      ::= { hh3csLswTRAPMibObject 3 }
+
+    hh3cSlavePowerNormal NOTIFICATION-TYPE
+      OBJECTS { hh3cDevMPowerNum }
+      STATUS  current
+      DESCRIPTION
+              "Slave power supply normal"
+      ::= { hh3csLswTRAPMibObject 4 }
+
+    hh3cPowerRemoved NOTIFICATION-TYPE
+      OBJECTS { hh3cDevMPowerNum }
+      STATUS  current
+      DESCRIPTION
+              "Power removed"
+      ::= { hh3csLswTRAPMibObject 5 }
+
+    hh3cfanfailure NOTIFICATION-TYPE
+      OBJECTS { hh3cDevMFanNum }
+      STATUS  current
+      DESCRIPTION
+              "Fan failure"
+      ::= { hh3csLswTRAPMibObject 6 }
+
+    hh3cFanNormal NOTIFICATION-TYPE
+      OBJECTS { hh3cDevMFanNum }
+      STATUS  current
+      DESCRIPTION
+              "Fan normal"
+      ::= { hh3csLswTRAPMibObject 7 }
+
+    hh3cBoardRemoved NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board removed"
+      ::= { hh3csLswTRAPMibObject 8 }
+
+    hh3cBoardInserted NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex,hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board inserted"
+      ::= { hh3csLswTRAPMibObject 9 }
+
+    hh3cBoardFailure NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board failed"
+      ::= { hh3csLswTRAPMibObject 10 }
+
+    hh3cBoardNormal NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board normal"
+      ::= { hh3csLswTRAPMibObject 11 }
+
+    hh3cSubcardRemove NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex, hh3cLswSubslotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Sub card removeed"
+      ::= { hh3csLswTRAPMibObject 12 }
+
+    hh3cSubcardInsert NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex, hh3cLswSubslotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Sub card inserted"
+      ::= { hh3csLswTRAPMibObject 13 }
+
+    hh3cBoardTemperatureLower NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board temperature low"
+      ::= { hh3csLswTRAPMibObject 14 }
+
+    hh3cBoardTemperatureFromLowerToNormal NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board temperature form lower to normal"
+      ::= { hh3csLswTRAPMibObject 15 }
+
+    hh3cBoardTemperatureHigher NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board temperature high"
+      ::= { hh3csLswTRAPMibObject 16 }
+
+    hh3cBoardTemperatureFormHigherToNormal NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board temperature from higher to normal"
+      ::= { hh3csLswTRAPMibObject 17 }
+
+    hh3cRequestLoading NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board request load"
+      ::= { hh3csLswTRAPMibObject 18 }
+
+    hh3cLoadFailure NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board load failure"
+      ::= { hh3csLswTRAPMibObject 19 }
+
+    hh3cLoadFinished NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board load finished"
+      ::= { hh3csLswTRAPMibObject 20 }
+
+    hh3cBackBoardModeSetFuilure NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex }
+      STATUS  current
+      DESCRIPTION
+              "Back board mode set failure"
+      ::= { hh3csLswTRAPMibObject 21 }
+
+    hh3cBackBoardModeSetOK NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex }
+      STATUS  current
+      DESCRIPTION
+              "Back board mode set OK"
+      ::= { hh3csLswTRAPMibObject 22 }
+
+    hh3cPowerInserted NOTIFICATION-TYPE
+      OBJECTS { hh3cDevMPowerNum }
+      STATUS  current
+      DESCRIPTION
+              "Power inserted"
+      ::= { hh3csLswTRAPMibObject 23 }
+
+    hh3cBootImageUpdated NOTIFICATION-TYPE
+      OBJECTS { hh3cLswFrameIndex, hh3cLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "This trap node indicates that the boot image of specified board
+              is updated."
+      ::= { hh3csLswTRAPMibObject 24 }
+
+END

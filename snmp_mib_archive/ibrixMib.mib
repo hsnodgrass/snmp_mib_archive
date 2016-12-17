@@ -1,0 +1,2240 @@
+
+-- *****************************************************************
+-- HP: StoreAll Structure of Management Information
+-- *****************************************************************
+--
+
+IBRIX-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+    Unsigned32, Gauge32, Counter32, Counter64
+        FROM SNMPv2-SMI
+    DisplayString, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    OBJECT-GROUP, NOTIFICATION-GROUP
+        FROM SNMPv2-CONF
+    enterprises
+        FROM SNMPv2-SMI;
+
+ibrix MODULE-IDENTITY
+    LAST-UPDATED "201309111200Z" -- Sep 11, 2013
+    ORGANIZATION "Organization : HP StoreAll"
+    CONTACT-INFO "Contact-info www.hp.com/go/StoreAll"
+
+    DESCRIPTION
+        "The Structure of Management Information for StoreAll Version 6.5"
+    
+    REVISION     "201309111200Z"
+    DESCRIPTION
+         "Corrected soltionSerialNumber -> solutionSerialNumber at Object definition"
+
+    REVISION     "201307191200Z"
+    DESCRIPTION
+         "Corrected Organization & contact information
+         Product version to which this MIB belongs to is mentioned in the description above"
+
+    REVISION     "201302151200Z"
+    DESCRIPTION
+         "Event Index added to Event variable bindings"
+
+    REVISION     "201109121200Z"
+    DESCRIPTION
+        "Added new SolutionInformation Group for the purposes of PhoneHome
+         Added new HardwareInformation Table for enumerating the underlying hardware
+         Changed fields eventOrigin, eventData1 and eventData2 to 
+               eventUUID, eventSolutionSerialNumber and eventSolutionProductNumber in eventEntry
+         Added new field eventFRU to eventEntry
+         Updated description of eventText"
+
+    REVISION     "200808111200Z"
+    DESCRIPTION
+        "Added new enumerations to eventType for 4.2 release
+         Added warn enumeration to eventSeverity object
+         Added new eventText object to contain the event descriptive text that
+               combines eventDescription, eventOrigin, eventData1, eventData2
+               into one
+         eventOrigin changed to obsolete
+         eventData1 and eventData2 changed to obsolete"
+    REVISION     "200801091200Z"
+    DESCRIPTION
+        "Modifications to Cfr job information"
+    REVISION     "200712111200Z"
+    DESCRIPTION
+        "Adding new segment and job information"
+    REVISION     "200710011200Z"
+    DESCRIPTION
+        "Adding new statistics"
+    REVISION     "200611202155Z"
+    DESCRIPTION
+        "Initial version of the IBRIX MIB module"
+
+    ::= { enterprises 18997 }  -- assigned by IANA
+
+
+YesNoValue ::= TEXTUAL-CONVENTION
+        STATUS        current
+        DESCRIPTION   "Value is Yes, No or unspecified if not applicable"
+        SYNTAX        OCTET STRING (SIZE(0..3))
+
+DataSegregationType ::= TEXTUAL-CONVENTION
+        STATUS        current
+        DESCRIPTION   "Data segregation type. Value is one of DIRS, FILES, or MIXED"
+        SYNTAX        OCTET STRING (SIZE(0..5))
+
+
+ibrixMibs         OBJECT IDENTIFIER ::= { ibrix 1 }
+ibrixEvents       OBJECT IDENTIFIER ::= { ibrix 2 }
+ibrixEventsV2     OBJECT IDENTIFIER ::= { ibrixEvents 0 }
+ibrixGroups       OBJECT IDENTIFIER ::= { ibrix 3 }
+ibrixEventsGroups OBJECT IDENTIFIER ::= { ibrix 4 }
+
+
+-- fileSystemTable, FS Table
+
+fileSystemTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF FileSystemEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "IBRIX File Systems"
+        ::= { ibrixMibs 1 }
+
+fileSystemEntry OBJECT-TYPE
+        SYNTAX        FileSystemEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry for one File System in a cluster"
+        INDEX         { IMPLIED fsName }
+        ::= { fileSystemTable 1 }
+
+FileSystemEntry ::=
+        SEQUENCE {
+                fsName            DisplayString,
+                fsSegment         Unsigned32,
+                fsMount           INTEGER,
+                fsOriginFsName    DisplayString,
+                fsTotalBlocks     Counter64,
+                fsFreeBlocks      Counter64,
+                fsFreeUserBlocks  Counter64,
+                fsUsedUserBlocks  Counter64,
+                fsUsedBlocks      Counter64,
+                fsMaxFiles        Counter64,
+                fsUsedFiles       Counter64,
+                fsFreeFiles       Counter64
+                }
+
+fsName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "File System name"
+        ::= { fileSystemEntry 1 }
+
+fsSegment OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of segments in this File System"
+        ::= { fileSystemEntry 2 }
+
+fsMount OBJECT-TYPE
+        SYNTAX        INTEGER {
+                mounted(1),
+                unmounted(2)
+               }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Mount status of the File System"
+        ::= { fileSystemEntry 3 }
+
+fsOriginFsName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Origin File System name for snapshot FS"
+        ::= { fileSystemEntry 4 }
+
+fsTotalBlocks OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total blocks in KB"
+        ::= { fileSystemEntry 5 }
+
+fsFreeBlocks OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total free blocks in KB"
+        ::= { fileSystemEntry 6 }
+
+fsFreeUserBlocks OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total free user blocks in KB"
+        ::= { fileSystemEntry 7 }
+
+fsUsedUserBlocks OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Percent of used user blocks"
+        ::= { fileSystemEntry 8 }
+
+fsUsedBlocks OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Total used blocks in KB"
+        ::= { fileSystemEntry 9 }
+
+fsMaxFiles OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Maximum number of files"
+        ::= { fileSystemEntry 10 }
+
+fsUsedFiles OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of used files"
+        ::= { fileSystemEntry 11 }
+
+fsFreeFiles OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of free files"
+        ::= { fileSystemEntry 12 }
+
+
+fsGroup OBJECT-GROUP 
+        OBJECTS { fsName,
+                  fsSegment,
+                  fsMount,
+                  fsOriginFsName,
+                  fsTotalBlocks,
+                  fsFreeBlocks,
+                  fsFreeUserBlocks,
+                  fsUsedUserBlocks,
+                  fsUsedUserBlocks,
+                  fsUsedBlocks,
+                  fsMaxFiles,
+                  fsUsedFiles,
+                  fsFreeFiles
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with a File System"
+        ::= { ibrixGroups 1 }
+
+
+-- logicalVolumeTable, LV Table
+
+logicalVolumeTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF LogicalVolumeEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Logical Volume (LV) objects"
+        ::= { ibrixMibs 2 }
+
+logicalVolumeEntry OBJECT-TYPE
+        SYNTAX        LogicalVolumeEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry for one Logical Volume"
+        INDEX         { lvName }
+        ::= { logicalVolumeTable 1 }
+
+LogicalVolumeEntry ::=
+        SEQUENCE {
+                lvName
+                        DisplayString,
+                lvSize
+                        Unsigned32,
+                lvFsName
+                        DisplayString,
+                lvSegment
+                        Unsigned32,
+                lvVgName
+                        DisplayString
+        }
+
+lvName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Logical Volume name"
+        ::= { logicalVolumeEntry 1 }
+
+lvSize OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Logical Volume size (MB)"
+        ::= { logicalVolumeEntry 2 }
+
+lvFsName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "FS name this LV belongs to"
+        ::= { logicalVolumeEntry 3 }
+
+lvSegment OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Logical Volume segment number"
+        ::= { logicalVolumeEntry 4 }
+
+lvVgName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Volume Group name"
+        ::= { logicalVolumeEntry 5 }
+
+lvGroup OBJECT-GROUP 
+        OBJECTS { lvName,
+                  lvSize,
+                  lvFsName,
+                  lvSegment,
+                  lvVgName
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with a Logical Volume"
+        ::= { ibrixGroups 2 }
+
+
+-- volumeGroup table, VG Table
+
+volumeGroupTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF VolumeGroupEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Volume Group objects"
+        ::= { ibrixMibs 3 }
+
+volumeGroupEntry OBJECT-TYPE
+        SYNTAX        VolumeGroupEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry for one Volume Group"
+        INDEX         { vgName }
+        ::= { volumeGroupTable 1 }
+
+VolumeGroupEntry ::=
+        SEQUENCE {
+                vgName
+                        DisplayString,
+                vgSize
+                        Unsigned32,
+                vgFree
+                        Unsigned32,
+                vgUsed
+                        Unsigned32,
+                vgLvName
+                        DisplayString,
+                vgPvName
+                        DisplayString
+                }
+
+vgName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Volume Group name"
+        ::= { volumeGroupEntry 1 }
+
+vgSize OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Volume Group size (MB)"
+        ::= { volumeGroupEntry 2 }
+
+vgFree OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Volume Group free size (MB)"
+        ::= { volumeGroupEntry 3 }
+
+vgUsed OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Percent of used storage in VG"
+        ::= { volumeGroupEntry 4 }
+
+vgLvName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Logiical Volume name"
+        ::= { volumeGroupEntry 5 }
+
+vgPvName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Physical Volume name"
+        ::= { volumeGroupEntry 6 }
+
+vgGroup OBJECT-GROUP 
+        OBJECTS { vgName,
+                  vgSize,
+                  vgFree,
+                  vgUsed,
+                  vgLvName,
+                  vgPvName
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with a volume group"
+        ::= { ibrixGroups 3 }
+
+
+-- physicalVolumeGroup table, PV Table
+
+physicalVolumeTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF PhysicalVolumeEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Physical Volume objects"
+        ::= { ibrixMibs 4 }
+
+physicalVolumeEntry OBJECT-TYPE
+        SYNTAX        PhysicalVolumeEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry for one Physical Volume"
+        INDEX         { pvNumber }
+        ::= { physicalVolumeTable 1 }
+
+PhysicalVolumeEntry ::=
+        SEQUENCE {
+                pvNumber  Unsigned32,
+                pvSize    Unsigned32,
+                pvVgName  DisplayString
+                }
+
+pvNumber OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Physical Volume number"
+        ::= { physicalVolumeEntry 1 }
+
+pvSize OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Physical Volume size (MB)"
+        ::= { physicalVolumeEntry 2 }
+
+pvVgName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "VG name this PV belongs to.
+               This object is not available in IBRIX 1.3"
+        ::= { physicalVolumeEntry 3 }
+
+pvGroup OBJECT-GROUP 
+        OBJECTS { pvNumber,
+                  pvSize,
+                  pvVgName
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with a Physical Volume"
+        ::= { ibrixGroups 4 }
+
+
+-- Segment Servers table, SS Table
+
+segmentServerTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF SegmentServerEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Segment Server objects"
+        ::= { ibrixMibs 5 }
+
+segmentServerEntry OBJECT-TYPE
+        SYNTAX        SegmentServerEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry for one Segment Server"
+        INDEX         { IMPLIED ssName }
+        ::= { segmentServerTable 1 }
+
+SegmentServerEntry ::=
+        SEQUENCE {
+                ssName           DisplayString,
+                ssState          DisplayString,
+                ssUptime         DisplayString,
+                ssFsVersion      DisplayString,
+                ssIadIasVersion  DisplayString,
+                ssIadFsVersion   DisplayString,
+                ssKernelVersion  DisplayString,
+                ssCpuUtilization Gauge32,
+                ssLoad           DisplayString,
+                ssDiskIo         Unsigned32,
+                ssNetworkIo      Unsigned32,
+                ssLoadAvg1       Gauge32,
+                ssLoadAvg5       Gauge32,
+                ssLoadAvg15      Gauge32
+                }
+
+ssName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server name"
+        ::= { segmentServerEntry 1 }
+
+ssState OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server state"
+        ::= { segmentServerEntry 2 }
+
+ssUptime OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server uptime"
+        ::= { segmentServerEntry 3 }
+
+ssFsVersion OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server FS version"
+        ::= { segmentServerEntry 4 }
+
+ssIadIasVersion OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server Iad/Ias version"
+        ::= { segmentServerEntry 5 }
+
+ssIadFsVersion OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server Iad/Fs version"
+        ::= { segmentServerEntry 6 }
+
+ssKernelVersion OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server kernel version"
+        ::= { segmentServerEntry 7 }
+
+ssCpuUtilization OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server percent CPU utilization"
+        ::= { segmentServerEntry 8 }
+
+ssLoad OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server load average in 1, 5, 15 minutes"
+        ::= { segmentServerEntry 9 }
+
+ssDiskIo OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server disk IO in KBits"
+        ::= { segmentServerEntry 10 }
+
+ssNetworkIo OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server network IO in KBits"
+        ::= { segmentServerEntry 11 }
+
+ssLoadAvg1 OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server load average for a minute"
+        ::= { segmentServerEntry 12 }
+
+ssLoadAvg5 OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server load average for a 5 minutes"
+        ::= { segmentServerEntry 13 }
+
+ssLoadAvg15 OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server load average for 15 minutes"
+        ::= { segmentServerEntry 14 }
+
+
+segmentServerGroup OBJECT-GROUP 
+        OBJECTS { ssName,
+                  ssState,
+                  ssUptime,
+                  ssFsVersion,
+                  ssIadIasVersion,
+                  ssIadFsVersion,                                   
+                  ssKernelVersion,
+                  ssCpuUtilization,                               
+                  ssLoad,
+                  ssDiskIo,
+                  ssNetworkIo,
+                  ssLoadAvg1,
+                  ssLoadAvg5,
+                  ssLoadAvg15
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with a Segment Server"
+        ::= { ibrixGroups 5 }
+
+
+-- Segment Server IO Statistics
+
+
+ssIOStatsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF SsIOStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Segment server I/O statistics objects"
+        ::= { ibrixMibs 6 }
+
+ssIOStatsEntry OBJECT-TYPE
+        SYNTAX        SsIOStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry of I/O statistics for a segment server"
+        INDEX         { IMPLIED ssName }
+        ::= { ssIOStatsTable 1 }
+
+SsIOStatsEntry ::=
+        SEQUENCE {
+                ssIOBytesRead   Gauge32,
+                ssIONumReads    Counter64,
+                ssIOAvgMsReads  Gauge32,
+                ssIOBytesWrite   Gauge32,
+                ssIONumWrites   Counter64,
+                ssIOAvgMsWrites Gauge32
+                }
+
+ssIOBytesRead OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of bytes read in KB"
+        ::= { ssIOStatsEntry 1 }
+
+ssIONumReads OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of reads issued"
+        ::= { ssIOStatsEntry 2 }
+
+ssIOAvgMsReads OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Average number of milliseconds per read multipled by 100. Ex: 0.14 * 100 = 14"
+        ::= { ssIOStatsEntry 3 }
+
+ssIOBytesWrite OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of bytes written in KB"
+        ::= { ssIOStatsEntry 4 }
+
+ssIONumWrites OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of writes issued"
+        ::= { ssIOStatsEntry 5 }
+
+ssIOAvgMsWrites OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Average number of milliseconds per write multipled by 100. Ex: 0.14 * 100 = 14"
+        ::= { ssIOStatsEntry 6 }
+
+ssIOStatsGroup OBJECT-GROUP 
+        OBJECTS { ssName,
+                  ssIOBytesRead,
+                  ssIONumReads,
+                  ssIOAvgMsReads,
+                  ssIOBytesWrite,
+                  ssIONumWrites,
+                  ssIOAvgMsWrites
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with I/O statistics on a segment server"
+        ::= { ibrixGroups 6 }
+
+
+-- Segment Server Network Statistics
+
+
+ssNetStatsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF SsNetStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Segment server network statistics objects"
+        ::= { ibrixMibs 7 }
+
+ssNetStatsEntry OBJECT-TYPE
+        SYNTAX        SsNetStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry of network statistics for a segment server"
+        INDEX         { IMPLIED ssName }
+        ::= { ssNetStatsTable 1 }
+
+SsNetStatsEntry ::=
+        SEQUENCE {
+                ssNetInBytes    Gauge32,
+                ssNetInIOs      Gauge32,
+                ssNetOutBytes   Gauge32,
+                ssNetOutIOs     Gauge32
+                }
+
+ssNetInBytes OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of network bytes read in KB"
+        ::= { ssNetStatsEntry 1 }
+
+
+ssNetInIOs OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of network input I/Os in KB"
+        ::= { ssNetStatsEntry 2 }
+
+ssNetOutBytes OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of network bytes written in KB"
+        ::= { ssNetStatsEntry 3 }
+
+ssNetOutIOs OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of network output I/Os in KB"
+        ::= { ssNetStatsEntry 4 }
+
+ssNetStatsGroup OBJECT-GROUP 
+        OBJECTS { ssName,
+                  ssNetInBytes,
+                  ssNetInIOs,
+                  ssNetOutBytes,
+                  ssNetOutIOs
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with network statistics on a segment server"
+        ::= { ibrixGroups 7 }
+
+
+-- Segment Server Memory Statistics
+
+
+ssMemStatsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF SsMemStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Segment server memory statistics objects"
+        ::= { ibrixMibs 8 }
+
+ssMemStatsEntry OBJECT-TYPE
+        SYNTAX        SsMemStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry of memory statistics for a segment server"
+        INDEX         { IMPLIED ssName }
+        ::= { ssMemStatsTable 1 }
+
+SsMemStatsEntry ::=
+        SEQUENCE {
+                ssMemTotal       Unsigned32,
+                ssMemUsed        Gauge32,
+                ssMemFree        Gauge32,
+                ssMemSwapTotal   Unsigned32,
+                ssMemSwapUsed    Gauge32,
+                ssMemSwapFree    Gauge32,
+                ssMemBuffers     Gauge32,
+                ssMemCached      Gauge32
+                }
+
+ssMemTotal OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server total memory in KBytes"
+        ::= { ssMemStatsEntry 1 }
+
+ssMemUsed OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server used memory in KBytes"
+        ::= { ssMemStatsEntry 2 }
+
+ssMemFree OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server free memory in KBytes"
+        ::= { ssMemStatsEntry 3 }
+
+ssMemSwapTotal OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server total swap memory in KBytes"
+        ::= { ssMemStatsEntry 4 }
+
+ssMemSwapUsed OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server used swap memory in KBytes"
+        ::= { ssMemStatsEntry 5 }
+
+ssMemSwapFree OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server free swap memory in KBytes"
+        ::= { ssMemStatsEntry 6 }
+
+ssMemBuffers OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server memory in buffer cache in KBytes"
+        ::= { ssMemStatsEntry 7 }
+
+ssMemCached OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server memory in pagecache minus SwapCache in KBytes"
+        ::= { ssMemStatsEntry 8 }
+
+ssMemStatsGroup OBJECT-GROUP 
+        OBJECTS { ssName,
+                  ssMemTotal,
+                  ssMemUsed,
+                  ssMemFree,
+                  ssMemSwapTotal,
+                  ssMemSwapUsed,
+                  ssMemSwapFree,
+                  ssMemBuffers,
+                  ssMemCached
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with memory statistics on a segment server"
+        ::= { ibrixGroups 8 }
+
+
+-- Segment Server CPU Statistics
+
+ssCpuStatsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF SsCpuStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Segment server memory statistics objects"
+        ::= { ibrixMibs 9 }
+
+ssCpuStatsEntry OBJECT-TYPE
+        SYNTAX        SsCpuStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry of memory statistics for a segment server"
+        INDEX         { IMPLIED ssName }
+        ::= { ssCpuStatsTable 1 }
+
+SsCpuStatsEntry ::=
+        SEQUENCE {
+                ssCpuStatsSystem    Gauge32,
+                ssCpuStatsUser      Gauge32,
+                ssCpuStatsNice      Gauge32,
+                ssCpuStatsIdle      Gauge32,
+                ssCpuStatsIOWait    Gauge32,
+                ssCpuStatsIOIrq     Gauge32,
+                ssCpuStatsIOSIrq    Gauge32
+                }
+
+ssCpuStatsSystem OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server percent system CPU"
+        ::= { ssCpuStatsEntry 1 }
+
+ssCpuStatsUser OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server percent user CPU"
+        ::= { ssCpuStatsEntry 2 }
+
+ssCpuStatsNice OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server percent nice CPU"
+        ::= { ssCpuStatsEntry 3 }
+
+ssCpuStatsIdle OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server percent idle time"
+        ::= { ssCpuStatsEntry 4 }
+
+ssCpuStatsIOWait OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server percent time waiting for I/O"
+        ::= { ssCpuStatsEntry 5 }
+
+ssCpuStatsIOIrq OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server percent time servicing interupts"
+        ::= { ssCpuStatsEntry 6 }
+
+ssCpuStatsIOSIrq OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server percent time servicing soft irqs"
+        ::= { ssCpuStatsEntry 7 }
+
+ssCpuStatsGroup OBJECT-GROUP 
+        OBJECTS { ssName,
+                  ssCpuStatsSystem,
+                  ssCpuStatsUser,
+                  ssCpuStatsNice,
+                  ssCpuStatsIdle,
+                  ssCpuStatsIOWait,
+                  ssCpuStatsIOIrq,
+                  ssCpuStatsIOSIrq
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with cpu statistics on a segment server"
+        ::= { ibrixGroups 9 }
+
+
+-- Segment Server NFS Statistics
+
+ssNfsStatsTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF SsNfsStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Segment server memory statistics objects"
+        ::= { ibrixMibs 10 }
+
+ssNfsStatsEntry OBJECT-TYPE
+        SYNTAX        SsNfsStatsEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry of memory statistics for a segment server"
+        INDEX         { IMPLIED ssName }
+        ::= { ssNfsStatsTable 1 }
+
+SsNfsStatsEntry ::=
+        SEQUENCE {
+                 ssNfsStatsNull      Gauge32,
+                 ssNfsStatsGetattr   Gauge32,
+                 ssNfsStatsSetattr   Gauge32,
+                 ssNfsStatsLookup    Gauge32,
+                 ssNfsStatsAccess    Gauge32,
+                 ssNfsStatsReadlink  Gauge32,
+                 ssNfsStatsRead      Gauge32,
+                 ssNfsStatsWrite     Gauge32,
+                 ssNfsStatsCreate    Gauge32,
+                 ssNfsStatsMakedir   Gauge32,
+                 ssNfsStatsSymlink   Gauge32,
+                 ssNfsStatsMknod     Gauge32,
+                 ssNfsStatsRemove    Gauge32,
+                 ssNfsStatsRmdir     Gauge32,
+                 ssNfsStatsRename    Gauge32,
+                 ssNfsStatsLink      Gauge32,
+                 ssNfsStatsReaddir   Gauge32,
+                 ssNfsStatsReaddirPl Gauge32,
+                 ssNfsStatsFsstat    Gauge32,
+                 ssNfsStatsFsinfo    Gauge32,
+                 ssNfsStatsPathconf  Gauge32,
+                 ssNfsStatsCommit    Gauge32
+                }
+
+ssNfsStatsNull OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs null"
+        ::= { ssNfsStatsEntry 1 }
+
+ssNfsStatsGetattr OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs getattr"
+        ::= { ssNfsStatsEntry 2 }
+
+ssNfsStatsSetattr OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs setattr"
+        ::= { ssNfsStatsEntry 3 }
+
+ssNfsStatsLookup OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs lookup"
+        ::= { ssNfsStatsEntry 4}
+
+ssNfsStatsAccess OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs access"
+        ::= { ssNfsStatsEntry 5 }
+
+ssNfsStatsReadlink OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs readlink"
+        ::= { ssNfsStatsEntry 6 }
+
+ssNfsStatsRead OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs read"
+        ::= { ssNfsStatsEntry 7 }
+
+ssNfsStatsWrite OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs write"
+        ::= { ssNfsStatsEntry 8 }
+
+ssNfsStatsCreate OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs create"
+        ::= { ssNfsStatsEntry 9 }
+
+ssNfsStatsMakedir OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs makedir"
+        ::= { ssNfsStatsEntry 10 }
+
+ssNfsStatsSymlink OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs symlink"
+        ::= { ssNfsStatsEntry 11 }
+
+ssNfsStatsMknod OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs mknod"
+        ::= { ssNfsStatsEntry 12 }
+
+ssNfsStatsRemove OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs remove"
+        ::= { ssNfsStatsEntry 13 }
+
+ssNfsStatsRmdir OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs rmdir"
+        ::= { ssNfsStatsEntry 14 }
+
+ssNfsStatsRename OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs rename"
+        ::= { ssNfsStatsEntry 15 }
+
+ssNfsStatsLink OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs link"
+        ::= { ssNfsStatsEntry 16 }
+
+ssNfsStatsReaddir OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs readdir"
+        ::= { ssNfsStatsEntry 17 }
+
+ssNfsStatsReaddirPl OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs readdirplus"
+        ::= { ssNfsStatsEntry 18 }
+
+ssNfsStatsFsstat OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs fsstat"
+        ::= { ssNfsStatsEntry 19 }
+
+ssNfsStatsFsinfo OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs fsinfo"
+        ::= { ssNfsStatsEntry 20 }
+
+ssNfsStatsPathconf OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs pathconf"
+        ::= { ssNfsStatsEntry 21 }
+
+ssNfsStatsCommit OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment Server nfs commit"
+        ::= { ssNfsStatsEntry 22 }
+
+ssNfsStatsGroup OBJECT-GROUP 
+        OBJECTS { ssName,
+                  ssNfsStatsNull,
+                  ssNfsStatsGetattr,
+                  ssNfsStatsSetattr,
+                  ssNfsStatsLookup,
+                  ssNfsStatsAccess,
+                  ssNfsStatsReadlink,
+                  ssNfsStatsRead,
+                  ssNfsStatsWrite,
+                  ssNfsStatsCreate,
+                  ssNfsStatsMakedir,
+                  ssNfsStatsSymlink,
+                  ssNfsStatsMknod,
+                  ssNfsStatsRemove,
+                  ssNfsStatsRmdir,
+                  ssNfsStatsRename,
+                  ssNfsStatsLink,
+                  ssNfsStatsReaddir,
+                  ssNfsStatsReaddirPl,
+                  ssNfsStatsFsstat,
+                  ssNfsStatsFsinfo,
+                  ssNfsStatsPathconf,
+                  ssNfsStatsCommit
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with nfs statistics on a segment server"
+        ::= { ibrixGroups 10 }
+
+
+-- File System Segments
+-- CounterBasedGauge64 RFC 2856
+
+fsSegmentTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF FsSegmentEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "File system segment objects"
+        ::= { ibrixMibs 11 }
+
+fsSegmentEntry OBJECT-TYPE
+        SYNTAX        FsSegmentEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry of file system segments. 
+                       One entry exists per file system and segment"
+        INDEX         { fsSegmentNum, IMPLIED fsSegmentFsname }
+        ::= { fsSegmentTable 1 }
+
+FsSegmentEntry ::=
+        SEQUENCE {
+                 fsSegmentFsname      DisplayString,
+                 fsSegmentNum         Unsigned32,
+                 fsSegmentOwner       DisplayString,
+                 fsSegmentLvName      DisplayString,
+                 fsSegmentBlkSize     Unsigned32,
+                 fsSegmentBlksTot     Unsigned32,
+                 fsSegmentBlksFree    Gauge32,
+                 fsSegmentBlksAvail   Gauge32,
+                 fsSegmentFilesMax    Unsigned32,
+                 fsSegmentFilesFree   Gauge32,
+                 fsSegmentPctUsed     Gauge32,
+                 fsSegmentType        DataSegregationType,
+                 fsSegmentBackupOwner DisplayString,
+                 fsSegmentOnBackup    YesNoValue,
+                 fsSegmentInFsck      YesNoValue,
+                 fsSegmentInReplicate YesNoValue,
+                 fsSegmentInRebalance YesNoValue     
+                }
+
+fsSegmentFsname     OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "File system name the segment belongs to"
+        ::= { fsSegmentEntry 1 }
+
+fsSegmentNum        OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of segments in file system"
+        ::= { fsSegmentEntry 2 }
+
+fsSegmentOwner      OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment owner"
+        ::= { fsSegmentEntry 3 }
+
+fsSegmentLvName     OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment logical volume name"
+        ::= { fsSegmentEntry 4 }
+
+fsSegmentBlkSize    OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "File system block size"
+        ::= { fsSegmentEntry 5 }
+
+fsSegmentBlksTot    OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of blocks in segment in 4K"
+        ::= { fsSegmentEntry 6 }
+
+fsSegmentBlksFree   OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Nummber of free blocks in segment in 4K"
+        ::= { fsSegmentEntry 7 }
+
+fsSegmentBlksAvail  OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Numer of available blocks in segment in 4K"
+        ::= { fsSegmentEntry 8 }
+
+fsSegmentFilesMax   OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Maximum number of files that can be allocated in segment in 1K"
+        ::= { fsSegmentEntry 9 }
+
+fsSegmentFilesFree  OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of free files in segment in 1K"
+        ::= { fsSegmentEntry 10 }
+
+fsSegmentPctUsed    OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Percentage of segment used"
+        ::= { fsSegmentEntry 11 }
+
+fsSegmentType       OBJECT-TYPE
+        SYNTAX        DataSegregationType
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment data segregation type"
+        ::= { fsSegmentEntry 12 }
+
+fsSegmentBackupOwner OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment backup owner"
+        ::= { fsSegmentEntry 13 }
+
+fsSegmentOnBackup   OBJECT-TYPE
+        SYNTAX        YesNoValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment is currently on its backup server"
+        ::= { fsSegmentEntry 14 }
+
+fsSegmentInFsck     OBJECT-TYPE
+        SYNTAX        YesNoValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment is currently in fsck"
+        ::= { fsSegmentEntry 15 }
+
+fsSegmentInReplicate OBJECT-TYPE
+        SYNTAX        YesNoValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment is part of a file system being replicated"
+        ::= { fsSegmentEntry 16 }
+
+fsSegmentInRebalance OBJECT-TYPE
+        SYNTAX        YesNoValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Segment is being rebalanced"
+        ::= { fsSegmentEntry 17 }
+
+
+fsSegmentGroup OBJECT-GROUP 
+        OBJECTS {
+                 fsSegmentFsname, 
+                 fsSegmentNum,
+                 fsSegmentOwner,
+                 fsSegmentLvName,
+                 fsSegmentBlkSize,
+                 fsSegmentBlksTot,
+                 fsSegmentBlksFree,
+                 fsSegmentBlksAvail,
+                 fsSegmentFilesMax,
+                 fsSegmentFilesFree,
+                 fsSegmentPctUsed,
+                 fsSegmentType,
+                 fsSegmentBackupOwner,
+                 fsSegmentOnBackup,
+                 fsSegmentInFsck,
+                 fsSegmentInReplicate,
+                 fsSegmentInRebalance
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with a file system segment"
+        ::= { ibrixGroups 11 }
+
+
+-- CFR Jobs
+
+cfrJobTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF CfrJobEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "A CFR job"
+        ::= { ibrixMibs 13 }
+
+cfrJobEntry OBJECT-TYPE
+        SYNTAX        CfrJobEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry of a CFR job"
+        INDEX         { IMPLIED cfrJobName }
+        ::= { cfrJobTable 1 }
+
+CfrJobEntry ::=
+        SEQUENCE {
+                 cfrJobName           DisplayString,
+                 cfrJobId             Counter64,
+                 cfrJobSrcCluster     DisplayString,
+                 cfrJobSrcFsName      DisplayString,
+                 cfrJobSrcPath        DisplayString,
+                 cfrJobTgtCluster     DisplayString,
+                 cfrJobTgtFsName      DisplayString,
+                 cfrJobTgtPath        DisplayString,
+                 cfrJobRunOnce        YesNoValue,
+                 cfrJobIsActive       YesNoValue,
+                 cfrJobErrorStatus    INTEGER,
+                 cfrJobState          DisplayString,
+                 cfrJobProcessedSize  Gauge32,
+                 cfrJobQueueSize      Gauge32
+                 }
+
+cfrJobName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Name of a cfr job"
+        ::= { cfrJobEntry 1 }
+
+cfrJobId OBJECT-TYPE
+        SYNTAX        Counter64
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Cfr job id"
+        ::= { cfrJobEntry 2 }
+
+cfrJobSrcCluster OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Source cluster name"
+        ::= { cfrJobEntry 3 }
+
+cfrJobSrcFsName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Source file system name"
+        ::= { cfrJobEntry 4 }
+
+cfrJobSrcPath OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Source path"
+        ::= { cfrJobEntry 5 }
+
+cfrJobTgtCluster OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Target cluster name"
+        ::= { cfrJobEntry 6 }
+
+cfrJobTgtFsName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Target file system name"
+        ::= { cfrJobEntry 7 }
+
+cfrJobTgtPath OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Target path"
+        ::= { cfrJobEntry 8 }
+
+cfrJobRunOnce OBJECT-TYPE
+        SYNTAX        YesNoValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Yes if the CFR job is assigned a specific task.
+                       The job terminates automatically when the
+                       task completes.  No if the CFR job runs 
+                       indefinitely and stops only when asked to stop"
+        ::= { cfrJobEntry 9 }
+
+cfrJobIsActive OBJECT-TYPE
+        SYNTAX        YesNoValue
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Yes if CFR job is active, No if not active"
+        ::= { cfrJobEntry 10 }
+
+cfrJobErrorStatus OBJECT-TYPE
+        SYNTAX        INTEGER {
+             ok(0),
+             error(1),
+             partialError(2)
+             }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "CFR job error status.  Partial error indiates
+                       some parts of the job encountered an error.
+                       Error indicates the job as a whole encountered
+                       errors"
+        ::= { cfrJobEntry 11 }
+
+cfrJobState OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Job state is one of UNKNOWN, STOPPED, STARTING, RUNNING, STOPPING"
+        ::= { cfrJobEntry 12 }
+
+cfrJobProcessedSize OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of files processed in K"
+        ::= { cfrJobEntry 13 }
+
+cfrJobQueueSize OBJECT-TYPE
+        SYNTAX        Gauge32
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Number of files remaining in the queue in K"
+        ::= { cfrJobEntry 14 }
+        
+cfrJobGroup OBJECT-GROUP 
+        OBJECTS {
+                 cfrJobName,
+                 cfrJobId,
+                 cfrJobSrcCluster,
+                 cfrJobSrcFsName,
+                 cfrJobSrcPath,
+                 cfrJobTgtCluster,
+                 cfrJobTgtFsName,
+                 cfrJobTgtPath,
+                 cfrJobRunOnce,
+                 cfrJobIsActive,
+                 cfrJobErrorStatus,
+                 cfrJobState,
+                 cfrJobProcessedSize,
+                 cfrJobQueueSize
+                }
+        STATUS  current
+        DESCRIPTION "Objects associated with a CFR Job"
+        ::= { ibrixGroups 13 }
+
+
+-- Hardware Information 
+
+hardwareInformationTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF hardwareInformationEntry
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Hardware Information - enumerates hardware information of subcomponents"
+        ::= { ibrixMibs 14 }
+
+hardwareInformationEntry OBJECT-TYPE
+        SYNTAX        HardwareInformationEntry
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Entry of Hardware Information"
+        INDEX         { IMPLIED hwProductSerialNumber }
+        ::= { hardwareInformationTable 1 }
+
+HardwareInformationEntry ::=
+        SEQUENCE {
+                  SKUSerialNumber             DisplayString,
+                  SKUProductNumber            DisplayString,
+                  hwProductSerialNumber       DisplayString,
+                  hwProductNumber             DisplayString,
+                  hwProductUUID               DisplayString,
+                  hwProductName               DisplayString,
+                  hwProductNameAlias          DisplayString,
+                  hwProductModelNumber        DisplayString,
+                  hwProductSubType            DisplayString,
+                  hwProductIpAddress          DisplayString,
+                  hwProductIloIpAddress       DisplayString,
+                  hwProductIloName            DisplayString   
+                 }
+
+SKUSerialNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "SKU Serial Number - encompassing X9000 SKU SN"
+        ::= { hardwareInformationEntry 1 }
+
+SKUProductNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "SKU Product Number - encompassing X9000 SKU PN "
+        ::= { hardwareInformationEntry 2 }
+
+hwProductSerialNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product Serial Number"
+        ::= { hardwareInformationEntry 3 }
+
+hwProductNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product Number"
+        ::= { hardwareInformationEntry 4 }
+
+hwProductUUID OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product UUID discovered from host"
+        ::= { hardwareInformationEntry 5 }
+
+hwProductName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product Name"
+        ::= { hardwareInformationEntry 6 }
+
+hwProductNameAlias OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product Name Alias, generated by IBRIX Solution"
+        ::= { hardwareInformationEntry 7 }
+
+hwProductModelNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product Model Number"
+        ::= { hardwareInformationEntry 8 }
+
+hwProductSubType OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product Sub Type"
+        ::= { hardwareInformationEntry 9 }
+
+hwProductIpAddress OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product Node IP Address"
+        ::= { hardwareInformationEntry 10 }
+
+hwProductIloIpAddress OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product ILO IP Address"
+        ::= { hardwareInformationEntry 11 }
+
+hwProductIloName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Product ILO Name"
+        ::= { hardwareInformationEntry 12 }
+      
+hardwareInformationGroup OBJECT-GROUP 
+        OBJECTS {
+                 SKUSerialNumber,
+                 SKUProductNumber,
+                 hwProductSerialNumber,
+                 hwProductNumber,
+                 hwProductUUID,
+                 hwProductName,
+                 hwProductNameAlias,
+                 hwProductModelNumber,
+                 hwProductSubType,
+                 hwProductIpAddress,
+                 hwProductIloIpAddress,
+                 hwProductIloName
+                }
+        STATUS  current
+        DESCRIPTION "Objects associated with a Hardware Information"
+        ::= { ibrixGroups 14 }
+
+
+-- Solution Information
+
+solutionInformationGroup OBJECT-GROUP 
+        OBJECTS {
+                 solutionSerialNumber,
+                 solutionModelNumber,
+                 solutionName,
+                 solutionProductNumber,
+                 solutionUUID,
+                 solutionIpAddress,
+                 solutionSoftwareVersion,
+                 solutionCustomerEntitlement,
+                 solutionCountryCode,
+                 solutionData1,
+                 solutionData2
+                }
+        STATUS  current
+        DESCRIPTION "Objects associated with Solution Information"
+        ::= { ibrixGroups 15 }
+
+solutionSerialNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Serial number"
+        ::= { solutionInformationGroup 1 }
+
+solutionModelNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Model number"
+        ::= { solutionInformationGroup 2 }
+
+solutionName OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Solution Name"
+        ::= { solutionInformationGroup 3 }
+
+solutionProductNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Solution Product Number"
+        ::= { solutionInformationGroup 4 }
+
+solutionUUID OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "UUID to Uniquely Identify Solution"
+        ::= { solutionInformationGroup 5 }
+
+solutionIpAddress OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "User IP Address - User VIF / Cluster VIF"
+        ::= { solutionInformationGroup 6 }
+
+solutionSoftwareVersion OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Software Version generated by IBRIX"
+        ::= { solutionInformationGroup 7 }
+
+solutionCustomerEntitlement OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Customer Entitlement Information"
+        ::= { solutionInformationGroup 8 }
+
+solutionCountryCode OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Country Code"
+        ::= { solutionInformationGroup 9 }
+
+solutionData1 OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Field reserved for future Use.
+                       To be used for any additional info required about X9000 Solution"
+        ::= { solutionInformationGroup 10 }
+
+solutionData2 OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Field reserved for future Use.
+                       To be used for any additional info required about X9000 Solution"
+        ::= { solutionInformationGroup 11 }
+
+-- Notifications
+
+ibrixGenericEvent NOTIFICATION-TYPE
+    OBJECTS   {
+            eventIndex,
+            eventType,
+            eventDescription,
+            eventUUID,
+            eventSolutionSerialNumber,
+            eventSolutionProductNumber,
+            eventSeverity,
+            eventOidValue,
+            eventText,
+            eventFRU,
+            eventCustomerEntitlement
+              }
+    STATUS      current
+    DESCRIPTION "This is a generic Ibrix Fusion event"
+        ::= { ibrixEventsV2 1 }
+
+ibrixGenericEventGroup NOTIFICATION-GROUP
+        NOTIFICATIONS { ibrixGenericEvent }
+        STATUS        current
+        DESCRIPTION   "Notification group for generic events sent by the Fusion Manager"
+        ::= { ibrixEventsGroups 2 }
+
+
+-- Event table
+
+eventTable OBJECT-TYPE
+        SYNTAX        SEQUENCE OF EventEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Ibrix Fusion last event"
+        ::= { ibrixEvents 1 }
+
+eventEntry OBJECT-TYPE
+        SYNTAX        EventEntry
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "Entry for Ibrix Fusion event"
+        INDEX         { eventIndex }
+        ::= { eventTable 1 }
+
+EventEntry ::=
+        SEQUENCE {
+            eventIndex                     Unsigned32,
+            eventType                      INTEGER,
+            eventDescription               DisplayString,
+            eventUUID                      DisplayString,
+            eventSolutionSerialNumber      DisplayString,
+            eventSolutionProductNumber     DisplayString,
+            eventSeverity                  INTEGER,
+            eventOidValue                  OBJECT IDENTIFIER,
+            eventText                      DisplayString,
+            eventFRU                       DisplayString,
+            eventCustomerEntitlement       DisplayString
+              }
+
+
+eventIndex OBJECT-TYPE
+        SYNTAX        Unsigned32
+        MAX-ACCESS    not-accessible
+        STATUS        current
+        DESCRIPTION   "counter of the last event since Fusion Manager restart"
+        ::= { eventEntry 1 }
+
+
+eventType OBJECT-TYPE
+        SYNTAX      INTEGER  {
+            deviceMirrorFaulty(1), 
+            deviceMirrorOk(2), 
+            filesystemCreated(3), 
+            filesystemDeleted(4), 
+            filesystemSpaceFull(5), 
+            filesystemSpaceAvailable(6), 
+            filesystemMounted(7), 
+            filesystemUnmounted(8), 
+            filesystemOffline(9), 
+            filesystemQuotaGroupOverHard(10), 
+            filesystemQuotaGroupOverSoft(11), 
+            filesystemQuotaGroupSet(12), 
+            filesystemQuotaUserOverHard(13), 
+            filesystemQuotaUserOverSoft(14), 
+            filesystemQuotaUserSet(15), 
+            filesystemQuotaoffFailed(16), 
+            filesystemQuotaonFailed(17), 
+            filesystemSnapshotInvalid(18), 
+            hbaLinkDown(19), 
+            hbaLinkUp(20), 
+            iadDown(21), 
+            iadInitializing(22), 
+            iadUp(23), 
+            jobFailed(24), 
+            jobSucceeded(25), 
+            physicalvolumeAdded(26), 
+            physicalvolumeDeleted(27), 
+            segmentActivateFailed(28), 
+            segmentSpaceFull(29), 
+            segmentSpaceAvailable(30), 
+            segmentMigrated(31), 
+            segmentMissing(32), 
+            segmentRejected(33), 
+            serverDeleted(35), 
+            serverFailedback(36), 
+            serverFailedover(37), 
+            serverPowerDown(38), 
+            serverPowerUp(39), 
+            serverRegistered(40), 
+            serverStatusDown(41), 
+            serverStatusUp(42), 
+            serverUnreachable(43), 
+            serverCpuUsage(44), 
+            serverCpuNormal(45), 
+            vendorstorageCreated(46), 
+            vendorstorageDeleted(47), 
+            volumegroupCreated(48), 
+            volumegroupDeleted(49), 
+            filesystemQuotaGroupUnderHard(50), 
+            filesystemQuotaGroupUnderSoft(51), 
+            filesystemQuotaGroupUnset(52), 
+            filesystemQuotaUserUnderHard(53), 
+            filesystemQuotaUserUnderSoft(54), 
+            filesystemQuotaUserUnset(55), 
+            logicalvolumeActivateFailed(56), 
+            filesystemQuotaOn(57), 
+            filesystemQuotaOff(58), 
+            haFusionmanagerUp(59), 
+            haFusionmanagerDown(60), 
+            haFusionmanagerStarted(61), 
+            haStonithDown(62), 
+            haStonithUp(63), 
+            haStonithReset(64), 
+            haDisabled(65), 
+            haEnabled(66), 
+            haNodeStandbyOn(67), 
+            haNodeStandbyOff(68), 
+            haMalfunction(69), 
+            haFusionmanagerHealth(70), 
+            filesystemSpaceAlert(71), 
+            filesystemSpaceWarn(72), 
+            serverTemperatureSensorWarn(73), 
+            serverProcessorSensorWarn(74), 
+            serverVoltageSensorWarn(75), 
+            serverPowersupplySensorWarn(76), 
+            serverFanSensorWarn(77), 
+            serverMemorySensorWarn(78), 
+            cfrJobRunning(79), 
+            cfrJobStopped(80), 
+            nicUp(81), 
+            nicDown(82), 
+            hbaLinkAdded(83), 
+            hbaLinkRemoved(84), 
+            serverSensorMonitoringStarted(85), 
+            serverSensorMonitoringStopped(86), 
+            serverMonitoredSensorsStale(87), 
+            serverMonitoredSensorsActive(88), 
+            serverReachable(89), 
+            serverDeregistered(90), 
+            hostUnknown(91), 
+            hostKnown(92), 
+            nicAdded(93), 
+            nicRemoved(94), 
+            mirrorStateHealth(95), 
+            serverInfailover(96), 
+            serverTemperatureSensorAlert(97), 
+            serverTemperatureSensorNormal(98), 
+            serverProcessorSensorAlert(99), 
+            serverProcessorSensorNormal(100), 
+            serverVoltageSensorAlert(101), 
+            serverVoltageSensorNormal(102), 
+            serverPowersupplySensorAlert(103), 
+            serverPowersupplySensorNormal(104), 
+            serverFanSensorAlert(105), 
+            serverFanSensorNormal(106), 
+            serverMemorySensorAlert(107), 
+            serverMemorySensorNormal(108), 
+            serverUsingAlternateIp(109), 
+            serverUsingPrimaryIp(110), 
+            segmentAvailable(111), 
+            segmentUnavailable(112), 
+            segmentCreated(113), 
+            segmentDeleted(114), 
+            serverFailoverFailed(115), 
+            serverStatusInitializing(116), 
+            serverInfailback(117), 
+            serverFailbackFailed(118), 
+            serverDumpStarted(119), 
+            filesystemFilesFull(120), 
+            filesystemFilesAvailable(121), 
+            filesystemFilesAlert(122), 
+            filesystemFilesWarn(123), 
+            segmentFilesFull(124), 
+            segmentFilesAvailable(125), 
+            serverPartiallyFailedOver(126), 
+            serverPartiallyFailedBack(127), 
+            serverPowerDownFailed(128), 
+            serverPowerUpFailed(129), 
+            nfsStopFailed(130), 
+            nfsStartFailed(131), 
+            migratorStarting(132), 
+            migratorRunning(133), 
+            migratorStopping(134), 
+            migratorCompleted(135), 
+            migratorWorkerFailed(136), 
+            migratorAnalyzerFailed(137), 
+            migratorManualStop(138), 
+            migratorStoppedByFailover(139), 
+            migratorStoppedByFailback(140), 
+            migratorStoppedBySegmentMigration(141), 
+            migratorStoppedByFsExpansion(142), 
+            migratorStoppedByReplicator(143), 
+            cfrJobDomainScanStarted(144), 
+            cfrJobDomainScanEnded(145), 
+            cfrJobConnectionLost(146), 
+            cfrJobConnectionEstablished(147), 
+            serverFailedoverWithErrors(148), 
+            serverFailedbackWithErrors(149), 
+            cfrJobLogSpaceLow(150), 
+            cfrJobTargetFilesystemFull(151), 
+            shRunning(152), 
+            shCompleted(153), 
+            shFailed(154), 
+            shManualStop(155), 
+            migratorStartFailed(156), 
+            migratorStopFailed(157), 
+            snapshotSegementSpaceAvailable(158), 
+            snapshotSegmentSpaceWarn(159), 
+            snapshotSegmentSpaceAlert(160), 
+            snapshotSegmentSpaceFull(161), 
+            snapshotSegmentInvalid(162), 
+            snapshotCreated(163), 
+            snapshotDeleted(164), 
+            segmentSpaceWarn(165), 
+            segmentSpaceAlert(166), 
+            segmentFilesWarn(167), 
+            segmentFilesAlert(168), 
+            logicalvolumeCreated(169), 
+            logicalvolumeExtended(170), 
+            logicalvolumeReduced(171), 
+            logicalvolumeDeleted(172), 
+            volumegroupExtended(173), 
+            volumegroupReduced(174), 
+            segmentMapUpdateFailed(175), 
+            serverPoweringUp(176), 
+            serverMountingFilesystems(177), 
+            asyncRepRunning(178), 
+            asyncRepFailed(179), 
+            asyncRepStartFailed(180), 
+            asyncRepStopFailed(181), 
+            asyncRepCompleted(182), 
+            asyncRepManualStop(183), 
+            bulkRepRunning(184), 
+            bulkRepFailed(185), 
+            bulkRepStartFailed(186), 
+            bulkRepStopFailed(187), 
+            bulkRepCompleted(188), 
+            bulkRepManualStop(189), 
+            nicConfigMatchOk(190), 
+            nicConfigMismatchWarn(191), 
+            nicConfigMismatchAlert(192), 
+            nicInactive(193), 
+            hbaStatusStale(194), 
+            taskStartCommand(196), 
+            taskStopCommand(197), 
+            taskPauseCommand(198), 
+            taskResumeCommand(199), 
+            loginSuccess(200), 
+            loginFailure(201), 
+            logoff(202), 
+            fileSystemCmd(203), 
+            serverCmd(204), 
+            clientCmd(205), 
+            genericCmd(206), 
+            rebalanceRunning(207), 
+            rebalanceFailed(208), 
+            rebalanceStartFailed(209), 
+            rebalanceStopFailed(210), 
+            rebalanceCompleted(211), 
+            rebalanceManualStop(212), 
+            rebalanceStarting(213), 
+            rebalanceStopping(214), 
+            asyncRepTaskStopping(215), 
+            migratorFailed(216), 
+            kernelResponseAlert(217), 
+            physicalDiskUp(230), 
+            physicalDiskDown(231), 
+            physicalDiskWarn(232), 
+            physicalDiskFailure(233), 
+            physicalDiskStale(234), 
+            physicalDiskDegraded(235), 
+            filesystemUserOverQuota(248), 
+            filesystemGroupOverQuota(249), 
+            filesystemDtreeOverQuota(250), 
+            filesystemDtreeQuotaSet(251), 
+            filesystemDtreeQuotaUnset(252), 
+            serverHardwareUp(253), 
+            serverHardwareDown(254), 
+            serverHardwareWarn(255), 
+            serverHardwareFailure(256), 
+            serverHardwareStale(257), 
+            serverHardwareDegraded(258), 
+            httpdDown(259), 
+            httpdUp(260), 
+            ftpdHealth(261), 
+            cfrJobDomainScanCanceled(262), 
+            cfrJobDomainScanFailed(263), 
+            cfrJobLogDiskIOFailed(264), 
+            cfrJobAuthFailed(265), 
+            taskManualStop(266), 
+            taskStopping(267), 
+            taskRunning(268), 
+            taskFailed(269), 
+            taskStarting(270), 
+            taskStopFailed(271), 
+            taskStartFailed(272), 
+            taskCompleted(273), 
+            cfrJobReplicationFailed(274), 
+            cfrJobTransactionStopped(275), 
+            snapTreeCreated(276), 
+            snapTreeDeleted(277), 
+            snapshotCreatedOnSchedule(278), 
+            snapshotOnScheduleFailed(279), 
+            d2dservices(280), 
+            ibrixcollectDataCollectionSuccess(281), 
+            ibrixcollectDataCollectionFailed(282), 
+            validationJobStarted(283), 
+            validationJobCompleted(284), 
+            validationJobPaused(285), 
+            validationJobResumed(286), 
+            validationJobRemoved(287), 
+            validationJobErrored(288), 
+            validationJobHashFailed(289), 
+            validationJobAlert(290), 
+            d2dhardwareComponentUp(291), 
+            d2dhardwareComponentDown(292), 
+            d2dhardwareComponentWarn(293), 
+            d2dhardwareComponentFailure(294), 
+            d2dhardwareComponentStale(295), 
+            d2dhardwareComponentDegraded(296), 
+            onlineQuotacheckStarting(297), 
+            onlineQuotacheckRunning(298), 
+            onlineQuotacheckStopping(299), 
+            onlineQuotacheckCompleted(300), 
+            onlineQuotacheckFailed(301), 
+            onlineQuotacheckManualStop(302), 
+            onlineQuotacheckStopFailed(303), 
+            snapshotOnScheduleError(304), 
+            hardwarecomponentFailure(305), 
+            hardwarecomponentUp(306), 
+            kernelFileSystemUp(307), 
+            kernelFileSystemDown(308), 
+            partitionSizeOk(309), 
+            partitionSizeCritical(310), 
+            partitionSizeFull(311), 
+            AvUnreachableVse(312), 
+            AvUnusedVse(313), 
+            AvOperationalVse(314), 
+            AvMulitpleVendors(315), 
+            startPlatformMonitorFailed(316), 
+            setMonitoringHostFailed(317), 
+            d2dLicenseViolation(318), 
+            d2dUserMgmtOperation(319), 
+            d2dSystemPowerChange(320), 
+            cfrBadHealth(321), 
+            filesystemUserUnderQuota(322), 
+            filesystemGroupUnderQuota(323), 
+            filesystemDtreeUnderQuota(324), 
+            partitionSizeVeryCritical(325), 
+            ibrixCollectDataCollectionFailedVmIncomplete(326), 
+            d2d_fwUpdateBegin(327), 
+            d2d_fwUpdateEnd(328), 
+            d2d_fwUpdateFail(329), 
+            d2d_fwUpdateRebootRequired(330), 
+            d2d_fwListRecommendations(331), 
+            serverUptimeNormal(332), 
+            serverUptimeOvershoot(333)
+              }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Events generated by Ibrix Fusion"
+        ::= { eventEntry 2 }
+
+eventDescription OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Name of the event"
+        ::= { eventEntry 3 }
+
+eventUUID OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "UUID of the Solution generating the event"
+        ::= { eventEntry 4 }
+
+eventSolutionSerialNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Solution Serial Number"
+        ::= { eventEntry 5 }
+
+eventSolutionProductNumber OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Solution Product Number"
+        ::= { eventEntry 6 }
+
+eventSeverity OBJECT-TYPE
+        SYNTAX         INTEGER {
+           alert(1),
+           info(2),
+           warn(3)
+              }
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "how serious is this event"
+        ::= { eventEntry 7 }
+
+eventOidValue OBJECT-TYPE
+        SYNTAX        OBJECT IDENTIFIER
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "OID of the table relevant to this event"
+        ::= { eventEntry 8 }
+
+eventText OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Text string describing the event.  Combines and replaces
+                       eventDescription and other event data into
+                       a single more descriptive text"
+        ::= { eventEntry 9 }
+
+eventFRU OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Field Replacement Unit (FRU) generating the event.
+                       Unused for Software events.Reserved for future use"
+        ::= { eventEntry 10 }
+
+eventCustomerEntitlement OBJECT-TYPE
+        SYNTAX        DisplayString
+        MAX-ACCESS    read-only
+        STATUS        current
+        DESCRIPTION   "Customer Entitlement Information"
+        ::= { eventEntry 11 }
+
+eventGroup OBJECT-GROUP 
+        OBJECTS {
+                  eventIndex, 
+                  eventType,
+                  eventDescription,
+                  eventUUID,
+                  eventSolutionSerialNumber,
+                  eventSolutionProductNumber,
+                  eventSeverity,
+                  eventOidValue,
+                  eventText,
+                  eventFRU,
+                  eventCustomerEntitlement
+                }
+        STATUS  current
+        DESCRIPTION "Group objects associated with an event"
+        ::= { ibrixEventsGroups 1 }
+
+END
