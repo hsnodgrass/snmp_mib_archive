@@ -1,0 +1,74 @@
+--
+-- 	whisp-reg.mib
+--
+--      ********************************************************************
+--	Copyright 2003 (c) , Motorola, Inc.
+--      Motorola Confidential Proprietary
+--      ********************************************************************
+--
+--	This module contains registrations for Canopy related items such
+--	as the identity of products, product components and other MIB
+--	related items.
+--      
+--      ********************************************************************
+--	$Id: $
+--
+--      Revision History:
+--
+--      <Date>                  <Author>                <Changes>
+--      01/31/2002                Y.G              	Initial release.
+--      ********************************************************************
+
+WHISP-GLOBAL-REG-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+	MODULE-IDENTITY,
+	enterprises
+		FROM SNMPv2-SMI;
+
+whispGlobalRegModule 	MODULE-IDENTITY
+	LAST-UPDATED	"200304100000Z"
+	ORGANIZATION	"Motorola"
+	CONTACT-INFO
+		"Canopy Technical Support
+		email: technical-support@canopywireless.com"
+	DESCRIPTION
+		"The Canopy central registration module."
+	::= {whispModules 1}
+
+-- the root of the sub-tree for Canopy Radio Modem Product Line.
+mot		OBJECT IDENTIFIER ::= {enterprises 161}
+whispRoot	OBJECT IDENTIFIER ::= {mot 19}
+
+-- sub-tree for registrations, which includes modules
+whispReg	OBJECT IDENTIFIER ::= {whispRoot 1}
+
+-- sub-tree for WHiSP wide objects and events
+whispGeneric	OBJECT IDENTIFIER ::= {whispRoot 2}
+
+-- sub-tree for WHiSP product specific objects and events
+whispProducts	OBJECT IDENTIFIER ::= {whispRoot 3}
+
+--      Product registrations. The OIDs should be assigned to
+--      sysObjectID of the system group in SNMPv2-MIB supported
+--      by the agent. A manager needs to know the (unique) IP 
+--      address of the agent and get the value (OID value) of
+--      sysObjectID to uniquely identify the agent type. Once the
+--      agent type has been identified, the manager will know what
+--      MIBs the agent supports (from agent capabilities).
+
+        whispAps        OBJECT IDENTIFIER ::= {whispProducts 1}
+        whispSm         OBJECT IDENTIFIER ::= {whispProducts 2}
+        whispBox        OBJECT IDENTIFIER ::= {whispProducts 3}
+        whispCMM        OBJECT IDENTIFIER ::= {whispProducts 4}
+       
+-- the Canopy modules registrations
+        whispModules OBJECT IDENTIFIER ::= {whispReg 1}
+
+-- These are the returned values of the agent type.
+-- returned to:  .iso.org.dod.internet.mgmt.mib-2.system.sysObjectID.0 
+
+canopySnmpAgent      OBJECT IDENTIFIER ::= { whispRoot 250 }
+
+psos           OBJECT IDENTIFIER ::= { canopySnmpAgent 256 }
+
+END

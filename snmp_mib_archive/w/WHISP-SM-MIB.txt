@@ -1,0 +1,987 @@
+--
+-- 		whisp-sm-mib.mib
+--
+--      ********************************************************************
+--		Copyright 2005 (c) , Motorola, Inc.
+--      Motorola Confidential Proprietary
+--      ********************************************************************
+--
+--      Canopy SM and Backhaul Timing Slave MIB definitions.
+--      
+--      ********************************************************************
+--		$Id: $
+--
+--      Revision History:
+--
+--      <Date>                  <Author>                <Changes>
+--      01/31/2002              Y.G           Initial creation.
+--		04/15/2003		 		Y.G		      Second release.
+--		09/12/2003		 		Y.G		      Add NAPT and DHCP
+--		07/14/2005		 		M.D		      Frequency lists and copyright update
+--      ********************************************************************
+
+WHISP-SM-MIB   DEFINITIONS ::= BEGIN
+IMPORTS
+        MODULE-IDENTITY, OBJECT-TYPE,
+        Counter32, Gauge32, TimeTicks, IpAddress  
+                FROM SNMPv2-SMI
+        DisplayString, PhysAddress
+                FROM SNMPv2-TC
+        OBJECT-GROUP
+                FROM SNMPv2-CONF
+        WhispLUID, WhispMACAddress
+                FROM WHISP-TC-MIB
+        whispModules, whispBox, whispAps, whispSm
+                FROM WHISP-GLOBAL-REG-MIB;
+
+whispSmMibModule  MODULE-IDENTITY
+	LAST-UPDATED	"200304150000Z"
+	ORGANIZATION	"Motorola"
+	CONTACT-INFO
+		"Canopy Technical Support
+		email: technical-support@canopywireless.com"
+	DESCRIPTION
+		"This module contains MIB definitions for Subscriber Modem."
+	::= {whispModules 13} 
+
+-- -------------------------------------------------------------------------
+-- Top Level Registrations
+
+whispSmConfig      OBJECT IDENTIFIER ::= {whispSm 1}
+whispSmStatus      OBJECT IDENTIFIER ::= {whispSm 2}
+whispSmGroups	   OBJECT IDENTIFIER ::= {whispSm 3}
+
+-- -------------------------------------------------------------------------
+	
+-- Subscriber Modem and Backhaul timing slave configuration
+	
+        
+	rfScanList		OBJECT-TYPE
+		SYNTAX          DisplayString
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "RF scan list.
+                         The frequencies are:
+                         2.4 radios:24150,24175,24200,24225,24250,24275,24300,24325,24350,24375,
+                         	    24400,24425,24450,24475,24500,24525,24550,24575. 
+                         4.9 radios:4920,4940,4960,4980,5040,5060,5080.
+                         5.1 radios:5175,5180,5185,5190,5195,5200,5205,5210,5215,5220,5225,5230,5240,
+                         	    5245,5250,5255,5260,5265,5270,5275,5280,5285,5290,5295,5300,5305,
+                         	    5310,5315,5320,5325.
+                         5.2 radios:5275,5280,5285,5290,5295,5300,5305,5310,5315,5320,5325.
+                         5.4 radios:5495,5500,5505,5510,5515,5520,5525,5530,5535,5540,5545,5550,5555,5560,
+                         	    5565,5570,5575,5580,5585,5590,5595,5600,5605,5610,5615,5620,5625,5630,
+                         	    5635,5640,5645,5650,5655,5660,5665,5670,5675,5680,5685,5690,5695,5700,5705
+                         5.7 radios:5745,5750,5755,5760,5765,5770,5775,5780,5785,5790,5795,5800,5805.
+                         5.7 radios with ISM enabled :5735,5740,5745,5750,5755,5760,5765,5770,5775,
+                             5780,5785,5790,5795,5800,5805,5810,5815,5820,5825,5830,5835,5840.
+                         5.8 radios:5860,5865,5870,5875,5880,5885,5890,5895,5900,5905,5910.
+                         900 radios:9060,9070,9080,9090,9100,9110,9120,9130,9140,9150,9160,9170,9180,9190,9200,9220,9230,9240.
+                         0:  wired.
+                         When doing a set, separate values with comma."
+                        
+        ::= {whispSmConfig 1}	
+        
+        
+       powerUpMode		OBJECT-TYPE
+		SYNTAX          INTEGER{
+				 operational(0),
+				 aim(1)
+				}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION	"SM Power Up Mode With No 802.3 Link.
+                		1 -- Power up in Aim mode
+                		2 -- Power up in Operational mode.
+                		"
+        ::= {whispSmConfig 2}
+        
+         
+       lanIp			OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "LAN IP."
+        ::= {whispSmConfig 3}
+        
+         
+       lanMask			OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "LAN subnet mask."
+        ::= {whispSmConfig 4}
+        
+       defaultGw		OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Default gateway."
+       
+       ::= {whispSmConfig 5}               
+       
+        networkAccess		OBJECT-TYPE
+        	SYNTAX          INTEGER{localIP(0),
+        				pulicIP(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Network accessibility. Public or local IP. 
+                        For multipoint only."
+       
+       ::= {whispSmConfig 6}               
+       
+       
+      authKey			OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Authentication key. It should be equal or less than 32 
+                        characters long."
+        ::= {whispSmConfig 7}
+        
+      enable8023link		OBJECT-TYPE
+        	SYNTAX          INTEGER{disabled(0),
+        				enabled(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To enable or disable 802.3 link. For SMs only."
+       
+       ::= {whispSmConfig 8}           
+       
+       authKeyOption    	OBJECT-TYPE
+        	SYNTAX          INTEGER{useDefault(0),
+        				useKeySet(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "This option is for SMs only. Backhaul timing slave always
+                         uses the set key.
+                         0 - Use default key.
+                         1 - Use set key."
+       ::= {whispSmConfig 9}    
+       
+        timingPulseGated    	OBJECT-TYPE
+        	SYNTAX          INTEGER{disable(0),
+        				enable(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "0 - Disable (Always propagate the frame timing pulse).
+                         1 - Enable (If SM out of sync then dont propagate the frame timing pulse)."
+       ::= {whispSmConfig 10}     
+       
+-- NAPT configuration
+
+	naptPrivateIP		OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "NAPT private IP address. Only the first three bytes can be
+                        changed when NAPT is enabled."
+        ::= {whispSmConfig 11}
+	
+	naptPrivateSubnetMask	OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "NAPT private subnet mask. Only the last byte can be
+                        changed when NAPT is enabled. The address will always be:
+                        255.255.255.x."
+        ::= {whispSmConfig 12}
+        
+	naptPublicIP		OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "IP Address of NAPT Public Interface. The variable is available
+                        only when NAPT is enabled."
+        ::= {whispSmConfig 13}
+        
+	naptPublicSubnetMask	OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Subnet mask for NAPT Public Interface. The variable is available
+                        only when NAPT is enabled."
+        ::= {whispSmConfig 14}
+        
+	naptPublicGatewayIP	OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "IP Address of NAPT Public Interface Gateway. The variable is available
+                        only when NAPT is enabled."
+        ::= {whispSmConfig 15}
+	
+	naptRFPublicIP		OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "IP Address of RF Public Interface. The variable is available
+                        only when NAPT is enabled."
+        ::= {whispSmConfig 16}
+        
+	naptRFPublicSubnetMask	OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Subnet mask of RF Public Interface. The variable is available
+                        only when NAPT is enabled."
+        ::= {whispSmConfig 17}
+        
+	naptRFPublicGateway	OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "IP Address of RF Public Interface Gateway. The variable is 
+                        available only when NAPT is enabled."
+        ::= {whispSmConfig 18}
+        
+	naptEnable	OBJECT-TYPE
+        	SYNTAX          INTEGER{disabled(0),
+        				enabled(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To enable or disable NAPT. For multipoint only.
+                        1=Enable NAPT, 0=Disable NAPT."
+       
+       ::= {whispSmConfig 19}           
+     
+	arpCacheTimeout		OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "ARP cache time out in unit of minutes. For multipoint only. 
+                        Range from 1-30."
+       
+       ::= {whispSmConfig 20}   
+       
+       tcpGarbageCollectTmout	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Units of minutes for TCP garbage collection. For multipoint only.
+                        Range 4-1440."
+        ::= {whispSmConfig 21}   
+       
+       udpGarbageCollectTmout	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Units of minutes for UDP garbage collection. For multipoint only.
+                        Range 1-1440."      
+        ::= {whispSmConfig 22} 
+           
+-- DHCP configuration
+
+       dhcpClientEnable		OBJECT-TYPE
+        	SYNTAX          INTEGER{disabled(0),
+        				enabled(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To enable or disable DHCP client. For multipoint SM's 
+                        with NAPT enabled."      
+        ::= {whispSmConfig 23}   
+	dhcpServerEnable		OBJECT-TYPE
+        	SYNTAX          INTEGER{disabled(0),
+        				enabled(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To enable or disable DHCP server. For multipoint SM's 
+                        with NAPT enabled."      
+        ::= {whispSmConfig 24}          
+       dhcpServerLeaseTime	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Units of days for DHCP server lease time. For multipoint 
+                        SM's with NAPT enabled. Range from 1-30."      
+        ::= {whispSmConfig 25}   
+       
+       dhcpIPStart	OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "The last byte will be set for the starting IP that 
+                        our DHCP server gives away. The first 3 bytes of the 
+                        starting IP are the same as those of NAPT private IP"      
+        ::= {whispSmConfig 26}   
+        
+      dnsAutomatic		OBJECT-TYPE
+        	SYNTAX          INTEGER{manually(0),
+        				automatically(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To have DHCP Server obtain DNS information automatically or manually."      
+        ::= {whispSmConfig 27}   
+        
+        
+        prefferedDNSIP		OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "The preferred DNS IP when we are configured for static DNS 
+                        (Not used when configured for automatic DNS)."      
+        ::= {whispSmConfig 28}   
+        
+        alternateDNSIP		OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "The alternate DNS IP when we are configured for static DNS 
+                        (Not used when configured for automatic DNS)."      
+        ::= {whispSmConfig 29}   
+        
+        dmzIP			OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Only the last byte of DMZ Host IP will be set.
+                        The first 3 bytes of DMZ IP are the same as those of 
+                        NAPT private IP."      
+        ::= {whispSmConfig 30}   
+        
+        dmzEnable		OBJECT-TYPE
+        	SYNTAX          INTEGER{disabled(0),
+        				enabled(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To enable or disable DMZ host functionality."      
+        ::= {whispSmConfig 31}   
+        
+        dhcpNumIPsToLease	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Number of IP addresses that our DHCP server can give away."      
+        ::= {whispSmConfig 32}   
+        
+        pppoeFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set PPPoE packet filter when NAT is disabled."
+       ::= {whispSmConfig 33}   
+       
+       smbFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set SMB packet filter when NAT is disabled."
+       ::= {whispSmConfig 34}   
+       snmpFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set SNMP packet filter when NAT is disabled."
+       ::= {whispSmConfig 35}   
+       
+       userP1Filter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set user defined port 1 packet filter when 
+                        NAT is disabled."
+       ::= {whispSmConfig 36}
+       
+       userP2Filter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set user defined port 2 packet filter when 
+                        NAT is disabled."
+       ::= {whispSmConfig 37}   
+       
+       userP3Filter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set user defined port 3 packet filter when 
+                        NAT is disabled."
+       ::= {whispSmConfig 38}      
+       
+       allOtherIpFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set all other IPv4 packet filter when NAT 
+                        is disabled."
+       ::= {whispSmConfig 39}   
+       
+       upLinkBCastFilter	OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          obsolete
+                DESCRIPTION
+                        "This variable is currently deprecated."
+       ::= {whispSmConfig 40}   
+       
+       arpFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set ARP packet filter when NAT is disabled."
+       ::= {whispSmConfig 41}   
+  
+       allOthersFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set all other packet filter when NAT is disabled."
+       ::= {whispSmConfig 42}   
+   
+      
+       
+-- User Defined Port Filtering Configuration
+
+	userDefinedPort1	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "A decimal value of number one user defined port."
+       ::= {whispSmConfig 43}   
+       
+       port1TCPFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set user defined port 1 TCP traffic filter."
+       ::= {whispSmConfig 44}   
+       
+       port1UDPFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set user defined port 1 UDP traffic filter."
+       ::= {whispSmConfig 45}   
+       
+       userDefinedPort2		OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "A decimal value of number two user defined port."
+       ::= {whispSmConfig 46}   
+       
+       port2TCPFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set user defined port 2 TCP traffic filter."
+       ::= {whispSmConfig 47}   
+       
+       port2UDPFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set user defined port 2 UDP traffic filter."
+       ::= {whispSmConfig 48}   
+       
+       
+       userDefinedPort3		OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "A decimal value of number three user defined port."
+       ::= {whispSmConfig 49}   
+       
+       port3TCPFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set user defined port 3 TCP traffic filter."
+       ::= {whispSmConfig 50}   
+       
+       port3UDPFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set user defined port 3 UDP traffic filter."
+       ::= {whispSmConfig 51}   
+       
+        bootpcFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set bootp client sourced packets filter when 
+                        NAT is disabled."
+       ::= {whispSmConfig 52}      
+       
+       bootpsFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set bootp server sourced packets filter when 
+                        NAT is disabled."
+       ::= {whispSmConfig 53}      
+       
+       ip4MultFilter		OBJECT-TYPE
+        	SYNTAX          INTEGER{filterOff(0),
+        				filterOn(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To set IPv4 MultiCast packets filter when 
+                        NAT is disabled."
+       ::= {whispSmConfig 54}      
+       
+        ingressVID		OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Untagged ingress VID."
+       ::= {whispSmConfig 55}     
+  
+  -- CIR configuration
+  
+      
+        
+        lowPriorityUplinkCIR	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Low priority uplink CIR."      
+        ::= {whispSmConfig 56}   
+        
+        lowPriorityDownlinkCIR	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Low priority downlink CIR."      
+        ::= {whispSmConfig 57}
+        
+        hiPriorityChannel       OBJECT-TYPE
+                SYNTAX          INTEGER{disabled(0),
+        				enabled(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To enable or disable high priority channel."
+       
+       ::= {whispSmConfig 58}
+                  
+        hiPriorityUplinkCIR	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "High priority uplink CIR."      
+        ::= {whispSmConfig 59}
+        
+        hiPriorityDownlinkCIR	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "High priority downlink CIR."      
+        ::= {whispSmConfig 60}  
+        
+        twoXRate  	     OBJECT-TYPE
+                SYNTAX          INTEGER{disabled(0),
+        				enabled(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To enable or disable double rate."
+       
+       ::= {whispSmConfig 61}
+
+	   upLnkDataRate	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Sustained uplink bandwidth cap."      
+       ::= {whispSmConfig 62}
+
+	     upLnkLimit	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Burst uplink bandwidth cap."      
+       ::= {whispSmConfig 63}
+
+	    dwnLnkDataRate	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Sustained downlink bandwidth cap."      
+       ::= {whispSmConfig 64}
+
+	     dwnLnkLimit	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Burst downlink bandwidth cap."      
+       ::= {whispSmConfig 65}
+
+-- Subscriber Modem status page    
+       sessionStatus 		OBJECT-TYPE
+		SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"SM registered or not."
+        ::= {whispSmStatus 1}
+       
+       rssi			OBJECT-TYPE
+		SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Radio signal strength index."
+        ::= {whispSmStatus 2}
+        
+        jitter		OBJECT-TYPE
+		SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"A measure of multipath interference."
+        ::= {whispSmStatus 3}
+        
+        airDelay		OBJECT-TYPE
+		SYNTAX          INTEGER
+		MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Round trip delay in 100ns increments."
+        ::= {whispSmStatus 4}
+        
+        radioSlicing		OBJECT-TYPE
+		SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Radio slicing value."
+        ::= {whispSmStatus 5}
+        
+        radioTxGain		OBJECT-TYPE
+		SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Radio transmission gain setting."
+        ::= {whispSmStatus 6}
+        
+        calibrationStatus	OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Variable to show if RSSI, Radio slicing value and power level 
+                        are calibrated."
+       ::= {whispSmStatus 7}
+       
+        radioDbm		OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-only 
+                STATUS          current
+                DESCRIPTION
+                        "Power level."
+       ::= {whispSmStatus 8}
+     
+       registeredToAp		OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "AP MAC address that the SM registered to."
+       ::= {whispSmStatus 9}
+       
+-- DHCP client status:
+       
+        dhcpCip			OBJECT-TYPE
+		SYNTAX          IpAddress
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Assigned IP address to DHCP client."
+        ::= {whispSmStatus 10}
+        
+         dhcpSip		OBJECT-TYPE
+		SYNTAX          IpAddress
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Public DHCP server IP."
+        ::= {whispSmStatus 11}
+        
+         dhcpClientLease	OBJECT-TYPE
+		SYNTAX          TimeTicks
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"DHCP client lease time."
+        ::= {whispSmStatus 12}
+        
+         dhcpCSMask		OBJECT-TYPE
+		SYNTAX          IpAddress
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Public DHCP server subnet mask."
+        ::= {whispSmStatus 13}
+        
+         dhcpDfltRterIP		OBJECT-TYPE
+		SYNTAX          IpAddress
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Public default router IP address."
+        ::= {whispSmStatus 14}
+        
+         dhcpcdns1		OBJECT-TYPE
+		SYNTAX          IpAddress
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Primary public domain name server."
+        ::= {whispSmStatus 15}
+        
+          dhcpcdns2		OBJECT-TYPE
+		SYNTAX          IpAddress
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Secondary public domain name server."
+        ::= {whispSmStatus 16}
+          dhcpcdns3		OBJECT-TYPE
+		SYNTAX          IpAddress
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Third public domain name server."
+        ::= {whispSmStatus 17}
+        
+         dhcpDomName		OBJECT-TYPE
+		SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Public domain name server."
+        ::= {whispSmStatus 18}
+        
+-- DHCP server
+        
+        dhcpServerTable		OBJECT-TYPE
+        	SYNTAX          SEQUENCE OF DhcpServerEntry 
+                MAX-ACCESS      not-accessible
+                STATUS          current
+                DESCRIPTION
+                        "The table of DHCP server hosts."
+        ::= {whispSmStatus 19}
+        
+        dhcpServerEntry 	OBJECT-TYPE
+        	SYNTAX          DhcpServerEntry 
+                MAX-ACCESS      not-accessible
+                STATUS          current
+                DESCRIPTION
+                        "Entry of DHCP server hosts."
+                        
+                INDEX		{hostIp}
+        ::= {dhcpServerTable 1}
+        
+        DhcpServerEntry ::= SEQUENCE{
+        	hostIp		IpAddress,
+        	hostMacAddress	PhysAddress,
+        	hostLease	TimeTicks
+        	}
+	hostIp			OBJECT-TYPE
+        	SYNTAX          IpAddress
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "DHCP server IP address."
+                
+        ::= {dhcpServerEntry 1}
+        
+        hostMacAddress		OBJECT-TYPE
+        	SYNTAX          PhysAddress
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Private host MAC address."
+                
+        ::= {dhcpServerEntry 2}
+        
+        hostLease		OBJECT-TYPE
+        	SYNTAX          TimeTicks
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Lease time assigned by DHCP server host."
+                
+        ::= {dhcpServerEntry 3}
+	
+	    adaptRate		OBJECT-TYPE
+		SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"VC dapt rate."
+        ::= {whispSmStatus 20}
+        radioDbmInt		OBJECT-TYPE
+		SYNTAX          INTEGER
+		MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION	"Radio power level(integer)."
+        ::= {whispSmStatus 21}
+        
+	whispSmConfigGroup 	OBJECT-GROUP
+           	OBJECTS {
+           				rfScanList,
+                        powerUpMode,
+                        lanIp,
+                        lanMask,
+                        defaultGw,
+                        networkAccess,
+                        authKey,
+                        enable8023link,
+                        authKeyOption,
+                        timingPulseGated,
+                        naptPrivateIP,	
+			naptPrivateSubnetMask,
+			naptPublicIP,
+			naptPublicSubnetMask,
+			naptPublicGatewayIP,
+			naptRFPublicIP,		
+			naptRFPublicSubnetMask,
+			naptRFPublicGateway,
+			naptEnable,
+			arpCacheTimeout,
+			tcpGarbageCollectTmout,
+			udpGarbageCollectTmout,
+			dhcpClientEnable,
+			dhcpServerEnable,
+			dhcpServerLeaseTime,
+			dhcpIPStart,
+			dnsAutomatic,
+			prefferedDNSIP,
+			alternateDNSIP,
+			dmzIP,
+			dmzEnable,
+			dhcpNumIPsToLease,
+			pppoeFilter,
+			smbFilter,
+			snmpFilter,
+			userP1Filter,
+			userP2Filter,
+			userP3Filter,
+			allOtherIpFilter,
+			upLinkBCastFilter,
+			arpFilter,
+			allOthersFilter,
+			userDefinedPort1,
+			port1TCPFilter,
+			port1UDPFilter,
+			userDefinedPort2,
+			port2TCPFilter,
+			port2UDPFilter,
+			userDefinedPort3,
+			port3TCPFilter,
+			port3UDPFilter,
+			bootpcFilter,
+			bootpsFilter,
+			ip4MultFilter,
+			ingressVID,
+			lowPriorityUplinkCIR,
+			lowPriorityDownlinkCIR,
+			hiPriorityChannel,
+			hiPriorityUplinkCIR,
+			hiPriorityDownlinkCIR,
+			twoXRate,
+			upLnkDataRate,
+            upLnkLimit,
+            dwnLnkDataRate,
+            dwnLnkLimit
+			}
+                STATUS          current
+                DESCRIPTION
+                        "Canopy Subscriber Module configuration group."
+        ::= {whispSmGroups 1}
+        
+        whispSmStatusGroup 	OBJECT-GROUP
+                OBJECTS {
+                        sessionStatus,
+                        rssi,
+                        jitter,
+                        airDelay,
+                        radioSlicing,
+                        radioTxGain,
+                        calibrationStatus,
+                        radioDbm,
+                        registeredToAp,
+                        dhcpCip,
+                        dhcpSip,
+                        dhcpClientLease,
+                        dhcpCSMask,
+                        dhcpDfltRterIP,
+                        dhcpcdns1,
+                        dhcpcdns2,
+                        dhcpcdns3,
+                        dhcpDomName,
+                        adaptRate,
+                        radioDbmInt
+                        }
+                STATUS          current
+                DESCRIPTION
+                        "Canopy Subscriber Module status group."
+        ::= {whispSmGroups 2}
+END

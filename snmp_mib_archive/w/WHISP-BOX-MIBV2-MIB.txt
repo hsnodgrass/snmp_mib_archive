@@ -1,0 +1,1426 @@
+--
+-- 		whisp-box-mib.mib
+--
+--      ********************************************************************
+--		Copyright 2005 (c) , Motorola, Inc.
+--      Motorola Confidential Proprietary
+--      ********************************************************************
+--
+--      Canopy Box Level(AP,SM and Backhaul) MIB definitions.
+--      
+--      ********************************************************************
+--		$Id: $
+--
+--      Revision History:
+--
+--      <Date>                  <Author>            <Changes>
+--      Feb/10/2002             Y.G                 Initial release.
+--		Apr/15/2003		 		Y.G		      		Second release.
+--		Jul/14/2005				M.D					Code point access update
+--													IpAddress import, copyright update 
+--		Aug/18/2005				M.D					New parameter for default plug feature	
+--      ********************************************************************
+
+WHISP-BOX-MIBV2-MIB   DEFINITIONS ::= BEGIN
+IMPORTS
+        MODULE-IDENTITY, OBJECT-TYPE,
+        Counter32, Gauge32, IpAddress, NOTIFICATION-TYPE
+                FROM SNMPv2-SMI
+        DisplayString,MacAddress
+                FROM SNMPv2-TC
+        OBJECT-GROUP
+                FROM SNMPv2-CONF
+        WhispLUID, WhispMACAddress,EventString
+                FROM WHISP-TC-MIB
+        whispModules, whispBox
+                FROM WHISP-GLOBAL-REG-MIB;
+
+whispBoxLevelMibModule  MODULE-IDENTITY
+	LAST-UPDATED	"200304150000Z"
+	ORGANIZATION	"Motorola"
+	CONTACT-INFO
+		"Canopy Technical Support
+		email: technical-support@canopywireless.com"
+	DESCRIPTION
+		"This module contains generic Box-Level MIB definitions 
+                for Canopy Radios."
+	::= {whispModules 8} 
+
+---------------------------------------------------------------------------
+-- Top Level Registrations
+
+whispBoxStatus		 	OBJECT IDENTIFIER ::= {whispBox 1}
+whispBoxConfig  	 	OBJECT IDENTIFIER ::= {whispBox 2}
+whispBoxControls        OBJECT IDENTIFIER ::= {whispBox 3}
+--whispBoxBridgeTable	OBJECT IDENTIFIER ::= {whispBox 4}
+whispBoxEventLog        OBJECT IDENTIFIER ::= {whispBox 5}
+whispBoxConf            OBJECT IDENTIFIER ::= {whispBox 6}
+whispBoxBridgeVar		OBJECT IDENTIFIER ::= {whispBox 7}
+whispBoxCPVar  	 		OBJECT IDENTIFIER ::= {whispBox 9}
+whispBoxGroups          OBJECT IDENTIFIER ::= {whispBoxConf 1}
+
+
+
+-- -------------------------------------------------------------------------
+
+
+-- Canopy radio status page
+       
+       whispBoxSoftwareVer      OBJECT-TYPE
+                SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Version of software. Should be noted in the event customer has 
+                        technical difficulties and need to contact technical support."
+        ::= {whispBoxStatus 1}
+
+  
+        whispBoxFPGAVer     OBJECT-TYPE
+                SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Version of FPGA."
+        ::= {whispBoxStatus 2}
+
+        whispBoxEsn             OBJECT-TYPE
+                SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Electronic serial number(MAC address) assigned to Radio."
+        ::= {whispBoxStatus 3}
+        
+        whispBoxBoot	       OBJECT-TYPE
+                SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Software boot version."
+        ::= {whispBoxStatus 4}
+        
+        boxTemperature		OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Radio temperature."
+       ::= {whispBoxStatus 5}
+       
+       boxDeviceType		OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "The type of the device."
+       ::= {whispBoxStatus 6}
+       
+       boxDeviceTypeID		OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Device type ID."
+       ::= {whispBoxStatus 7}
+       
+       boxEncryption		OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Device encryption type."
+       ::= {whispBoxStatus 8}
+       
+       etherLinkStatus		OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Ethernet link status."
+       ::= {whispBoxStatus 9}
+       
+       boxFrequency		OBJECT-TYPE
+        	SYNTAX          DisplayString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Frequency band of the device."
+       ::= {whispBoxStatus 10}
+       
+       platformVer		OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Hardware platform version. For internal use."
+       ::= {whispBoxStatus 11}
+       
+   -- The following definitions deal with Canopy Box Level configuration variables.  
+        linkNegoSpeed		OBJECT-TYPE
+		SYNTAX          DisplayString
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Link negotiation speeds. 
+                        H10BT -- 10 Base T Half Duplex,
+                        F10BT -- 10 Base T Full Duplex,
+                        H100BT -- 100 Base T Half Duplex,
+                        F100BT -- 100 Base T Full Duplex.
+                        Separate the values with comma when doing a set.
+                        e.g. H10BT,F10BT,H100BT,F100BT "
+        ::= {whispBoxConfig 1}
+        
+        colorCode		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Color code." 
+        ::= {whispBoxConfig 2}
+        
+        displayOnlyAccess   		OBJECT-TYPE
+                SYNTAX          	DisplayString
+                MAX-ACCESS      	read-write
+                STATUS          	current
+                DESCRIPTION
+                        "Display only password." 
+        ::= {whispBoxConfig 3}
+        
+        fullAccess   			OBJECT-TYPE
+                SYNTAX          	DisplayString
+                MAX-ACCESS      	read-write
+                STATUS          	current
+                DESCRIPTION
+                        "Full access password." 
+        ::= {whispBoxConfig 4}
+        
+        webAutoUpdate   		OBJECT-TYPE
+                SYNTAX          	INTEGER
+                UNITS			"Seconds"
+                MAX-ACCESS      	read-write
+                STATUS          	current
+                DESCRIPTION
+                        "Web page auto update in seconds. 0 means disabled." 
+        ::= {whispBoxConfig 5}
+        
+         pass1Status   		OBJECT-TYPE
+                SYNTAX          	DisplayString
+                MAX-ACCESS      	read-only
+                STATUS          	current
+                DESCRIPTION
+                        "Password 1(display only) status." 
+        ::= {whispBoxConfig 6}
+        
+        pass2Status   		OBJECT-TYPE
+                SYNTAX          	DisplayString
+                MAX-ACCESS      	read-only
+                STATUS          	current
+                DESCRIPTION
+                        "Password 2(full access) status." 
+        ::= {whispBoxConfig 7}
+       
+        bridgeEntryTimeout	OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	UNITS		"minutes"
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Bridge table time out Range : 25 -- 1440 Minutes."
+                
+        ::= {whispBoxConfig 8}
+        
+    	 snmpMibPerm		OBJECT-TYPE
+        	SYNTAX          INTEGER{
+        			readWrite(0),
+        			readOnly(1)
+        			}
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Read/Write permission for MIB groups."
+                
+        ::= {whispBoxConfig 9}
+        
+        bhTimingMode		OBJECT-TYPE
+        	SYNTAX          INTEGER{
+        			timingMaster(1),
+        			timeingSlave(0)
+        			}
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Variable to switch between Timing Master and Timing Slave. 
+                        For Backhaul units only."
+                
+        ::= {whispBoxConfig 10}
+        
+         bhModulation		OBJECT-TYPE
+        	SYNTAX          INTEGER{
+        			tenMbitsPerSecond(0),
+        			twentyMbitsPerSecond(1)
+        			}
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Modulation scheme. For Backhaul units only. Only level 4 
+                         backhaul can be changed to 20Mbits/Second."
+                
+        ::= {whispBoxConfig 11}
+        
+        powerControl	OBJECT-TYPE
+        	SYNTAX          INTEGER{
+        			low(0),
+        			normal(1)
+        			}
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Power control."
+        ::= {whispBoxConfig 12}      
+        
+        extFilterDelay    OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	UNITS		"nanoseconds"
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "External Filters Delay. For 900MHz radios only."
+        ::= {whispBoxConfig 13}        
+        
+         antennaGain            OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	UNITS		"dBi"
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Antenna gain. For 5.7AGHz radios only."
+        ::= {whispBoxConfig 14}        
+        
+         eirp	                OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	UNITS		"dBm"
+        	MAX-ACCESS      read-write
+                STATUS      obsolete
+                DESCRIPTION
+                        "This variable is deprecated."
+        ::= {whispBoxConfig 15}                      
+        
+        dynamicLearning		OBJECT-TYPE
+        	SYNTAX          INTEGER{
+        			disabled(0),
+        			enabled(1)
+        			}
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To enable VLAN dynamic learning."
+        ::= {whispBoxConfig 16}      
+        
+        managementVID		OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Management VLAN VID."
+        ::= {whispBoxConfig 17}        
+        
+        agingTimeout		OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Aging timeout."
+        ::= {whispBoxConfig 18}      
+        
+        frameType		OBJECT-TYPE
+        	SYNTAX          INTEGER{
+        			allframes(0),
+        			taggedonly(1),
+					untaggedonly(2)
+        			}
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Allow only tagged frame."
+        ::= {whispBoxConfig 19} 
+        
+        addVlanMember		OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Add VLAN memeber."
+        ::= {whispBoxConfig 20}             
+        
+        removeVlanMember		OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Remove VLAN memeber."
+        ::= {whispBoxConfig 21}      
+        
+         scheduling	        OBJECT-TYPE
+        	SYNTAX          INTEGER{software(0),
+        				hardware(1)
+        			}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "To use hardware or software scheduling"      
+        ::= {whispBoxConfig 22}
+        
+        transmitterOP		OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	UNITS		"dBm"
+        	MAX-ACCESS      read-write
+                STATUS      current
+                DESCRIPTION
+                        "Transmitter output power."
+        ::= {whispBoxConfig 23}
+        
+        bridgeEnable		OBJECT-TYPE
+        	SYNTAX          INTEGER{enable(0),disable(1)}
+        	MAX-ACCESS      read-write
+                STATUS      current
+                DESCRIPTION
+                        "Disable or enable bridging functionality for a BH unit."
+        ::= {whispBoxConfig 24} 
+        
+         fecEnable		OBJECT-TYPE
+        	SYNTAX          INTEGER{enable(1),disable(0)}
+        	MAX-ACCESS      read-write
+                STATUS      current
+                DESCRIPTION
+                        "Disable or enable FEC error correction functionality 
+                        for multipoint units."
+        ::= {whispBoxConfig 25}  
+        
+         trapIP1			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 26}
+        
+         trapIP2			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 27}
+        
+         trapIP3			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 28}
+        
+         trapIP4			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 29}
+        
+         trapIP5			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 30}
+        
+         trapIP6			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 31}
+        
+         trapIP7			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 32}
+        
+         trapIP8			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 33}
+        
+         trapIP9			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 34}
+        
+         trapIP10			OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Trap IP address."
+                
+        ::= {whispBoxConfig 35}
+       
+	    commString			OBJECT-TYPE
+        		SYNTAX          DisplayString
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Community string."
+                
+        ::= {whispBoxConfig 36}
+
+ 		subnetMask		OBJECT-TYPE
+        	SYNTAX          INTEGER
+        	MAX-ACCESS      read-write
+                STATUS      current
+                DESCRIPTION
+                        "Subnet mask for the management IP."
+        ::= {whispBoxConfig 37} 
+
+        mngtIP		OBJECT-TYPE
+        		SYNTAX          IpAddress
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Management IP address."
+                
+        ::= {whispBoxConfig 38}
+
+		allowVIDAccess		OBJECT-TYPE
+        		SYNTAX          INTEGER{enable(0),disable(1)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Allow or disallow local SM management VID access."
+                
+        ::= {whispBoxConfig 39}
+
+        setDefaultPlug		OBJECT-TYPE
+        		SYNTAX          INTEGER{enable(1),disable(0)}
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "If enable parameters are set to Factory Defaults upon default plug detection."
+                
+        ::= {whispBoxConfig 40}
+
+        whispBoxAttributesGroup OBJECT-GROUP
+                OBJECTS {
+                        whispBoxFPGAVer,
+                        whispBoxSoftwareVer,
+                        whispBoxEsn,
+                        whispBoxBoot,
+                        boxTemperature,
+                        boxDeviceType,
+                        boxDeviceTypeID,
+                        boxEncryption,
+                        etherLinkStatus,
+                        boxFrequency,
+                        platformVer,
+                        colorCode,
+                        displayOnlyAccess,
+                        fullAccess,
+                        webAutoUpdate,
+                        pass1Status,
+                        pass2Status,
+                        bridgeEntryTimeout,
+                        snmpMibPerm,
+                        bhTimingMode,
+                        bhModulation,
+                        powerControl,
+                        extFilterDelay,
+                        eirp,
+                        dynamicLearning,
+                        managementVID,
+                        agingTimeout,
+                        frameType,
+                        addVlanMember,
+                        removeVlanMember,
+                        scheduling,
+                        transmitterOP,
+						bridgeEnable,
+						fecEnable,
+						trapIP1,
+						trapIP2,
+						trapIP3,
+						trapIP4,
+						trapIP5,
+						trapIP6,
+						trapIP7,
+						trapIP8,
+						trapIP9,
+						trapIP10,
+						commString,
+						subnetMask,
+						mngtIP,
+						allowVIDAccess,
+						setDefaultPlug
+                        }
+                STATUS          current
+                DESCRIPTION
+                        "Canopy Box Level Attributes group."
+        ::= {whispBoxGroups 1}
+   	
+        whispBoxEvntLog         OBJECT-TYPE
+                SYNTAX          EventString
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Event log for AP and SM."
+        ::= {whispBoxEventLog 1}
+	
+-- Box level control.
+
+	saveFlash   			OBJECT-TYPE
+                SYNTAX          	INTEGER{
+        				doNotSaveToFlash(0),
+        				saveToFlash(1)
+        				}
+                MAX-ACCESS      	read-write
+                STATUS          	obsolete
+                DESCRIPTION
+                        "This variable is currently deprecated." 
+        ::= {whispBoxControls 1}
+        
+        reboot   			OBJECT-TYPE
+                SYNTAX          	INTEGER{
+        				reboot(1),
+        				finishedReboot(0)
+        				}
+                MAX-ACCESS      	read-write
+                STATUS          	current
+                DESCRIPTION
+                        "Setting the variable to 1 will reboot the unit. When the
+                        unit finishs rebooting, it will be in finishedReboot state." 
+        ::= {whispBoxControls 2}
+        
+        clearEventLog   		OBJECT-TYPE
+                SYNTAX          	INTEGER{
+        				clear(1),
+        				notClear(0)
+        				}
+                MAX-ACCESS      	read-write
+                STATUS          	current
+                DESCRIPTION
+                        "Setting the variable to 1 will clear the event log." 
+        ::= {whispBoxControls 3}
+      
+	whispBoxControlGroup 	OBJECT-GROUP
+                OBJECTS {
+                        saveFlash, -- This variable is obsolete
+                        reboot,
+                        clearEventLog
+                        }
+                STATUS          current
+                DESCRIPTION
+                        "Canopy Box Level control group."
+        ::= {whispBoxGroups 2}
+        
+-- The following definitions deal with Bridge table
+
+	whispBoxBridgeTable	OBJECT-TYPE
+        	SYNTAX          SEQUENCE OF WhispBoxBridgeEntry 
+                MAX-ACCESS      not-accessible
+                STATUS          current
+                DESCRIPTION
+                        "Bridge table."
+        ::= {whispBox 4}
+        
+        whispBoxBridgeEntry 	OBJECT-TYPE
+        	SYNTAX          WhispBoxBridgeEntry
+                MAX-ACCESS      not-accessible
+                STATUS          current
+                DESCRIPTION
+                        "Bridge entry."
+                INDEX		{whispBridgeMacAddr}
+            
+        ::= {whispBoxBridgeTable 1}
+        
+        WhispBoxBridgeEntry ::= SEQUENCE{
+        	whispBridgeMacAddr	MacAddress,
+        	whispBridgeDesLuid	WhispLUID,
+        	whispBridgeAge		INTEGER,
+        	whispBridgeExt		INTEGER,
+        	whispBridgeHash		INTEGER,
+        	whispBridgeCAM		INTEGER
+        	}
+        	
+       	
+        whispBridgeMacAddr	OBJECT-TYPE
+        	SYNTAX          MacAddress  
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "MAC Address of the registered enity."
+                
+        ::= {whispBoxBridgeEntry 1}
+        
+        whispBridgeDesLuid	OBJECT-TYPE
+        	SYNTAX          WhispLUID 
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "This is the Local Unit Identifier assigned to
+                         Subscriber Modems."
+                
+        ::= {whispBoxBridgeEntry 2}
+        
+        whispBridgeAge		OBJECT-TYPE
+        	SYNTAX          INTEGER 
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Table entry last access age in minutes."
+                
+        ::= {whispBoxBridgeEntry 3}
+        
+        whispBridgeExt	OBJECT-TYPE
+        	SYNTAX          INTEGER 
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Timeout extension flag for entries which also
+                         reside in the PNA APR cache."
+                
+        ::= {whispBoxBridgeEntry 4}
+        
+        whispBridgeHash	OBJECT-TYPE
+        	SYNTAX          INTEGER 
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Hash table array index."
+                
+        ::= {whispBoxBridgeEntry 5}
+        
+        whispBridgeCAM	OBJECT-TYPE
+        	SYNTAX          INTEGER 
+                MAX-ACCESS      read-only
+                STATUS          obsolete
+                DESCRIPTION
+                        "This entry is deprecated."
+                
+        ::= {whispBoxBridgeEntry 6}
+        
+          whispBridgeTbUsed	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Number of used entries in bridging table."
+                
+        ::= {whispBoxBridgeVar 1}
+        
+        whispBridgeTbFree	OBJECT-TYPE
+        	SYNTAX          INTEGER  
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Number of free entries in bridging table."
+                
+        ::= {whispBoxBridgeVar 2}
+        
+        whispBridgeTbErr	OBJECT-TYPE
+        	SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Bridging table errors."
+                
+        ::= {whispBoxBridgeVar 3}
+
+	whispBoxBTGroup 	OBJECT-GROUP
+                OBJECTS {
+                        whispBridgeMacAddr,
+        		whispBridgeDesLuid,
+        		whispBridgeAge,
+        		whispBridgeExt,
+        		whispBridgeHash,
+        		-- this variable is obsolete
+        		whispBridgeCAM
+                        }
+                STATUS          current
+                DESCRIPTION
+                        "Canopy Box Bridging Table group."
+        ::= {whispBoxGroups 3}
+        
+	
+-- The following definitions deal with VLAN table
+
+	whispVLANTable	OBJECT-TYPE
+        	SYNTAX          SEQUENCE OF WhispBoxBridgeEntry 
+                MAX-ACCESS      not-accessible
+                STATUS          current
+                DESCRIPTION
+                        "VLAN member table."
+        ::= {whispBox 8}
+        
+        whispVLANEntry 	OBJECT-TYPE
+        	SYNTAX          WhispVLANEntry
+                MAX-ACCESS      not-accessible
+                STATUS          current
+                DESCRIPTION
+                        "VLAN entry."
+                INDEX		{whispVID}
+            
+        ::= {whispVLANTable 1}
+        
+        WhispVLANEntry ::= SEQUENCE{
+        	whispVID		INTEGER,
+        	whispVType		DisplayString,
+        	whispVAge		INTEGER
+        	}
+        
+         whispVID  		OBJECT-TYPE
+        	SYNTAX          INTEGER (1..4095)
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "VLAN member ID."
+                
+        ::= {whispVLANEntry 1}
+        
+         whispVType  		OBJECT-TYPE
+        	SYNTAX          DisplayString 
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "VLAN member type."
+                
+        ::= {whispVLANEntry 2}
+        
+         whispVAge  		OBJECT-TYPE
+        	SYNTAX          INTEGER 
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "VLAN member age."
+                
+        ::= {whispVLANEntry 3}
+ 
+	whispBoxVLANTableGroup 	OBJECT-GROUP
+                OBJECTS {
+                       whispVID,		
+        	       whispVType,
+        	       whispVAge
+                        }
+                STATUS          current
+                DESCRIPTION
+                        "Canopy Box VLAN member Table group."
+        ::= {whispBoxGroups 4}
+
+
+-- The following definitions deal with Code Point Table
+
+	 	codePoint0		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 0." 
+        		::= {whispBoxCPVar 1}
+
+	 	codePoint1		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 1." 
+        		::= {whispBoxCPVar 2}
+
+	  	codePoint2		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 2." 
+        		::= {whispBoxCPVar 3}
+
+	 	codePoint3		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 3." 
+        		::= {whispBoxCPVar 4}
+
+ 		codePoint4		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 4." 
+        		::= {whispBoxCPVar 5}
+
+ 		codePoint5		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 5." 
+        		::= {whispBoxCPVar 6}
+
+ 		codePoint6		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 6." 
+        		::= {whispBoxCPVar 7}
+
+		codePoint7		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 7." 
+        		::= {whispBoxCPVar 8}
+
+ 		codePoint8		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 8." 
+        		::= {whispBoxCPVar 9}
+
+		codePoint9		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 9." 
+        		::= {whispBoxCPVar 10}
+
+ 		codePoint10		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 10." 
+        		::= {whispBoxCPVar 11}
+
+		codePoint11		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 11." 
+        		::= {whispBoxCPVar 12}
+
+	  	codePoint12		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 12." 
+        		::= {whispBoxCPVar 13}
+
+	 	codePoint13		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 13." 
+        		::= {whispBoxCPVar 14}
+
+ 		codePoint14		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 14." 
+        		::= {whispBoxCPVar 15}
+
+ 		codePoint15		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 15." 
+        		::= {whispBoxCPVar 16}
+
+ 		codePoint16		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 16." 
+        		::= {whispBoxCPVar 17}
+
+		codePoint17		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 17." 
+        		::= {whispBoxCPVar 18}
+
+ 		codePoint18		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 18." 
+        		::= {whispBoxCPVar 19}
+
+		codePoint19		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 19." 
+        		::= {whispBoxCPVar 20}
+
+ 		codePoint20		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 20." 
+        		::= {whispBoxCPVar 21}
+
+		codePoint21		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 21." 
+        		::= {whispBoxCPVar 22}
+
+	  	codePoint22		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 22." 
+        		::= {whispBoxCPVar 23}
+
+	 	codePoint23		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 23." 
+        		::= {whispBoxCPVar 24}
+
+ 		codePoint24		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 24." 
+        		::= {whispBoxCPVar 25}
+
+ 		codePoint25		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 25." 
+        		::= {whispBoxCPVar 26}
+
+ 		codePoint26		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 26." 
+        		::= {whispBoxCPVar 27}
+
+		codePoint27		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 27." 
+        		::= {whispBoxCPVar 28}
+
+ 		codePoint28		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 28." 
+        		::= {whispBoxCPVar 29}
+
+		codePoint29		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point2 9." 
+        		::= {whispBoxCPVar 30}
+
+ 		codePoint30		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 30." 
+        		::= {whispBoxCPVar 31}
+
+		codePoint31		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 31." 
+        		::= {whispBoxCPVar 32}
+
+	  	codePoint32		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 32." 
+        		::= {whispBoxCPVar 33}
+
+	 	codePoint33		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 33." 
+        		::= {whispBoxCPVar 34}
+
+ 		codePoint34		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 34." 
+        		::= {whispBoxCPVar 35}
+
+ 		codePoint35		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 35." 
+        		::= {whispBoxCPVar 36}
+
+ 		codePoint36		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 36." 
+        		::= {whispBoxCPVar 37}
+
+		codePoint37		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 37." 
+        		::= {whispBoxCPVar 38}
+
+ 		codePoint38		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 38." 
+        		::= {whispBoxCPVar 39}
+
+		codePoint39		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 39." 
+        		::= {whispBoxCPVar 40}
+
+ 		codePoint40		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 40." 
+        		::= {whispBoxCPVar 41}
+
+		codePoint41		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 41." 
+        		::= {whispBoxCPVar 42}
+
+	  	codePoint42		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 42." 
+        		::= {whispBoxCPVar 43}
+
+	 	codePoint43		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 43." 
+        		::= {whispBoxCPVar 44}
+
+ 		codePoint44		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 44." 
+        		::= {whispBoxCPVar 45}
+
+ 		codePoint45		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 45." 
+        		::= {whispBoxCPVar 46}
+
+ 		codePoint46		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 46." 
+        		::= {whispBoxCPVar 47}
+
+		codePoint47		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 47." 
+        		::= {whispBoxCPVar 48}
+
+ 		codePoint48		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 48." 
+        		::= {whispBoxCPVar 49}
+
+		codePoint49		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 49." 
+        		::= {whispBoxCPVar 50}
+
+ 		codePoint50		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 50." 
+        		::= {whispBoxCPVar 51}
+
+		codePoint51		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 51." 
+        		::= {whispBoxCPVar 52}
+
+	  	codePoint52		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 52." 
+        		::= {whispBoxCPVar 53}
+
+	 	codePoint53		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 53." 
+        		::= {whispBoxCPVar 54}
+
+ 		codePoint54		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 54." 
+        		::= {whispBoxCPVar 55}
+
+ 		codePoint55		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 55." 
+        		::= {whispBoxCPVar 56}
+
+ 		codePoint56		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-only
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 56." 
+        		::= {whispBoxCPVar 57}
+
+		codePoint57		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 57." 
+        		::= {whispBoxCPVar 58}
+
+ 		codePoint58		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 58." 
+        		::= {whispBoxCPVar 59}
+
+		codePoint59		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 59." 
+        		::= {whispBoxCPVar 60}
+
+ 		codePoint60		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 60." 
+        		::= {whispBoxCPVar 61}
+	
+		codePoint61		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 61." 
+        		::= {whispBoxCPVar 62}
+
+ 		codePoint62		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 62." 
+        		::= {whispBoxCPVar 63}
+
+		codePoint63		OBJECT-TYPE
+                SYNTAX          INTEGER
+                MAX-ACCESS      read-write
+                STATUS          current
+                DESCRIPTION
+                        "Code Point 63." 
+        		::= {whispBoxCPVar 64}
+
+ 	  	whispBoxCPTableGroup OBJECT-GROUP
+                OBJECTS {
+                        codePoint0,
+                        codePoint1,
+                        codePoint2,
+                        codePoint3,
+                        codePoint4,
+                        codePoint5,
+                        codePoint6,
+                        codePoint7,
+                        codePoint8,
+                        codePoint9,
+                        codePoint10,
+                        codePoint11,
+                        codePoint12,
+                        codePoint13,
+                        codePoint14,
+                        codePoint15,
+                        codePoint16,
+                        codePoint17,
+                        codePoint18,
+                        codePoint19,
+                        codePoint20,
+  						codePoint21,
+                        codePoint22,
+                        codePoint23,
+                        codePoint24,
+                        codePoint25,
+                        codePoint26,
+                        codePoint27,
+                        codePoint28,
+                        codePoint29,
+                        codePoint30,
+						codePoint31,
+                        codePoint32,
+                        codePoint33,
+                        codePoint34,
+                        codePoint35,
+                        codePoint36,
+                        codePoint37,
+                        codePoint38,
+                        codePoint39,
+                        codePoint40,
+                        codePoint41,
+                        codePoint42,
+                        codePoint43,
+                        codePoint44,
+                        codePoint45,
+                        codePoint46,
+                        codePoint47,
+                        codePoint48,
+                        codePoint49,
+                        codePoint50,
+  						codePoint51,
+                        codePoint52,
+                        codePoint53,
+                        codePoint54,
+                        codePoint55,
+                        codePoint56,
+                        codePoint57,
+                        codePoint58,
+                        codePoint59,
+                        codePoint60,
+                        codePoint61,
+                        codePoint62,
+                        codePoint63
+                        }
+                STATUS          current
+                DESCRIPTION
+                        "Code Point Table group."
+        ::= {whispBoxGroups 5}
+
+END
