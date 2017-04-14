@@ -1,0 +1,265 @@
+TRANGO-APEX-RF-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY,
+	OBJECT-TYPE,
+	OBJECT-IDENTITY,
+	NOTIFICATION-TYPE,
+        apex
+                FROM TRANGO-APEX-MIB	        
+        DisplayString
+		FROM SNMPv2-TC
+	MODULE-COMPLIANCE
+		FROM SNMPv2-CONF;
+
+-- *******************************************************************
+-- ** RF/ODU Information ** trango.twb.apex.rf
+-- *******************************************************************
+
+rf			OBJECT IDENTIFIER ::= { apex 3 }
+
+atpc			OBJECT IDENTIFIER ::= { rf 1 }
+
+rfATPCEnable		OBJECT-TYPE
+        SYNTAX	    	INTEGER { DISABLED(0), ENABLED(1) }
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Enable/Disable Automatic Transmit Power Control"
+	::= { atpc 1 }
+
+rfATPCMaxPower		OBJECT-TYPE
+        SYNTAX		INTEGER
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Maximum ATPC power"
+	::= { atpc 2 }
+
+rfATPCStepSize		OBJECT-TYPE
+    	SYNTAX		INTEGER (SIZE(1..5))
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"ATPC step size for each of the increment/decrement"
+	::= { atpc 3 }
+
+txfreq			OBJECT IDENTIFIER ::= { rf 2 }
+
+rfTxFrequency		OBJECT-TYPE
+        SYNTAX		Opaque
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Set/Display the current TX frequency"
+	::= { txfreq 1 }
+
+rfTxFrequencyInt	OBJECT-TYPE
+        SYNTAX		INTEGER
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Set/Display the current TX frequency in integer"
+	::= { txfreq 2 }
+
+rxfreq			OBJECT IDENTIFIER ::= { rf 3 }
+
+rfRxFrequency		OBJECT-TYPE
+        SYNTAX		Opaque
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display the current RX frequency"
+	::= { rxfreq 1 }
+
+rfRxFrequencyInt	OBJECT-TYPE
+        SYNTAX		INTEGER
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display the current RX frequency in integer"
+	::= { rxfreq 2 }
+
+speed			OBJECT IDENTIFIER ::= { rf 4 }
+
+rfSymrate   		OBJECT-TYPE
+	SYNTAX  	INTEGER {  RATE8(2), RATE12(3), RATE17(4), RATE26(5), RATE35(6), RATE43(7), RATE49(8) }
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Set/Display the current Symbol Rate"
+	::= { speed 1 }
+
+rfModulation   		OBJECT-TYPE
+	SYNTAX  	INTEGER { QPSK(0), 16Q(1), 32Q(2), 64Q(3), 128Q(4), 256Q(5) }
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Set/Display the current modulation"
+	::= { speed 2 }
+
+rfBPF   		OBJECT-TYPE
+	SYNTAX  	INTEGER
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display the current bandpass filter value"
+	::= { speed 3 }
+
+rfChannelWidth		OBJECT-TYPE
+    	SYNTAX		INTEGER { BW10(0), BW20(1), BW28(2), BW40(3), BW50(4), BW80(5) }
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Display the current channel width"
+	::= { speed 4 }
+
+power			OBJECT IDENTIFIER ::= { rf 5 }
+
+rfPower   		OBJECT-TYPE
+        SYNTAX		Opaque
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Set/Display the current power"
+	::= { power 1 }
+
+rfPowerInt   		OBJECT-TYPE
+        SYNTAX		INTEGER
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Set/Display the current power in integer"
+	::= { power 2 }
+
+rfRSSILEDEnable   	OBJECT-TYPE
+        SYNTAX	    	INTEGER { DISABLED(0), ENABLED(1) }
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Enable/Disable ODU LED display for RSSI"
+	::= { rf 6 }
+
+rfTemp			OBJECT-TYPE
+    	SYNTAX		INTEGER
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Read current system Temperature"
+	::= { rf 7 }
+
+target			OBJECT IDENTIFIER ::= { rf 8 }
+
+rfTargetRSSI		OBJECT-TYPE
+    	SYNTAX		Opaque  
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Set/Disable the current Target RSSI value in float value"
+	::= { target 1 }
+
+rfTargetRSSIInt		OBJECT-TYPE
+    	SYNTAX		INTEGER  
+	MAX-ACCESS	read-write
+	STATUS		current
+	DESCRIPTION	"Set/Disable the current Target RSSI value in integer"
+	::= { target 2 }
+
+rssi			OBJECT IDENTIFIER ::= { rf 9 }
+
+rfRSSI			OBJECT-TYPE
+    	SYNTAX		Opaque 
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Read current RSSI value"
+	::= { rssi 1 }
+
+rfRSSIInt		OBJECT-TYPE
+    	SYNTAX		INTEGER 
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Read current RSSI value in Integer"
+	::= { rssi 2 }
+
+rfPll			OBJECT IDENTIFIER ::= { rf 10 }
+
+rfRFMRFpll		OBJECT-TYPE
+    	SYNTAX		INTEGER	{ NOLOCK(0), LOCK(1) } 
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"RFM RX PLL lock status"
+	::= { rfPll 1 }
+
+rfRFMIFpll		OBJECT-TYPE
+    	SYNTAX		INTEGER	{ NOLOCK(0), LOCK(1) } 
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"RFM RX PLL lock status"
+	::= { rfPll 2 }
+
+rfTransmitPll		OBJECT-TYPE
+    	SYNTAX		INTEGER	{ NOLOCK(0), LOCK(1) } 
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Transmit PLL lock status"
+	::= { rfPll 3 }
+
+rfReceviedPll			OBJECT-TYPE
+    	SYNTAX		INTEGER	{ NOLOCK(0), LOCK(1) } 
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Loopback PLL lock status"
+	::= { rfPll 4 }
+
+rfIn			OBJECT IDENTIFIER ::= { rf 11 }
+
+rfInDataOctets		OBJECT-TYPE
+    	SYNTAX		Counter32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display total number of incoming Octets in FPGA"
+	::= { rfIn 1 }
+
+rfInDataPackets		OBJECT-TYPE
+    	SYNTAX		Counter32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display total number of incoming Packets in FPGA"
+	::= { rfIn 2 }
+
+rfInDropPackets	OBJECT-TYPE
+    	SYNTAX		Counter32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display total number of Ethernet drop packets goes in toFPGA"
+	::= { rfIn 3 }
+
+rfInPortUtil		OBJECT-TYPE
+    	SYNTAX		INTEGER
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display current in port utilizaition percentage" 
+	::= { rfIn 4 }
+
+rfInPortRate		OBJECT-TYPE
+    	SYNTAX		INTEGER
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display current in port rate" 
+	::= { rfIn 5 }
+
+rfOut			OBJECT IDENTIFIER ::= { rf 12 }
+
+rfOutDataOctets		OBJECT-TYPE
+    	SYNTAX		Counter32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display total number of outgoing Octets in FPGA"
+	::= { rfOut 1 }
+
+rfOutDataPackets	OBJECT-TYPE
+    	SYNTAX		Counter32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display total number of outgoing Packets in FPGA"
+	::= { rfOut 2 }
+
+rfOutPortUtil		OBJECT-TYPE
+    	SYNTAX		INTEGER
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display current out port utilizaition percentage" 
+	::= { rfOut 3 }
+
+rfOutPortRate		OBJECT-TYPE
+    	SYNTAX		INTEGER
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Display current out port rate" 
+	::= { rfOut 4 }
+
+END
