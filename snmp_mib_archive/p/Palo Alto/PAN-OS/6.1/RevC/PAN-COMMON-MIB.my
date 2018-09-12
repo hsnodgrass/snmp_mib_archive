@@ -1,0 +1,508 @@
+-- ***********************************************
+-- PAN-COMMON-MIB.my
+--
+-- MIB for the common MIB objects implemented by all
+-- Palo Alto devices.
+-- ***********************************************
+
+PAN-COMMON-MIB DEFINITIONS ::= BEGIN
+
+	IMPORTS
+		MODULE-IDENTITY, OBJECT-IDENTITY,
+		OBJECT-TYPE, NOTIFICATION-TYPE,
+		Integer32
+			FROM SNMPv2-SMI
+--		MODULE-COMPLIANCE, OBJECT-GROUP
+--			FROM SNMPv2-CONF
+		DisplayString, TruthValue
+			FROM SNMPv2-TC
+		TcChassisType
+			FROM PAN-GLOBAL-TC
+		panModules, panCommonMib
+			FROM PAN-GLOBAL-REG;
+
+	panCommonMibModule MODULE-IDENTITY
+		LAST-UPDATED			"201403060000Z"
+		ORGANIZATION			"Palo Alto Networks"
+		CONTACT-INFO			"
+					Customer Support
+					Palo Alto Networks
+					4401 Great America Pkwy
+					Santa Clara, CA 95054-1211
+
+					+1 866-898-9087
+					support at paloaltonetworks dot com"
+
+		DESCRIPTION				"
+			A MIB module containing definitions of managed objects
+			implemented by all Palo Alto Networks' products."
+
+		REVISION				"201403060000Z"
+		DESCRIPTION				"
+			Rev 2.1
+            Fixed a capitalization error with PanVsysEntry."
+		REVISION				"201303010000Z"
+		DESCRIPTION				"
+			Rev 2.0
+            Updated with panGlobalProtect and panVsysTable."
+        REVISION                "201102091610Z"
+		DESCRIPTION				"
+			Rev 1.0
+			Initial version of MIB module PAN-COMMON-MIB."
+
+		::= { panModules 3 }
+
+	panCommonConfMib OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Sub-tree for MIB conformance statements."
+		::= { panCommonMib 1 }
+
+	panCommonObjs OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Sub-tree for common MIB objects."
+		::= { panCommonMib 2 }
+
+	panCommonEvents OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Sub-tree for common MIB events."
+		::= { panCommonMib 3 }
+
+	-- Top level groups
+
+	panSys OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Sub-tree for common system objects."
+		::= { panCommonObjs 1 }
+
+	panChassis OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Sub-tree for common chassis information."
+		::= { panCommonObjs 2 }
+
+	panSession OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Sub-tree for common session information."
+		::= { panCommonObjs 3 }
+
+	panMgmt OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Sub-tree for common Management plane information."
+		::= { panCommonObjs 4 }
+
+	panGlobalProtect OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Sub-tree for common GlobalProtect information."
+		::= { panCommonObjs 5 }
+
+	----------------------------------------------------------------------
+	-- System objects
+
+	panSysSwVersion OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Full software version. The first two components of the full
+			version are the major and minor versions. The third component
+			indicates the maintenance release number and the fourth,
+			the build number."
+		::= { panSys 1 }
+
+	panSysHwVersion OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..128))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Hardware version of the unit."
+		::= { panSys 2 }
+
+	panSysSerialNumber OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..128))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"The serial number of the unit. If not available,
+			an empty string is returned."
+		::= { panSys 3 }
+
+	panSysTimeZoneOffset OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"The offset in seconds from UTC of the system's time zone.
+			Values are negative for locations west of UTC and positive
+			for locations east of UTC."
+		::= { panSys 4 }
+
+	panSysDaylightSaving OBJECT-TYPE
+		SYNTAX      TruthValue
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Whether daylight savings are in currently in effect for the
+			system's time zone."
+		::= { panSys 5 }
+
+	panSysVpnClientVersion OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Currently installed VPN client package version.  If
+			package is not installed, 0.0.0 is returned."
+		::= { panSys 6 }
+
+	panSysAppVersion OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Currently installed application definition version.  If 
+			no application definition is found, 0 is returned."
+		::= { panSys 7 }
+
+	panSysAvVersion OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Currently installed antivirus version.  If no antivirus 
+			is found, 0 is returned."
+		::= { panSys 8 }
+
+	panSysThreatVersion OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Currently installed threat definition version.  If no
+			threat definition is found, 0 is returned."
+		::= { panSys 9 }
+
+	panSysUrlFilteringVersion OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Currently installed URL filtering version.  If no URL
+			filtering is installed, 0 is returned."
+		::= { panSys 10 }
+
+	panSysHAState OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Current high-availability state."
+		::= { panSys 11 }
+
+	panSysHAPeerState OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Current peer high-availability state."
+		::= { panSys 12 }
+
+	panSysHAMode OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Current high-availability mode (disabled, 
+			active-passive, or active-active)."
+		::= { panSys 13 }
+
+	panSysUrlFilteringDatabase OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Current installed URL filtering database
+			(surfcontrol, brightcloud, etc)"
+		::= { panSys 14 }
+
+	panSysGlobalProtectClientVersion OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Currently installed global-protect client package version. 
+			If package is not installed, 0.0.0 is returned."
+		::= { panSys 15 }
+
+	panSysOpswatDatafileVersion OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Currently installed opswat database version. 
+			If package is not installed, 0 is returned."
+		::= { panSys 16 }
+
+	----------------------------------------------------------------------
+	-- Chassis
+
+	panChassisType OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..128))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Chassis type for this Palo Alto device."
+		::= { panChassis 1 }
+
+	panMSeriesMode OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..128))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Series Mode for this Palo Alto device."
+		::= { panChassis 2 }
+
+
+	----------------------------------------------------------------------
+	-- Session
+
+	panSessionUtilization OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Session table utilization percentage. Values should
+			be between 0 and 100."
+		::= { panSession 1 }
+
+	panSessionMax OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Total number of sessions supported."
+		::= { panSession 2 }
+
+	panSessionActive OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Total number of active sessions."
+		::= { panSession 3 }
+
+	panSessionActiveTcp OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Total number of active TCP sessions."
+		::= { panSession 4 }
+
+	panSessionActiveUdp OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Total number of active UDP sessions."
+		::= { panSession 5 }
+
+	panSessionActiveICMP OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Total number of active ICMP sessions."
+		::= { panSession 6 }
+
+	panSessionActiveSslProxy OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Total number of active SSL proxy sessions."
+		::= { panSession 7 }
+
+	panSessionSslProxyUtilization OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"SSL proxy Session utilization percentage. Values should
+			be between 0 and 100."
+		::= { panSession 8 }
+
+	panVsysTable OBJECT-TYPE
+        SYNTAX          SEQUENCE OF PanVsysEntry
+        MAX-ACCESS      not-accessible
+		STATUS			current
+		DESCRIPTION
+			"VSYS table"
+		::= { panSession 9 }
+
+	----------------------------------------------------------------------
+	-- VsysTable 
+
+    panVsysEntry OBJECT-TYPE
+		SYNTAX          PanVsysEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION
+            "Entries are created when the Vsys's are added to the
+            entVsysTable."
+    INDEX           { panVsysId }
+    ::= { panVsysTable 1 }
+
+    PanVsysEntry ::= SEQUENCE {
+        panVsysId                       Integer32,
+	    panVsysName                     DisplayString (SIZE(0..32)),
+	    panVsysSessionUtilizationPct    Integer32,
+    	panVsysActiveSessions           Integer32,
+    	panVsysMaxSessions              Integer32
+       }
+       
+	panVsysId OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Vsys id"
+		::= { panVsysEntry 1 }
+
+	panVsysName OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"User assigned vsys name (empty string if not available)"
+		::= { panVsysEntry 2 }
+
+	panVsysSessionUtilizationPct OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Vsys utilization percentage, if session limit is configured.
+            If session limit is not configured, this value is '0'"
+		::= { panVsysEntry 3 }
+
+	panVsysActiveSessions OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Active sessions on this Vsys"
+		::= { panVsysEntry 4 }
+
+	panVsysMaxSessions OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Max sessions on this Vsys, if session limit is configured.
+            If session limit is not configured, this value is '0'"
+		::= { panVsysEntry 5 }
+
+	----------------------------------------------------------------------
+	-- Mgmt
+
+	panMgmtPanoramaConnected OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Current Connection status to Panorama Server (connected, not-connected)"
+		::= { panMgmt 1 }
+
+	panMgmtPanorama2Connected OBJECT-TYPE
+		SYNTAX      DisplayString (SIZE(0..32))
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Current Connection status to Panorama2 Server (connected, not-connected)"
+		::= { panMgmt 2 }
+
+	----------------------------------------------------------------------
+	-- GlobalProtect 
+
+	panGPGatewayUtilization OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION
+			"GlobalProtect gateway utilization"
+		::= { panGlobalProtect 1 }
+
+	----------------------------------------------------------------------
+	-- GlobalProtect gateway utilization 
+
+	panGPGWUtilizationPct OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"GlobalProtect Gateway utilization percentage"
+		::= { panGPGatewayUtilization 1 }
+
+	panGPGWUtilizationMaxTunnels OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Max tunnels allowed"
+		::= { panGPGatewayUtilization 2 }
+
+	panGPGWUtilizationActiveTunnels OBJECT-TYPE
+		SYNTAX      Integer32
+		MAX-ACCESS  read-only
+		STATUS      current
+		DESCRIPTION
+			"Number of active tunnels"
+		::= { panGPGatewayUtilization 3 }
+
+	----------------------------------------------------------------------
+	-- Events
+
+	panCommonEventObjs OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Branch for objects meant only to be sent in event varbinds."
+		::= { panCommonEvents 1 }
+
+	panCommonEventEvents OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Branch for the events themselves."
+		::= { panCommonEvents 2 }
+
+	panCommonEventEventsV2 OBJECT-IDENTITY
+		STATUS					current
+		DESCRIPTION				"
+			Branch for SNMPv2 events. The OIDs for SNMPv2 events should
+			have a zero as the next-to-last sub-identifier (as specified
+			in RFC1902)."
+		::= { panCommonEventEvents 0 }
+
+	-- Objects sent only in events
+
+	panCommonEventDescr OBJECT-TYPE
+		SYNTAX					DisplayString
+		MAX-ACCESS				accessible-for-notify
+		STATUS					current
+		DESCRIPTION
+			"String that provides a textual description of the event."
+		::= { panCommonEventObjs 1 }
+
+	-- Event descriptions
+
+	panCommonEventLog NOTIFICATION-TYPE
+		OBJECTS { panCommonEventDescr }
+		STATUS  current
+		DESCRIPTION
+			"A config/system/firewall/threat log"
+		::= { panCommonEventEventsV2 1 }
+END
